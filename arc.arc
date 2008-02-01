@@ -1484,6 +1484,8 @@
                                  (pr ,out))))))
                   body)))))
 
+(mac $ body
+   `(seval (quote ,@body)))
 
 ; Lower priority ideas
 
