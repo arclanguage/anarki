@@ -1199,10 +1199,23 @@
 
 (def ensure-dir (path)
   (unless (dir-exists path)
-    (system (string "mkdir " path))))
+    (system (string "mkdir -p " path))))
+
+(def uname nil 
+  (let val (tostring (system "uname"))
+  (subseq val 0 (- (len val) 1))))
 
 (def date ((o time (seconds)))
-  (let val (tostring (system (string "date -u -r " time " \"+%Y-%m-%d\"")))
+  (let val (tostring (system 
+                      (string
+                       "date -u "
+                       (if 
+                        (is (uname) "Linux")
+                        ;; Linux wants -d and an interval
+                        (string "-d \"" (- 1 (since time)) " seconds\"")
+                        ;; BSD wants -r and epoch seconds
+                        (string "-r " time))
+                       " \"+%Y-%m-%d\"")))
     (subseq val 0 (- (len val) 1))))
 
 (def since (t1) (- (seconds) t1))
@@ -1489,6 +1502,8 @@
                                  (pr ,out))))))
                   body)))))
 
+(mac $ body
+   `(seval (quote ,@body)))
 
 ; Lower priority ideas
 
