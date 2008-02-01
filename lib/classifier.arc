@@ -9,11 +9,13 @@
 (mac tresh (x cat) (w/uniq q `(let ,q ((cadr:cdr ,x) ,cat) (or ,q 1.0))))
 (mac =tresh (x cat v) `(do (= ((cadr:cdr ,x) ,cat) ,v) ,x))
 
-(mac =default (table key d)
-  `(if (,table ,key)
-      ,table
-      (do (= (,table ,key) ,d)
-        ,table)))
+(mac =default (table key de)
+  (w/uniq (t k d)
+  `(with (,t ,table ,k ,key ,d ,de)
+    (if (,t ,k)
+      ,t
+      (do (= (,t ,k) ,d)
+          ,t)))))
 
 (def incf (cl f cat)
   (do (=default (fc cl) f (table))
