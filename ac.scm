@@ -1082,6 +1082,11 @@
 
 (xdef 'seval (lambda (x) (eval (ac-denil x))))
 
+(xdef 'regexp regexp)
+(xdef 'r-match regexp-match)
+(xdef 'r-match-pos regexp-match-positions)
+(xdef 'r-replace regexp-replace)
+
 (xdef 'quit exit)
 
 
