@@ -229,8 +229,7 @@
   (if (ac-complex-args? args)
       (ac-complex-fn args body env)
       `(lambda ,(let ((a (ac-denil args))) (if (eqv? a 'nil) '() a))
-         'nil
-         ,@(ac-body body (append (ac-arglist args) env)))))
+         ,@(ac-body* body (append (ac-arglist args) env)))))
 
 ; does an fn arg list use optional parameters or destructuring?
 ; a rest parameter is not complex
@@ -251,8 +250,7 @@
          (z (ac-complex-args args env ra #t)))
     `(lambda ,ra
        (let* ,z
-         'nil
-         ,@(ac-body body (append (ac-complex-getargs z) env))))))
+         ,@(ac-body* body (append (ac-complex-getargs z) env))))))
 
 ; returns a list of two-element lists, first is variable name,
 ; second is (compiled) expression. to be used in a let.
@@ -303,9 +301,13 @@
         (#t (cons (car a) (ac-arglist (cdr a))))))
 
 (define (ac-body body env)
+  (map (lambda (x) (ac x env)) body))
+
+;; like ac-body, but spits out a nil expression if empty
+(define (ac-body* body env)
   (if (null? body)
-      '()
-      (cons (ac (car body) env) (ac-body (cdr body) env))))
+      (list (list 'quote 'nil))
+      (ac-body body env)))
 
 ; (set v1 expr1 v2 expr2 ...)
 
