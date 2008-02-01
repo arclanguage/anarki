@@ -1510,6 +1510,8 @@
   `(= (hooks* ',name) (fn ,@rest)))
   
 
+(mac $ body
+   `(seval (quote ,@body)))
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
