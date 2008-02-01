@@ -313,7 +313,7 @@
             `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
               ,afn ,@aargs))
            (#t
-            `(ar-apply ,afn (list ,@aargs)))))))
+            `(ar-apply ,afn (list ,@aargs))))))))
 
 (define (ac-mac-call m args env)
   (let ((x1 (apply m (map ac-niltree args))))
