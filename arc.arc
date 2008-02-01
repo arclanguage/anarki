@@ -112,15 +112,15 @@
             (apply join (cdr args))
             (cons (car a) (apply join (cdr a) (cdr args)))))))
 
-; Need rfn for use in macro expansions.
+; Self-referencing lambda expression.
+; Creates a closure wherein lambda is bound to name.
 
 (mac rfn (name parms . body)
   `(let ,name nil
      (set ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
-  `(let self nil
-     (set self (fn ,parms ,@body))))
+  `(rfn self ,parms ,@body)) 
 
 ; Ac expands x:y:z into (compose x y z), ~x into (complement x)
 
@@ -1326,15 +1326,33 @@
                (self (- n 1) (cdr xs)))))
      n xs)))
 
-(def reduce (f xs)
-  (if (cddr xs)
-      (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
-      (apply f xs)))
+; In the normal case, the result of reduce is the combined result of function's
+; being applied to successive pairs of elements of sequence. If the sequence 
+; contains exactly one element and no init is given, then that element is returned
+; and function is not called. If the sequence is empty and init is given, then 
+; init is returned and function is not called. If the sequence is empty and init 
+; is not given, then the function is called with zero arguments, and reduce returns
+; whatever function does. This is the only case where the function is called with 
+; other than two arguments.     
+     
+(let initsym (uniq)  
+    
+  ; Left-associative
+  (def reduce (f xs (o init initsym))
+    ((afn (xs) 
+       (if (cdr xs) (self (cons (f (car xs) (cadr xs)) (cddr xs)))
+           xs (car xs)
+           (f)))
+     (if (is init initsym) xs (cons init xs))))
 
-(def rreduce (f xs)
-  (if (cddr xs)
-      (f (car xs) (rreduce f (cdr xs)))
-      (apply f xs)))
+  ; Right-associative
+  ; Rather inefficent due to recursive call not being in the tail position.
+  (def rreduce (f xs (o init initsym))
+    ((afn (xs) 
+       (if (cdr xs) (f (car xs) (rreduce f (cdr xs)))
+           xs (car xs)
+           (f)))
+     (if (is init initsym) xs (join xs (list init))))))
 
 (let argsym (uniq)
 
