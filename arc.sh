@@ -1,15 +1,16 @@
 #!/bin/bash
-
+ 
 if [ -L "$0" ]; then
   arc_dir=`readlink $0`
 else
   arc_dir=$0
 fi
+arc_dir=`dirname $arc_dir`
 
-ARC_DIR=`dirname $arc_dir`
+mzscheme=mzscheme
 
-if which rlwrap &> /dev/null; then
-  rlwrap -C arc mzscheme -m -d "$ARC_DIR/as.scm"
+if [ -e `which rlwrap` ]; then
+  rlwrap -C arc $mzscheme -m -d "$arc_dir/as.scm"
 else
-  mzscheme -m -d "$ARC_DIR/as.scm"
+  $mzscheme -m -d "$arc_dir/as.scm"
 fi
