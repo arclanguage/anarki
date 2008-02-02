@@ -14,7 +14,7 @@ if [ ! -e $mzscheme ]; then
   ./configure && make && make install
 fi
 
-if [ -e `which rlwrap` ]; then
+if [ "$(type -p rlwrap)" ]; then
   rlwrap -C arc $mzscheme -m -d "$arc_dir/as.scm"
 else
   $mzscheme -m -d "$arc_dir/as.scm"
