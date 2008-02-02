@@ -1,14 +1,21 @@
-#!/bin/sh
+#!/bin/bash
+ 
+if [ -L "$0" ]; then
+  arc_dir=`readlink $0`
+else
+  arc_dir=$0
+fi
+arc_dir=`dirname $arc_dir`
 
-if [[ ! -e ../third-party/mzscheme/bin/mzscheme ]]; then
-	root_dir=`pwd`
-	cd ../third-party/mzscheme/src
-	./configure && make && make install
-    cd $root_dir
+mzscheme_dir=$arc_dir/../third-party/mzscheme
+mzscheme=$mzscheme_dir/bin/mzscheme
+if [ ! -e $mzscheme ]; then
+  cd $mzscheme_dir
+  ./configure && make && make install
 fi
 
-if [ -e `which rlwrap` ] &> /dev/null; then 
-	rlwrap -C arc ../third-party/mzscheme/bin/mzscheme -m -f as.scm	
-else 
-	../third-party/mzscheme/bin/mzscheme -m -f as.scm
-fi;
+if [ -e `which rlwrap` ]; then
+  rlwrap -C arc $mzscheme -m -d "$arc_dir/as.scm"
+else
+  $mzscheme -m -d "$arc_dir/as.scm"
+fi
