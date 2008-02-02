@@ -293,7 +293,7 @@
                                                          ,name)))
                name))
       (err "First arg to set must be a symbol" a)))
-      
+
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
 ;   (ar-apply _pr (list 1 2))
@@ -301,23 +301,19 @@
 ;   (ar-funcall2 _pr 1 2)
 (define (ac-call fn args env)
   (let ((macfn (ac-macro? fn)))
-    (cond (macfn
-           (ac-mac-call macfn args env))
-          ((and (pair? fn) (eqv? (car fn) 'fn))
-           `(,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 0)
-           `(ar-funcall0 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 1)
-           `(ar-funcall1 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 2)
-           `(ar-funcall2 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 3)
-           `(ar-funcall3 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 4)
-           `(ar-funcall4 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          (#t
-           `(ar-apply ,(ac fn env)
-                      (list ,@(map (lambda (x) (ac x env)) args)))))))
+    (if macfn
+        (ac-mac-call macfn args env)
+        (let ((afn (ac fn env))
+              (aargs (map (lambda (x) (ac x env)) args))
+              (nargs (length args)))
+          (cond 
+           ((and (pair? fn) (eqv? (car fn) 'fn))
+            `(,afn ,@aargs))
+           ((and (>= nargs 0) (<= nargs 4))
+            `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
+              ,afn ,@aargs))
+           (#t
+            `(ar-apply ,afn (list ,@aargs)))))))
 
 (define (ac-mac-call m args env)
   (let ((x1 (apply m (map ac-niltree args))))
