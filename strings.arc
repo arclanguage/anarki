@@ -214,6 +214,11 @@
                          v2
                          (trim v2 'end [is _ #\0]))))))))
 
+; Import Scheme's regular expressions
+(= re ($ regexp))
+(= re-match ($ regexp-match))
+(= re-pos ($ regexp-match-positions))
+(= re-subst ($ regexp-replace))
 
 ; http://www.eki.ee/letter/chardata.cgi?HTML4=1
 ; http://jrgraphix.net/research/unicode_blocks.php?block=1
