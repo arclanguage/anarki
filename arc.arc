@@ -33,9 +33,16 @@
                               (writec #\newline)))
                       (set ,var ,val)))))
 
+; It would be nice if multiple strings counted as multiple docstring lines.
+; It would also be nice if macros could have docstrings.
+(set *help* (table))
 (set def (annotate 'mac
             (fn (name parms . body)
               `(do (sref sig ',parms ',name)
+                   ; If there's a docstring, save it
+                   (if (is (type ',(car body)) 'string)
+                       (if ',(cdr body)
+                           (sref *help* ,(car body) ',name)))
                    (safeset ,name (fn ,parms ,@body))))))
 
 (def caar (xs) (car (car xs)))
@@ -1473,6 +1480,7 @@
              (err "Can't upcase" x))))
 
 (def range (start end)
+  "Return a range of numbers from `start' to `end'."
   (if (> start end)
       nil
       (cons start (range (+ start 1) end))))
@@ -1504,6 +1512,12 @@
 
 (mac $ body
    (list 'seval (cons 'quasiquote body)))
+
+(mac help (name)
+   (prn (if (no (*help* name))
+            "Documentation unavailable"
+            (*help* name)))
+   nil)
 
 ; Lower priority ideas
 
