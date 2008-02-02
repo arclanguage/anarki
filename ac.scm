@@ -1083,7 +1083,6 @@
 (xdef 'ssexpand (lambda (x)
                   (if (symbol? x) (expand-ssyntax x) x)))
 
-
 (xdef 'seval (lambda (x) (eval (ac-denil x))))
 
 (xdef 'regexp regexp)
