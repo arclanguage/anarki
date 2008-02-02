@@ -8,7 +8,7 @@
 ;"\u0085"
 
 (def tokens (s (o sep whitec))
-  (let test (if (isa sep 'fn) sep (fn (c) (is c sep)))
+  (let test (testify sep)
     (let rec (afn (cs toks tok)
                (if (no cs)         (consif tok toks)
                    (test (car cs)) (self (cdr cs) (consif tok toks) nil)
