@@ -627,6 +627,7 @@
         ((input-port? x)    'input)
         ((tcp-listener? x)  'socket)
         ((exn? x)           'exception)
+        ((regexp? x)        're)
         (#t                 (err "Type: unknown type" x))))
 (xdef 'type ar-type)
 
@@ -1084,11 +1085,6 @@
                   (if (symbol? x) (expand-ssyntax x) x)))
 
 (xdef 'seval (lambda (x) (eval (ac-denil x))))
-
-(xdef 'regexp regexp)
-(xdef 'r-match regexp-match)
-(xdef 'r-match-pos regexp-match-positions)
-(xdef 'r-replace regexp-replace)
 
 (xdef 'quit exit)
 
