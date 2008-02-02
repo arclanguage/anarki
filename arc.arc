@@ -1514,6 +1514,8 @@
    (list 'seval (cons 'quasiquote body)))
 
 (mac help (name)
+   (if (sig name)
+       (prn (cons name (sig name))))
    (prn (if (no (*help* name))
             "Documentation unavailable"
             (*help* name)))
