@@ -55,21 +55,22 @@
 ; need in order to decide whether set should create a global.
 
 (define (ac s env)
-  (cond ((string? s) (string-copy s))  ; to avoid immutable strings
-        ((literal? s) s)
-        ((eqv? s 'nil) (list 'quote 'nil))
-        ((ssyntax? s) (ac (expand-ssyntax s) env))
-        ((symbol? s) (ac-var-ref s env))
-        ((ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env))
-        ((eq? (xcar s) 'quote) (list 'quote (ac-niltree (cadr s))))
-        ((eq? (xcar s) 'quasiquote) (ac-qq (cadr s) env))
-        ((eq? (xcar s) 'if) (ac-if (cdr s) env))
-        ((eq? (xcar s) 'fn) (ac-fn (cadr s) (cddr s) env))
-        ((eq? (xcar s) 'set) (ac-set (cdr s) env))
-        ; this line could be removed without changing semantics
-        ((eq? (xcar (xcar s)) 'compose) (ac (decompose (cdar s) (cdr s)) env))
-        ((pair? s) (ac-call (car s) (cdr s) env))
-        (#t (err "Bad object in expression" s))))
+  (let ((head (xcar s)))
+    (cond ((string? s) (string-copy s))  ; to avoid immutable strings
+          ((literal? s) s)
+          ((eqv? s 'nil) (list 'quote 'nil))
+          ((ssyntax? s) (ac (expand-ssyntax s) env))
+          ((symbol? s) (ac-var-ref s env))
+          ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
+          ((eq? head 'quote) (list 'quote (ac-niltree (cadr s))))
+          ((eq? head 'quasiquote) (ac-qq (cadr s) env))
+          ((eq? head 'if) (ac-if (cdr s) env))
+          ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
+          ((eq? head 'set) (ac-set (cdr s) env))
+          ; this line could be removed without changing semantics
+          ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
+          ((pair? s) (ac-call (car s) (cdr s) env))
+          (#t (err "Bad object in expression" s)))))
 
 (define (literal? x)
   (or (boolean? x)
@@ -156,12 +157,12 @@
 (define (ac-qq1 level x env)
   (cond ((= level 0)
          (ac x env))
-        ((and (pair? x) (eqv? (car x) 'unquote))
+        ((eqv? (xcar x) 'unquote)
          (list 'unquote (ac-qq1 (- level 1) (cadr x) env)))
-        ((and (pair? x) (eqv? (car x) 'unquote-splicing) (= level 1))
+        ((and (eqv? (xcar x) 'unquote-splicing) (= level 1))
          (list 'unquote-splicing
                (list 'ar-nil-terminate (ac-qq1 (- level 1) (cadr x) env))))
-        ((and (pair? x) (eqv? (car x) 'quasiquote))
+        ((eqv? (xcar x) 'quasiquote)
          (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
         ((pair? x)
          (map (lambda (x) (ac-qq1 level x env)) x))
@@ -195,7 +196,7 @@
 (define (ac-complex-args? args)
   (cond ((eqv? args '()) #f)
         ((symbol? args) #f)
-        ((and (pair? args) (symbol? (car args)))
+        ((symbol? (xcar args))
          (ac-complex-args? (cdr args)))
         (#t #t)))
 
@@ -300,18 +301,18 @@
 (define (ac-call fn args env)
   (let ((macfn (ac-macro? fn)))
     (if macfn
-        (ac-mac-call macfn args env)
-        (let ((afn (ac fn env))
-              (aargs (map (lambda (x) (ac x env)) args))
-              (nargs (length args)))
-          (cond 
-           ((and (pair? fn) (eqv? (car fn) 'fn))
-            `(,afn ,@aargs))
-           ((and (>= nargs 0) (<= nargs 4))
-            `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
+      (ac-mac-call macfn args env)
+      (let ((afn (ac fn env))
+            (aargs (map (lambda (x) (ac x env)) args))
+            (nargs (length args)))
+        (cond 
+          ((eqv? (xcar fn) 'fn)
+           `(,afn ,@aargs))
+          ((and (>= nargs 0) (<= nargs 4))
+           `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
               ,afn ,@aargs))
-           (#t
-            `(ar-apply ,afn (list ,@aargs))))))))
+          (#t
+           `(ar-apply ,afn (list ,@aargs))))))))
 
 (define (ac-mac-call m args env)
   (let ((x1 (apply m (map ac-niltree args))))
@@ -335,13 +336,11 @@
 ; macroexpand the outer call of a form as much as possible
 
 (define (ac-macex e . once)
-  (if (pair? e)
-      (let ((m (ac-macro? (car e))))
-        (if m
-            (let ((expansion (ac-denil (apply m (map ac-niltree (cdr e))))))
-              (if (null? once) (ac-macex expansion) expansion))
-            e))
-      e))
+  (let ((m (ac-macro? (xcar e))))
+    (if m
+      (let ((expansion (ac-denil (apply m (map ac-niltree (cdr e))))))
+        (if (null? once) (ac-macex expansion) expansion))
+      e)))
 
 ; macros return Arc lists, ending with NIL.
 ; but the Arc compiler expects Scheme lists, ending with '().
@@ -1094,3 +1093,4 @@
 )
 
 (require ac)
+
