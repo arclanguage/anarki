@@ -1503,7 +1503,7 @@
                   body)))))
 
 (mac $ body
-   `(seval (quote ,@body)))
+   (list 'seval (cons 'quasiquote body)))
 
 ; Lower priority ideas
 
