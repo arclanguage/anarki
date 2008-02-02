@@ -69,32 +69,32 @@
 
 ;; Example spec:
 ;;
-(= test-basics
-   (describe "Basic ARC list functions"
-     (prolog
-      (= li '(a b c))
-      (= pair '(a . b)))
-     (it "CAR should return the first item in a list"
-       (is (car li) 'a))
-     (it "CAR should return nil for an empty list"
-       (is (car '()) nil))
-     (it "CADR should return the second item of a list"
-       (is (cadr li) 'b))
-     (it "CADR should return NIL for an empty list"
-       (is (cadr '()) nil))
-     (it "CADR should return NIL for the 2nd item of a one item list"
-       (is (cadr '(a)) nil))
-     (it "CDR should return the rest of a list"
-       (iso (cdr li) '(b c)))
-     (it "CDR should returns '() for an empty list"
-       (is (cdr '()) '()))
-     (it "CDR should return the rest of a dotted pair"
-       (is (cdr pair) 'b))
-     (it "CDDR should return the rest of the rest of a list"
-       (iso (cddr li) '(c)))
-     (it "CDDR should return '() for an empty list"
-       (is (cddr '()) '()))
-     (it "CDDR should returns '() for a one item list"
-       (is (cddr '(a)) '()))))
+;; (= test-basics
+;;    (describe "Basic ARC list functions"
+;;      (prolog
+;;       (= li '(a b c))
+;;       (= pair '(a . b)))
+;;      (it "CAR should return the first item in a list"
+;;        (is (car li) 'a))
+;;      (it "CAR should return nil for an empty list"
+;;        (is (car '()) nil))
+;;      (it "CADR should return the second item of a list"
+;;        (is (cadr li) 'b))
+;;      (it "CADR should return NIL for an empty list"
+;;        (is (cadr '()) nil))
+;;      (it "CADR should return NIL for the 2nd item of a one item list"
+;;        (is (cadr '(a)) nil))
+;;      (it "CDR should return the rest of a list"
+;;        (iso (cdr li) '(b c)))
+;;      (it "CDR should returns '() for an empty list"
+;;        (is (cdr '()) '()))
+;;      (it "CDR should return the rest of a dotted pair"
+;;        (is (cdr pair) 'b))
+;;      (it "CDDR should return the rest of the rest of a list"
+;;        (iso (cddr li) '(c)))
+;;      (it "CDDR should return '() for an empty list"
+;;        (is (cddr '()) '()))
+;;      (it "CDDR should returns '() for a one item list"
+;;        (is (cddr '(a)) '()))))
 
-(print-results (test-basics) t)
+;; (print-results (test-basics) t)
