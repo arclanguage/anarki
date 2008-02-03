@@ -1517,16 +1517,43 @@
    (list 'seval (cons 'quasiquote body)))
 
 (mac help (name)
-   (let h (*help* name)
-     (if (no h)
-         (prn name " is not documented.")
-         (with (kind  (car h)
-                doc   (cadr h))
-          (pr "[" kind "] ")
-          (prn (if (sig name)
-                (cons name (sig name))))
-          (prn (or doc "Documentation unavailable")))))
-   nil)
+   `(do (pr ,(tostring
+              (let h (*help* name)
+                (if (no h)
+                    (prn name " is not documented.")
+                    (with (kind  (car h)
+                                 doc   (cadr h))
+                          (pr "[" kind "] ")
+                          (prn (if (sig name)
+                                   (cons name (sig name))))
+                          (prn (or doc "Documentation unavailable")))))))
+        nil))
+
+; I couldn't find a pre-existing total macro-expander
+(def expand (expr)
+  (if (acons expr)
+      (macex (cons (car expr)
+                   (map expand (cdr expr))))
+      expr))
+
+(mac % () nil)
+(mac %% () nil)
+(mac %%% () nil)
+
+(def input-history-update (expr)
+  (let expandedexpr (expand expr)
+    (= %%% %%
+       %% %)
+    (tostring (mac % () expandedexpr))))
+
+(= ^ nil
+   ^^ nil
+   ^^^ nil)
+
+(def output-history-update (val)
+  (= ^^^ ^^
+     ^^ ^
+     ^ val))
 
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
