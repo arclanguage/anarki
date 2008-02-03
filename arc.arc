@@ -34,15 +34,14 @@
                       (set ,var ,val)))))
 
 ; It would be nice if multiple strings counted as multiple docstring lines.
-; It would also be nice if macros could have docstrings.
 (set *help* (table))
 (set def (annotate 'mac
             (fn (name parms . body)
               `(do (sref sig ',parms ',name)
-                   ; If there's a docstring, save it
+                   ; Document the function, including the docstring if present
                    (if (is (type ',(car body)) 'string)
-                       (if ',(cdr body)
-                           (sref *help* ,(car body) ',name)))
+                       (sref *help* '(fn ,(car body)) ',name)
+                       (sref *help* '(fn nil) ',name))
                    (safeset ,name (fn ,parms ,@body))))))
 
 (def caar (xs) (car (car xs)))
@@ -77,6 +76,10 @@
 (set mac (annotate 'mac
            (fn (name parms . body)
              `(do (sref sig ',parms ',name)
+                   ; Document the macro, including the docstring if present
+                   (if (is (type ',(car body)) 'string)
+                       (sref *help* '(mac ,(car body)) ',name)
+                       (sref *help* '(mac nil) ',name))
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
 (mac and args
@@ -1514,11 +1517,13 @@
    (list 'seval (cons 'quasiquote body)))
 
 (mac help (name)
-   (if (sig name)
-       (prn (cons name (sig name))))
-   (prn (if (no (*help* name))
-            "Documentation unavailable"
-            (*help* name)))
+   (withs (h     (*help* name)
+           kind  (car h)
+           doc   (cadr h))
+     (pr "[" kind "] ")
+     (prn (if (sig name)
+              (cons name (sig name))))
+     (prn (or doc "Documentation unavailable")))
    nil)
 
 ; Lower priority ideas
