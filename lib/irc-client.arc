@@ -30,6 +30,7 @@
 (def irc (nick)
   (let (ip op)
     (client server* 6667)
+    (= op* op)                          ;so we can send stuff from the repl
     (w/stdin ip
       (w/stdout op
         (out "NICK " nick)
