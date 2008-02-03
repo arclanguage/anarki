@@ -7,11 +7,12 @@
 (require :sb-bsd-sockets)
 
 (defpackage :arc
-  (:use :cl :sb-bsd-sockets :sb-ext))
+  (:use :cl :sb-bsd-sockets :sb-ext)
+  (:export :arc-eval :fn))
 
 (in-package :arc)
 
-(defun ac (s env)
+(defun ac (s &optional env)
   (cond ((typep s 'string) (copy-seq s))
 	((literal? s) s)
 	((eql s 'nil) (list 'quote 'nil))
@@ -91,8 +92,11 @@
 	((null (cdr fns)) (cons (car fns) args))
 	(t (list (car fns) (decompose (cdr fns) args)))))
 
+(defun arcsym (patt val)
+  (intern (format nil patt val) (find-package :arc)))
+
 (defun ac-global-name (s)
-  (intern (format nil "_~a" (symbol-name s))))
+  (arcsym "_~a" (symbol-name s)))
 
 (defun ac-var-ref (s env)
   (if (lex? s env)
@@ -218,8 +222,8 @@
 	    ((eql (xcar fn) 'fn)
 	     `(,afn ,@aargs))
 	    ((and (<= 0 nargs 4))
-	     `(,(intern (format nil "AR-FUNCALL~a" nargs))
-		(symbol-value ',afn) ,@aargs))
+	     `(,(arcsym "AR-FUNCALL~d" nargs)
+		,afn ,@aargs))
 	    (t 
 	     `(ar-apply ,afn (list ,@aargs))))))))
 
@@ -262,11 +266,8 @@
 (defun xdef (sym val)
   (set (ac-global-name sym) val))
 
-(defun fxdef (sym fn)
-  (setf (symbol-function (ac-global-name sym)) fn))
-
 (defmacro mxdef (name args &body body)
-  `(fxdef ',name (lambda ,args ,@body)))
+  `(xdef ',name (lambda ,args ,@body)))
 
 
 (defparameter fn-signatures (make-hash-table :test #'equal))
@@ -299,7 +300,7 @@
   (ar-apply fn (ar-apply-args args)))
 
 (macrolet ((_ar-funcall-x (num &rest args)
-	     `(defun ,(intern (format nil "AR-FUNCALL~d" num)) (fn ,@args)
+	     `(defun ,(arcsym "AR-FUNCALL~d" num) (fn ,@args)
 		(if (functionp fn)
 		    (funcall fn ,@args)
 		    (ar-apply fn (list ,@args))))))
@@ -363,12 +364,12 @@
 	 (ac-niltree (apply #'append (mapcar #'ar-nil-terminate args))))
 	(t (apply #'+ args))))
 
-(fxdef '- #'-)
-(fxdef '* #'*)
-(fxdef '/ #'/)
-(fxdef 'mod #'mod)
-(fxdef 'expt #'expt)
-(fxdef 'sqrt #'sqrt)
+(xdef '- #'-)
+(xdef '* #'*)
+(xdef '/ #'/)
+(xdef 'mod #'mod)
+(xdef 'expt #'expt)
+(xdef 'sqrt #'sqrt)
 
 (macrolet ((_arc-comp (name f fstr fchar)
 	     `(progn
@@ -626,7 +627,7 @@
 		      (terpri)))))))
     (loop
        (handler-case (_repl)
-	 (error (e) (format t "Error: ~a" e))))))
+	 (error (e) (format t "Error: ~a~%" e))))))
       
 (defun aload1 (s)
   (loop for x = (read s nil t)
@@ -709,3 +710,67 @@
   (eval (ac-denil x)))
 
 (xdef 'quit #'sb-ext:quit)
+
+;;;; Test suite
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *tests* nil))
+
+(defvar *curr* '(nil . 0))
+(defvar *failed* nil)
+
+(defmacro deftest (name &body body)
+  (pushnew name *tests*)
+  `(defun ,name ()
+     (setf *curr* (cons ',name 1))
+     (format t "~a~15t " ',name)
+     (macrolet ((_e (x) `(arc-eval ',x))) ,@body)
+     (terpri)))
+     
+(defun chk (res)
+  (princ (if res #\. #\+))
+  (when (not res) (push (copy-list *curr*) *failed*))
+  (incf (cdr *curr*)))
+
+(defun test ()
+  (setf *failed* nil)
+  (loop for _t in (reverse *tests*)
+     do (funcall (symbol-function _t)))
+  (when *failed*
+    (format t "~%Failed:~%")
+    (let (prev)
+      (dolist (f (reverse *failed*))
+	(if (eq prev (car f))
+	    (format t " [~a]" (cdr f))
+	    (format t "~&  ~a [~a]" (car f) (cdr f)))
+	(setf prev (car f)))))
+  (values))
+
+(defgeneric == (a b)
+  (:method (a b) (equal a b)))
+
+(deftest t-literals
+  (chk (== 1    (_e 1)))
+  (chk (== #\a  (_e #\a)))
+  (chk (== "a"  (_e "a")))
+  (chk (== 1.45 (_e 1.45)))
+  (chk (== 'nil (_e 'nil)))
+  (chk (== '(quote a) (_e '(quote a)))))
+
+(deftest t-operations
+  (chk (== 3  (_e (+ 1 2))))
+  (chk (== 6  (_e (* 2 3))))
+  (chk (== 4  (_e (/ 12 3))))
+  (chk (== 1  (_e (- 2 1))))
+  (chk (== 0  (_e (+))))
+  (chk (== 1  (_e (*))))
+  (chk (== -1 (_e (- 1))))
+  (chk (== 1  (_e (+ 1)))))
+
+(deftest t-funcalls
+  (chk (== '(ar-funcall0 _+)         (ac '(+))))
+  (chk (== '(ar-funcall1 _+ 1)       (ac '(+ 1))))
+  (chk (== '(ar-funcall2 _+ 1 2)     (ac '(+ 1 2))))
+  (chk (== '(ar-funcall3 _+ 1 2 3)   (ac '(+ 1 2 3))))
+  (chk (== '(ar-funcall4 _+ 1 2 3 4) (ac '(+ 1 2 3 4))))
+  (chk (== 3 (_e ((fn (x) (+ 1 x)) 2)))))
