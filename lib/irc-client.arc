@@ -3,9 +3,6 @@
          (lambda () (tcp-connect ,hostname ,port))
        list)))
 
-;; be nice to make this settable, so we could do (= (env "FOO") "bar")
-(= env ($ getenv))
-
 (= server* "localhost")
 
 (def log args
