@@ -131,8 +131,11 @@
 (defun ac-fn (args body env)
   (if (ac-complex-args? args)
       (ac-complex-fn args body env)
-      `(lambda ,(let ((a (ac-denil args))) (if (eql a 'nil) '() a))
-	 ,@(ac-body* body (append (ac-arglist args) env)))))
+      (flet ((args (a) (cond ((eql a 'nil) '())
+			     ((symbolp a) `(&rest ,a))
+			     (t a))))
+	`(lambda ,(args (ac-denil args))
+	   ,@(ac-body* body (append (ac-arglist args) env))))))
 
 (defun ac-complex-args? (args)
   (cond ((eql args '()) nil)
@@ -714,7 +717,27 @@
 
 (xdef 'quit #'sb-ext:quit)
 
-;;;; Test suite
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;;   Bracket notation
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (set-macro-character #\] 
+    (get-macro-character #\) nil))
+  (set-macro-character #\[
+    #'(lambda (stream char)
+	(declare (ignore char))
+	(list 'fn (list '_) (read-delimited-list #\] stream t)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;;   Load arc.arc
+
+; (aload "arc.arc")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;;   Test suite 
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *tests* nil))
@@ -784,7 +807,8 @@
 
 (deftest t-funcalls
   (chk (== 3 (_e ((fn (x) (+ 1 x)) 2))))
-  (chk (== 5 (_e ((fn (a b) (+ a b)) 2 3)))))
+  (chk (== 5 (_e ((fn (a b) (+ a b)) 2 3))))
+  (chk (== '((1 2)) (_e ((fn x x) '(1 2))))))
 
 (deftest t-if 
   (chk (== 0 (_e (if t 0 1))))
@@ -794,9 +818,15 @@
   (chk (== 2 (_e (if nil 0 nil 1 2)))))
 
 (deftest t-backq
-  (chk (== '(1 2)     (_e ((fn (x) `(1 ,x)) 2))))
-  (chk (== '(1 2 3)   (_e ((fn (x y) `(,x 2 ,y)) 1 3))))
-  (chk (== '(1 2 3)   (_e ((fn (x) `(1 ,@x)) '(2 3)))))
-  (chk (== '(1 2 3 4) (_e ((fn (x y) `(1 ,@x ,y)) '(2 3) 4))))
-  (chk (== '(1 (2 3)) (_e ((fn (x) `(1 (2 ,x))) 3))))
+  (chk (== '(1 2)         (_e ((fn (x) `(1 ,x)) 2))))
+  (chk (== '(1 2 3)       (_e ((fn (x y) `(,x 2 ,y)) 1 3))))
+  (chk (== '(1 2 3)       (_e ((fn (x) `(1 ,@x)) '(2 3)))))
+  (chk (== '(1 2 3 4)     (_e ((fn (x y) `(1 ,@x ,y)) '(2 3) 4))))
+  (chk (== '(1 (2 3))     (_e ((fn (x) `(1 (2 ,x))) 3))))
   (chk (== '(1 (2 (3 4))) (_e ((fn (x) `(1 (2 ,x))) '(3 4))))))
+
+(deftest t-set 
+  (chk (== #\a  (_e ((fn (x) (set x #\a) x) #\z)))))
+
+(deftest t-brackets
+  (chk (== 2 (_e ([+ _ 1] 1)))))
