@@ -97,8 +97,9 @@
 	((null (cdr fns)) (cons (car fns) args))
 	(t (list (car fns) (decompose (cdr fns) args)))))
 
-(defun arcsym (patt val)
-  (intern (format nil patt val) (find-package :arc)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun arcsym (patt val)
+    (intern (format nil patt val) (find-package :arc))))
 
 (defun ac-global-name (s)
   (arcsym "_~a" (symbol-name s)))
@@ -108,16 +109,16 @@
       s 
       (ac-global-name s)))
 
+(defparameter *backq-syms*
+  '((sb-impl::backq-list list)
+    (sb-impl::backq-cons cons)
+    (sb-impl::backq-append append)))
+
 (defun backq? (head)
-  (or (eq head 'sb-impl::backq-list)
-      (eq head 'sb-impl::backq-cons)
-      (eq head 'sb-impl::backq-append)))
+  (member head *backq-syms* :key #'car))
 
 (defun ac-backq (head args env)
-  (cons (case head 
-	  (sb-impl::backq-list 'list)
-	  (sb-impl::backq-cons 'cons)
-	  (sb-impl::backq-append 'append))
+  (cons (second (assoc head *backq-syms*))
 	(mapcar #'(lambda (x) (ac x env)) args)))
 
 (defun ac-if (args env)
