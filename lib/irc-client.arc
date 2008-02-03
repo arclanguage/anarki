@@ -1,13 +1,10 @@
-;; I guess this is really scheme ...
-($ 
- (xdef 'client 
-       (lambda (hostname port)
-               (call-with-values 
-                (lambda () (tcp-connect hostname port)) 
-                list))))
+(def client (hostname port)
+  ($ (call-with-values 
+         (lambda () (tcp-connect ,hostname ,port))
+       list)))
 
 ;; be nice to make this settable, so we could do (= (env "FOO") "bar")
-($ (xdef 'env getenv))
+(= env ($ getenv))
 
 (= server* "localhost")
 (def >err (msg . args)
@@ -22,37 +19,36 @@
   nil)
 
 (= chans* (table))
-((afn (nick)
-      (let (ip op)
-        (client server* 6667)
-        (w/stdin ip
-          (w/stdout op
-            (out "NICK " nick)
-            (out
-             "USER "          (or (env "USER") "unknown")
-             " unknown-host " server*
-             " :"             "arcbot"
-             ", version "     "0")
+(def irc (nick)
+   (let (ip op)
+     (client server* 6667)
+     (w/stdin ip
+        (w/stdout op
+           (out "NICK " nick)
+           (out
+            "USER "          (or (env "USER") "unknown")
+            " unknown-host " server*
+            " :"             "arcbot"
+            ", version "     "0")
 
-            (whilet l (readline)
-              (= l (trim (trim l 'end) 'front #\:))
-              (>err "<=" l)
-              (let l (parse l)
-                (case (car l)
-                  NOTICE (>err  "ooh, a notice:" (cdr l))
-                  PING   (out "PONG :" (cadr l))
-                  (case (cadr l)
-                    |001|    (map [out "JOIN " _]  (list "#fart" "#poop"))
-                    |433|    (do (>err "Oh hell, gotta whop the nick.")
-                                 (self (+ nick "_")))
-                    JOIN     (>err "user" (car l) "joined" (car:cdr:cdr l))
-                    PRIVMSG  (withs ((speaker privmsg dest text) l
-                                     toks (tokens text))
-                                    (if (headmatch nick (car toks))
-                                        (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
-                                        (out "PRIVMSG " dest " :yeah, whatever")))
-                    (>err "?")))))))))
- "arcbot")
+           (whilet l (readline)
+             (= l (trim (trim l 'end) 'front #\:))
+             (>err "<=" l)
+             (let l (parse l)
+               (case (car l)
+                 NOTICE (>err  "ooh, a notice:" (cdr l))
+                 PING   (out "PONG :" (cadr l))
+                 (case (cadr l)
+                   |001|    (map [out "JOIN " _]  (list "#fart" "#poop"))
+                   |433|    (do (>err "Oh hell, gotta whop the nick.")
+                                (irc (+ nick "_")))
+                   JOIN     (>err "user" (car l) "joined" (car:cdr:cdr l))
+                   PRIVMSG  (withs ((speaker privmsg dest text) l
+                              toks (tokens text))
+                                   (if (headmatch nick (car toks))
+                                     (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
+                                     (out "PRIVMSG " dest " :yeah, whatever")))
+                   (>err "?")))))))))
 
 ; ":Chalain!n=chalain@216-74-233-198.res.logixcom.net QUIT :\"Lost terminal\"")
 ; -> (:Chalain!n=chalain@216-74-233-198.res.logixcom.net QUIT "\"Lost terminal\"")
