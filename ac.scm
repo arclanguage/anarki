@@ -68,7 +68,7 @@
           ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
           ((eq? head 'set) (ac-set (cdr s) env))
           ; this line could be removed without changing semantics
-          ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
+          ((eq? head 'compose) (ac (decompose (cdar s) (cdr s)) env))
           ((pair? s) (ac-call (car s) (cdr s) env))
           ((eof-object? s) (exit))
           (#t (err "Bad object in expression" s)))))
