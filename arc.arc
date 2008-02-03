@@ -1529,6 +1529,9 @@
                           (prn (or doc "Documentation unavailable")))))))
         nil))
 
+;; be nice to make this settable, so we could do (= (env "FOO") "bar")
+(= env ($ getenv))
+
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
   (if (acons expr)
