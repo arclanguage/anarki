@@ -181,11 +181,12 @@
     (if p1
         (subseq s 
                 (if (in where 'front 'both) p1 0)
-                (when (in where 'end 'both)
-                  (let i (- (len s) 1)
-                    (while (and (> i p1) (test (s i)))
-                      (-- i))
-                    (+ i 1))))
+                (if (in where 'end 'both)
+                    (let i (- (len s) 1)
+                      (while (and (> i p1) (test (s i)))
+                             (-- i))
+                      (+ i 1))
+                    (len s)))
         "")))
 
 (def num (m (o digits 2) (o trail-zeros nil) (o init-zero nil))
