@@ -1517,16 +1517,17 @@
    (list 'seval (cons 'quasiquote body)))
 
 (mac help (name)
-   (let h (*help* name)
-     (if (no h)
-         (prn name " is not documented.")
-         (with (kind  (car h)
-                doc   (cadr h))
-          (pr "[" kind "] ")
-          (prn (if (sig name)
-                (cons name (sig name))))
-          (prn (or doc "Documentation unavailable")))))
-   nil)
+   `(do (pr ,(tostring
+              (let h (*help* name)
+                (if (no h)
+                    (prn name " is not documented.")
+                    (with (kind  (car h)
+                                 doc   (cadr h))
+                          (pr "[" kind "] ")
+                          (prn (if (sig name)
+                                   (cons name (sig name))))
+                          (prn (or doc "Documentation unavailable")))))))
+        nil))
 
 ; Lower priority ideas
 
