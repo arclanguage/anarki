@@ -38,7 +38,7 @@
               (= l (trim (trim l 'end) 'front #\:))
               (>err "<=" l)
               (let l (parse l)
-                (case (car l)
+                (case (caar l)
                   NOTICE (>err  "ooh, a notice:" (cdr l))
                   PING   (out "PONG :" (cadr l))
                   (case (cadr l)
@@ -54,19 +54,10 @@
                     (>err "?")))))))))
  "arcbot")
 
-; ":Chalain!n=chalain@216-74-233-198.res.logixcom.net QUIT :\"Lost terminal\"")
-; -> (:Chalain!n=chalain@216-74-233-198.res.logixcom.net QUIT "\"Lost terminal\"")
-;; (two symbols and a string)
 (def parse (s)
-  ;; Generally, a colon means "From here to the end of the line is a
-  ;; single string".  Exceptions:
-  ;; * the first character is sometimes a colon.  We deal with that below.
-  ;; * sometimes a colon introduces a number, don't ask me why.  But
-  ;; that only happens in lines that we ignore anyway :)
-
-  (let toks (fn (s) (>err (let ts (tokens s)
-                            (cons (map sym (tokens (car ts) #\!))
-                                  (map sym (cdr ts))))))
+  (let toks (fn (s) (let ts (tokens s)
+                      (cons (map sym (tokens (car ts) #\!))
+                            (map sym (cdr ts)))))
     (aif (findsubseq ":" s 1) 
          (join (toks (subseq s 0 it))
                (list (subseq s (+ it 1))))
