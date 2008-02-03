@@ -177,15 +177,17 @@
 ; should make it possible for test to be a literal as well
 
 (def trim (s where (o test whitec))
+  (zap [testify _] test)
   (let p1 (pos [no (test _)] s)
     (if p1
         (subseq s 
                 (if (in where 'front 'both) p1 0)
-                (when (in where 'end 'both)
-                  (let i (- (len s) 1)
-                    (while (and (> i p1) (test (s i)))
-                      (-- i))
-                    (+ i 1))))
+                (if (in where 'end 'both)
+                    (let i (- (len s) 1)
+                      (while (and (> i p1) (test (s i)))
+                             (-- i))
+                      (+ i 1))
+                    (len s)))
         "")))
 
 (def num (m (o digits 2) (o trail-zeros nil) (o init-zero nil))
