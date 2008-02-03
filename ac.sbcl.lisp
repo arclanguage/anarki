@@ -110,16 +110,16 @@
       (ac-global-name s)))
 
 (defparameter *backq-syms*
-  '((sb-impl::backq-list list)
-    (sb-impl::backq-cons cons)
-    (sb-impl::backq-append append)))
+  '(sb-impl::backq-list
+    sb-impl::backq-list*
+    sb-impl::backq-cons
+    sb-impl::backq-append))
 
 (defun backq? (head)
-  (member head *backq-syms* :key #'car))
+  (member head *backq-syms*))
 
 (defun ac-backq (head args env)
-  (cons (second (assoc head *backq-syms*))
-	(mapcar #'(lambda (x) (ac x env)) args)))
+  (cons head (mapcar #'(lambda (x) (ac x env)) args)))
 
 (defun ac-if (args env)
   (cond ((null args) ''nil)
@@ -131,10 +131,17 @@
 (defun ac-fn (args body env)
   (if (ac-complex-args? args)
       (ac-complex-fn args body env)
-      (flet ((args (a) (cond ((eql a 'nil) '())
-			     ((symbolp a) `(&rest ,a))
-			     (t a))))
-	`(lambda ,(args (ac-denil args))
+      (labels ((_argl (x)
+		 (cond ((consp (cdr x))
+			(cons (car x) (_argl (cdr x))))
+		       ((null (cdr x))
+			(cons (car x) nil))
+		       (t (cons (car x) (list '&rest (cdr x))))))
+	       (_args (a) (cond ((eql a 'nil) '())
+				((symbolp a) `(&rest ,a))
+				((consp a) (_argl a))
+				(t a))))
+	`(lambda ,(_args (ac-denil args))
 	   ,@(ac-body* body (append (ac-arglist args) env))))))
 
 (defun ac-complex-args? (args)
@@ -208,7 +215,7 @@
 
 (defun ac-set1 (a b env)
   (if (symbolp a)
-      (let ((name (intern (format nil " ~a" (symbol-name a)))))
+      (let ((name (intern (format nil "%~a" (symbol-name a)))))
 	(list 'let `((,name ,b))
 	      (cond ((eql a 'nil) (error "Can't rebind nil"))
 		    ((eql a 't) (error "Cant' rebind t"))
@@ -238,7 +245,8 @@
 
 (defun ac-macro? (fn)
   (if (symbolp fn)
-      (let ((v (and (boundp fn) (symbol-value (ac-global-name fn)))))
+      (let* ((sym (ac-global-name fn))
+	     (v (and (boundp sym) (symbol-value sym))))
 	(if (and v (ar-tagged? v) (eq (ar-type v) 'mac))
 	    (ar-rep v)
 	    nil))
@@ -638,7 +646,7 @@
 (defun aload1 (s)
   (loop for x = (read s nil t)
      while x
-     do (arc-eval x))
+     do (format t "; eval: ~a~%" (arc-eval x)))
   t)
 
 ;; atests1
@@ -808,6 +816,7 @@
 (deftest t-funcalls
   (chk (== 3 (_e ((fn (x) (+ 1 x)) 2))))
   (chk (== 5 (_e ((fn (a b) (+ a b)) 2 3))))
+  (chk (== '((2 3) . 1) (_e ((fn (x . y) (cons y x)) 1 2 3))))
   (chk (== '((1 2)) (_e ((fn x x) '(1 2))))))
 
 (deftest t-if 
@@ -823,7 +832,8 @@
   (chk (== '(1 2 3)       (_e ((fn (x) `(1 ,@x)) '(2 3)))))
   (chk (== '(1 2 3 4)     (_e ((fn (x y) `(1 ,@x ,y)) '(2 3) 4))))
   (chk (== '(1 (2 3))     (_e ((fn (x) `(1 (2 ,x))) 3))))
-  (chk (== '(1 (2 (3 4))) (_e ((fn (x) `(1 (2 ,x))) '(3 4))))))
+  (chk (== '(1 (2 (3 4))) (_e ((fn (x) `(1 (2 ,x))) '(3 4)))))
+  (chk (== '((1 () 2 3))  (_e ((fn x `((1 () ,@x))) 2 3)))))
 
 (deftest t-set 
   (chk (== #\a  (_e ((fn (x) (set x #\a) x) #\z)))))
