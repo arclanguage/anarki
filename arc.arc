@@ -1532,6 +1532,12 @@
 ;; be nice to make this settable, so we could do (= (env "FOO") "bar")
 (= env ($ getenv))
 
+(defset env (x)
+  (w/uniq g
+    (list (list g x)
+          `(env ,g)
+          `(fn (val) (($ putenv) ,g val)))))
+
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
   (if (acons expr)
