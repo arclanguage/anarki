@@ -7,19 +7,16 @@
 (= env ($ getenv))
 
 (= server* "localhost")
-(def >err (msg . args)
-  (w/stdout (stderr)
-    (apply prn msg args)))
+
+(def log args
+  (w/appendfile o "irclog"
+     (w/stdout o (apply prs args) (prn))))
 
 (def out args
   (let args (join args (list "\r"))
     (apply prn args )
-    (disp "=>" (stderr))
-    (map [write _ (stderr)] args)
-    (disp "\n" (stderr)))
+    (apply log "=>" args (list "\n")))
   nil)
-
-(= chans* (table))
 
 (def parse (s)
   (let toks (fn (s) (let ts (tokens s)
@@ -44,20 +41,20 @@
 
         (whilet l (readline)
           (= l (trim (trim l 'end) 'front #\:))
-          (>err "<=" l)
+          (log "<=" l)
           (let l (parse l)
             (case (caar l)
-              NOTICE (>err  "ooh, a notice:" (cdr l))
+              NOTICE (log  "ooh, a notice:" (cdr l))
               PING   (out "PONG :" (cadr l))
               (case (cadr l)
                 |001|    (map [out "JOIN " _]  (list "#fart" "#poop"))
-                |433|    (do (>err "Oh hell, gotta whop the nick.")
+                |433|    (do (log "Oh hell, gotta whop the nick.")
                              (irc (+ nick "_")))
-                JOIN     (>err "user" (car l) "joined" (car:cdr:cdr l))
+                JOIN     (log "user" (car l) "joined" (car:cdr:cdr l))
                 PRIVMSG  (withs ((speaker privmsg dest text) l
                                  toks (tokens text))
-                                (if (headmatch nick (car toks))
-                                    ;; TODO: beware of botwars.
-                                    (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
-                                    (out "PRIVMSG " dest " :yeah, whatever")))
-                (>err "?")))))))))
+                                (when (headmatch nick (car toks))
+                                  ;; TODO: beware of botwars.
+                                  (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
+                                  ))
+                (log "?")))))))))
