@@ -8,23 +8,28 @@
 
 (defpackage :arc
   (:use :cl :sb-bsd-sockets :sb-ext)
-  (:export :arc-eval :fn))
+  (:export :arc-eval 
+	   :fn 
+	   :if))
 
 (in-package :arc)
 
 (defun ac (s &optional env)
-  (cond ((typep s 'string) (copy-seq s))
-	((literal? s) s)
-	((eql s 'nil) (list 'quote 'nil))
-	((ssyntax? s) (ac (expand-ssyntax s) env))
-	((symbolp s) (ac-var-ref s env))
-	((eq (xcar s) 'quote) (list 'quote (ac-niltree (cadr s))))
-	((eq (xcar s) 'quasiquote) (ac-qq (cadr s) env))
-	((eq (xcar s) 'fn) (ac-fn (cadr s) (cddr s) env))
-	((eq (xcar s) 'set) (ac-set (cdr s) env))
-	((eq (xcar (xcar s)) 'compose) (ac (decompose (cdar s) (cdr s)) env))
-	((consp s) (ac-call (car s) (cdr s) env))
-	(t (error "Bad object in expression [~a]" s))))
+  (let ((head (xcar s)))
+    (cond ((typep s 'string) (copy-seq s))
+	  ((literal? s) s)
+	  ((eql s 'nil) (list 'quote 'nil))
+	  ((ssyntax? s) (ac (expand-ssyntax s) env))
+	  ((symbolp s) (ac-var-ref s env))
+	  ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
+	  ((eq head 'quote) (list 'quote (ac-niltree (cadr s))))
+	  ((backq? head) (ac-backq head (cdr s) env))
+	  ((eq head 'fn) (ac-fn (cadr s) (cddr s) env))
+	  ((eq head 'if) (ac-if (cdr s) env))
+	  ((eq head 'set) (ac-set (cdr s) env))
+	  ((eq (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
+	  ((consp s) (ac-call (car s) (cdr s) env))
+	  (t (error "Bad object in expression [~a]" s)))))
 
 (defun literal? (x)
   (or (or (eq x 't) (eq x 'nil))
@@ -103,27 +108,24 @@
       s 
       (ac-global-name s)))
 
-(defun ac-qq (args env)
-  (labels ((ac-qq1 (level x env)
-	     (cond ((= level 0) (ac x env))
-		   ((and (consp x) (eq (xcar x) 'unquote))
-		    (list 'unquote (ac-qq1 (1- level) (cadr x) env)))
-		   ((and (consp x) (eq (xcar x) 'unquote-splicing) (= level 1))
-		    (list 'unquote-splicing
-			  (list 'ar-nit-terminate (ac-qq1 (1- level) (cadr x) env))))
-		   ((and (consp x) (eq (car x) 'quasiquote))
-		    (list 'quasiquote (ac-qq1 (1+ level) (cadr x) env)))
-		   ((consp x)
-		    (mapcar #'(lambda (x) (ac-qq1 level x env)) x))
-		   (t x))))
-    (list 'quasiquote (ac-qq1 1 args env))))
+(defun backq? (head)
+  (or (eq head 'sb-impl::backq-list)
+      (eq head 'sb-impl::backq-cons)
+      (eq head 'sb-impl::backq-append)))
+
+(defun ac-backq (head args env)
+  (cons (case head 
+	  (sb-impl::backq-list 'list)
+	  (sb-impl::backq-cons 'cons)
+	  (sb-impl::backq-append 'append))
+	(mapcar #'(lambda (x) (ac x env)) args)))
 
 (defun ac-if (args env)
   (cond ((null args) ''nil)
 	((null (cdr args)) (ac (car args) env))
-	(t `(if (not (ar-false? ,(ac (car args) env))
-		     ,(ac (cadr args) env)
-		     ,(ac-if (cddr args) env))))))
+	(t `(if (not (ar-false? ,(ac (car args) env)))
+		,(ac (cadr args) env)
+		,(ac-if (cddr args) env)))))
 
 (defun ac-fn (args body env)
   (if (ac-complex-args? args)
@@ -223,7 +225,7 @@
 	     `(,afn ,@aargs))
 	    ((and (<= 0 nargs 4))
 	     `(,(arcsym "AR-FUNCALL~d" nargs)
-		,afn ,@aargs))
+		(symbol-value ',afn) ,@aargs))
 	    (t 
 	     `(ar-apply ,afn (list ,@aargs))))))))
 
@@ -287,7 +289,7 @@
 
 (defun ar-nill (x) x)
 
-(defun ar-false? (x) x)
+(defun ar-false? (x) (not x))
 
 (defun ar-apply (fn args)
   (cond ((functionp fn) (apply fn args))
@@ -755,7 +757,10 @@
   (chk (== "a"  (_e "a")))
   (chk (== 1.45 (_e 1.45)))
   (chk (== 'nil (_e 'nil)))
-  (chk (== '(quote a) (_e '(quote a)))))
+  (chk (== nil  (_e nil)))
+  (chk (== t    (_e t)))
+  (chk (== '(quote a) (_e '(quote a))))
+  (chk (== '(1 2 3) (_e '(1 2 3)))))
 
 (deftest t-operations
   (chk (== 3  (_e (+ 1 2))))
@@ -765,12 +770,32 @@
   (chk (== 0  (_e (+))))
   (chk (== 1  (_e (*))))
   (chk (== -1 (_e (- 1))))
-  (chk (== 1  (_e (+ 1)))))
+  (chk (== 1  (_e (+ 1))))
+  (chk (== 15 (_e (+ (+ 1 2) (+ 3 (+ 4 5)))))))
+
+(deftest t-ar-funcall-n
+  (chk (== 'ar-funcall0 (car (ac '(+)))))
+  (chk (== 'ar-funcall1 (car (ac '(+ 1)))))
+  (chk (== 'ar-funcall2 (car (ac '(+ 1 2)))))
+  (chk (== 'ar-funcall3 (car (ac '(+ 1 2 3)))))
+  (chk (== 'ar-funcall4 (car (ac '(+ 1 2 3 4)))))
+  (chk (== 10 (_e (+ 1 1 1 1 1 1 1 1 1 1)))))
 
 (deftest t-funcalls
-  (chk (== '(ar-funcall0 _+)         (ac '(+))))
-  (chk (== '(ar-funcall1 _+ 1)       (ac '(+ 1))))
-  (chk (== '(ar-funcall2 _+ 1 2)     (ac '(+ 1 2))))
-  (chk (== '(ar-funcall3 _+ 1 2 3)   (ac '(+ 1 2 3))))
-  (chk (== '(ar-funcall4 _+ 1 2 3 4) (ac '(+ 1 2 3 4))))
-  (chk (== 3 (_e ((fn (x) (+ 1 x)) 2)))))
+  (chk (== 3 (_e ((fn (x) (+ 1 x)) 2))))
+  (chk (== 5 (_e ((fn (a b) (+ a b)) 2 3)))))
+
+(deftest t-if 
+  (chk (== 0 (_e (if t 0 1))))
+  (chk (== 1 (_e (if nil 0 1))))
+  (chk (== 0 (_e (if t   0 nil 1 2))))
+  (chk (== 1 (_e (if nil 0 t   1 2))))
+  (chk (== 2 (_e (if nil 0 nil 1 2)))))
+
+(deftest t-backq
+  (chk (== '(1 2)     (_e ((fn (x) `(1 ,x)) 2))))
+  (chk (== '(1 2 3)   (_e ((fn (x y) `(,x 2 ,y)) 1 3))))
+  (chk (== '(1 2 3)   (_e ((fn (x) `(1 ,@x)) '(2 3)))))
+  (chk (== '(1 2 3 4) (_e ((fn (x y) `(1 ,@x ,y)) '(2 3) 4))))
+  (chk (== '(1 (2 3)) (_e ((fn (x) `(1 (2 ,x))) 3))))
+  (chk (== '(1 (2 (3 4))) (_e ((fn (x) `(1 (2 ,x))) '(3 4))))))
