@@ -1529,7 +1529,6 @@
                           (prn (or doc "Documentation unavailable")))))))
         nil))
 
-;; be nice to make this settable, so we could do (= (env "FOO") "bar")
 (= env ($ getenv))
 
 (defset env (x)
