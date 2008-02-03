@@ -34,7 +34,8 @@
              " :"             "arcbot"
              ", version "     "0")
 
-            (whilet l (trim (readline) 'end)
+            (whilet l (readline)
+              (= l (trim (trim l 'end) 'front #\:))
               (>err "<=" l)
               (let l (parse l)
                 (case (car l)
@@ -48,7 +49,7 @@
                     PRIVMSG  (withs ((speaker privmsg dest text) l
                                      toks (tokens text))
                                     (if (headmatch nick (car toks))
-                                        (out "PRIVMSG " dest " :" speaker ", you like me!" )
+                                        (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
                                         (out "PRIVMSG " dest " :yeah, whatever")))
                     (>err "?")))))))))
  "arcbot")
@@ -63,7 +64,9 @@
   ;; * sometimes a colon introduces a number, don't ask me why.  But
   ;; that only happens in lines that we ignore anyway :)
 
-  (let toks (fn (s) (map sym (tokens s)))
+  (let toks (fn (s) (>err (let ts (tokens s)
+                            (cons (map sym (tokens (car ts) #\!))
+                                  (map sym (cdr ts))))))
     (aif (findsubseq ":" s 1) 
          (join (toks (subseq s 0 it))
                (list (subseq s (+ it 1))))
