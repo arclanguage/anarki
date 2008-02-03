@@ -177,6 +177,7 @@
 ; should make it possible for test to be a literal as well
 
 (def trim (s where (o test whitec))
+  (zap [testify _] test)
   (let p1 (pos [no (test _)] s)
     (if p1
         (subseq s 
