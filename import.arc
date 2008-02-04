@@ -23,9 +23,9 @@
 ;
 ; (impas nil mod1)
 ; (add1 5) => 6
+;
 
-
-(= libdir* "lib/")
+(= libdir* "lib/") ; not sure if I should be reusing the lib/ dir for this
 
 (let defaultas (uniq)
   (mac importmodule (module (o as defaultas)) 
@@ -66,7 +66,7 @@
 ; 
 ; If we had (export symbol1 symbol2 ...) then we could qualify the name differently 
 ; for symbols in the list, such that anything not in the list would remain private.  
-; Seems easy enough.
+; Seems easy enough.  Maybe tomorrow. :)
 ; 
 ; Some other ideas:
 ;(impfrom mod4 this that other) 
@@ -85,5 +85,11 @@
 ; as I can see, a module system that did close over modules would have to 
 ; have additional support in the interpreter, rather than being implementable 
 ; directly in Arc. 
+; 
+; OTHER
+; 
+; written by Randall Randall <randall@randallsquared.com>
+; same license as Arc for compatibility: Perl Artistic 2
+; also released into the public domain.
 ; 
 ; 
