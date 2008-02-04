@@ -1034,6 +1034,9 @@
 (def abs (n)
   (if (< n 0) (- n) n))
 
+(def signop (n)
+  (if (< n 0) - +))
+
 ; The problem with returning a list instead of multiple values is that
 ; you can't act as if the fn didn't return multiple vals in cases where
 ; you only want the first.  Not a big problem.
@@ -1482,11 +1485,12 @@
       sym    (sym (map upc (coerce x 'string)))
              (err "Can't upcase" x))))
 
-(def range (start end)
-  "Return a range of numbers from `start' to `end'."
-  (if (> start end)
-      nil
-      (cons start (range (+ start 1) end))))
+(def range (start end (o step 1))
+  "Return a range of numbers from `start' to `end', by `step'."
+  (if (> (abs start) (abs end)) nil
+      (is start end) (list end)
+      (cons start
+            (range ((signop (- end start)) start step) end step))))
 
 (def mismatch (s1 s2)
   (catch
