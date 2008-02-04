@@ -9,7 +9,7 @@
 ;; Adapted-by: Eric Hanchrow <offby1@blarg.net>
 ;; Keywords: languages, lisp
 
-;; This file is part of GNU Emacs.
+;; This file is not part of GNU Emacs.
 
 ;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 ;; the Lisp mode documented in the Emacs manual.
 
 ;;; Code:
-
+
 (require 'lisp-mode)
 
 (defvar arc-mode-syntax-table
@@ -93,7 +93,7 @@
     (modify-syntax-entry ?# "' 14b" st)
     (modify-syntax-entry ?\\ "\\   " st)
     st))
-
+
 (defvar arc-mode-abbrev-table nil)
 (define-abbrev-table 'arc-mode-abbrev-table ())
 
@@ -184,7 +184,7 @@
   "Keymap for Arc mode.
 All commands in `lisp-mode-shared-map' are inherited by this map.")
 
-
+
 ;;;###autoload
 (defun arc-mode ()
   "Major mode for editing Arc code.
@@ -302,7 +302,7 @@ See `run-hooks'."
   ;; Choose the face to use.
   (lisp-font-lock-syntactic-face-function state))
 
-
+
 (defvar calculate-lisp-indent-last-sexp)
 
 ;; Copied from lisp-indent-function, but with gets of
@@ -343,7 +343,7 @@ See `run-hooks'."
 	      (method
 		(funcall method state indent-point normal-indent)))))))
 
-
+
 ;;; Let is different in Arc
 
 (defun would-be-symbol (string)
@@ -386,7 +386,7 @@ See `run-hooks'."
 (put 'do 'arc-indent-function 0)
 (put 'let 'arc-indent-function 'arc-let-indent)
 
-
+
 
 (provide 'arc)
 
