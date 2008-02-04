@@ -64,20 +64,21 @@
 ; Makes an array. The store is a hash table.
 (def make-array-wrapper (dim store)
   (let indexer (make-indexer dim)
-    (fn args
-      (if (no args) 
-          `(array ,@dim)
-          (let x (car args) 
-             (if (is x 'dim) dim
-                 (is x 'rank) (len dim)
-                 (is x 'setter) (fn (val . x)
-			           (if (isa (car x) 'cons)
-				     (= (store (apply indexer (car x))) val)
-                                     (= (store (apply indexer x)) val)))
-                 (is x 'store) store
-                 (is x 'indexer) indexer
-                 (is x 'inverse-indexer) (make-inverse-indexer dim) 
-                   (store (apply indexer args))))))))
+    (annotate 'array
+              (fn args
+                  (if (no args) 
+                      `(array ,@dim)
+                      (let x (car args) 
+                        (if (is x 'dim) dim
+                            (is x 'rank) (len dim)
+                            (is x 'setter) (fn (val . x)
+                                               (if (isa (car x) 'cons)
+                                                   (= (store (apply indexer (car x))) val)
+                                                   (= (store (apply indexer x)) val)))
+                            (is x 'store) store
+                            (is x 'indexer) indexer
+                            (is x 'inverse-indexer) (make-inverse-indexer dim) 
+                            (store (apply indexer args)))))))))
 
 ; Creates a new array with the given dimensions.
 (def array (dim (o contents nil))
@@ -130,6 +131,10 @@
   (rec (a 'rank) tree nil)
   a))
 
+(redef sref (com val ind)
+  (if (no (isa com 'array)) (old com val ind)
+      ((com 'setter) val ind)))
+
 ; Example: matrix inversion.
 (def inv (a)
   (withs (a (copy-array a)
@@ -151,4 +156,3 @@
     a))
 
 
-  
