@@ -1517,6 +1517,12 @@
                                  (pr ,out))))))
                   body)))))
 
+(mac redef (name parms . body)
+  `(do (tostring
+        (let old ,name
+          (def ,name ,parms ,@body)))
+       ,name))
+
 (mac $ body
    (list 'seval (cons 'quasiquote body)))
 
