@@ -56,16 +56,19 @@
 
 (def list args args)
 
-(def idfn (x) x)
+(def idfn (x)
+  " identity function - just returns its argument "    
+  x)
 
 ; Maybe later make this internal.
 
 (def map1 (f xs)
+  " return a sequence with function f applied to every element in sequence xs "    
   (if (no xs)
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
-(def pair (xs (o f list))
+(def pair (xs (o f list))  
   (if (no xs)
        nil
       (no (cdr xs))
@@ -83,6 +86,7 @@
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
 (mac and args
+  " evaluates arguments till false is found else returns the last one "    
   (if args
       (if (cdr args)
           `(if ,(car args) (and ,@(cdr args)))
@@ -90,13 +94,16 @@
       't))
 
 (def assoc (key al)
+  " finds a (key value) pair in an associated list "
   (if (atom al)
        nil
       (and (acons (car al)) (is (caar al) key))
        (car al)
       (assoc key (cdr al))))
 
-(def alref (al key) (cadr (assoc key al)))
+(def alref (al key)
+  " get a value form a key in a associated list " 
+  (cadr (assoc key al)))
 
 (mac with (parms . body)
   `((fn ,(map1 car (pair parms))
@@ -115,6 +122,7 @@
 ; Rtm prefers to overload + to do this
 
 (def join args
+  " joins all list arguments together "
   (if (no args)
       nil
       (let a (car args)
@@ -122,22 +130,23 @@
             (apply join (cdr args))
             (cons (car a) (apply join (cdr a) (cdr args)))))))
 
-; Self-referencing lambda expression.
-; Creates a closure wherein lambda is bound to name.
-
 (mac rfn (name parms . body)
+  "Self-referencing funtion expression.
+   Creates a closure wherein lambda is bound to name. "
   `(let ,name nil
      (set ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
+   "Self-referencing lambda expression.
+    Creates a closure wherein lambda is bound to name
+    use self as the name"
   `(rfn self ,parms ,@body))
 
-; Ac expands x:y:z into (compose x y z), ~x into (complement x)
-
-; Only used when the call to compose doesn't occur in functional position.
-; Composes in functional position are transformed away by ac.
-
 (mac compose args
+  "Arc expands x:y:z into (compose x y z)
+   quick way to write (x(y(z)))
+   Only used when the call to compose doesn't occur in functional position.
+   Composes in functional position are transformed away by ac. "
   (let g (uniq)
     `(fn ,g
        ,((afn (fs)
@@ -147,17 +156,22 @@
          args))))
 
 (mac complement (f)
+  "Arc expands ~x into (complement x)
+   whenever the function returns true this returns false"
   (let g (uniq)
     `(fn ,g (no (apply ,f ,g)))))
 
 (def rev (xs)
+  " reverses a sequence "
   ((afn (xs acc)
      (if (no xs)
          acc
          (self (cdr xs) (cons (car xs) acc))))
    xs nil))
 
-(def isnt (x y) (no (is x y)))
+(def isnt (x y) 
+  "not is"
+  (no (is x y)))
 
 (mac w/uniq (names . body)
   (if (acons names)
@@ -167,14 +181,19 @@
       `(let ,names (uniq) ,@body)))
 
 (mac or args
+  " computes arguments till one of them is true and it returns it"
   (and args
        (w/uniq g
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
-(def alist (x) (or (no x) (is (type x) 'cons)))
+(def alist (x)
+  " is this a list? 
+    return true if argument consists of cons pairs "
+  (or (no x) (is (type x) 'cons)))
 
 (mac in (x . choices)
+  " returns true of the first argument is one of the other arguments"
   (w/uniq g
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
@@ -182,6 +201,7 @@
 ; should take n args
 
 (def iso (x y)
+  " isomorphic compare - it compares structure and can be slow"
   (or (is x y)
       (and (acons x)
            (acons y)
@@ -189,18 +209,22 @@
            (iso (cdr x) (cdr y)))))
 
 (mac when (test . body)
+  " when some thing is true do the body "
   `(if ,test (do ,@body)))
 
 (mac unless (test . body)
+  " when some thing is not true do the body "
   `(if (no ,test) (do ,@body)))
 
 (mac while (test . body)
+  " while some thing is true perform the body in a loop "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (when ,gp ,@body (,gf ,test)))
       ,test)))
 
 (def empty (seq)
+  " test to see if list is empty "
   (or (no seq)
       (and (no (acons seq)) (is (len seq) 0))))
 
@@ -219,12 +243,14 @@
   (if (isa x 'fn) x [is _ x]))
 
 (def some (test seq)
+  " applies the test to elements in sequence till it returns true"
   (let f (testify test)
     (if (alist seq)
         (reclist f:car seq)
         (recstring f:seq seq))))
 
 (def all (test seq)
+  " returns true when all of the elements in the sequence return true "
   (~some (complement (testify test)) seq))
 
 (def mem (test seq)
@@ -232,12 +258,15 @@
     (reclist [if (f:car _) _] seq)))
 
 (def find (test seq)
+  " returns the first element that matches the test function "
   (let f (testify test)
     (if (alist seq)
         (reclist   [if (f:car _) (car _)] seq)
         (recstring [if (f:seq _) (seq _)] seq))))
 
-(def isa (x y) (is (type x) y))
+(def isa (x y) 
+  " checks if x is of type y "
+  (is (type x) y))
 
 ; Possible to write map without map1, but makes News 3x slower.
 
