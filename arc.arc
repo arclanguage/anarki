@@ -172,6 +172,9 @@
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
+(mac or= (var val)
+  `(= ,var (or ,var ,val)))
+
 (def alist (x) (or (no x) (is (type x) 'cons)))
 
 (mac in (x . choices)
@@ -1539,9 +1542,6 @@
                                    (cons name (sig name))))
                           (prn (or doc "Documentation unavailable")))))))
         nil))
-
-(mac or= (var val)
-  `(= ,var (or ,var ,val)))
 
 (= env ($ getenv))
 
