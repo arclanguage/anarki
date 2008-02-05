@@ -1543,6 +1543,9 @@
                           (prn (or doc "Documentation unavailable")))))))
         nil))
 
+(mac or= (var val)
+  `(= ,var (or ,var ,val)))
+
 (= env ($ getenv))
 
 (defset env (x)
