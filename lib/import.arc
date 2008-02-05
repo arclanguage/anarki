@@ -65,6 +65,11 @@
 (mac impas (as module)
   `(importmodule ,module ,as))
 
+(mac import (module) 
+  " plain import of a module into the standard name space "
+  `(importmodule ,module nil))
+
+
 ; Possible TODO
 ; 
 ; If we had (export symbol1 symbol2 ...) then we could qualify the name differently 
