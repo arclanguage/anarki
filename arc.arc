@@ -1391,14 +1391,11 @@
        (pr ,@(parse-format str))))
 )
 
-(def load (file (o hook nil))
-  (if hook ; better to repeat below or put this test in every iteration?
-      (w/infile f file
-        (whilet e (read f)
-          (eval (hook e))))
-      (w/infile f file
-        (whilet e (read f)
-          (eval e)))))
+(def load (file (o hook))
+  (or= hook idfn)
+  (w/infile f file
+    (whilet e (read f)
+      (eval (hook e)))))
 
 (def positive (x)
   (and (number x) (> x 0)))
