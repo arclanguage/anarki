@@ -172,9 +172,6 @@
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
-(mac or= (var val)
-  `(= ,var (or ,var ,val)))
-
 (def alist (x) (or (no x) (is (type x) 'cons)))
 
 (mac in (x . choices)
@@ -1395,10 +1392,9 @@
 )
 
 (def load (file (o hook))
-  (or= hook idfn)
   (w/infile f file
     (whilet e (read f)
-      (eval (hook e)))))
+      (eval ((or hook idfn) e)))))
 
 (def positive (x)
   (and (number x) (> x 0)))
