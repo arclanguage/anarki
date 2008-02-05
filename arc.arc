@@ -1551,33 +1551,6 @@
           `(env ,g)
           `(fn (val) (($ putenv) ,g val)))))
 
-; I couldn't find a pre-existing total macro-expander
-(def expand (expr)
-  (if (acons expr)
-      (macex (cons (car expr)
-                   (map expand (cdr expr))))
-      expr))
-
-(mac % () nil)
-(mac %% () nil)
-(mac %%% () nil)
-
-(def input-history-update (expr)
-  (let expandedexpr (expand expr)
-    (= %%% %%
-       %% %)
-    (tostring (mac % () expandedexpr))))
-
-(= ^ nil
-   ^^ nil
-   ^^^ nil)
-
-(def output-history-update (val)
-  (= ^^^ ^^
-     ^^ ^
-     ^ val))
-
-
 ; Lower priority ideas
 
 ; solution to the "problem" of improper lists: allow any atom as a list

@@ -909,8 +909,6 @@
         (if (eqv? expr ':a)
             'done
             (let ((val (arc-eval expr)))
-              (arc-eval `(input-history-update ',expr))
-              (arc-eval `(output-history-update ',val))
               (write (ac-denil val))
               (namespace-set-variable-value! '_that val)
               (namespace-set-variable-value! '_thatexpr expr)
