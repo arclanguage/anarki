@@ -172,6 +172,9 @@
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
+(mac or= (var val)
+  `(= ,var (or ,var ,val)))
+
 (def alist (x) (or (no x) (is (type x) 'cons)))
 
 (mac in (x . choices)
@@ -1391,10 +1394,11 @@
        (pr ,@(parse-format str))))
 )
 
-(def load (file)
+(def load (file (o hook))
+  (or= hook idfn)
   (w/infile f file
     (whilet e (read f)
-      (eval e))))
+      (eval (hook e)))))
 
 (def positive (x)
   (and (number x) (> x 0)))
@@ -1549,7 +1553,7 @@
 
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
-  (if (acons expr)
+  (if (and (acons expr) (~dotted expr))
       (macex (cons (car expr)
                    (map expand (cdr expr))))
       expr))

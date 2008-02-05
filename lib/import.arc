@@ -50,7 +50,10 @@
          (when ',as
            (mac ,(if (is defaultas as) module as as (uniq)) libform 
              ; the above rigamarole because Arc doesn't like (mac nil ...) even if never used
-             (let fullyqualified (coerce (+ ,strmodname "  " (coerce (caar libform) 'string)) 'sym) 
+             (let fullyqualified 
+                  (if ',as ; if they passed nil for as, then we don't qualify at all
+                      (coerce (+ ,actualname "  " (coerce (caar libform) 'string)) 'sym) 
+                      (caar libform))
                `(,fullyqualified ,@(cdr (car libform))))))))))
 
 (mac imp modules
@@ -88,8 +91,9 @@
 ; 
 ; OTHER
 ; 
-; written by Randall Randall <randall@randallsquared.com>
+; written by Randall Randall <randall@randallsquared.com> 2008-02-03
 ; same license as Arc for compatibility: Perl Artistic 2
 ; also released into the public domain.
 ; 
+; 2008-02-04 Fixed helper macro bug pointed out by greatness on arclanguage.org
 ; 

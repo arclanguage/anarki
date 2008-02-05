@@ -10,9 +10,10 @@
      (w/stdout o (apply prs args) (prn))))
 
 (def out args
-  (let args (join args (list "\r"))
-    (apply prn args )
-    (apply log "=>" args (list "\n")))
+  (w/stdout op*
+    (let args (join args (list "\r"))
+      (apply prn args )
+      (apply log "=>" args)))
   nil)
 
 (def parse (s)
@@ -29,30 +30,37 @@
     (client server* 6667)
     (= op* op)                          ;so we can send stuff from the repl
     (w/stdin ip
-      (w/stdout op
-        (out "NICK " nick)
-        (out
-         "USER "          (or (env "USER") "unknown")
-         " unknown-host " server*
-         " :"             "arcbot"
-         ", version "     "0")
+      (out "NICK " nick)
+      (out
+       "USER "          (or (env "USER") "unknown")
+       " unknown-host " server*
+       " :"             "arcbot"
+       ", version "     "0")
 
-        (whilet l (readline)
-          (= l (trim (trim l 'end) 'front #\:))
-          (log "<=" l)
-          (let l (parse l)
-            (case (caar l)
-              NOTICE (log  "ooh, a notice:" (cdr l))
-              PING   (out "PONG :" (cadr l))
-              (case (cadr l)
-                |001|    (map [out "JOIN " _]  (list "#fart" "#poop"))
-                |433|    (do (log "Oh hell, gotta whop the nick.")
-                             (irc (+ nick "_")))
-                JOIN     (log "user" (car l) "joined" (car:cdr:cdr l))
-                PRIVMSG  (withs ((speaker privmsg dest text) l
-                                 toks (tokens text))
-                                (when (headmatch nick (car toks))
-                                  ;; TODO: beware of botwars.
-                                  (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
-                                  ))
-                (log "?")))))))))
+      (whilet l (readline)
+        (= l (trim (trim l 'end) 'front #\:))
+        (log "<=" l)
+        (let l (parse l)
+          (case (caar l)
+            NOTICE (log  "ooh, a notice:" (cdr l))
+            PING   (out "PONG :" (cadr l))
+            (case (cadr l)
+              |001|    (map [out "JOIN " _]  (list "##arcbot"))
+              |433|    (do (log "Oh hell, gotta whop the nick.")
+                           (irc (+ nick "_")))
+              JOIN     (log "user" (car l) "joined" (car:cdr:cdr l))
+              PRIVMSG  (withs ((speaker privmsg dest text) l
+                               toks (tokens text)
+                               url-regexp (re "http(s)?(//[-a-zA-Z0-9_.]+:[0-9]*)?[-a-zA-Z0-9_=!?#$@~`%&*+\\/:;.,]+[-a-zA-Z0-9_=#$@~`%&*+\\/]")
+                               grab-matches (fn (re str)
+                                                (drain (aif (re-pos re str)
+                                                            (let (start . stop) (car it)
+                                                                 (do1 (subseq str start stop)
+                                                                      (= str (subseq str stop))))))))
+                              (map [out "NOTICE " dest " :" (tinyurl _)]
+                                   (keep [< 75 (len _)] (grab-matches url-regexp text))
+                                   ))
+              (log "?"))))))))
+
+(def irc& (nick)
+  (= bot* (thread (fn () (irc nick)))))
