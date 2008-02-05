@@ -67,6 +67,7 @@
           ((eq? head 'if) (ac-if (cdr s) env))
           ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
           ((eq? head 'set) (ac-set (cdr s) env))
+          ((eq? head 'lset) (ac-lset (cdr s) env))
           ; this line could be removed without changing semantics
           ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
           ((pair? s) (ac-call (car s) (cdr s) env))
@@ -337,6 +338,11 @@
                                                          ,name)))
                name))
       (err "First arg to set must be a symbol" a)))
+
+(define (ac-lset x env)
+  (if (null? x) '()
+      `(define ,(ac-macex (ac-global-name (car x)))
+         ,(ac (cadr x) env))))
 
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
