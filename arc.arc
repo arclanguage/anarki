@@ -1553,7 +1553,7 @@
 
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
-  (if (acons expr)
+  (if (and (acons expr) (~dotted expr))
       (macex (cons (car expr)
                    (map expand (cdr expr))))
       expr))
