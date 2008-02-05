@@ -50,9 +50,14 @@
                              (irc (+ nick "_")))
                 JOIN     (log "user" (car l) "joined" (car:cdr:cdr l))
                 PRIVMSG  (withs ((speaker privmsg dest text) l
-                                 toks (tokens text))
-                                (when (headmatch nick (car toks))
-                                  ;; TODO: beware of botwars.
-                                  (out "PRIVMSG " dest " :" (car speaker) ", you like me!" )
+                                 toks (tokens text)
+                                 url-regexp (re "http(s)?(//[-a-zA-Z0-9_.]+:[0-9]*)?[-a-zA-Z0-9_=!?#$@~`%&*+\\/:;.,]+[-a-zA-Z0-9_=#$@~`%&*+\\/]")
+                                 grab-matches (fn (re str)
+                                                  (drain (aif (re-pos re str)
+                                                              (let (start . stop) (prn (car it))
+                                                                   (do1 (subseq str start stop)
+                                                                        (= str (subseq str stop))))))))
+                                (map [out "NOTICE " dest " :" (tinyurl _)]
+                                     (keep [< 75 (len _)] (grab-matches url-regexp text))
                                   ))
                 (log "?")))))))))
