@@ -17,6 +17,10 @@
 (def file-size (path)
    ($ (file-size ,path)))
 
+(def cd (path)
+   ($ (current-directory ,path))
+   (pwd))
+
 (def pwd ()
    ($ (path->string (current-directory))))
 
