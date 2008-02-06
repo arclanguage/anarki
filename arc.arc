@@ -680,7 +680,9 @@
   `(iflet ,var ,expr (do ,@body)))
 
 (mac aif (expr . body)
-  `(let it ,expr (if it ,@body)))
+  (if (<= (len body) 2)
+    `(let it ,expr (if it ,@body))
+    `(let it ,expr (if it ,(car body) (aif ,@(cdr body))))))
 
 (mac awhen (expr . body)
   `(let it ,expr (if it (do ,@body))))
