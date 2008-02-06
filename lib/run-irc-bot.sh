@@ -4,9 +4,11 @@ here=$(cd $(dirname "$0"); pwd)
 cd "$here"
 
 (
-echo "(cd \"lib\")"
-echo "(load \"irc-bot.arc\")" 
-echo "(= bot* (thread (fn () (irc \"arcbot\"))))"
-echo "(prn \"bot is running in background\")"
+cat <<EOF
+(cd "lib")
+(load "irc-bot.arc")
+(= bot* (thread (fn () (irc "arcbot"))))
+(prn "bot is running in background")
+EOF
 cat /dev/stdin
 ) | ../arc.sh
