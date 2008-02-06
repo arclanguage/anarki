@@ -1563,15 +1563,15 @@
 
 (mac help (name)
    `(do (pr ,(tostring
+              (when (sig name)
+                (prn (cons name (sig name))))
               (let h (*help* name)
                 (if (no h)
                     (prn name " is not documented.")
                     (with (kind  (car h)
                                  doc   (cadr h))
-                          (pr "[" kind "] ")
-                          (prn (if (sig name)
-                                   (cons name (sig name))))
-                          (prn (or doc "Documentation unavailable")))))))
+                      (pr "[" kind "] ")
+                      (prn (or doc "Documentation unavailable")))))))
         nil))
 
 (= env ($ getenv))
