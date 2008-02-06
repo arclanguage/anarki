@@ -192,6 +192,9 @@
     return true if argument consists of cons pairs "
   (or (no x) (is (type x) 'cons)))
 
+(mac or= (var val)
+  `(= ,var (or ,var ,val)))
+
 (mac in (x . choices)
   " returns true of the first argument is one of the other arguments"
   (w/uniq g
@@ -1421,9 +1424,10 @@
 )
 
 (def load (file (o hook))
+  (or= hook idfn)
   (w/infile f file
     (whilet e (read f)
-      (eval ((or hook idfn) e)))))
+      (eval (hook e)))))
 
 (def positive (x)
   (and (number x) (> x 0)))
