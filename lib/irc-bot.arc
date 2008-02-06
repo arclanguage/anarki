@@ -47,6 +47,8 @@
             (case (cadr l)
               |001|    (map [out "JOIN " _]  (list "##arcbot"))
               |433|    (do (log "Oh hell, gotta whop the nick.")
+                           (close ip)
+                           (close op)
                            (irc (+ nick "_")))
               JOIN     (log "user" (car l) "joined" (car:cdr:cdr l))
               PRIVMSG  (withs ((speaker privmsg dest text) l
