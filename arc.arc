@@ -131,7 +131,7 @@
             (cons (car a) (apply join (cdr a) (cdr args)))))))
 
 (mac rfn (name parms . body)
-  "Self-referencing funtion expression.
+  "Self-referencing function expression.
    Creates a closure wherein lambda is bound to name. "
   `(let ,name nil
      (set ,name (fn ,parms ,@body))))
