@@ -1003,13 +1003,11 @@
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
-  (if (is var 'index)
-      (err "Can't use index as first arg to on.")
-      (w/uniq gs
-        `(let ,gs ,s
-           (forlen index ,gs
-             (let ,var (,gs index)
-               ,@body))))))
+  (w/uniq (gs index)
+    `(let ,gs ,s
+       (forlen ,index ,gs
+         (let ,var (,gs ,index)
+           ,@body)))))
 
 (def best (f seq)
   (if (no seq)
