@@ -21,9 +21,17 @@
 ; separate string type
 ;  (= (cdr (cdr str)) "foo") couldn't work because no way to get str tail
 
+(set *help* (table))
 
 (set do (annotate 'mac
           (fn args `((fn () ,@args)))))
+;documentation for do itself
+(sref *help*
+  '(fn " Evaluates each expression in sequence. ")
+  'do)
+(sref sig
+  'args
+  'do)
 
 (set safeset (annotate 'mac
                (fn (var val)
@@ -34,7 +42,6 @@
                       (set ,var ,val)))))
 
 ; It would be nice if multiple strings counted as multiple docstring lines.
-(set *help* (table))
 (set def (annotate 'mac
             (fn (name parms . body)
               `(do (sref sig ',parms ',name)
@@ -43,18 +50,25 @@
                        (sref *help* '(fn ,(car body)) ',name)
                        (sref *help* '(fn nil) ',name))
                    (safeset ,name (fn ,parms ,@body))))))
+;documentation for def itself
+(sref *help*
+  '(fn " Defines a function with the given `name', `parms', and `body'. ")
+  'def)
+(sref sig
+  '(name parms . body)
+  'def)
 
-(def caar (xs) (car (car xs)))
-(def cadr (xs) (car (cdr xs)))
-(def cddr (xs) (cdr (cdr xs)))
+(def caar (xs) " Equivalent to (car (car xs)) " (car (car xs)))
+(def cadr (xs) " Equivalent to (car (cdr xs)) " (car (cdr xs)))
+(def cddr (xs) " Equivalent to (cdr (cdr xs)) " (cdr (cdr xs)))
 
-(def no (x) (is x nil))
+(def no (x) " Determines if `x' is `nil'. " (is x nil))
 
-(def acons (x) (is (type x) 'cons))
+(def acons (x) " Determines if `x' is a `cons' cell or list. " (is (type x) 'cons))
 
-(def atom (x) (no (acons x)))
+(def atom (x) " Determines if `x' is atomic. " (no (acons x)))
 
-(def list args args)
+(def list args " Creates a list from the given parameters. " args)
 
 (def idfn (x)
   " Identity function - just returns its argument. "
@@ -69,6 +83,7 @@
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
 (def pair (xs (o f list))
+  " Applies pairs of elements to the function f. "
   (if (no xs)
        nil
       (no (cdr xs))
@@ -84,6 +99,13 @@
                        (sref *help* '(mac ,(car body)) ',name)
                        (sref *help* '(mac nil) ',name))
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
+;documentation for mac itself
+(sref *help*
+  '(fn " Defines a macro, a special function which transforms code. ")
+  'mac)
+(sref sig
+  '(name parms . body)
+  'mac)
 
 (mac and args
   " Evaluates arguments till false is found else returns the last one. "
@@ -102,18 +124,23 @@
       (assoc key (cdr al))))
 
 (def alref (al key)
-  " Get a value form a key in a associated list. "
+  " Get a value from a key in a associated list. "
   (cadr (assoc key al)))
 
 (mac with (parms . body)
+  " Assigns a set of local variables for the given `body'.
+    Assignment is simultaneous. "
   `((fn ,(map1 car (pair parms))
      ,@body)
     ,@(map1 cadr (pair parms))))
 
 (mac let (var val . body)
+  " Assigns a local variable for the given `body'. "
   `(with (,var ,val) ,@body))
 
 (mac withs (parms . body)
+  " Assigns local variables for the given `body'.
+    The assignments are made in the given order."
   (if (no parms)
       `(do ,@body)
       `(let ,(car parms) ,(cadr parms)
@@ -174,6 +201,8 @@
   (no (is x y)))
 
 (mac w/uniq (names . body)
+  " Assigns a set of variables to unique symbols.
+    Generally used for macro functions. "
   (if (acons names)
       `(with ,(apply + nil (map1 (fn (n) (list n '(uniq)))
                              names))
@@ -181,18 +210,19 @@
       `(let ,names (uniq) ,@body)))
 
 (mac or args
-  " Computes arguments till one of them is true and it returns it. "
+  " Computes arguments until one of them is true and returns that result. "
   (and args
        (w/uniq g
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
 (def alist (x)
-  " Is this a list?
+  " Is this a (non-empty) list?
     Return true if argument consists of cons pairs. "
   (or (no x) (is (type x) 'cons)))
 
 (mac or= (var val)
+  " Performs (or var val) and assigns the result to var. "
   `(= ,var (or ,var ,val)))
 
 (mac in (x . choices)
@@ -204,7 +234,7 @@
 ; should take n args
 
 (def iso (x y)
-  " Isomorphic compare - it compares structure and can be slow. "
+  " Isomorphic compare - compares structure (can be slow). "
   (or (is x y)
       (and (acons x)
            (acons y)
@@ -212,29 +242,31 @@
            (iso (cdr x) (cdr y)))))
 
 (mac when (test . body)
-  " When some thing is true do the body. "
+  " When `test' is true, do `body'. "
   `(if ,test (do ,@body)))
 
 (mac unless (test . body)
-  " When some thing is not true do the body. "
+  " When `test' is not true, do `body'. "
   `(if (no ,test) (do ,@body)))
 
 (mac while (test . body)
-  " While some thing is true perform the body in a loop. "
+  " While `test' is true, perform `body' in a loop. "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (when ,gp ,@body (,gf ,test)))
       ,test)))
 
 (def empty (seq)
-  " Test to see if list is empty. "
+  " Test to see if `seq' is an empty list or other sequence. "
   (or (no seq)
       (and (no (acons seq)) (is (len seq) 0))))
 
 (def reclist (f xs)
+  " Applies the function `f' on the elements of `xs' until `f' returns true. "
   (and xs (or (f xs) (reclist f (cdr xs)))))
 
 (def recstring (test s (o start 0))
+  " Applies the function `test' on the characters of `s' until `test' returns true. "
   (let n (len s)
     ((afn (i)
        (and (< i (len s))
@@ -243,20 +275,22 @@
      start)))
 
 (def testify (x)
+  " Creates a test that determines if a given argument is `x'. "
   (if (isa x 'fn) x [is _ x]))
 
 (def some (test seq)
-  " Applies the test to elements in sequence till it returns true. "
+  " Determines if at least one element of `seq' satisfies `test'. "
   (let f (testify test)
     (if (alist seq)
         (reclist f:car seq)
         (recstring f:seq seq))))
 
 (def all (test seq)
-  " Returns true when all of the elements in the sequence return true. "
+  " Determines if all elements of `seq' satisfy `test'. "
   (~some (complement (testify test)) seq))
 
 (def mem (test seq)
+  " Returns the sublist of `seq' whose first element satisfies `test'."
   (let f (testify test)
     (reclist [if (f:car _) _] seq)))
 
@@ -285,6 +319,8 @@
 
 
 (def map (f . seqs)
+  " Applies the elements of the sequences to the given function.
+    Returns a sequence containing the results of the function. "
   (if (some [isa _ 'string] seqs)
        (withs (n   (apply min (map len seqs))
                new (newstring n))
@@ -304,14 +340,20 @@
        seqs)))
 
 (def mappend (f . args)
+  " Applies the elements of the seqeunces to the given function.
+    Returns a sequence containing the concatenation of the results
+    of the function."
   (apply + nil (apply map f args)))
 
 (def firstn (n xs)
+  " Returns the first `n' elements of the given list `xs'. "
   (if (and (> n 0) xs)
       (cons (car xs) (firstn (- n 1) (cdr xs)))
       nil))
 
 (def nthcdr (n xs)
+  " Returns the sublist of `xs' starting on the `n'th element.
+    `n' is 0-based. "
   (if (> n 0)
       (nthcdr (- n 1) (cdr xs))
       xs))
@@ -319,28 +361,34 @@
 ; Generalization of pair: (tuples x) = (pair x)
 
 (def tuples (xs (o n 2))
+  " Returns a list of lists of the elements of `xs', grouped by `n'. "
   (if (no xs)
       nil
       (cons (firstn n xs)
             (tuples (nthcdr n xs) n))))
 
-(def caris (x val) (and (acons x) (is (car x) val)))
+(def caris (x val) " Determines if (car x) is `val'. " (and (acons x) (is (car x) val)))
 
 (def warn (msg . args)
+  " Displays a warning message on its arguments. "
   (disp (+ "Warning: " msg ". "))
   (map [do (write _) (disp " ")] args)
   (disp #\newline))
 
 (mac atomic body
+  " Performs `body' atomically, blocking other threads. "
   `(atomic-invoke (fn () ,@body)))
 
 (mac atlet args
+  " Performs a `let' atomically, blocking other threads. "
   `(atomic (let ,@args)))
 
 (mac atwith args
+  " Performs a `with' atomically, blocking other threads. "
   `(atomic (with ,@args)))
 
 (mac atwiths args
+  " Performs a `withs' atomically, blocking other threads. "
   `(atomic (withs ,@args)))
 
 ; setforms returns (vars get set) for a place based on car of an expr
@@ -359,6 +407,7 @@
 (set setter (table))
 
 (mac defset (name parms . body)
+  " Defines a setter for the named form. "
   (w/uniq gexpr
     `(sref setter
            (fn (,gexpr)
@@ -453,9 +502,12 @@
                   (pair terms))))
 
 (mac = args
+  " Assigns values to variables. "
   (expand=list args))
 
 (mac loop (start test update . body)
+  " First performs `start'; while `test' is true, performs `body' then
+    `update' in a loop. "
   (w/uniq (gfn gparm)
     `(do ,start
          ((rfn ,gfn (,gparm)
@@ -464,17 +516,21 @@
           ,test))))
 
 (mac for (v init max . body)
+  " Loops for the variable `v' from `init' to `max'. "
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
        (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
          ,@body))))
 
 (mac repeat (n . body)
+  " Repeats the `body' `n' times."
   `(for ,(uniq) 1 ,n ,@body))
 
 ; could bind index instead of gensym
 
 (mac each (var expr . body)
+  " Performs `body' for each element of the sequence returned by `expr',
+    with each element assigned to `var'. "
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
@@ -492,6 +548,7 @@
 ; (nthcdr x y) = (subseq y x).
 
 (def subseq (seq start (o end (len seq)))
+  " Returns a subsequence of the given `seq'. "
   (if (isa seq 'string)
       (let s2 (newstring (- end start))
         (for i 0 (- end start 1)
@@ -500,13 +557,18 @@
       (firstn (- end start) (nthcdr start seq))))
 
 (def prefix (pre str)
+  " Determines if `pre' is the same as the first part of `str'. "
   (and (<= (len pre) (len str))
        (is pre (subseq str 0 (len pre)))))
 
 (mac ontable (k v h . body)
+  " Loops through the entries of table `h', with key-value pairs assigned
+    to `k' and `v', respectively. "
   `(maptable (fn (,k ,v) ,@body) ,h))
 
 (mac whilet (var test . body)
+  " While `test' is true, perform `body' in a loop.
+    The result of `test' is assigned to `var'. "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (let ,var ,gp
@@ -514,11 +576,13 @@
       ,test)))
 
 (def last (seq)
+  " Returns the last element of `seq'. "
   (if (no (cdr seq))
       (car seq)
       (last (cdr seq))))
 
 (def rem (test seq)
+  " Returns a list with the elements of `seq' that pass `test' removed. "
   (let f (testify test)
     (if (alist seq)
         ((afn (s)
@@ -529,11 +593,14 @@
         (coerce (rem test (coerce seq 'cons)) 'string))))
 
 (def keep (test seq)
+  " Returns a list with the elements of `seq' that pass `test'. "
   (rem (complement (testify test)) seq))
 
-(def trues (f seq) (rem nil (map f seq)))
+(def trues (f seq) " Returns a list with all `nil's removed. " (rem nil (map f seq)))
 
 (mac do1 args
+  " Performs the body in sequence, then returns the value of the
+    first expression. "
   (w/uniq g
     `(let ,g ,(car args)
        ,@(cdr args)
@@ -543,6 +610,8 @@
 ; but can't insert objects into expansions in Mzscheme.
 
 (mac caselet (var expr . args)
+  " Matches the result of `expr' to arguments until one matches.
+    The result of `expr' is assigned to `var'. "
   (let ex (afn (args)
             (if (no (cdr args))
                 (car args)
@@ -552,9 +621,11 @@
     `(let ,var ,expr ,(ex args))))
 
 (mac case (expr . args)
+  " Matches the result of `expr' to arguments until one matches. "
   `(caselet ,(uniq) ,expr ,@args))
 
 (mac push (x place)
+  " Pushes the value `x' on the front of the list in `place'. "
   (w/uniq gx
     (let (binds val setter) (setforms place)
       `(let ,gx ,x
@@ -562,6 +633,7 @@
            (,setter (cons ,gx ,val)))))))
 
 (mac swap (place1 place2)
+  " Swaps the values of the specified places. "
   (w/uniq (g1 g2)
     (with ((binds1 val1 setter1) (setforms place1)
            (binds2 val2 setter2) (setforms place2))
@@ -570,6 +642,7 @@
          (,setter2 ,g1)))))
 
 (mac rotate places
+  " Rotates the values of the specified places, from right to left. "
   (with (vars (map [uniq] places)
          forms (map setforms places))
     `(atwiths ,(mappend (fn (g (binds val setter))
@@ -582,6 +655,7 @@
               forms))))
 
 (mac pop (place)
+  " Pops a value from the front of the list in `place'."
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ binds (list g val))
@@ -589,23 +663,29 @@
               (,setter (cdr ,g)))))))
 
 (def adjoin (x xs (o test iso))
+  " Returns a list with `x' in front of `xs', unless `test' returns true
+    for some element of `xs' when matched with `x'. "
   (if (some [test x _] xs)
       xs
       (cons x xs)))
 
 (mac pushnew (x place . args)
+  " Pushes `x' into the front of the list in `place' unless it is
+    already in that list. "
   (w/uniq gx
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ (list gx x) binds)
          (,setter (adjoin ,gx ,val ,@args))))))
 
 (mac pull (test place)
+  " Pulls all elements that pass `test' from the list in `place'."
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ (list g test) binds)
          (,setter (rem ,g ,val))))))
 
 (mac ++ (place (o i 1))
+  " Increments `place' by the given increment `i' (defaults to 1). "
   (if (isa place 'sym)
       `(= ,place (+ ,place ,i))
       (w/uniq gi
@@ -614,6 +694,7 @@
              (,setter (+ ,val ,gi)))))))
 
 (mac -- (place (o i 1))
+  " Decrements `place' by the given decrement `i' (defaults to 1). "
   (if (isa place 'sym)
       `(= ,place (- ,place ,i))
       (w/uniq gi
@@ -624,6 +705,7 @@
 ; E.g. (inc x) equiv to (zap + x 1)
 
 (mac zap (op place . args)
+  " Modifies `place' with the result of `op' on that `place'. "
   (with (gop    (uniq)
          gargs  (map [uniq] args)
          mix    (afn seqs
@@ -649,6 +731,7 @@
 ;          (car args))))
 
 (def pr args
+  " Prints the arguments. "
   (map1 disp args)
   (car args))
 
@@ -663,35 +746,45 @@
 ;          (car args))))
 
 (def prn args
+  " Prints the arguments followed by a newline. "
   (do1 (apply pr args)
        (writec #\newline
                (if (isa (car args) 'output) (car args) (stdout)))))
 
 (mac nil! args
+  " Sets each of the given places to nil. "
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
 
 (mac t! args
+  " Sets each of the given places to t. "
   `(do ,@(map (fn (a) `(= ,a t)) args)))
 
 ; Destructing means ambiguity: are pat vars bound in else? (no)
 
 (mac iflet (var expr then . rest)
+  " Checks if `expr' is true, and if so, assigns it to `var' and
+    performs the `then' clause. "
   (w/uniq gv
     `(let ,gv ,expr
        (if ,gv (let ,var ,gv ,then) ,@rest))))
 
 (mac whenlet (var expr . body)
+  " Checks if `expr' is true, and if so, assigns it to `var' and
+    performs the `body'."
   `(iflet ,var ,expr (do ,@body)))
 
 (mac aif (expr . body)
+  " Similar to `if' but assigns the result of 'expr' to the variable `it'."
   (if (<= (len body) 2)
     `(let it ,expr (if it ,@body))
     `(let it ,expr (if it ,(car body) (aif ,@(cdr body))))))
 
 (mac awhen (expr . body)
+  " Similar to `when' but assigns the result of 'expr' to the variable `it'."
   `(let it ,expr (if it (do ,@body))))
 
 (mac aand args
+  " Similar to `and' but assigns the previous expression to the variable `it'."
   (if (no args)
       't
       (no (cdr args))
@@ -699,6 +792,8 @@
       `(let it ,(car args) (and it (aand ,@(cdr args))))))
 
 (mac accum (accfn . body)
+  " Accumulates the values given to all calls to `accfn' within `body' and
+    returns a list of those values. "
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
@@ -707,6 +802,8 @@
 ; Repeatedly evaluates its body till it returns nil, then returns vals.
 
 (mac drain (expr (o eof nil))
+  " Repeatedly evaluates `expr' until it returns nil, then returns a list
+    of the true values. "
   (w/uniq (gacc gdone gres)
     `(with (,gacc nil ,gdone nil)
        (while (no ,gdone)
@@ -716,10 +813,12 @@
                (push ,gres ,gacc))))
        (rev ,gacc))))
 
-; For the common C idiom while x = snarfdata != stopval.
+; For the common C idiom while (x = snarfdata) != stopval.
 ; Rename this if use it often.
 
 (mac whiler (var expr endval . body)
+  " Performs `body' while `expr' is not `endval', assigning the result of
+    `expr' to `var'."
   (w/uniq gf
     `((rfn ,gf (,var)
         (when (and ,var (no (is ,var ,endval)))
@@ -735,12 +834,16 @@
 ;            (apply (rep op) (cdr e))
 ;            e))))
 
-(def consif (x y) (if x (cons x y) y))
+(def consif (x y)
+  " Adds `x' to the front of the list `y' if `x' is true. "
+  (if x (cons x y) y))
 
 (def string args
+  " Creates a string from its arguments "
   (apply + "" (map [coerce _ 'string] args)))
 
 (def flat (x (o stringstoo))
+  " Flattens a nested list. "
   ((rfn f (x acc)
      (if (or (no x) (and stringstoo (is x "")))
           acc
@@ -752,11 +855,13 @@
 ; Perhaps not the final idea, or at least final name
 
 (mac default (x test alt)
+  " Returns `x' if it passes `test', otherwise returns `alt'. "
   (w/uniq gx
     `(let ,gx ,x
        (if (,test ,gx) ,gx ,alt))))
 
 (def pos (test seq (o start 0))
+  " Returns the position of the first element in `seq' that passes `test'. "
   (let f (testify test)
     (if (alist seq)
         ((afn (seq n)
@@ -769,11 +874,13 @@
          start)
         (recstring [if (f (seq _)) _] seq start))))
 
-(def even (n) (is (mod n 2) 0))
+(def even (n) " Determines if a number is even. " (is (mod n 2) 0))
 
-(def odd (n) (no (even n)))
+(def odd (n) " Determines if a number is odd. " (no (even n)))
 
 (mac after (x . ys)
+  " Ensures that the body is performed after the expression `x',
+    even if it fails."
   `(protect (fn () ,x) (fn () ,@ys)))
 
 (let expander
@@ -782,53 +889,81 @@
           (after (do ,@body) (close ,var))))
 
   (mac w/infile (var name . body)
+    " Opens the given file `name' for input, assigning the stream to `var'.
+      The stream is automatically closed on exit from the `body'. "
     (expander 'infile var name body))
 
   (mac w/outfile (var name . body)
+    " Opens the given file `name' for output, assigning the stream to `var'.
+      The stream is automatically closed on exit from the `body'. "
     (expander 'outfile var name body))
 
   (mac w/instring (var str . body)
+    " Opens the given string `str' for input, assigning the stream to `var'.
+      The stream is automatically closed on exit from the `body'. "
     (expander 'instring var str body))
   )
 
 (mac w/outstring (var . body)
+  " Opens a string for output, assigning the stream to `var'.
+    The stream is automatically closed on exit from the `body'. "
   `(let ,var (outstring) ,@body))
 
 (mac w/appendfile (var name . body)
+  " Opens a file `name' for append, assigning the stream to `var'.
+    The stream is automatically closed on exit from the `body'. "
   `(let ,var (outfile ,name 'append)
      (after (do ,@body) (close ,var))))
 
 ; rename this simply "to"?  - prob not; rarely use
 
 (mac w/stdout (str . body)
+  " Opens the string `str' for output; normal printed output from `body'
+    is redirected to the string. "
   `(call-w/stdout ,str (fn () ,@body)))
 
 (mac w/stdin (str . body)
+  " Opens the string `str' for input; normal read input from `body'
+    is redirected from the string. "
   `(call-w/stdin ,str (fn () ,@body)))
 
 (mac tostring body
+  " Returns the printed output from `body' as a string. "
   (w/uniq gv
    `(w/outstring ,gv
       (w/stdout ,gv ,@body)
       (inside ,gv))))
 
 (mac fromstring (str . body)
+  " Redirects input to `body' from the given string `str'. "
   (w/uniq gv
    `(w/instring ,gv ,str
       (w/stdin ,gv ,@body))))
 
-(def readstring1 (s (o eof nil)) (w/instring i s (read i eof)))
+(def readstring1 (s (o eof nil))
+  " Reads a single expression from the string. "
+  (w/instring i s (read i eof)))
 
 (def read ((o x (stdin)) (o eof nil))
+  " Reads a single expression from a string or stream. "
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
-(def readfile (name) (w/infile s name (drain (read s))))
+(def readfile (name)
+  " Reads the expressions from the file `name', and returns a list of
+    expressions read from the file. "
+  (w/infile s name (drain (read s))))
 
-(def readfile1 (name) (w/infile s name (read s)))
+(def readfile1 (name)
+  " Reads a single expression from the file `name'. "
+  (w/infile s name (read s)))
 
-(def writefile1 (val name) (w/outfile s name (write val s)) val)
+(def writefile1 (val name)
+  " Writes the value to the file `name'. "
+  (w/outfile s name (write val s)) val)
 
 (def readall (src (o eof nil))
+  " Reads the expressions from the string or stream `src', and returns a
+    list of expressions read from the file. "
   ((afn (i)
     (let x (read i eof)
       (if (is x eof)
@@ -836,21 +971,26 @@
           (cons x (self i)))))
    (if (isa src 'string) (instring src) src)))
 
-(def sym (x) (coerce x 'sym))
+(def sym (x)
+  " Returns the symbol for `x'. "
+  (coerce x 'sym))
 
 (mac rand-choice exprs
+  " Returns the result of one of the given `exprs', chosen at random. "
   `(case (rand ,(len exprs))
      ,@(let key -1
          (mappend [list (++ key) _]
                   exprs))))
 
 (mac n-of (n expr)
+  " Repeats `expr' `n' times, then returns the results in a list. "
   (w/uniq ga
     `(let ,ga nil
        (repeat ,n (push ,expr ,ga))
        (rev ,ga))))
 
 (def rand-string (n)
+  " Generates a random string of letters and numbers, starting with a letter. "
   (with (cap (fn () (+ 65 (rand 26)))
          sm  (fn () (+ 97 (rand 26)))
          dig (fn () (+ 48 (rand 10))))
