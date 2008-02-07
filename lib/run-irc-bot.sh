@@ -6,6 +6,7 @@ cd "$here"
 (
 cat <<EOF
 (cd "lib")
+(load "tiny.arc")
 (load "irc-bot.arc")
 (= bot* (thread (fn () (irc "arcbot"))))
 (prn "bot is running in background")
