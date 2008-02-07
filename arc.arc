@@ -57,18 +57,18 @@
 (def list args args)
 
 (def idfn (x)
-  " Identity function - just returns its argument. "    
+  " Identity function - just returns its argument. "
   x)
 
 ; Maybe later make this internal.
 
 (def map1 (f xs)
-  " Return a sequence with function f applied to every element in sequence xs. "    
+  " Return a sequence with function f applied to every element in sequence xs. "
   (if (no xs)
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
-(def pair (xs (o f list))  
+(def pair (xs (o f list))
   (if (no xs)
        nil
       (no (cdr xs))
@@ -86,7 +86,7 @@
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
 (mac and args
-  " Evaluates arguments till false is found else returns the last one. "    
+  " Evaluates arguments till false is found else returns the last one. "
   (if args
       (if (cdr args)
           `(if ,(car args) (and ,@(cdr args)))
@@ -102,7 +102,7 @@
       (assoc key (cdr al))))
 
 (def alref (al key)
-  " Get a value form a key in a associated list. " 
+  " Get a value form a key in a associated list. "
   (cadr (assoc key al)))
 
 (mac with (parms . body)
@@ -169,7 +169,7 @@
          (self (cdr xs) (cons (car xs) acc))))
    xs nil))
 
-(def isnt (x y) 
+(def isnt (x y)
   " Inverse of is. "
   (no (is x y)))
 
@@ -188,7 +188,7 @@
             (if ,g ,g (or ,@(cdr args)))))))
 
 (def alist (x)
-  " Is this a list? 
+  " Is this a list?
     Return true if argument consists of cons pairs. "
   (or (no x) (is (type x) 'cons)))
 
@@ -267,7 +267,7 @@
         (reclist   [if (f:car _) (car _)] seq)
         (recstring [if (f:seq _) (seq _)] seq))))
 
-(def isa (x y) 
+(def isa (x y)
   " Checks if x is of type y. "
   (is (type x) y))
 
