@@ -499,6 +499,10 @@
         s2)
       (firstn (- end start) (nthcdr start seq))))
 
+(def prefix (pre str)
+  (and (<= (len pre) (len str))
+       (is pre (subseq str 0 (len pre)))))
+
 (mac ontable (k v h . body)
   `(maptable (fn (,k ,v) ,@body) ,h))
 
@@ -1562,17 +1566,25 @@
    (list 'seval (cons 'quasiquote body)))
 
 (mac help (name)
-   `(do (pr ,(tostring
-              (when (sig name)
-                (prn (cons name (sig name))))
-              (let h (*help* name)
-                (if (no h)
-                    (prn name " is not documented.")
-                    (with (kind  (car h)
-                                 doc   (cadr h))
-                      (pr "[" kind "] ")
-                      (prn (or doc "Documentation unavailable")))))))
+   `(do (pr ,(helpstr name))
         nil))
+
+(def helpstr (name (o verbose t))
+  (tostring
+   (let h (*help* name)
+     (if (no h)
+         (if verbose (prn name " is not documented."))
+         (with (kind  (car h)
+                doc   (cadr h))
+           (pr "[" kind "]" (if (is kind 'mac) " " "  "))
+           (prn (if (sig name)
+                    (cons name (sig name))))
+           (and verbose doc (prn doc)))))))
+
+(def fns (pfx (o test [prefix pfx _]))
+  "Print sigs for macros & functions starting with pfx, or that pass test if given."
+  (each f (sort < (keep test (map [string _] (keys sig))))
+        (pr (helpstr (sym f) nil))))
 
 (= env ($ getenv))
 
