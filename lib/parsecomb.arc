@@ -73,12 +73,12 @@
 (def start (s i)
   "Match the beginning of a string."
   (if (is i 0)
-      (return "" s i)))
+      (return "" i)))
 
 (def end (s i)
   "Match the end of a string."
   (if (reallyatend i s)
-      (return "" s i)))
+      (return "" i)))
 
 (def noop (s i)
   "Consume no input successfully.  If used in alternatives, use only at the end.
@@ -139,10 +139,13 @@
                       (map [maybe (delay ,parser)] (range (+ ,n 1) ,m))))
             s i)))
 
-(def token (s)
+; parse the sequence of chars given in order using seq-r.
+; join the list of chars from seq-r so it looks like we parsed them as a unit.
+(def token (t)
   "Parse the literal string s."
   (fn (s i)
-    (seq-r (map char (($ string->list) s)) s i)))
+    (iflet (parsed newi) (seq-r (map char (($ string->list) t)) s i)
+           (return (apply string parsed) newi))))
 
 ; (?=expr)
 (mac can-see (parser)
@@ -163,11 +166,14 @@
 (mac mapdelay (lst)
   `(map [eval:apply delay (list _)] ',lst))
 
+(def mkparser (x)
+  (if (isa x 'string) (token x) x))
+
 ; |
 ; alternation, like parsec's <|>
 (mac alt parsers
   `(fn (s i)
-     (alt-r (mapdelay ,parsers) s i)))
+     (alt-r (mapdelay ,(map mkparser parsers)) s i)))
 
 (def alt-r (parsers s i)
   (and parsers
@@ -178,7 +184,7 @@
 ; parse this then that, somewhat like parsec's >>
 (mac seq parsers
   `(fn (s i)
-     (seq-r (mapdelay ,parsers) s i)))
+     (seq-r (mapdelay ,(map mkparser parsers)) s i)))
 
 (def seq-r (parsers s i (o acc))
   (if (no parsers)
@@ -207,7 +213,7 @@
   (iflet (parsed newi) (parse parser s i)
           (many1-r parser s newi (+ acc parsed))
          (~empty acc)
-          (return acc newi)))
+          (return acc i)))
 
 (= space  (one-of " \t\n\r")
    spaces (many1 space))
