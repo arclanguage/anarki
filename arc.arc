@@ -819,12 +819,13 @@
 (mac whiler (var expr endval . body)
   " Performs `body' while `expr' is not `endval', assigning the result of
     `expr' to `var'."
-  (w/uniq gf
-    `((rfn ,gf (,var)
-        (when (and ,var (no (is ,var ,endval)))
-          ,@body
-          (,gf ,expr)))
-      ,expr)))
+  (w/uniq (gf ge)
+    `(let ,ge ,endval
+        ((rfn ,gf (,var)
+          (when (and ,var (no (is ,var ,ge)))
+            ,@body
+            (,gf ,expr)))
+         ,expr))))
 
 ;(def macex (e)
 ;  (if (atom e)
