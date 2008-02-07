@@ -433,8 +433,32 @@ Connection: close")
 
 )
 
+(= frontpage-admin-links*
+  '(
+    ("Manage applications"	"prompt")
+    ("Add user"			"admin")
+    ("Arc Prompt"		"repl")
+   ))
+(= frontpage-user-links*
+  '(
+    ("Log out"			"logout")
+   ))
 (defop || req
-  (pr "It's alive."))
+  (whitepage
+    (pr "Arc server is running.")
+    (let u (get-user req)
+      (when u
+        (pr "  Hello, ") (prbold u)
+        (when (admin u)
+          (each l frontpage-admin-links*
+            (br)
+            (apply link l)) )
+        (each l frontpage-user-links*
+          (br)
+          (apply link l)) )
+      (when (no u)
+        (br)
+        (link "Log in" "login") ))))
 
 (defop topips req
   (when (admin (get-user req))
