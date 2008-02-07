@@ -226,7 +226,7 @@
   `(= ,var (or ,var ,val)))
 
 (mac in (x . choices)
-  " Returns true of the first argument is one of the other arguments. "
+  " Returns true if the first argument is one of the other arguments. "
   (w/uniq g
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
@@ -1000,9 +1000,11 @@
             'string)))
 
 (mac forlen (var s . body)
+  " Loops across the length of the sequence `s'. "
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
+  " Loops across the sequence `s', assigning each element to `var'. "
   (w/uniq (gs index)
     `(let ,gs ,s
        (forlen ,index ,gs
@@ -1010,6 +1012,7 @@
            ,@body)))))
 
 (def best (f seq)
+  " Selects the best element of `seq' according to `f'. "
   (if (no seq)
       nil
       (let wins (car seq)
@@ -1017,14 +1020,15 @@
           (if (f elt wins) (= wins elt)))
         wins)))
 
-(def max args (best > args))
-(def min args (best < args))
+(def max args " Returns the highest argument. " (best > args))
+(def min args " Returns the lowest argument. " (best < args))
 
 ; (mac max2 (x y)
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
 (def most (f seq)
+  " Selects the element of `seq' with the highest [f _]. "
   (unless (no seq)
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
@@ -1037,6 +1041,7 @@
 ; macroexpansion.
 
 (def insert-sorted (test elt seq)
+  " Inserts `elt' into a sequence `seq' sorted by `test'. "
   (if (no seq)
        (list elt)
       (test elt (car seq))
@@ -1044,9 +1049,11 @@
       (cons (car seq) (insert-sorted test elt (cdr seq)))))
 
 (mac insort (test elt seq)
+  " Inserts `elt' into a sequence in the place `seq' sorted by `test'. "
   `(zap [insert-sorted ,test ,elt _] ,seq))
 
 (def reinsert-sorted (test elt seq)
+  " Inserts `elt' into a sequence `seq', partially sorted by `test'. "
   (if (no seq)
        (list elt)
       (is elt (car seq))
@@ -1056,44 +1063,65 @@
       (cons (car seq) (reinsert-sorted test elt (cdr seq)))))
 
 (mac insortnew (test elt seq)
+  " Inserts `elt' into a sequence in the place `seq', partially sorted
+    by `test'. "
   `(zap [reinsert-sorted ,test ,elt _] ,seq))
 
 ; Could make this look at the sig of f and return a fn that took the
 ; right no of args and didn't have to call apply (or list if 1 arg).
 
 (def memo (f)
+  " Creates a function that will store results of calls to the given
+    source function.
+    For each set of arguments, the source function will only be called
+    once; if the memo'ed function is called again with the same arguments,
+    it will return the stored result instead of calling the source function. "
   (let cache (table)
     (fn args
       (or (cache args)
           (= (cache args) (apply f args))))))
 
 (mac defmemo (name parms . body)
+  " Defines a function that automatically stores the results of calls.
+    For each set of arguments, this function will only execute once.
+    If the function is called again with the same arguments, it will
+    immediately return the stored result for that set of arguments. "
   `(safeset ,name (memo (fn ,parms ,@body))))
 
 (def <= args
+  " Determines if each argument is less than or equal to succeeding
+    arguments. "
   (or (no args)
       (no (cdr args))
       (and (no (> (car args) (cadr args)))
            (apply <= (cdr args)))))
 
 (def >= args
+  " Determines if each argument is greater than or equal to succeeding
+    arguments. "
   (or (no args)
       (no (cdr args))
       (and (no (< (car args) (cadr args)))
            (apply >= (cdr args)))))
 
 (def whitec (c)
+  " Determines if the given `c' is a whitespace character. "
   (in c #\space #\newline #\tab #\return))
 
-(def nonwhite (c) (no (whitec c)))
+(def nonwhite (c)
+  " Determines if the given `c' is not a whitespace character. "
+  (no (whitec c)))
 
 (def alphadig (c)
+  " Determines if the given `c' is an alphanumeric character. "
   (or (<= #\a c #\z) (<= #\A c #\Z) (<= #\0 c #\9)))
 
 (def punc (c)
+  " Determines if the given `c' is punctuation character. "
   (in c #\. #\, #\; #\: #\! #\?))
 
 (def readline ((o str (stdin)))
+  " Reads a string terminated by a newline from the stream `str'. "
   (awhen (readc str)
     (tostring
       (writec it)
@@ -1103,6 +1131,8 @@
 ; Don't currently use this but suspect some code could.
 
 (mac summing (sumfn . body)
+  " Counts the number of times `sumfn' is called with a true value
+    within `body'. "
   (w/uniq (gc gt)
     `(let ,gc 0
        (let ,sumfn (fn (,gt) (if ,gt (++ ,gc)))
@@ -1110,11 +1140,14 @@
        ,gc)))
 
 (def trav (f base tree)
+  " Traverses a list as a binary tree. "
   (if (atom tree)
       (base tree)
       (f (trav f base (car tree)) (trav f base (cdr tree)))))
 
-(def carif (x) (if (atom x) x (car x)))
+(def carif (x)
+  " Returns the first element of a list if the argument is a list. "
+  (if (atom x) x (car x)))
 
 ; Could prob be generalized beyond printing.
 
