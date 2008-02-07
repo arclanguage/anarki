@@ -1004,12 +1004,14 @@
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
-  " Loops across the sequence `s', assigning each element to `var'. "
-  (w/uniq (gs index)
-    `(let ,gs ,s
-       (forlen ,index ,gs
-         (let ,var (,gs ,index)
-           ,@body)))))
+  " Loops across the sequence `s', assigning each element to `var', and providing the current index in `index'.  "
+  (if (is var 'index)
+      (err "Can't use index as first arg to on.")
+      (w/uniq gs
+        `(let ,gs ,s
+           (forlen index ,gs
+             (let ,var (,gs index)
+               ,@body))))))
 
 (def best (f seq)
   " Selects the best element of `seq' according to `f'. "
