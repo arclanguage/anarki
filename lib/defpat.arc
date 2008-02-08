@@ -59,6 +59,18 @@
 ;   something.
 ; - 'fnpat, 'afnpat, 'rfnpat forms
 ;
+;KNOWN BUG:
+; (defpat mytest
+;   (1 x . y) (prn "1 followed by " x " and a bunch of " y)
+;   z         (prn "Dunno, just a bunch of " z))
+; (mytest 1)
+; => should call the z clause, not (1 nil . nil) clause.
+; => without the z pattern, creates a function with the
+;    minimum 1-arity, which tends to hide (but not fix)
+;    the problem.
+; => TOFIX: Probably need to add tests for structure,
+;    not just constants, in (patcheck ...)
+;
 ;please report any bugs you don't want to fix yourself to:
 ; almkglor@gmail.com
 ;alternatively, throw it on http://arclanguage.org/forum
