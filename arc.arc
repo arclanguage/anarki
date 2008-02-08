@@ -83,7 +83,7 @@
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
 (def pair (xs (o f list))
-  " Applies pairs of elements to the function f. "
+  " Applies pairs of elements to the function `f'. "
   (if (no xs)
        nil
       (no (cdr xs))
@@ -159,14 +159,13 @@
 
 (mac rfn (name parms . body)
   " Self-referencing function expression.
-    Creates a closure wherein lambda is bound to name. "
+    Creates a function which calls itself as `name'. "
   `(let ,name nil
      (set ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
   " Self-referencing lambda expression.
-    Creates a closure wherein lambda is bound to name.
-    Use self as the name."
+    Creates a function which calls itself with the name `self'."
   `(rfn self ,parms ,@body))
 
 (mac compose args
