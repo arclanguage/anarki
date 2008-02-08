@@ -1118,6 +1118,15 @@
   " Writes the value to the file `name'. "
   (w/outfile s name (write val s)) val)
 
+(def writefileraw (val name) 
+     "Write a list of bytes in val to a file."
+     (w/outfile s name (writeb (car val) s))
+     (map [writefilebyte _ name] (cdr val)) val)
+
+(def writefilebyte (val name)
+     "Write a single byte to a file"
+     (w/appendfile s name (writeb val s)) val)
+
 (def readall (src (o eof nil))
   " Reads the expressions from the string or stream `src', and returns a
     list of expressions read from the file. "
