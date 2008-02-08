@@ -1521,7 +1521,7 @@
 
 (def split (seq pos)
   " Splits `seq' at offset `pos', returning a two-element list of the
-    split. "
+    split.  See also 'splitn "
   (withs (mid (nthcdr (- pos 1) seq)
           s2  (cdr mid))
     (nil! (cdr mid))
@@ -1788,6 +1788,8 @@
     (list winner n)))
 
 (def splitn (n xs)
+  " Splits `xs' at offset `n', returning a two-element list of the
+    split.  See also 'split "
   (let acc nil
     ((afn (n xs)
        (if (or (no xs) (<= n 0))
@@ -1854,28 +1856,37 @@
        (pr ,@(parse-format str))))
 )
 
+;;why not (o hook idfn) ?
 (def load (file (o hook))
+  " Reads the expressions in `file' and evaluates them.  Read expressions
+    may be preprocessed by `hook'. "
   (or= hook idfn)
   (w/infile f file
     (whilet e (read f)
       (eval (hook e)))))
 
 (def positive (x)
+  " Determines if `x' is a number and is positive. "
   (and (number x) (> x 0)))
 
 (mac w/table (var . body)
+  " Creates a table assigned to `var' for use in `body'. "
   `(let ,var (table) ,@body ,var))
 
 (def ero args
+  " Outputs `args' to error output. "
   (each a args
     (write a (stderr))
     (writec #\space (stderr))))
 
-(def queue () (list nil nil 0))
+(def queue ()
+  " Creates a queue. "
+  (list nil nil 0))
 
 ; Despite call to atomic, once had some sign this wasn't thread-safe.
 
 (def enq (obj q)
+  " Adds `obj' to a queue. "
   (atomic
     (++ (q 2))
     (if (no (car q))
@@ -1885,25 +1896,33 @@
     (car q)))
 
 (def deq (q)
+  " Removes and returns an item from a queue. "
   (atomic (unless (is (q 2) 0) (-- (q 2)))
           (pop (car q))))
 
 ; Should redef len to do this, and make queues lists annotated queue.
 
-(def qlen (q) (q 2))
+(def qlen (q) " Returns the number of items in a queue. " (q 2))
 
-(def qlist (q) (car q))
+(def qlist (q) " Returns the queue contents as a list. " (car q))
 
+;; unsafe - suppose we have (enq-limit x q 10) and (enq-limit x q 1000)
+;; somewhere else?
 (def enq-limit (val q (o limit 1000))
+  " Adds an item to the queue; removes a queue item if `limit' is
+    exceeded. "
   (atomic
      (unless (< (qlen q) limit)
        (deq q))
      (enq val q)))
 
 (def median (ns)
+  " Computes the median of an unsorted list. "
   ((sort > ns) (truncate (/ (len ns) 2))))
 
 (mac noisy-each (n var val . body)
+  " Performs `body' for each element of the sequence returned by `expr',
+    with each element assigned to `var'; prints a `.' every `n' elements. "
   (w/uniq (gn gc)
     `(with (,gn ,n ,gc 0)
        (each ,var ,val
@@ -1917,15 +1936,19 @@
        )))
 
 (mac point (name . body)
+  " Creates a form which may be exited by calling `name' from within `body'. "
   (w/uniq g
     `(ccc (fn (,g)
             (let ,name [,g _]
               ,@body)))))
 
 (mac catch body
+  " Catches any value returned by `throw' within `body'. "
   `(point throw ,@body))
 
 (def downcase (x)
+  " Converts `x' to lowercase, if a character, string, or symbol;
+    otherwise, raises an error. "
   (let downc (fn (c)
                (let n (coerce c 'int)
                  (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
@@ -1938,6 +1961,8 @@
              (err "Can't downcase" x))))
 
 (def upcase (x)
+  " Converts `x' to uppercase, if a character, string, or symbol;
+    otherwise, raises an error. "
   (let upc (fn (c)
              (let n (coerce c 'int)
                (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
@@ -1957,12 +1982,15 @@
             (range ((signop (- end start)) start step) end step))))
 
 (def mismatch (s1 s2)
+  " Returns the first index where `s1' and `s2' do not match. "
   (catch
     (on c s1
       (when (isnt c (s2 index))
         (throw index)))))
 
 (def memtable (ks)
+  " Creates a membership table which returns t for each element in `ks' and
+    nil otherwise. "
   (let h (table)
     (each k ks (t! (h k)))
     h))
@@ -1970,6 +1998,8 @@
 (= bar* " | ")
 
 (mac w/bars body
+  " Prints out the strings returned by each expression in `body',
+    separated by vertical bars. "
   (w/uniq (out needbars)
     `(let ,needbars nil
        (do ,@(map (fn (e)
@@ -1982,19 +2012,25 @@
                   body)))))
 
 (mac redef (name parms . body)
+  " Redefine a function.  The old function definitiaion may be used within
+    `body' as the name `old'. "
   `(do (tostring
         (let old ,name
           (def ,name ,parms ,@body)))
        ,name))
 
 (mac $ body
+   " Allows access to the underlying Scheme. "
    (list 'seval (cons 'quasiquote body)))
 
-(mac help (name)
+(mac help ( (o name 'help))
+   " Prints the documentation for the given symbol.  To use, type
+     (help symbol) "
    `(do (pr ,(helpstr name))
         nil))
 
 (def helpstr (name (o verbose t))
+  " Returns a help string for the symbol `name'. "
   (tostring
    (let h (*help* name)
      (if (no h)
