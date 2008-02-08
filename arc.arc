@@ -333,9 +333,9 @@
       (pred (car seq))
       (ormap pred (cdr seq)))))
 
-(def arglist-vars (arglist)
+(def *mbf-arglist-vars (arglist)
   " Returns the variables in an argument list. "
-  (if (is arglist 'cons)
+  (if (isa arglist 'cons)
     (apply join
       (map1
         (fn (_)
@@ -347,7 +347,7 @@
         (makeproper arglist)))
     arglist))
 
-(def arglist-frees (arglist)
+(def *mbf-arglist-frees (arglist)
   " Returns the free variables used in default values for optional arguments
     of an argument list. "
   (if (isa arglist 'cons)
@@ -356,11 +356,11 @@
         (fn (_)
           (and (isa _ 'cons)
                (is (car _) 'o)
-               (all-vars (car:cdar _))))
+               (all-vars (cddr _))))
         (makeproper arglist)))
     nil))
 
-(def all-vars (form)
+(def *mbf-all-vars (form)
   " Extracts all the variables in `form'. "
   (let head (and (isa form 'cons) (car form))
     (if
@@ -375,18 +375,18 @@
           (fn (_)
             (and (isa _ 'cons)
                  (in (car _) 'unquote 'unquote-splicing)
-                 (apply join (map1 all-vars (cdr _)))))
+                 (apply join (map1 *mbf-all-vars (cdr _)))))
           (cdr form))
       (is head 'if)
-        (apply join (map1 all-vars (cdr form)))
+        (apply join (map1 *mbf-all-vars (cdr form)))
       (is head 'fn)
-        (join (apply join (map1 all-vars (arglist-vars  (cadr form))))
-              (apply join (map1 all-vars (arglist-frees (cadr form))))
-              (apply join (map1 all-vars                (cddr form))))
+        (join (apply join (map1 *mbf-all-vars (*mbf-arglist-vars  (cadr form))))
+              (apply join (map1 *mbf-all-vars (*mbf-arglist-frees (cadr form))))
+              (apply join (map1 *mbf-all-vars                     (cddr form))))
       ; else (including set)
-        (apply join (map1 all-vars form)))))
+        (apply join (map1 *mbf-all-vars form)))))
 
-(def free? (form var)
+(def *mbf-free? (form var)
   ; I'd like to use case, but it doesn't exist yet.
   (with (kind (type form)
          find (afn (x lst)
@@ -400,9 +400,9 @@
         (let head (car form)
           (if
             (is head 'fn)
-              (or (find var (arglist-frees (cadr form)))
-                  (and (no (find var (arglist-vars (cadr form))))
-                       (free? (cddr form) var)))
+              (or (find var (*mbf-arglist-frees (cadr form)))
+                  (and (no (find var (*mbf-arglist-vars (cadr form))))
+                       (*mbf-free? (cddr form) var)))
             (is head 'quote)
               #f
             (is head 'quasiquote)
@@ -410,10 +410,10 @@
                 (fn (_)
                   (and (isa _ 'cons)
                        (in (car _) 'unquote 'unquote-splicing)
-                       (free? (cdr _) var)))
+                       (*mbf-free? (cdr _) var)))
                 form)
             ; else
-              (ormap (fn (_) (free? _ var)) form)))
+              (ormap (fn (_) (*mbf-free? _ var)) form)))
     ; else
       nil)))
 
@@ -427,11 +427,11 @@
                    (is rest "_")
                    (and (some (fn (c) (isnt c #\0)) rest)
                         (all  (fn (c) (in c #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) rest)))
-               (free? body _)
+               (*mbf-free? body _)
                (let num (or (and (is rest "") 1) (and (is rest "_") (do (set arbno t) -1)) (coerce rest 'int))
                  (when (> num max) (set max num)))
                nil)))
-      (all-vars (expand body)))
+      (*mbf-all-vars (expand body)))
     `(fn ,((afn (n)
              (if (< n (+ max 1))
                (cons (coerce (+ "_" (coerce n 'string)) 'sym) (self (+ n 1)))
