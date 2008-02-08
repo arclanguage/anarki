@@ -302,12 +302,14 @@
 
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
+  " Completely expands all macros in `expr'. "
   (if (and (acons expr) (~dotted expr))
       (macex (cons (car expr)
                    (map1 expand (cdr expr))))
       expr))
 
 (def makeproper (lst)
+  " Transforms `list' to a proper list if it is a dotted list. "
   (if (no (acons lst))
       lst
       (cons (car lst)
@@ -316,6 +318,7 @@
               (list (cdr lst))))))
 
 (def andmap (pred seq)
+  " Applies `pred' to elements of `seq' until an element fails. "
   (or
     seq
     (and
@@ -323,6 +326,7 @@
       (andmap pred (cdr seq)))))
 
 (def ormap (pred seq)
+  " Applies `pred' to elements of `seq' until an element passes. "
   (and
     seq
     (or
@@ -330,6 +334,7 @@
       (ormap pred (cdr seq)))))
 
 (def arglist-vars (arglist)
+  " Returns the variables in an argument list. "
   (if (is arglist 'cons)
     (apply join
       (map1
