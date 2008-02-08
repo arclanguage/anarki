@@ -1075,13 +1075,13 @@
 ; rename this simply "to"?  - prob not; rarely use
 
 (mac w/stdout (str . body)
-  " Opens the string `str' for output; normal printed output from `body'
-    is redirected to the string. "
+  " Opens the stream `str' for output; normal printed output from `body'
+    is redirected to the stream. "
   `(call-w/stdout ,str (fn () ,@body)))
 
 (mac w/stdin (str . body)
-  " Opens the string `str' for input; normal read input from `body'
-    is redirected from the string. "
+  " Opens the stream `str' for input; normal read input from `body'
+    is redirected from the stream. "
   `(call-w/stdin ,str (fn () ,@body)))
 
 (mac tostring body
