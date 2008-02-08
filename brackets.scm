@@ -12,8 +12,7 @@
 ; but nested reads still use the curent readtable:
 
 (define (read-square-brackets ch port src line col pos)
-  `(fn (_)
-     ,(read/recursive port #\[ #f)))
+  `(make-br-fn ,(read/recursive port #\[ #f)))
   
 ; a readtable that is just like the builtin except for []s
 

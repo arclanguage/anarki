@@ -274,9 +274,13 @@
                 (self (+ i 1)))))
      start)))
 
+(def isa (x y)
+  " Checks if x is of type y. "
+  (is (type x) y))
+
 (def testify (x)
   " Creates a test that determines if a given argument is `x'. "
-  (if (isa x 'fn) x [is _ x]))
+  (if (isa x 'fn) x (fn (_) (is _ x))))
 
 (def some (test seq)
   " Determines if at least one element of `seq' satisfies `test'. "
@@ -289,6 +293,156 @@
   " Determines if all elements of `seq' satisfy `test'. "
   (~some (complement (testify test)) seq))
 
+(def dotted (x)
+  " Determines if `x' is a dotted cons pair. "
+  (if (atom x)
+      nil
+      (and (cdr x) (or (atom (cdr x))
+                       (dotted (cdr x))))))
+
+; I couldn't find a pre-existing total macro-expander
+(def expand (expr)
+  (if (and (acons expr) (~dotted expr))
+      (macex (cons (car expr)
+                   (map1 expand (cdr expr))))
+      expr))
+
+(def makeproper (lst)
+  (if (no (acons lst))
+      lst
+      (cons (car lst)
+            (if (alist (cdr lst))
+              (makeproper (cdr lst))
+              (list (cdr lst))))))
+
+(def andmap (pred seq)
+  (or
+    seq
+    (and
+      (pred (car seq))
+      (andmap pred (cdr seq)))))
+
+(def ormap (pred seq)
+  (and
+    seq
+    (or
+      (pred (car seq))
+      (ormap pred (cdr seq)))))
+
+(def arglist-vars (arglist)
+  (if (is arglist 'cons)
+    (apply join
+      (map1
+        (fn (_)
+          (if (isa _ 'cons)
+            (if (is (car _) 'o)
+              (list:cadr _)
+              _)
+            (list _)))
+        (makeproper arglist)))
+    arglist))
+
+(def arglist-frees (arglist)
+  (if (isa arglist 'cons)
+    (apply join
+      (map1
+        (fn (_)
+          (and (isa _ 'cons)
+               (is (car _) 'o)
+               (all-vars (car:cdar _))))
+        (makeproper arglist)))
+    nil))
+
+(def all-vars (form)
+  (let head (and (isa form 'cons) (car form))
+    (if
+      (or (no form) (and (no (isa form 'sym)) (no (isa form 'cons))))
+        nil
+      (isa form 'sym)
+        (list form)
+      (is head 'quote)
+        nil
+      (is head 'quasiquote)
+        (ormap
+          (fn (_)
+            (and (isa _ 'cons)
+                 (in (car _) 'unquote 'unquote-splicing)
+                 (apply join (map1 all-vars (cdr _)))))
+          (cdr form))
+      (is head 'if)
+        (apply join (map1 all-vars (cdr form)))
+      (is head 'fn)
+        (join (apply join (map1 all-vars (arglist-vars  (cadr form))))
+              (apply join (map1 all-vars (arglist-frees (cadr form))))
+              (apply join (map1 all-vars                (cddr form))))
+      ; else (including set)
+        (apply join (map1 all-vars form)))))
+
+(def free? (form var)
+  ; I'd like to use case, but it doesn't exist yet.
+  (with (kind (type form)
+         find (afn (x lst)
+                (if (and (alist lst) lst)
+                  (or (is x (car lst) (self x (cdr lst))))
+                  nil)))
+    (if
+      (is kind 'sym)
+        (is form var)
+      (is kind 'cons)
+        (let head (car form)
+          (if
+            (is head 'fn)
+              (or (find var (arglist-frees (cadr form)))
+                  (and (no (find var (arglist-vars (cadr form))))
+                       (free? (cddr form) var)))
+            (is head 'quote)
+              #f
+            (is head 'quasiquote)
+              (ormap
+                (fn (_)
+                  (and (isa _ 'cons)
+                       (in (car _) 'unquote 'unquote-splicing)
+                       (free? (cdr _) var)))
+                form)
+            ; else
+              (ormap (fn (_) (free? _ var)) form)))
+    ; else
+      nil)))
+
+(def filter (pred lst)
+  (if (acons lst)
+    (if (pred (car lst))
+      (cons (car lst) (filter pred (cdr lst)))
+      (filter pred (cdr lst)))
+    lst))
+
+(mac make-br-fn (body)
+  (with (max 0 arbno nil)
+    (map1 ; Just for the side-effect; used as "max"
+      (fn (_)
+        (withs (s (coerce _ 'string) first (s 0) rest (coerce (cdr (coerce s 'cons)) 'string))
+          (and (is (s 0) #\_)
+               (or (is rest "")
+                   (is rest "_")
+                   (and (some (fn (c) (isnt c #\0)) rest)
+                        (all  (fn (c) (in c #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) rest)))
+               (free? body _)
+               (let num (or (and (is rest "") 1) (and (is rest "_") (do (set arbno t) -1)) (coerce rest 'int))
+                 (when (> num max) (set max num)))
+               nil)))
+      (all-vars (expand body)))
+    `(fn ,((afn (n)
+             (if (< n (+ max 1))
+               (cons (coerce (+ "_" (coerce n 'string)) 'sym) (self (+ n 1)))
+               (if arbno
+                 '__
+                 (if (is max 0) '(_) nil)))) 1)
+         ,(if (> max 0)
+            `(let _ _1 ,body)
+            body))))
+
+;;; NO []s ABOVE THIS LINE ;;;
+
 (def mem (test seq)
   " Returns the sublist of `seq' whose first element satisfies `test'."
   (let f (testify test)
@@ -300,10 +454,6 @@
     (if (alist seq)
         (reclist   [if (f:car _) (car _)] seq)
         (recstring [if (f:seq _) (seq _)] seq))))
-
-(def isa (x y)
-  " Checks if x is of type y. "
-  (is (type x) y))
 
 ; Possible to write map without map1, but makes News 3x slower.
 
@@ -1183,13 +1333,6 @@
     (ontree f (car tree))
     (ontree f (cdr tree))))
 
-(def dotted (x)
-  " Determines if `x' is a dotted cons pair. "
-  (if (atom x)
-      nil
-      (and (cdr x) (or (atom (cdr x))
-                       (dotted (cdr x))))))
-
 (def fill-table (table data)
   " Fills `table' with key-value pairs in the `data' list. "
   (each (k v) (pair data) (= (table k) v))
@@ -1863,13 +2006,6 @@
     (list (list g x)
           `(env ,g)
           `(fn (val) (($ putenv) ,g val)))))
-
-; I couldn't find a pre-existing total macro-expander
-(def expand (expr)
-  (if (and (acons expr) (~dotted expr))
-      (macex (cons (car expr)
-                   (map expand (cdr expr))))
-      expr))
 
 (mac % () nil)
 (mac %% () nil)
