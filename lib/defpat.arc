@@ -17,7 +17,7 @@
 ;<docstring> := <string>
 ;<pattern> :=
 ;  <const> | <var> | (<pattern>*) | (<pattern>* . <pattern>)
-;<const> := anything that isn't a symbol, or (t and nil), or a 'symbol form.
+;<const> := anything that is: (not a symbol), or (t and nil), or a 'symbol form.
 ;<var> := anything that is a symbol, but isn't t and isn't nil
 ;<clause> := any expression
 ;
@@ -49,6 +49,9 @@
 ;   (x) <clause> dontcare <clause> - the first form will create a
 ;   function that accepts exactly one argument, the second form will
 ;   create a function that accepts any number of arguments.
+; - (x) <clause1> (y) <clause2> will bind x for <clause1>, and y for
+;   <clause2>; however, x will be free in <clause2>, and y will be
+;   free in <clause1>.
 ;
 ;TODO:
 ; - 'defpat does not rearrange patterns, so you must manually arrange
@@ -59,17 +62,6 @@
 ;   something.
 ; - 'fnpat, 'afnpat, 'rfnpat forms
 ;
-;KNOWN BUG:
-; (defpat mytest
-;   (1 x . y) (prn "1 followed by " x " and a bunch of " y)
-;   z         (prn "Dunno, just a bunch of " z))
-; (mytest 1)
-; => should call the z clause, not (1 nil . nil) clause.
-; => without the z pattern, creates a function with the
-;    minimum 1-arity, which tends to hide (but not fix)
-;    the problem.
-; => TOFIX: Probably need to add tests for structure,
-;    not just constants, in (patcheck ...)
 ;
 ;please report any bugs you don't want to fix yourself to:
 ; almkglor@gmail.com
@@ -161,18 +153,16 @@
 						p nil)))
 			;extracts the list of checks for a pattern
 			patcheck
-			(fn (a p)
-				(accum ret
-					((afn (p path)
-						(if
-						(constp p)
-							(ret `(*defpat-checkpath ,a ,(rev path) ,p))
-						(varp p)
-							nil
-							(do
-								(self (car p) (cons 'car path))
-								(self (cdr p) (cons 'cdr path)) ) ))
-						p nil)))
+			(afn (a p)
+				(if
+				(constp p)
+					`(is ,a ,p)
+				(varp p)
+					`t
+					`(and
+						(acons ,a)
+						(let ,a (car ,a) ,(self a (car p)))
+						(let ,a (cdr ,a) ,(self a (cdr p))) ) ))
 			;creates a clause checking form in 'if format
 			clausecheck
 			(fn (a c)
@@ -181,8 +171,8 @@
 				(if (is 1 (len c))
 					c
 					(list
-						`(and ,@([patcheck a (pat _)]
-								c))
+						([patcheck a (pat _)]
+								c)
 						`(with ,(apply join ([patwith a (pat _)] c))
 							,(exp c)))))
 			;creates the dispatch form
@@ -204,16 +194,6 @@
 		`(def ,name ,arglist
 			,@(if docstring (list docstring))
 			,(dispatch))))
-
-(mac *defpat-checkpath (a path p)
-	" Macro for internal use of defpat.
-	  Checks for existence of `path' in `a',
-	  whose final target should be `p'. "
-	(if (no path)
-		`(is ,a ,p)
-		`(if (acons ,a)
-			(let ,a (,(car path) ,a)
-				(*defpat-checkpath ,a ,(cdr path) ,p)))))
 
 ;test cases
 
@@ -264,4 +244,14 @@
 		(prn "Eeeeeeek!  Stopped!")
 	;otherwise
 		(prn "Hey, your car can't understand that!"))
+
+(defpat *defpat-pair
+	" Example/testcase for defpat in redefining
+	  the `pair' function. "
+	((x y . zs))	`((,x ,y) ,@(*defpat-pair zs))
+	((x))		`((,x))
+	(())		()
+	((x y . zs) f)	`(,(f x y) ,@(*defpat-pair zs f))
+	((x) f)		`((,x)) ;this is how the arc0 pair does it
+	(() f)		())
 
