@@ -409,13 +409,6 @@
     ; else
       nil)))
 
-(def filter (pred lst)
-  (if (acons lst)
-    (if (pred (car lst))
-      (cons (car lst) (filter pred (cdr lst)))
-      (filter pred (cdr lst)))
-    lst))
-
 (mac make-br-fn (body)
   (with (max 0 arbno nil)
     (map1 ; Just for the side-effect; used as "max"
