@@ -134,9 +134,9 @@
 (mac n-times (parser n (o m))
   `(fn (s i)
      (seq-r (if (no ,m)
-                (map [idfn (delay ,parser)] (range 1 ,n))
-                (join (map [idfn (delay ,parser)] (range 1 ,n))
-                      (map [maybe (delay ,parser)] (range (+ ,n 1) ,m))))
+                (map [delay ,parser] (range 1 ,n))
+                (join (map [delay ,parser] (range 1 ,n))
+                      (map [maybe ,parser] (range (+ ,n 1) ,m))))
             s i)))
 
 ; parse the sequence of chars given in order using seq-r.
@@ -144,7 +144,7 @@
 (def token (t)
   "Parse the literal string s."
   (fn (s i)
-    (iflet (parsed newi) (seq-r (map char (($ string->list) t)) s i)
+    (iflet (parsed newi) (seq-r (map char (coerce t 'cons)) s i)
            (return (apply string parsed) newi))))
 
 ; (?=expr)
@@ -167,7 +167,7 @@
   `(map [eval:apply delay (list _)] ',lst))
 
 (def mkparser (x)
-  (if (isa x 'string) (token x) x))
+  (if (isa x 'string) `(token ,x) x))
 
 ; |
 ; alternation, like parsec's <|>
@@ -214,6 +214,8 @@
           (many1-r parser s newi (+ acc parsed))
          (~empty acc)
           (return acc i)))
+
+; need something like parsec's sepBy and endBy parsers
 
 (= space  (one-of " \t\n\r")
    spaces (many1 space))
