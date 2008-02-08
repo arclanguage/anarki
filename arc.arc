@@ -562,8 +562,8 @@
        (is pre (subseq str 0 (len pre)))))
 
 (mac ontable (k v h . body)
-  " Loops through the entries of table `h', with key-value pairs assigned
-    to `k' and `v', respectively. "
+  " Loops through the entries of table or object `h', with key-value pairs
+    assigned to `k' and `v', respectively. "
   `(maptable (fn (,k ,v) ,@body) ,h))
 
 (mac whilet (var test . body)
@@ -1155,15 +1155,19 @@
 ; Could prob be generalized beyond printing.
 
 (def prall (elts (o init "") (o sep ", "))
+  " Prints several arguments with an initial header and separated by a
+    given separator. "
   (when elts
     (pr init (car elts))
     (map [pr sep _] (cdr elts))
     elts))
 
 (def prs args
+  " Prints several arguments separated by spaces. "
   (prall args "" #\space))
 
 (def tree-subst (old new tree)
+  " Replaces an element of a list with that list treated as a binary tree. "
   (if (is tree old)
        new
       (atom tree)
@@ -1172,22 +1176,27 @@
             (tree-subst old new (cdr tree)))))
 
 (def ontree (f tree)
+  " Applies a function across each node of a list with that list treated
+    as a binary tree. "
   (f tree)
   (unless (atom tree)
     (ontree f (car tree))
     (ontree f (cdr tree))))
 
 (def dotted (x)
+  " Determines if `x' is a dotted cons pair. "
   (if (atom x)
       nil
       (and (cdr x) (or (atom (cdr x))
                        (dotted (cdr x))))))
 
 (def fill-table (table data)
+  " Fills `table' with key-value pairs in the `data' list. "
   (each (k v) (pair data) (= (table k) v))
   table)
 
 (mac obj args
+  " Creates an object with the specified entries. "
   (w/uniq g
     `(let ,g (table)
        ,@(map (fn ((k v)) `(= (,g ',k) ,v))
@@ -1195,41 +1204,52 @@
        ,g)))
 
 (def keys (h)
+  " Returns a list of keys in the table or object `h'. "
   (accum a (ontable k v h (a k))))
 
 (def vals (h)
+  " Returns a list of values in the table or object `h'. "
   (accum a (ontable k v h (a v))))
 
 ; These two should really be done by coerce.  Wrap coerce?
 
 (def tablist (h)
+  " Transforms a table or object `h' into an association list. "
   (accum a (maptable (fn args (a args)) h)))
 
 (def listtab (al)
+  " Transforms an association list into a table or object. "
   (let h (table)
     (map (fn ((k v)) (= (h k) v))
          al)
     h))
 
 (def load-table (file (o eof))
+  " Loads an association list from `file' into a table or object. "
   (w/infile i file (read-table i eof)))
 
 (def read-table ((o i (stdin)) (o eof))
+  " Loads an association list from the stream `i' into a table or object. "
   (let e (read i eof)
     (if (alist e) (listtab e) e)))
 
 (def load-tables (file)
+  " Loads several association lists from `file' into a list of tables or
+    objects. "
   (w/infile i file
     (w/uniq eof
       (drain (read-table i eof) eof))))
 
 (def save-table (h file)
+  " Writes a table or object `h' to `file'. "
   (w/outfile o file (write-table h o)))
 
 (def write-table (h (o o (stdout)))
+  " Writes a table or object `h' to the stream `o'. "
   (write (tablist h) o))
 
 (def copy (x)
+  " Creates a copy of an existing argument `x'. "
   (case (type x)
     sym    x
     cons   (apply (fn args args) x)
@@ -1244,9 +1264,11 @@
            (err "Can't copy " x)))
 
 (def abs (n)
+  " Returns the absolute value of a number. "
   (if (< n 0) (- n) n))
 
 (def signop (n)
+  " Returns the sign of a number as the symbol `+' or `-'. "
   (if (< n 0) - +))
 
 ; The problem with returning a list instead of multiple values is that
@@ -1254,6 +1276,7 @@
 ; you only want the first.  Not a big problem.
 
 (def round (n)
+  " Rounds off a fractional value to the nearest whole number. "
   (withs (base (truncate n) rem (abs (- n base)))
     (if (> rem 1/2) ((if (> n 0) + -) base 1)
         (< rem 1/2) base
@@ -1261,20 +1284,24 @@
                     base)))
 
 (def roundup (n)
+  " Rounds off a fractional value to the nearest absolute highest
+    whole number. "
   (withs (base (truncate n) rem (abs (- n base)))
     (if (>= rem 1/2)
         ((if (> n 0) + -) base 1)
         base)))
 
 (def to-nearest (n quantum)
+  " Rounds off `n' to the nearest multiple of `quantum'. "
   (* (roundup (/ n quantum)) quantum))
 
-(def avg (ns) (/ (apply + ns) (len ns)))
+(def avg (ns) " Averages all numbers in `ns'. " (/ (apply + ns) (len ns)))
 
 ; Use mergesort on assumption that mostly sorting mostly sorted lists
 ; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1)
 
 (def sort (test seq)
+  " Sorts `seq' according to `test'. "
   (if (alist seq)
       (mergesort test (copy seq))
       (coerce (mergesort test (coerce seq 'cons)) (type seq))))
@@ -1283,6 +1310,7 @@
 ; by Eli Barzilay for MzLib; re-written in Arc.
 
 (def mergesort (less? lst)
+  " Sorts a list `lst' according to `less?'. "
   (with (n (len lst))
     (if (<= n 1) lst
         ; ; check if the list is already sorted
@@ -1319,6 +1347,7 @@
 ; Also by Eli.
 
 (def merge (less? x y)
+  " Merges two sorted lists by `less?'. "
   (if (no x) y
       (no y) x
       (let lup nil
@@ -1338,15 +1367,19 @@
               x)))))
 
 (def bestn (n f seq)
+  " Returns a list of the best `n' elements of seq according to `f'. "
   (firstn n (sort f seq)))
 
 (def split (seq pos)
+  " Splits `seq' at offset `pos', returning a two-element list of the
+    split. "
   (withs (mid (nthcdr (- pos 1) seq)
           s2  (cdr mid))
     (nil! (cdr mid))
     (list seq s2)))
 
 (mac time (expr)
+  " Prints the time consumed by the `expr', returning the result. "
   (w/uniq (t1 t2)
     `(let ,t1 (msec)
        (do1 ,expr
@@ -1354,17 +1387,25 @@
               (prn "time: " (- ,t2 ,t1) " msec."))))))
 
 (mac jtime (expr)
+  " Prints the time consumed by `expr', returning `ok' when the
+    expression completes. "
   `(do1 'ok (time ,expr)))
 
 (mac time10 (expr)
+  " Prints the time consumed by executing `expr' 10 times "
   `(time (repeat 10 ,expr)))
 
 (= templates* (table))
 
 (def maps (fn . args)
+  " Applies the elements of the seqeunces to the given function.
+    Returns a sequence containing the concatenation of the results
+    of the function."
   (apply join (apply map fn args)))
 
 (mac deftem (tem . fields)
+  " Defines an object template for field values, with inclusion for
+    existing templates. "
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
     `(= (templates* ',name)
         (+ (maps templates* ',(rev includes))
@@ -1372,6 +1413,7 @@
                         (pair fields)))))))
 
 (def inst (tem . args)
+  " Creates an object instantiating a given template. "
   (let x (table)
     (each (k v) (templates* tem)
       (unless (no v) (= (x k) (v))))
@@ -1382,12 +1424,17 @@
 ; To write something to be read by temread, (write (tablist x))
 
 (def temread (tem (o str (stdin)))
+  " Reads an association list from the stream `str' and creates an
+    object instantiating the given template containing the data in
+    the association list. "
   (templatize tem (read str)))
 
 ; Converts alist to inst; ugly; maybe should make this part of coerce.
 ; Note: discards fields not defined by the template.
 
 (def templatize (tem raw)
+  " Creates an object instantiating a given template containing the
+    data in the association list `raw'. "
   (with (x (inst tem) fields (templates* tem))
     (each (k v) raw
       (when (assoc k fields)
@@ -1395,16 +1442,24 @@
     x))
 
 (def temload (tem file)
+  " Reads an association list from `file' and creates an object
+    instantiating the given template containing the data in the
+    association list. "
   (w/infile i file (temread tem i)))
 
 (def temloadall (tem file)
+  " Reads all association lists from `file' and creates a list
+    of objects instantiating the given template containing the
+    data in each association list. "
   (map (fn (pairs) (templatize tem pairs))
        (w/infile in file (readall in))))
 
 
-(def number (n) (in (type n) 'int 'num))
+(def number (n) " Determines if `n' is a number. " (in (type n) 'int 'num))
 
 (def cache (timef valf)
+  " Caches the result of a call to `valf' until a number of seconds
+    greater than the result of a call to `timef' have passed. "
   (with (cached nil gentime nil)
     (fn ()
       (unless (and cached (< (- (seconds) gentime) (timef)))
@@ -1413,24 +1468,32 @@
       cached)))
 
 (mac errsafe (expr)
+  " Executes `expr' and blocks any errors "
   `(on-err (fn (c) nil)
            (fn () ,expr)))
 
-(def saferead (arg) (errsafe (read arg)))
+(def saferead (arg)
+  " Reads an expression, blocking any errors. "
+  (errsafe (read arg)))
 
 (def safe-load-table (filename)
+  " Loads a table from `filename', blocking any errors. "
   (or (errsafe (load-table filename))
       (table)))
 
 (def ensure-dir (path)
+  " Ensures that the specified directory exists, and creates it if not
+    yet created. "
   (unless (dir-exists path)
     (system (string "mkdir -p " path))))
 
 (def uname nil
+  " Returns the name of the operating system. "
   (let val (tostring (system "uname"))
   (subseq val 0 (- (len val) 1))))
 
 (def date ((o time (seconds)))
+  " Returns the date as a string in YYYY-MM-DD format. "
   (let val (tostring (system
                       (string
                        "date -u "
@@ -1443,41 +1506,58 @@
                        " \"+%Y-%m-%d\"")))
     (subseq val 0 (- (len val) 1))))
 
-(def since (t1) (- (seconds) t1))
+(def since (t1)
+  " Returns the number of seconds since the given time. "
+  (- (seconds) t1))
 
 (def count (test x)
+  " Counts the number of elements in `x' which pass `test'. "
   (with (n 0 testf (testify test))
     (each elt x
       (if (testf elt) (++ n)))
     n))
 
 (def ellipsize (str (o limit 80))
+  " Trims a string `str' with `...' if it is longer than the given `limit'. "
   (if (<= (len str) limit)
       str
       (+ (subseq str 0 limit) "...")))
 
-(def random-elt (seq) (seq (rand (len seq))))
+(def random-elt (seq)
+  " Returns an element of `seq' chosen by random. "
+  (seq (rand (len seq))))
 
 (mac until (test . body)
+  " While `test' is false, perform `body' in a loop. "
   `(while (no ,test) ,@body))
 
 (def before (x y seq (o i 0))
+  " Determines if `x' exists before `y' in `seq'. "
   (with (xp (pos x seq i) yp (pos y seq i))
     (and xp (or (no yp) (< xp yp)))))
 
 (def orf fns
+  " Creates a function which returns true on its argument if any of the
+    given `fns' return true on that argument. "
   (fn (x) (some [_ x] fns)))
 
 (def andf fns
+  " Creates a function which returns true on its argument if all of the
+    given `fns' return true on that argument. "
   (fn (x) (all [_ x] fns)))
 
 (def atend (i s)
+  " Determines if the index `i' is at or beyond the end of the sequence `s'. "
   (>= i (- (len s) 1)))
 
 (def multiple (x y)
+  " Determines if `x' is a multiple of `y'. "
   (is 0 (mod x y)))
 
-(mac nor args `(no (or ,@args)))
+(mac nor args
+  " Computes arguments until one of them returns true, then returns nil,
+    or else returns true. "
+  `(no (or ,@args)))
 
 ; Consider making the default sort fn take compare's two args (when do
 ; you ever have to sort mere lists of numbers?) and rename current sort
@@ -1487,6 +1567,8 @@
 ; as (compare > len).
 
 (def compare (comparer scorer)
+  " Creates a function that compares using `comparer' the result of `scorer'
+    on its arguments. "
   (fn (x y) (comparer (scorer x) (scorer y))))
 
 ; Cleaner thus, but may only ever need in 2 arg case.
@@ -1495,9 +1577,12 @@
 ;  (fn args (apply comparer map scorer args)))
 
 (def only (f g . args)
+  " Applies `f' to the results of `g' on `args', but only if the result of
+    `g' is true. "
   (aif (apply g args) (f it)))
 
 (mac conswhen (f x y)
+  " Adds `x' to the front of `y' if `x' passes the test `f'. "
   (w/uniq (gf gx)
    `(with (,gf ,f ,gx ,x)
       (if (,gf ,gx) (cons ,gx ,y) ,y))))
@@ -1505,6 +1590,7 @@
 ; Could rename this get, but don't unless it's frequently used.
 
 (def firstn-that (n f xs)
+  " Returns the first `n' elements of `xs' which pass `f'. "
   (if (or (<= n 0) (no xs))
        nil
       (f (car xs))
@@ -1512,6 +1598,7 @@
        (firstn-that n f (cdr xs))))
 
 (def dedup (xs)
+  " Removes duplicated elements from `xs'. "
   (with (h (table) acc nil)
     (each x xs
       (unless (h x)
@@ -1519,24 +1606,33 @@
         (t! (h x))))
     (rev acc)))
 
-(def single (x) (and (acons x) (no (cdr x))))
+(def single (x)
+  " Determines if `x' is a list with only one element. "
+  (and (acons x) (no (cdr x))))
 
 (def plural (n str)
+  " Adds the character `s' to `str' if `n' is more than 1 or is a list
+    with more than one element. "
   (if (or (is n 1) (single n))
       str
       (string str "s")))
 
 (def intersperse (x ys)
+  " Inserts `x' between elements of `ys'. "
   (cons (car ys)
         (mappend [list x _] (cdr ys))))
 
 (def counts (seq (o c (table)))
+  " Returns a table with elements of `seq' as keys and the number of
+    occurences of that element as values. "
   (if (no seq)
       c
       (do (zap [if _ (+ _ 1) 1] (c (car seq)))
           (counts (cdr seq) c))))
 
 (def commonest (seq)
+  " Returns a two-element list containing the most common element of
+    `seq' and the number of times it occured in the sequence. "
   (with (winner nil n 0)
     (ontable k v (counts seq)
       (when (> v n) (= winner k n v)))
