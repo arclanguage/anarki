@@ -2025,9 +2025,35 @@
 
 (mac help ( (o name 'help))
    " Prints the documentation for the given symbol.  To use, type
-     (help symbol) "
-   `(do (pr ,(helpstr name))
-        nil))
+     (help symbol) ; you may also use (help \"string\") to search
+     all documentation for that string. "
+   (if
+     (isa name 'sym)
+       `(do (pr ,(helpstr name))
+            nil)
+     (isa name 'string)
+       `(helpsearch (downcase ,name))
+     t
+       `(do (pr ,(helpstr 'help)) nil) ))
+
+(def helpsearch (str)
+  " Prints all symbols whose documentation matches or partly matches `str'. "
+  (let part-match
+      ;TODO: optimize/improve
+      (fn (s)
+        ((afn (v)
+          (when (isnt 0 (len v))
+            (or (prefix str v)
+              (self (subseq v 1)) )))
+          (downcase (coerce s 'string)) ))
+    (prall
+      (sort <
+        (accum add
+          (ontable k (typ d) *help*
+            (when (or (part-match k) (part-match typ) (part-match d))
+              (add k)))))
+      "Related symbols:\n" "\n")
+    nil))
 
 (def helpstr (name (o verbose t))
   " Returns a help string for the symbol `name'. "
