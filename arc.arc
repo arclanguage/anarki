@@ -348,6 +348,8 @@
     arglist))
 
 (def arglist-frees (arglist)
+  " Returns the free variables used in default values for optional arguments
+    of an argument list. "
   (if (isa arglist 'cons)
     (apply join
       (map1
@@ -359,6 +361,7 @@
     nil))
 
 (def all-vars (form)
+  " Extracts all the variables in `form'. "
   (let head (and (isa form 'cons) (car form))
     (if
       (or (no form) (and (no (isa form 'sym)) (no (isa form 'cons))))
