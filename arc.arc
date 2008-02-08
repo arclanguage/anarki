@@ -1527,6 +1527,19 @@
     (nil! (cdr mid))
     (list seq s2)))
 
+(def ssplit (str (o noblanks) (o delim whitec))
+  "Split `str' at each occurrence of `delim', returning a list of
+   strings.  If `noblanks' is non-nil empty strings are excluded."
+  (with (acc nil j 0)
+    (forlen i str
+      (if (delim (str i))
+        (do (push (subseq str j i) acc)
+            (= j (+ i 1))))
+      (if (and (atend i str)
+               (<= j i))
+        (push (subseq str j (+ i 1)) acc))) ; add 1 because atend is true prematurely
+    (rev (if noblanks (rem empty acc) acc))))
+
 (mac time (expr)
   " Prints the time consumed by the `expr', returning the result. "
   (w/uniq (t1 t2)
