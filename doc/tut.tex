@@ -1,0 +1,1309 @@
+\documentclass[a4paper,12pt]{book}
+
+\textheight=255mm
+\topmargin=-13mm
+\textwidth=160mm
+\oddsidemargin=1mm
+\evensidemargin=1mm
+\parindent=0pt
+\parskip=1ex
+
+\begin{document}
+
+\thispagestyle{empty}
+
+{\em [This is a brief tutorial on {\sc{}Arc}.  It's intended for readers with
+little programming experience and no {\sc{}Lisp} experience.  It is thus
+also an introduction to {\sc{}Lisp}.]}
+
+\bigskip
+\bigskip
+
+{\sc{}Arc} programs consist of expressions.  The simplest expressions are
+things like numbers and strings, which evaluate to themselves.
+
+\begin{verbatim}
+arc> 25
+25
+arc> "foo"
+"foo"
+\end{verbatim}
+
+Several expressions enclosed within parentheses are also an expression.
+These are called lists.  When a list is evaluated, the elements are
+evaluated from left to right, and the value of the first (presumably
+a function) is passed the values of the rest.  Whatever it returns
+is returned as the value of the expression.
+
+\begin{verbatim}
+arc> (+ 1 2)
+3
+\end{verbatim}
+
+Here's what just happened.  First {\tt+}, {\tt1}, and {\tt2} were evaluated,
+returning the plus function, 1, and 2 respectively.  1 and 2 were
+then passed to the plus function, which returned 3, which was
+returned as the value of the whole expression.
+
+(Macros introduce a twist, because they transform lists before 
+they're evaluated.  We'll get to them later.)
+
+Since expression and evaluation are both defined recursively, 
+programs can be as complex as you want:
+
+\begin{verbatim}
+arc> (+ (+ 1 2) (+ 3 (+ 4 5)))
+15
+\end{verbatim}
+
+Putting the {\tt+} before the numbers looks odd when you're used to
+writing \verb|1 + 2|, but it has the advantage that {\tt+} can now take any
+number of arguments, not just two:
+
+\begin{verbatim}
+arc> (+)
+0
+arc> (+ 1) 
+1
+arc> (+ 1 2)
+3
+arc> (+ 1 2 3)
+6
+\end{verbatim}
+
+This turns out to be a convenient property, especially when generating
+code, which is a common thing to do in {\sc{}Lisp}.
+
+{\sc{}Lisp} dialects like {\sc{}Arc} have a data type most languages don't:
+{\em{}symbols}.  We've already seen one: {\tt+} is a symbol.  Symbols don't
+evaluate to themselves the way numbers and strings do.  They return
+whatever value they've been assigned.
+
+If we give {\tt{}foo} the value 13, it will return 13 when evaluated:
+
+\begin{verbatim}
+arc> (= foo 13)
+13
+arc> foo
+13
+\end{verbatim}
+
+You can turn off evaluation by putting a single quote character
+before an expression.  So {\tt'foo} returns the symbol {\tt{}foo}.
+
+\begin{verbatim}
+arc> 'foo
+foo
+\end{verbatim}
+
+Particularly observant readers may be wondering how we got away
+with using {\tt{}foo} as the first argument to {\tt=}.  If the arguments are
+evaluated left to right, why didn't this cause an error when foo
+was evaluated?  There are some operators that violate the usual
+evaluation rule, and {\tt=} is one of them.  Its first argument isn't
+evaluated.
+
+If you quote a list, you get back the list itself.  
+
+\begin{verbatim}
+arc> (+ 1 2)   
+3
+arc> '(+ 1 2)
+(+ 1 2)
+\end{verbatim}
+
+The first expression returns the number 3.  The second, because it
+was quoted, returns a list consisting of the symbol {\tt+} and the numbers
+1 and 2.
+
+You can build up lists with \verb|cons|, which returns a list with a new
+element on the front:
+
+\begin{verbatim}
+arc> (cons 'f '(a b))
+(f a b)
+\end{verbatim}
+
+It doesn't change the original list:
+
+\begin{verbatim}
+arc> (= x '(a b))
+(a b)
+arc> (cons 'f x)
+(f a b)
+arc> x
+(a b)
+\end{verbatim}
+
+The empty list is represented by the symbol \verb|nil|, which is defined
+to evaluate to itself.  So to make a list of one element you say:
+
+\begin{verbatim}
+arc> (cons 'a nil)
+(a)
+\end{verbatim}
+
+You can take lists apart with \verb|car| and \verb|cdr|, which return the first
+element and everything but the first element respectively:
+
+\begin{verbatim}
+arc> (car '(a b c))
+a
+arc> (cdr '(a b c))
+(b c)
+\end{verbatim}
+
+To create a list with many elements use \verb|list|, which does a series
+of \verb|cons|es:
+
+\begin{verbatim}
+arc> (list 'a 1 "foo" '(b))                      
+(a 1 "foo" (b))
+arc> (cons 'a (cons 1 (cons "foo" (cons '(b) nil))))
+(a 1 "foo" (b))
+\end{verbatim}
+
+Notice that lists can contain elements of any type.
+
+There are 4 parentheses at the end of that call to \verb|cons|.  How do
+{\sc{}Lisp} programmers deal with this?  They don't.  You could add or
+subtract a right paren from that expression and most wouldn't notice.
+{\sc{}Lisp} programmers don't count parens.  They read code by indentation,
+not parens, and when writing code they let the editor match parens
+(use \verb|:set sm| in {\em{}vi}, \verb|M-x lisp-mode| in {\em{}Emacs}).
+
+Like {\sc{}Common Lisp} assignment, {\sc{}Arc}'s {\tt=} is not just for variables, but
+can reach inside structures.  So you can use it to modify lists:
+
+\begin{verbatim}
+arc> x
+(a b)
+arc> (= (car x) 'z)
+z
+arc> x
+(z b)
+\end{verbatim}
+
+Lists are useful in exploratory programming because they're so
+flexible.  You don't have to commit in advance to exactly what a
+list represents.  For example, you can use a list of two numbers
+to represent a point on a plane.  Some would think it more proper
+to define a point object with two fields, $x$ and $y$.  But if you use
+lists to represent points, then when you expand your program to
+deal with $n$ dimensions, all you have to do is make the new code
+default to zero for missing coordinates, and any remaining planar
+code will continue to work.
+
+Or if you decide to expand in another direction and allow partially
+evaluated points, you can start using symbols representing variables
+as components of points, and once again, all the existing code will
+continue to work.
+
+In exploratory programming, it's as important to avoid premature
+specification as premature optimization.
+
+The most exciting thing lists can represent is code.  The lists you
+build with \verb|cons| are the same things programs are made out of.  This
+means you can write programs that write programs.  The usual way
+to do this is with something called a {\em{}macro}.  We'll get to those
+later.  First, functions.
+
+We've already seen some functions: {\tt+}, \verb|cons|, \verb|car|, and \verb|cdr|.  You can
+define new ones with \verb|def|, which takes a symbol to use as the name,
+a list of symbols representing the parameters, and then zero or
+more expressions called the body.  When the function is called,
+those expressions will be evaluated in order with the symbols in
+the body temporarily set (``bound'') to the corresponding argument.
+Whatever the last expression returns will be returned as the value
+of the call.
+
+Here's a function that takes two numbers and returns their average:
+
+\begin{verbatim}
+arc> (def average (x y) 
+       (/ (+ x y) 2))
+#<procedure: average>
+arc> (average 2 4)
+3
+\end{verbatim}
+
+The body of the function consists of one expression, \verb|(/ (+ x y) 2)|.
+It's common for functions to consist of one expression; in purely
+functional code (code with no side-effects) they always do.
+
+Notice that \verb|def|, like {\tt=}, doesn't evaluate all its arguments.  It
+is another of those operators with its own evaluation rule.
+
+What's the strange-looking object returned as the value of the \verb|def|
+expression?  That's what a function looks like.  In {\sc{}Arc}, as in most
+{\sc{}Lisp}s, functions are a data type, just like numbers or strings.
+
+As the literal representation of a string is a series of characters
+surrounded by double quotes, the literal representation of a function
+is a list consisting of the symbol {\tt{}fn}, followed by its parameters,
+followed by its body.  So you could represent a function to return
+the average of two numbers as:
+
+\begin{verbatim}
+arc> (fn (x y) (/ (+ x y) 2))
+#<procedure>
+\end{verbatim}
+
+There's nothing semantically special about named functions as there
+is in some other languages.  All \verb|def| does is basically this:
+
+\begin{verbatim}
+arc> (= average (fn (x y) (/ (+ x y) 2)))
+#<procedure: average>
+\end{verbatim}
+
+And of course you can use a literal function wherever you could use
+a symbol whose value is one, e.\,g.
+
+\begin{verbatim}
+arc> ((fn (x y) (/ (+ x y) 2)) 2 4)
+3
+\end{verbatim}
+
+This expression has three elements, \verb|(fn (x y) (/ (+ x y) 2))|, which
+yields a function that returns averages, and the numbers {\tt2} and {\tt4}.
+So when you evaluate all three expressions and pass the values of
+the second and third to the value of the first, you pass 2 and 4
+to a function that returns averages, and the result is 3.
+
+There's one thing you can't do with functions that you can do with
+data types like symbols and strings: you can't print them out in a
+way that could be read back in.  The reason is that the function 
+could be a {\em{}closure}; displaying closures is a tricky problem.
+
+In {\sc{}Arc}, data structures can be used wherever functions are, and
+they behave as functions from indices to whatever's stored there.
+So to get the first element of a string you say:
+
+\begin{verbatim}
+arc> ("foo" 0)
+#\f
+\end{verbatim}
+
+That return value is what a literal character looks like, incidentally.
+
+Expressions with data structures in functional position also work
+as the first argument to {\tt=}.
+
+\begin{verbatim}
+arc> (= s "foo")
+"foo"
+arc> (= (s 0) #\m)
+#\m
+arc> s
+"moo"
+\end{verbatim}
+
+There are two commonly used operators for establishing temporary
+variables, \verb|let| and \verb|with|.  The first is for just one variable.
+
+\begin{verbatim}
+arc> (let x 1 
+       (+ x (* x 2)))
+3
+\end{verbatim}
+
+To bind multiple variables, use \verb|with|.
+
+\begin{verbatim}
+arc> (with (x 3 y 4)
+       (sqrt (+ (expt x 2) (expt y 2))))
+5
+\end{verbatim}
+
+So far we've only had things printed out implicity as a result of
+evaluating them.  The standard way to print things out in the middle
+of evaluation is with \verb|pr| or \verb|prn|.  They take multiple arguments and
+print them in order; \verb|prn| also prints a newline at the end.  Here's
+a variant of \verb|average| that tells us what its arguments were:
+
+\begin{verbatim}
+arc> (def average (x y)
+       (prn "my arguments were: " (list x y))
+       (/ (+ x y) 2))
+*** redefining average
+#<procedure: average>
+arc> (average 100 200)
+my arguments were: (100 200)
+150
+\end{verbatim}
+
+The standard conditional operator is \verb|if|.  Like {\tt=} and \verb|def|, it doesn't
+evaluate all its arguments.  When given three arguments, it evaluates
+the first, and if that returns true, it returns the value of the
+second, otherwise the value of the third:
+
+\begin{verbatim}
+arc> (if (odd 1) 'a 'b)
+a
+arc> (if (odd 2) 'a 'b)
+b
+\end{verbatim}
+
+Returning true means returning anything except \verb|nil|.  \verb|Nil| is
+conventionally used to represent falsity as well as the empty list.
+The symbol {\tt{}t} (which like \verb|nil| evaluates to itself) is often used to
+represent truth, but any value other than \verb|nil| would serve just as
+well.
+
+\begin{verbatim}
+arc> (odd 1)
+t
+arc> (odd 2)
+nil
+\end{verbatim}
+
+It sometimes causes confusion to use the same thing for falsity and
+the empty list, but many years of {\sc{}Lisp} programming have convinced
+me it's a net win, because the empty list is set-theoretic false,
+and many {\sc{}Lisp} programs think in sets.
+
+If the third argument is missing it defaults to \verb|nil|.
+
+\begin{verbatim}
+arc> (if (odd 2) 'a)
+nil
+\end{verbatim}
+
+An \verb|if| with more than three arguments is equivalent to a nested \verb|if|.
+
+\begin{verbatim}
+(if a b c d e)
+\end{verbatim}
+
+is equivalent to
+
+\begin{verbatim}
+(if a
+    b
+    (if c
+        d
+        e))
+\end{verbatim}
+
+If you're used to languages with \verb|elseif|, this pattern will be
+familiar.\footnote{%
+Note to {\sc{}Lisp} hackers: If you're used to the conventional {\sc{}Lisp}
+{\tt{}cond} operator, this {\tt{}if} amounts to the same thing, but with fewer
+parentheses.  E.\,g.\ {\tt (cond (a b) (c d) (t e))} becomes {\tt (if a b c d e)}\,.
+
+JMC's original {\tt{}cond} didn't have implicit {\tt{}progn}, so the parens around
+each pair of clauses were unnecessary.  They became necessary soon
+after, however, when {\tt{}cond} started to have implicit {\tt{}progn} in the
+first {\sc{}Lisp} implementations.  This probably prevented people from
+realizing they hadn't originally been needed.  But most {\tt{}cond}s in
+the wild seem to occur in purely functional code, and thus pay the
+cost in parens of implicit {\tt{}progn} without actually needing it.  My
+experience so far suggests it's a net win to offer {\tt{}progn} \`a la carte
+instead of combining it with the default conditional operator.
+Having to use explicit {\tt{}do}s may even be an advantage, because it
+calls attention to nonfunctional code.
+}
+
+Each argument to \verb|if| is a single expression, so if you want to do
+multiple things depending on the result of a test, combine them
+into one expression with \verb|do|.
+
+\begin{verbatim}
+arc> (do (prn "hello") 
+         (+ 2 3))                             
+hello
+5
+\end{verbatim}
+
+If you just want several expressions to be evaluated when some
+condition is true, you could say
+
+\begin{verbatim}
+(if a
+    (do b
+        c))
+\end{verbatim}
+
+but this situation is so common there's a separate operator for it.
+
+\begin{verbatim}
+(when a
+  b
+  c)
+\end{verbatim}
+
+The \verb|and| and \verb|or| operators are like conditionals because they don't
+evaluate more arguments than they have to.
+
+\begin{verbatim}
+arc> (and nil
+          (pr "you'll never see this"))
+nil
+\end{verbatim}
+
+The negation operator is called \verb|no|, a name that also works when
+talking about \verb|nil| as the empty list.  Here's a function to return
+the length of a list:
+
+\begin{verbatim}
+arc> (def mylen (xs)
+       (if (no xs)
+           0
+           (+ 1 (mylen (cdr xs)))))
+#<procedure: mylen>
+\end{verbatim}
+
+If the list is \verb|nil| the function will immediately return 0.  Otherwise
+it returns 1 more than the length of the \verb|cdr| of the list.
+
+\begin{verbatim}
+arc> (mylen nil)
+0
+arc> (mylen '(a b))
+2
+\end{verbatim}
+
+I called it \verb|mylen| because there's already a function called \verb|len| for
+this.   You're welcome to redefine {\sc{}Arc} functions, but redefining
+\verb|len| this way might break code that depended on it, because \verb|len| works
+on more than lists.
+
+The standard comparison operator is \verb|is|, which returns true if its
+arguments are identical or, if strings, have the same characters. 
+
+\begin{verbatim}
+arc> (is 'a 'a)
+t
+arc> (is "foo" "foo")
+t
+arc> (let x (list 'a) 
+       (is x x))
+t
+arc> (is (list 'a) (list 'a))
+nil
+\end{verbatim}
+
+Note that \verb|is| returns false for two lists with the same elements.
+There's another operator for that, \verb|iso| (from isomorphic).
+
+\begin{verbatim}
+arc> (iso (list 'a) (list 'a))
+t
+\end{verbatim}
+
+If you want to test whether something is one of several alternatives,
+you could say \verb|(or (is x y) (is x z) ...)|, but this situation is
+common enough that there's an operator for it.
+
+\begin{verbatim}
+arc> (let x 'a   
+       (in x 'a 'b 'c))
+t
+\end{verbatim}
+
+The \verb|case| operator takes alternating keys and expressions and returns
+the value of the expression after the key that matches.  You can
+supply a final expression as the default.
+
+\begin{verbatim}
+arc> (def translate (sym)
+       (case sym
+         apple 'mela 
+         onion 'cipolla
+               'che?))
+#<procedure: translate>
+arc> (translate 'apple)
+mela
+arc> (translate 'syzygy)
+che?
+\end{verbatim}
+
+{\sc{}Arc} has a variety of iteration operators.  For a range of numbers,
+use \verb|for|.
+
+\begin{verbatim}
+arc> (for i 1 10 
+       (pr i " "))
+1 2 3 4 5 6 7 8 9 10 nil
+\end{verbatim}
+
+To iterate through the elements of a list or string, use \verb|each|.
+
+\begin{verbatim}
+arc> (each x '(a b c d e) 
+       (pr x " "))
+a b c d e nil
+\end{verbatim}
+
+Those \verb|nil|s you see at the end each time are not printed out by the
+code in the loop.  They're the return values of the iteration
+expressions.
+
+To continue iterating while some condition is true, use \verb|while|.
+
+\begin{verbatim}
+arc> (let x 10
+       (while (> x 5)
+         (= x (- x 1))
+         (pr x)))
+98765nil
+\end{verbatim}
+
+There's also a more general \verb|loop| operator that's similar to the C
+\verb|for| operator and tends to be rarely used in practice, and a simple
+\verb|repeat| operator for doing something $n$ times:
+
+\begin{verbatim}
+arc> (repeat 5 (pr "la "))
+la la la la la nil
+\end{verbatim}
+
+The \verb|map| function takes a function and a list and returns the result
+of applying the function to successive elements.
+
+\begin{verbatim}
+arc> (map (fn (x) (+ x 10)) '(1 2 3))
+(11 12 13 . nil)
+\end{verbatim}
+
+Actually it can take any number of sequences, and keeps going till
+the shortest runs out:
+
+\begin{verbatim}
+arc> (map + '(1 2 3 4) '(100 200 300))
+(101 202 303)
+\end{verbatim}
+
+Since functions of one argument are so often used in {\sc{}Lisp} programs,
+{\sc{}Arc} has a special notation for them.  \verb|[... _ ...]|  is an abbreviation
+for \verb|(fn (_) (... _ ...))|.  So our first \verb|map| example could have been
+written
+
+\begin{verbatim}
+arc> (map [+ _ 10] '(1 2 3))
+(11 12 13 . nil)
+\end{verbatim}
+
+Removing variables is a particularly good way to make programs
+shorter.  An unnecessary variable increases the conceptual load of
+a program by more than just what it adds to the length.
+
+You can compose functions by putting a colon between the names.
+I.\,e.\, \verb|(foo:bar x y)| is equivalent to \verb|(foo (bar x y))|.  Composed
+functions are convenient as arguments.
+
+\begin{verbatim}
+arc> (map odd:car '((1 2) (4 5) (7 9)))
+(t nil t)
+\end{verbatim}
+
+You can also negate a function by putting a tilde ({\tt\char126}) before the
+name:
+
+\begin{verbatim}
+arc> (map ~odd '(1 2 3 4 5)) 
+(nil t nil t nil)
+\end{verbatim}
+
+There are a number of functions like \verb|map| that apply functions to
+successive elements of a sequence.  The most commonly used is \verb|keep|,
+which returns the elements satisfying some test.
+
+\begin{verbatim}
+arc> (keep odd '(1 2 3 4 5 6 7))
+(1 3 5 7)
+\end{verbatim}
+
+Others include \verb|rem|, which does the opposite of \verb|keep|; \verb|all|, which
+returns true if the function is true of every element; \verb|some|, which
+returns true if the function is true of any element; \verb|pos|, which
+returns the position of the first element for which the function
+returns true; and \verb|trues|, which returns a list of all the non-\verb|nil| 
+return values:
+
+\begin{verbatim}
+arc> (rem odd '(1 2 3 4 5 6))
+(2 4 6)
+arc> (all odd '(1 3 5 7))
+t
+arc> (some even '(1 3 5 7))
+nil
+arc> (pos even '(1 2 3 4 5))
+1
+arc> (trues [if (odd _) (+ _ 10)] 
+            '(1 2 3 4 5))
+(11 13 15)
+\end{verbatim}
+
+If functions like this are given a first argument that isn't a
+function, it's treated like a function that tests for equality to
+that:
+
+\begin{verbatim}
+arc> (rem 'a '(a b a c u s))
+(b c u s)
+\end{verbatim}
+
+and they all work on strings as well as lists.
+
+\begin{verbatim}
+arc> (rem #\a "abacus")
+"bcus"
+\end{verbatim}
+
+Lists can be used to represent a wide variety of data structures,
+but if you want to store key/value pairs efficiently, {\sc{}Arc} also has
+hash tables.
+
+\begin{verbatim}
+arc> (= airports (table))         
+#hash()
+arc> (= (airports "Boston") 'bos)
+bos
+\end{verbatim}
+
+If you want to create a hash table filled with values, you can use
+\verb|listtab|, which takes a list of key/value pairs and returns the 
+corresponding hash table.
+
+\begin{verbatim}
+arc> (let h (listtab '((x 1) (y 2)))
+       (h 'y))
+2
+\end{verbatim}
+
+There's also an abbreviated form where you don't need to group the
+arguments or quote the keys.
+
+\begin{verbatim}
+arc> (let h (obj x 1 y 2)
+       (h 'y))
+2
+\end{verbatim}
+
+Like lists and strings, hash tables can be used wherever functions are.
+
+\begin{verbatim}
+arc> (= codes (obj "Boston" 'bos "San Francisco" 'sfo "Paris" 'cdg))
+#hash(("Boston" . bos) ("Paris" . cdg) ("San Francisco" . sfo))
+arc> (map codes '("Paris" "Boston" "San Francisco"))
+(cdg bos sfo)
+\end{verbatim}
+
+The function \verb|keys| returns the keys in a hash table, and \verb|vals| returns
+the values.  
+
+\begin{verbatim}
+arc> (keys codes)
+("Boston" "Paris" "San Francisco")
+\end{verbatim}
+
+There is a function called \verb|maptable| for hash tables that is like
+\verb|map| for lists, except that it returns the original table instead
+of a new one.
+
+\begin{verbatim}
+arc> (maptable (fn (k v) (prn v " " k))
+               codes)
+sfo San Francisco
+cdg Paris
+bos Boston
+#hash(("Boston" . bos) ("Paris" . cdg) ("San Francisco" . sfo))
+\end{verbatim}
+
+[Note: Like functions, hash tables can't be printed out in a way
+that can be read back in.  We hope to fix that though.]
+
+There is a tradition in {\sc{}Lisp} going back to McCarthy's 1960 paper\footnote{%
+{\em Recursive Functions of Symbolic Expressions and Their Computation
+by Machine, Part~I}, CACM, April~1960.
+{\tt{}http://www-formal.stanford.edu/jmc/recursive/recursive.html}
+}
+of using lists to represent key/value pairs:
+
+\begin{verbatim}
+arc> (= codes (("Boston" bos) ("Paris" cdg) ("San Francisco" sfo)))
+(("Boston" bos) ("Paris" cdg) ("San Francisco" sfo))
+\end{verbatim}
+
+This is called an association list, or {\em{}alist} for short.  I once
+thought alists were just a hack, but there are many things you can
+do with them that you can't do with hash tables, including sort
+them, build them up incrementally in recursive functions, have
+several that share the same tail, and preserve old values.
+
+The function \verb|alref| returns the first value corresponding to a key
+in an alist:
+
+\begin{verbatim}
+arc> (alref codes "Boston")
+bos
+\end{verbatim}
+
+There are a couple operators for building strings.  The most general
+is \verb|string|, which takes any number of arguments and mushes them into
+a string:
+
+\begin{verbatim}
+arc> (string 99 " bottles of " 'bee #\r)
+"99 bottles of beer"
+\end{verbatim}
+
+Every argument will appear as it would look if printed out by \verb|pr|,
+except \verb|nil|, which is ignored.
+
+There's also \verb|tostring|, which is like \verb|do| except any output generated
+during the evaluation of its body is sent to a string, which is
+returned as the value of the whole expression.
+
+\begin{verbatim}
+arc> (tostring                  
+       (prn "domesday")
+       (prn "book"))
+"domesday\nbook\n"
+\end{verbatim}
+
+You can find the types of things using \verb|type|, and convert them to
+new types using \verb|coerce|.
+
+\begin{verbatim}
+arc> (map type (list 'foo 23 23.5 '(a) nil car "foo" #\a))
+(sym int num cons sym fn string char)
+arc> (coerce #\A 'int)
+65
+arc> (coerce "foo" 'cons)
+(#\f #\o #\o)
+arc> (coerce "99" 'int)
+99
+arc> (coerce "99" 'int 16)
+153
+\end{verbatim}
+
+The \verb|push| and \verb|pop| operators treat list as stacks, pushing a new
+element on the front and popping one off respectively.
+
+\begin{verbatim}
+arc> (= x '(c a b))
+(c a b)
+arc> (pop x)
+c
+arc> x
+(a b)
+arc> (push 'f x)
+(f a b)
+arc> x
+(f a b)
+\end{verbatim}
+
+Like {\tt=}, they work within structures, not just on variables.
+
+\begin{verbatim}
+arc> (push 'l (cdr x))
+(l a b)
+arc> x
+(f l a b)
+\end{verbatim}
+
+To increment or decrement use {\tt++} or {\tt--}:
+
+\begin{verbatim}
+arc> (let x '(1 2 3) 
+       (++ (car x))
+       x)           
+(2 2 3)
+\end{verbatim}
+
+There's also a more general operator called \verb|zap| that changes something
+to the result any function returns when applied to it.  I.\,e. \verb|(++ x)|
+is equivalent to \verb|(zap [+ _ 1] x)|.
+
+The \verb|sort| function returns a copy of a sequence sorted according to
+the function given as the first argument.
+
+\begin{verbatim}
+arc> (sort < '(2 9 3 7 5 1))
+(1 2 3 5 7 9)
+\end{verbatim}
+
+It doesn't change the original, so if you want to sort the value
+of a particular variable (or place within a structure), use \verb|zap|:
+
+\begin{verbatim}
+arc> (= x '(2 9 3 7 5 1))
+(2 9 3 7 5 1)
+arc> (zap [sort < _] x)
+(1 2 3 5 7 9)
+arc> x
+(1 2 3 5 7 9)
+\end{verbatim}
+
+If you want to modify a sorted list by inserting a new element
+at the right place, use \verb|insort|:
+
+\begin{verbatim}
+arc> (insort < 4 x)
+(1 2 3 4 5 7 9)
+arc> x
+(1 2 3 4 5 7 9)
+\end{verbatim}
+
+In practice the things one needs to sort are rarely just lists of
+numbers.  More often you'll need to sort things according to some
+property other than their value, e.\,g.
+
+\begin{verbatim}
+arc> (sort (fn (x y) (< (len x) (len y)))
+           '("orange" "pea" "apricot" "apple"))
+("pea" "apple" "orange" "apricot")
+\end{verbatim}
+
+{\sc{}Arc}'s sort is stable, meaning the relative positions of elements
+judged equal by the comparison function won't change:
+
+\begin{verbatim}
+arc> (sort (fn (x y) (< (len x) (len y)))
+           '("aa" "bb" "cc"))
+("aa" "bb" "cc")
+\end{verbatim}
+
+Since comparison functions other than {\tt>} or {\tt<} are so often needed,
+{\sc{}Arc} has a \verb|compare| function to build them:
+
+\begin{verbatim}
+arc> (sort (compare < len)
+           '("orange" "pea" "apricot" "apple"))
+("pea" "apple" "orange" "apricot")
+\end{verbatim}
+
+We've seen several functions so far that take optional arguments
+or varying numbers of arguments.  To make a parameter optional,
+just say \verb|(o x)| instead of {\tt{}x}. Optional parameters default to \verb|nil|.
+
+\begin{verbatim}
+arc> (def greet (name (o punc))
+       (string "hello " name punc))
+#<procedure: greet>
+arc> (greet 'joe)
+"hello joe"
+arc> (greet 'joe #\!)
+"hello joe!"
+\end{verbatim}
+
+Functions can have as many optional parameters as you want, but
+they have to come at the end of the parameter list.  
+
+If you put an expression after the name of an optional parameter,
+it will be evaluated if necessary to produce a default value.  The
+expression can refer to preceding parameters.
+
+\begin{verbatim}
+arc> (def greet (name (o punc (case name who #\? #\!)))
+       (string "hello " name punc)) 
+*** redefining greet
+#<procedure: greet>
+arc> (greet 'who)
+"hello who?"
+\end{verbatim}
+
+To make a function that takes any number of arguments, put a period
+and a space before the last parameter, and it will get bound to a
+list of the values of all the remaining arguments:
+
+\begin{verbatim}
+arc> (def foo (x y . z) 
+       (list x y z))
+#<procedure: foo>
+arc> (foo (+ 1 2) (+ 3 4) (+ 5 6) (+ 7 8))
+(3 7 (11 15))
+\end{verbatim}
+
+This type of parameter is called a ``rest parameter'' because it gets
+the rest of the arguments.  If you want all the arguments to a
+function to be collected in one parameter, just use it in place of
+the whole parameter list.
+
+(These conventions are not as random as they seem.  The parameter
+list mirrors the form of the arguments, and a list terminated by
+something other than \verb|nil| is represented as e.\,g.\ \verb|(a b . c)|.)
+
+To supply a list of arguments to a function, use \verb|apply|:
+
+\begin{verbatim}
+arc> (apply + '(1 2 3))
+6
+\end{verbatim}
+
+Now that we have rest parameters and \verb|apply|, we can write a version
+of \verb|average| that takes any number of arguments.
+
+\begin{verbatim}
+arc> (def average args 
+       (/ (apply + args) (len args)))
+#<procedure: average>
+arc> (average 1 2 3)
+2
+\end{verbatim}
+
+We know enough now to start writing macros.  Macros are basically
+functions that generate code.  Of course, generating code is easy;
+just call \verb|list|.
+
+\begin{verbatim}
+arc> (list '+ 1 2)
+(+ 1 2)
+\end{verbatim}
+
+What macros offer is a way of getting code generated this way into
+your programs.  Here's a (rather stupid) macro definition:
+
+\begin{verbatim}
+arc> (mac foo () 
+       (list '+ 1 2))
+*** redefining foo
+#3(tagged mac #<procedure>)
+\end{verbatim}
+
+Notice that a macro definition looks exactly like a function
+definition, but with \verb|def| replaced by \verb|mac|.  
+
+What this macro says is that whenever the expression (\verb|foo|) occurs
+in your code, it shouldn't be evaluated in the normal way like a
+function call.  Instead it should be replaced by the result of
+evaluating the body of the macro definition, \verb|(list '+ 1 2)|.
+This is called the ``expansion'' of the macro call.
+
+In other words, if you've defined \verb|foo| as above, putting \verb|(foo)|
+anywhere in your code is equivalent to putting \verb|(+ 1 2)| there.
+
+\begin{verbatim}
+arc> (+ 10 (foo))
+13
+\end{verbatim}
+
+This is a rather useless macro, because it doesn't take any arguments.
+Here's a more useful one:
+
+\begin{verbatim}
+arc> (mac when (test . body)
+       (list 'if test (cons 'do body)))
+*** redefining when
+#3(tagged mac #<procedure>)
+\end{verbatim}
+
+We've just redefined the built-in \verb|when| operator.  That would
+ordinarily be an alarming idea, but fortunately the definition we
+supplied is the same as the one it already had.
+
+\begin{verbatim}
+arc> (when 1 
+       (pr "hello ")
+       2)
+hello 2
+\end{verbatim}
+
+What the definition above says is that when you have to evaluate
+an expression whose first element is \verb|when|, replace it by the result
+of applying
+
+\begin{verbatim}
+(fn (test . body) 
+  (list 'if test (cons 'do body)))
+\end{verbatim}
+
+to the arguments.  Let's try it by hand and see what we get.
+
+\begin{verbatim}
+arc> (apply (fn (test . body) 
+              (list 'if test (cons 'do body)))
+            '(1 (pr "hello ") 2))
+(if 1 (do (pr "hello ") 2))
+\end{verbatim}
+
+So when {\sc{}Arc} has to evaluate 
+
+\begin{verbatim}
+(when 1 
+  (pr "hello ") 
+  2) 
+\end{verbatim}
+
+the macro we defined transforms that into 
+
+\begin{verbatim}
+(if 1 
+    (do (pr "hello ") 
+        2))
+\end{verbatim}
+
+first, and when that in turn is evaluated, it produces the behavior
+we saw above.
+
+Building up expressions using calls to \verb|list| and \verb|cons| can get unwieldy,
+so most {\sc{}Lisp} dialects have an abbreviation called {\em{}backquote} that
+makes generating lists easier.
+
+If you put a single open-quote character ({\tt`}) before an expression,
+it turns off evaluation just like the ordinary quote ({\tt'}) does,
+
+\begin{verbatim}
+arc> `(a b c)
+(a b c)
+\end{verbatim}
+
+except that if you put a comma before an expression within the list,
+evaluation gets turned back on for that expression.
+
+\begin{verbatim}
+arc> (let x 2
+       `(a ,x c))
+(a 2 c)
+\end{verbatim}
+
+A backquoted expression is like a quoted expression with holes in it.
+
+You can also put a comma-at ({\tt,@}) in front of anything within a
+backquoted expression, and in that case its value (which must be a
+list) will get spliced into whatever list you're currently in.
+
+\begin{verbatim}
+arc> (let x '(1 2)
+       `(a ,@x c))
+(a 1 2 c)
+\end{verbatim}
+
+With backquote we can make the definition of \verb|when| more readable.
+
+\begin{verbatim}
+(mac when (test . body)
+  `(if ,test (do ,@body)))
+\end{verbatim}
+
+In fact, this is the definition of \verb|when| in the {\sc{}Arc} source.
+
+One of the keys to understanding macros is to remember that macro
+calls aren't function calls.  Macro calls look like function calls.
+Macro definitions even look a lot like function definitions.  But
+something fundamentally different is happening.  You're transforming
+code, not evaluating it.  Macros live in the land of the names, not 
+the land of the things they refer to.
+
+For example, consider this definition of \verb|repeat|:
+
+\begin{verbatim}
+arc> (mac repeat (n . body)
+       `(for x 1 ,n ,@body))
+#3(tagged mac #<procedure>)
+\end{verbatim}
+
+Looks like it works, right?
+
+\begin{verbatim}
+arc> (repeat 3 (pr "blub ")) 
+blub blub blub nil
+\end{verbatim}
+
+But if you use it in certain contexts, strange things happen.
+
+\begin{verbatim}
+arc> (let x "blub "  
+       (repeat 3 (pr x)))
+123nil
+\end{verbatim}
+
+We can see what's going wrong if we look at the expansion.  The
+code above is equivalent to
+
+\begin{verbatim}
+(let x "blub "
+  (for x 1 3 (pr x)))
+\end{verbatim}
+
+Now the bug is obvious.  The macro uses the variable {\tt{}x} to hold the
+count while iterating, and that gets in the way of the {\tt{}x} we're
+trying to print.
+
+Some people worry unduly about this kind of bug.  It caused the
+{\sc{}Scheme} committee to adopt a plan for ``hygienic'' macros that was
+probably a mistake.  It seems to me that the solution is not to
+encourage the noob illusion that macro calls are function calls.
+People writing macros need to remember that macros live in the land
+of names.  Naturally in the land of names you have to worry about
+using the wrong names, just as in the land of values you have to
+remember not to use the wrong values---for example, not to use zero
+as a divisor.
+
+The way to fix \verb|repeat| is to use a symbol that couldn't occur in
+source code instead of {\tt{}x}.  In {\sc{}Arc} you can get one by calling the
+function \verb|uniq|.  So the correct definition of \verb|repeat| (and in fact
+the one in the {\sc{}Arc} source) is
+
+\begin{verbatim}
+(mac repeat (n . body)
+  `(for ,(uniq) 1 ,n ,@body))
+\end{verbatim}
+
+If you need one or more \verb|uniq|s for use in a macro, you can use \verb|w/uniq|, 
+which takes either a variable or list of variables you want bound to
+\verb|uniq|s.  Here's the definition of a variant of \verb|do| called \verb|do1| that's
+like \verb|do| but returns the value of its first argument instead of the
+last (useful if you want to print a message after something happens, 
+but return the something, not the message):
+
+\begin{verbatim}
+(mac do1 args
+  (w/uniq g
+    `(let ,g ,(car args)
+       ,@(cdr args)
+       ,g)))
+\end{verbatim}
+
+Sometimes you actually want to ``capture'' variables, as it's called,
+in macro definitions.  The following variant of \verb|if|, which binds the
+variable {\tt{}it} to the value of the test, turns out to be very useful:
+
+\begin{verbatim}
+(mac aif (expr . body)
+  `(let it ,expr (if it ,@body)))
+\end{verbatim}
+
+In a sense, you now know all about macros---in the same sense that,
+if you know the axioms in Euclid, you know all the theorems.  A lot
+follows from these simple ideas, and it can take years to explore
+the territory they define.  At least, it took me years.  But it's
+a path worth following.  Because macro calls can expand into further
+macro calls, you can generate massively complex expressions with
+them---code you would have had to write by hand otherwise.  And yet
+programs built up out of layers of macros turn out to be very
+manageable.  I wouldn't be surprised if some parts of my code go
+through 10 or 20 levels of macroexpansion before the compiler sees
+them, but I don't know, because I've never had to look.
+
+One of the things you'll discover as you learn more about macros
+is how much day-to-day coding in other languages consists of manually
+generating macroexpansions.  Conversely, one of the most important
+elements of learning to think like a {\sc{}Lisp} programmer is to cultivate
+a dissatisfaction with repetitive code.  When there are patterns
+in source code, the response should not be to enshrine them in a
+list of ``best practices,'' or to find an IDE that can generate them.
+Patterns in your code mean you're doing something wrong.  You should
+write the macro that will generate them and call that instead.
+
+Now that you've learned the basics of {\sc{}Arc} programming, the best way
+to learn more about the language is to try writing some programs
+in it.  Here's how to write the hello-world of web apps:
+
+\begin{verbatim}
+arc> (defop hello req (pr "hello world"))
+#<procedure:gs1430>
+arc> (asv)
+ready to serve port 8080
+\end{verbatim}
+
+If you now go to \verb|http://localhost:8080/hello| your new web app will
+be waiting for you.
+
+Here are a couple slightly more complex hellos that hint at the
+convenience of macros that store closures on the server:
+
+\begin{verbatim}
+(defop hello2 req
+  (w/link (pr "there") 
+    (pr "here")))
+
+(defop hello3 req
+  (w/link (w/link (pr "end")
+            (pr "middle"))
+    (pr "start")))
+
+(defop hello4 req
+  (aform [w/link (pr "you said: " (arg _ "foo"))
+           (pr "click here")]
+    (input "foo")
+    (submit)))
+\end{verbatim}
+
+See the sample application in \verb|blog.arc| for ideas about how to make
+web apps that do more.
+
+We now know enough {\sc{}Arc} to read the definitions of some of the
+predefined functions.  Here are a few of the simpler ones.
+
+\begin{verbatim}
+(def cadr (xs) 
+  (car (cdr xs)))
+
+(def no (x) 
+  (is x nil))
+
+(def list args 
+  args)
+
+(def isa (x y) 
+  (is (type x) y))
+
+(def firstn (n xs)
+  (if (and (> n 0) xs)
+      (cons (car xs) (firstn (- n 1) (cdr xs)))
+      nil))
+
+(def nthcdr (n xs)    
+  (if (> n 0)
+      (nthcdr (- n 1) (cdr xs))
+      xs))  
+
+(def tuples (xs (o n 2))
+  (if (no xs)
+      nil
+      (cons (firstn n xs)
+            (tuples (nthcdr n xs) n))))
+
+(def trues (f seq) 
+  (rem nil (map f seq)))
+
+(mac unless (test . body)
+  `(if (no ,test) (do ,@body)))
+
+(mac awhen (expr . body)
+  `(let it ,expr (if it (do ,@body))))
+
+(mac n-of (n expr)
+  (w/uniq ga
+    `(let ,ga nil
+       (repeat ,n (push ,expr ,ga))
+       (rev ,ga))))
+\end{verbatim}
+
+These definitions are taken from \verb|arc.arc|.  As its name suggests,
+reading that file is a good way to learn more about both {\sc{}Arc} and
+{\sc{}Arc} programming techniques.  Nothing in it is used before it's
+defined; it is an exercise in building the part of the language
+written in {\sc{}Arc} up from the ``axioms'' defined in \verb|ac.scm|. I hoped this
+would yield a simple language.  But since this is also the source
+code of {\sc{}Arc}, I've tried to balance simplicity with efficiency.  The
+definitions aren't mathematically minimal if that would be insanely
+inefficient; I tried that once, and they were.
+
+The definitions in \verb|arc.arc| are also an experiment in another way.
+They are the language spec.  The spec for \verb|isa| isn't prose, like
+function specs in {\sc{}Common Lisp}.  This is the spec for \verb|isa|:
+
+\begin{verbatim}
+(def isa (x y) 
+  (is (type x) y))
+\end{verbatim}
+
+It may sound rather dubious to say that the only spec for something
+is its implementation.  It sounds like the sort of thing one might
+say about C++, or the {\sc{}Common Lisp} loop macro.  But that's also how
+math works.  If the implementation is sufficiently abstract, it
+starts to be a good idea to make specification and implementation
+identical.
+
+I agree with Abelson and Sussman that programs should be written
+primarily for people to read rather than machines to execute.  The
+{\sc{}Lisp} defined as a model of computation in McCarthy's original paper
+was.  It seems worth trying to preserve this as you grow {\sc{}Lisp} into
+a language for everyday use.
+
+\end{document}
