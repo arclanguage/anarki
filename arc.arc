@@ -387,6 +387,7 @@
         (apply join (map1 *mbf-all-vars form)))))
 
 (def *mbf-free? (form var)
+  " Determines if `var' is free within `form' "
   ; I'd like to use case, but it doesn't exist yet.
   (with (kind (type form)
          find (afn (x lst)
@@ -418,6 +419,7 @@
       nil)))
 
 (mac make-br-fn (body)
+  " Used to expand [... _ ...] forms. "
   (with (max 0 arbno nil)
     (map1 ; Just for the side-effect; used as "max"
       (fn (_)
@@ -943,8 +945,8 @@
       `(let it ,(car args) (and it (aand ,@(cdr args))))))
 
 (mac accum (accfn . body)
-  " Accumulates the values given to all calls to `accfn' within `body' and
-    returns a list of those values. "
+  " Collects or accumulates the values given to all calls to `accfn' within
+    `body' and returns a list of those values. "
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
@@ -1804,6 +1806,8 @@
 
   ; Left-associative
   (def reduce (f xs (o init initsym))
+    " Applies `f' to an accumulated result on the elements of `xs'.
+      Elements are processsed left-to-right. "
     ((afn (xs)
        (if (cdr xs) (self (cons (f (car xs) (cadr xs)) (cddr xs)))
            xs (car xs)
@@ -1813,6 +1817,8 @@
   ; Right-associative
   ; Rather inefficent due to recursive call not being in the tail position.
   (def rreduce (f xs (o init initsym))
+    " Applies `f' to an accumulated result on the elements of `xs'.
+      Elements are processsed right-to-left. "
     ((afn (xs)
        (if (cdr xs) (f (car xs) (rreduce f (cdr xs)))
            xs (car xs)
@@ -1822,6 +1828,7 @@
 (let argsym (uniq)
 
   (def parse-format (str)
+    " Parses a simple ~-format string. "
     (rev (accum a
            (with (chars nil  i -1)
              (w/instring s str
@@ -1839,6 +1846,7 @@
                 (a (coerce (rev chars) 'string)))))))
 
   (mac prf (str . args)
+    " Prints according to a format string, replacing ~* with arguments. "
     `(let ,argsym (list ,@args)
        (pr ,@(parse-format str))))
 )
