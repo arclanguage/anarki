@@ -334,7 +334,7 @@
       (ormap pred (cdr seq)))))
 
 (def *mbf-arglist-vars (arglist)
-  " Returns the variables in an argument list. "
+  " Returns the variables bound in an argument list. "
   (if (isa arglist 'cons)
     (apply join
       (map1
@@ -361,7 +361,7 @@
     nil))
 
 (def *mbf-all-vars (form)
-  " Extracts all the variables in `form'. "
+  " Extracts all the variables in the fully macro-expanded s-expression `form'. "
   (let head (and (isa form 'cons) (car form))
     (if
       (or (no form) (and (no (isa form 'sym)) (no (isa form 'cons))))
@@ -387,7 +387,7 @@
         (apply join (map1 *mbf-all-vars form)))))
 
 (def *mbf-free? (form var)
-  " Determines if `var' is free within `form' "
+  " Checks if the variable named `var' occurs free (unbound) in `form'. "
   ; I'd like to use case, but it doesn't exist yet.
   (with (kind (type form)
          find (afn (x lst)
@@ -419,7 +419,11 @@
       nil)))
 
 (mac make-br-fn (body)
-  " Used to expand [... _ ...] forms. "
+  " Constructs an anonymous procedure with the body `body'; the procedure will
+    have bound variables of the form _1 ... _N, where N is the largest of those
+    variables used in the function.  __ will be a rest parameter, and _ is an
+    alias for _1.  Each variable is declared iff it is used.  This is used to
+    implement the [] anonymous functions. "
   (with (max 0 arbno nil)
     (map1 ; Just for the side-effect; used as "max"
       (fn (_)
