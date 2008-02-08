@@ -2039,13 +2039,9 @@
 (def helpsearch (str)
   " Prints all symbols whose documentation matches or partly matches `str'. "
   (let part-match
-      ;TODO: optimize/improve
-      (fn (s)
-        ((afn (v)
-          (when (isnt 0 (len v))
-            (or (prefix str v)
-              (self (subseq v 1)) )))
-          (downcase (coerce s 'string)) ))
+      (let rx (re (downcase str))
+        (fn (s)
+          (re-match rx (downcase (coerce s 'string)))))
     (prall
       (sort <
         (accum add
