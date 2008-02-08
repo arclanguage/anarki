@@ -355,7 +355,7 @@
         (fn (_)
           (and (isa _ 'cons)
                (is (car _) 'o)
-               (all-vars (cddr _))))
+               (*mbf-all-vars (cddr _))))
         (makeproper arglist)))
     nil))
 
