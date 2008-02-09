@@ -46,13 +46,35 @@
   "The index to the remaining input of a return value."
   (cadr retval))
 
-; this could return something somewhat AST-like
+
+; eventually this should return an AST
 (def parse (parser input (o idx 0))
   "Run the given parser on input."
-  (parser input))
+  ((force parser) input)) ; force the parser if it is a delay
 
 
-;; core parsers
+; all parsers should be lazy so one can build grammars thusly:
+;
+;   (= begin   (char "*")
+;      end     (char "*")
+;      emph    (seq begin (many1 content) end)  ; content not defined yet
+;      content (alt emph (seq (cant-see begin) (cant-see end) any-char)))
+
+; this idea is from On Lisp, seems to work well
+(mac delay (expr)
+  (if (isdelay expr)    ; don't nest delays
+      expr
+      `'(delay ,expr)))
+
+(def isdelay (x)
+  (and (acons x) (is (car x) 'delay)))
+
+ (def force (x)
+   (if (isdelay x)
+       (eval (last x))
+       x))
+
+;; core parsers (atoms)
 
 (def noop (input)
   "Consume no input successfully.  If used in alternatives, use only at the end.
@@ -102,90 +124,95 @@
   (fn (input) (parse-char input nil [no (findsubseq _ chars)])))
 
 ; (expr)?
-(def maybe (parser)
-  (alt parser noop))
+(mac maybe (parser)
+  `(alt (delay ,parser) noop))
 
 ; (expr){3}
 ; (expr){1,6}
-(def n-times (parser n (o m))
-  (apply seq (if (no m)
-                 (map [idfn parser] (range 1 n))
-                 (join (map [idfn parser] (range 1 n))
-                       (map [maybe parser] (range (+ n 1) m))))))
+(mac n-times (parser n (o m))
+  `(fn (input)
+     (seq-r (if (no ,m)
+                (map [idfn (delay ,parser)] (range 1 ,n))
+                (join (map [idfn (delay ,parser)] (range 1 ,n))
+                      (map [maybe (delay ,parser)] (range (+ ,n 1) ,m))))
+            input)))
 
 (def token (s)
   "Parse the literal string s."
-  (apply seq (map [char _] (($ string->list) s))))
+  (fn (input)
+    (seq-r (map [char _] (($ string->list) s))
+           input)))
 
 ; (?=expr)
-(def can-see (parser)
+(mac can-see (parser)
   "Look ahead.  Consumes no input."
-  (fn (input)
-    (let result (parser input)
-      (if (success result)
-          (return "" input)
-          result))))
+  `(fn (input)
+     (iflet result (parse (delay ,parser) input)
+            (return "" input))))
 
 ; (?!expr)
-(def cant-see (parser)
+(mac cant-see (parser)
   "Negative look ahead.  Consumes no input."
-  (fn (input)
-    (let result (parser input)
-      (if (success result)
-          (fail)
-          (return "" input)))))
+  `(fn (input)
+     (iflet result (parse (delay ,parser) input)
+            (fail)
+            (return "" input))))
+
+; is there a better way to eval an arg to a macro? yikes.
+(mac mapdelay (lst)
+  `(map [eval (apply delay (list _))] ',lst))
 
 ; |
 ; alternation, like parsec's <|>
-(def alt choices
-  (fn (input)
-    (with (result 'notnil i 0)
-      (while (and (< i (len choices))
-                  (no result))
-        (= result ((choices i) input))
-        (++ i))
-      result)))
+(mac alt parsers
+  `(fn (input)
+     (alt-r (mapdelay ,parsers) input)))
+
+(def alt-r (parsers input)
+  (if (no parsers)
+      (fail)
+      (or (parse (car parsers) input)
+          (alt-r (cdr parsers) input))))
 
 ; like catenation in a regex.
 ; parse this then that, somewhat like parsec's >>
-(def seq parsers
-  (fn (input)
-    (with (result    nil
-           parsed    ""
-           remaining input)
-      (while (and (no (empty parsers))
-                  (= result ((car parsers) remaining)))
-        (= parsed    (+ parsed (value result))
-           remaining (reminput result)
-           parsers   (cdr parsers)))
-      (if (and (empty parsers)
-               result)
-          (return parsed remaining)))))
+(mac seq parsers
+  (and (is 1 (len parsers)) ; allow (seq (parser parser)) or (seq parser parser)
+       (acons (car parsers))
+       (= parsers (car parsers)))
+  `(fn (input)  ; this should *definitely* use recursion
+     (seq-r (mapdelay ,parsers) input)))
+
+(def seq-r (parsers input (o accum ""))
+  (if (no parsers)
+      (if (~empty accum) ; this test is bullshit, need to check properly
+                         ; in case of (seq (can-see "foo")) nothing is consumed
+          (return accum input))
+      (iflet (parsed remaining) (parse (car parsers) input)
+             (seq-r (cdr parsers) remaining (+ accum parsed)))))
 
 ; *
 ; repeat zero or more times (cannot fail)
-(def many (parser)
-  (fn (input)
-    (with (result    nil
-           parsed    ""
-           remaining input)
-      (while (= result (parser remaining))
-        (= parsed    (+ parsed (value result))
-           remaining (reminput result)))
-      (return parsed remaining))))
+(mac many (parser)
+  `(fn (input)
+     (many-r (delay ,parser) input)))
+
+(def many-r (parser input (o accum ""))
+  (iflet (parsed remaining) (parse parser input)
+         (many-r parser remaining (+ accum parsed))
+         (return accum input)))
 
 ; +
 ; repeat one or more times
-(def many1 (parser)
-  (fn (input)
-    (with (result    nil
-           parsed    ""
-           remaining input)
-      (while (= result (parser remaining))
-        (= parsed    (+ parsed (value result))
-           remaining (reminput result)))
-      (if (> (len parsed) 0) ; success if we consumed any input
-          (return parsed remaining)))))
+(mac many1 (parser)
+  `(fn (input)
+     (many1-r (delay ,parser) input)))
+
+(def many1-r (parser input (o accum ""))
+  (iflet (parsed remaining) (parse parser input)
+         (many1-r parser remaining (+ accum parsed))
+         (~empty accum)
+         (return accum input)))
 
 ; if an index was passed around this would work
 (def beginning (input idx)

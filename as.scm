@@ -8,6 +8,7 @@
 (load "ac.scm") 
 (require "brackets.scm")
 (use-bracket-readtable)
+(require "bitops.scm")
 
 (aload "arc.arc")
 (aload "libs.arc") 

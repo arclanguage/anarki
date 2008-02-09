@@ -1,0 +1,681 @@
+==========================================
+This is a copy paste from (for easier 'grepability'):
+ http://dyn.dnadavis.net/ArcDocs/
+
+Try to keep any descriptions in the sameline (grep - again)
+ ex. grep abs arc-functions.txt
+==========================================
+
+
+
+arc.arc
+  Functions
+	<= args
+	>= args
+	abs (n) -- Absolute value of n ie. |n|
+	acons (x)
+	adjoin (x xs (o test iso))
+	alist (x)
+	all (test seq)
+	alphadig (c)
+	alref (al key)
+	andf fns
+	assoc (key al)
+	atend (i s)
+	atom (x)
+	avg (ns)
+	before (x y seq (o i 0))
+	best (f seq)
+	bestn (n f seq)
+	caar (xs)
+	cache (timef valf)
+	cadr (xs)
+	carif (x)
+	caris (x val)
+	cddr (xs)
+	commonest (seq)
+	compare (comparer scorer)
+	consif (x y)
+	copy (x)
+	count (test x)
+	counts (seq (o c (table)))
+	date ((o time (seconds)))
+	dedup (xs)
+	deq (q)
+	dotted (x)
+	downcase (x)
+	ellipsize (str (o limit 80))
+	empty (seq)
+	enq (obj q)
+	enq-limit (val q (o limit 1000))
+	ensure-dir (path)
+	ero args
+	even (n)
+	expand (expr)
+	expand-metafn-call (f args)
+	expand= (place val)
+	expand=list (terms)
+	fill-table (table data)
+	find (test seq)
+	firstn (n xs)
+	firstn-that (n f xs)
+	flat (x (o stringstoo))
+	idfn (x)
+	input-history-update (expr)
+	insert-sorted (test elt seq)
+	inst (tem . args)
+	intersperse (x ys)
+	isa (x y)
+	isnt (x y)
+	iso (x y)
+	join args
+	keep (test seq)
+	keys (h)
+	last (seq)
+	list args
+	listtab (al)
+	load (file (o hook))
+	load-table (file (o eof))
+	load-tables (file)
+	map (f . seqs)
+	map1 (f xs)
+	mappend (f . args)
+	maps (fn . args)
+	max args
+	median (ns)
+	mem (test seq)
+	memo (f)
+	memtable (ks)
+	merge (less? x y)
+	mergesort (less? lst)
+	metafn (x)
+	min args
+	mismatch (s1 s2)
+	most (f seq)
+	multiple (x y)
+	no (x)
+	nonwhite (c)
+	nthcdr (n xs)
+	number (n)
+	odd (n)
+	only (f g . args)
+	ontree (f tree)
+	orf fns
+	output-history-update (val)
+	pair (xs (o f list))
+	plural (n str)
+	pos (test seq (o start 0))
+	positive (x)
+	pr args
+	prall (elts (o init "") (o sep ", "))
+	prn args
+	prs args
+	punc (c)
+	qlen (q)
+	qlist (q)
+	queue ()
+	rand-string (n)
+	random-elt (seq)
+	range (start end (o step 1))
+	read ((o x (stdin)) (o eof nil))
+	read-table ((o i (stdin)) (o eof))
+	readall (src (o eof nil))
+	readfile (name)
+	readfile1 (name)
+	readline ((o str (stdin)))
+	readstring1 (s (o eof nil))
+	reclist (f xs)
+	recstring (test s (o start 0))
+	reinsert-sorted (test elt seq)
+	rem (test seq)
+	rev (xs)
+	round (n)
+	roundup (n)
+	safe-load-table (filename)
+	saferead (arg)
+	save-table (h file)
+	setforms (expr0)
+	signop (n)
+	since (t1)
+	single (x)
+	some (test seq)
+	sort (test seq)
+	split (seq pos)
+	splitn (n xs)
+	string args
+	subseq (seq start (o end (len seq)))
+	sym (x)
+	tablist (h)
+	temload (tem file)
+	temloadall (tem file)
+	templatize (tem raw)
+	temread (tem (o str (stdin)))
+	testify (x)
+	to-nearest (n quantum)
+	trav (f base tree)
+	tree-subst (old new tree)
+	trues (f seq)
+	tuples (xs (o n 2))
+	uname nil
+	upcase (x)
+	vals (h)
+	warn (msg . args)
+	whitec (c)
+	write-table (h (o o (stdout)))
+	writefile1 (val name)
+	Macros
+	$ body
+	% ()
+	%% ()
+	%%% ()
+	++ (place (o i 1))
+	-- (place (o i 1))
+	= args
+	aand args
+	accum (accfn . body)
+	afn (parms . body)
+	after (x . ys)
+	aif (expr . body)
+	and args
+	atlet args
+	atomic body
+	atwith args
+	atwiths args
+	awhen (expr . body)
+	case (expr . args)
+	caselet (var expr . args)
+	catch body
+	complement (f)
+	compose args
+	conswhen (f x y)
+	default (x test alt)
+	defmemo (name parms . body)
+	defset (name parms . body)
+	deftem (tem . fields)
+	do1 args
+	drain (expr (o eof nil))
+	each (var expr . body)
+	errsafe (expr)
+	for (v init max . body)
+	forlen (var s . body)
+	fromstring (str . body)
+	help (name)
+	iflet (var expr then . rest)
+	in (x . choices)
+	insort (test elt seq)
+	insortnew (test elt seq)
+	jtime (expr)
+	let (var val . body)
+	loop (start test update . body)
+	n-of (n expr)
+	nil! args
+	noisy-each (n var val . body)
+	nor args
+	obj args
+	on (var s . body)
+	ontable (k v h . body)
+	or args
+	or= (var val)
+	point (name . body)
+	pop (place)
+	pull (test place)
+	push (x place)
+	pushnew (x place . args)
+	rand-choice exprs
+	redef (name parms . body)
+	repeat (n . body)
+	rfn (name parms . body)
+	rotate places
+	summing (sumfn . body)
+	swap (place1 place2)
+	t! args
+	time (expr)
+	time10 (expr)
+	tostring body
+	unless (test . body)
+	until (test . body)
+	w/appendfile (var name . body)
+	w/bars body
+	w/outstring (var . body)
+	w/stdin (str . body)
+	w/stdout (str . body)
+	w/table (var . body)
+	w/uniq (names . body)
+	when (test . body)
+	whenlet (var expr . body)
+	while (test . body)
+	whiler (var expr endval . body)
+	whilet (var test . body)
+	with (parms . body)
+	withs (parms . body)
+	zap (op place . args)
+	ac.scm
+	Xdefs
+	*
+	+
+	-
+	/
+	
+	>
+	annotate
+	apply
+	atomic-invoke
+	bound
+	break-thread
+	call-w/stdin
+	call-w/stdout
+	car
+	ccc
+	cdr
+	client-ip
+	close
+	coerce
+	cons
+	current-gc-milliseconds
+	current-process-milliseconds
+	dead
+	details
+	dir
+	dir-exists
+	disp
+	err
+	eval
+	exact
+	expt
+	file-exists
+	infile
+	inside
+	instring
+	is
+	kill-thread
+	len
+	macex
+	macex1
+	maptable
+	mod
+	msec
+	newstring
+	nil
+	on-err
+	open-socket
+	outfile
+	outstring
+	peekc
+	pipe-from
+	protect
+	quit
+	rand
+	readb
+	readc
+	rep
+	rmfile
+	scar
+	scdr
+	seconds
+	seval
+	sig
+	sleep
+	socket-accept
+	sqrt
+	sread
+	sref
+	ssexpand
+	ssyntax
+	stderr
+	stdin
+	stdout
+	system
+	t
+	table
+	thread
+	truncate
+	type
+	uniq
+	write
+	writeb
+	writec
+app.arc
+  Functions
+	admin (u)
+	admin-gate (u)
+	admin-page (user . msg)
+	asv ((o port 8080))
+	bad-newacct (user pw)
+	code-block (s i)
+	cook-user (user)
+	create-acct (user pw)
+	delimc (c)
+	disable-acct (user)
+	get-user (req)
+	good-login (user pw ip)
+	goodname (str (o min 1) (o max nil))
+	hello-page (user ip)
+	indented-code (s i (o newlines 0) (o spaces 0))
+	load-userinfo ()
+	login-page (switch (o msg nil) (o afterward hello-page))
+	logout-user (user)
+	markdown (s (o maxurl) (o nolinks))
+	md-from-form (str (o nolinks))
+	mismatch-message ()
+	needrows (text cols (o pad 0))
+	new-user-cookie ()
+	parabreak (s i (o newlines 0))
+	prcookie (cook)
+	pwfields ((o label "login"))
+	readvar (typ str (o fail nil))
+	set-pw (user pw)
+	shash (str)
+	showvars (fields)
+	splitlines (str)
+	text-rows (text wid (o pad 3))
+	text-type (typ)
+	unmarkdown (s)
+	urlend (s i)
+	user-exists (u)
+	varfield (typ id val)
+	varline (typ id val)
+	vars-form (user fields f done (o button "update") (o lasts))
+  Macros
+	defopl (name parm . body)
+	matchform (user req after . body)
+	matchrform (user req after . body)
+	userlink (user text . body)
+	when-usermatch (user req . body)
+	when-usermatchr (user req . body)
+blog.arc
+  Functions
+	addpost (user title text)
+	bsv ()
+	display-post (user p)
+	edit-page (user p)
+	load-posts ()
+	notfound ()
+	permalink (p)
+	post (id)
+	post-page (user p)
+	save-post (p)
+  Macros
+	blogpage body
+code.arc
+  Functions
+	code-density (file)
+	codeflat (file)
+	codelines (file)
+	codetree (file)
+	common-operators (files)
+	common-tokens (files)
+	nonop (x)
+	space-eaters (files)
+	tokcount (files)
+	top40 (xs)
+	Macros
+html.arc
+  Functions
+	blank-url ()
+	br ((o n 1))
+	br2 ()
+	but ((o text "submit") (o name nil))
+	buts (name . texts)
+	cellpr (x)
+	color (r g b)
+	dehex (str)
+	end-tag (spec)
+	errpage args
+	esc<>& (str)
+	eschtml (str)
+	hspace (n)
+	img-url (file)
+	input (name (o val "") (o size 10))
+	link (text (o dest text) (o color))
+	menu (name items (o sel nil))
+	nbsp ()
+	opcolor (key val)
+	opesc (key val)
+	opnum (key val)
+	opsel (key val)
+	opstring (key val)
+	opsym (key val)
+	pagemessage (text)
+	para ()
+	parafy (str)
+	pr-escaped (x)
+	shortlink (url)
+	spacerow (h)
+	start-tag (spec)
+	striptags (s)
+	submit ((o val "submit"))
+	tag-options (spec options)
+	underlink (text (o dest text))
+	vhspace (h w)
+	vspace (n)
+	Macros
+	attribute (tag opt f)
+	center
+	form (action . body)
+	gentag args
+	inputs args
+	new-hspace (n)
+	opmeth (tag opt)
+	prbold body
+	prrow args
+	row args
+	spacetable body
+	spanclass (name . body)
+	spanrow (n . body)
+	tab
+	tag (spec . body)
+	tag-if (test spec . body)
+	textarea (name rows cols . body)
+	tr
+	underline body
+	whitepage body
+	widtable (w . body)
+	zerotable body
+libs.arc
+  Functions
+  Macros
+pprint.arc
+  Functions
+	lpar ()
+	ppr (expr (o col 0) (o noindent nil))
+	ppr-call (expr col noindent)
+	ppr-progn (expr col noindent)
+	pprest (exprs col (o oneline t))
+	sp ((o n 1))
+	write-spaced (xs)
+  Macros
+prompt.arc
+  Functions
+	app-path (user app)
+	edit-app (user app)
+	pprcode (exprs)
+	prompt-page (user . msg)
+	read-app (user app)
+	rem-app (user app)
+	repl (exprs url)
+	replpage (req)
+	run-app (user app)
+	view-app (user app)
+	write-app (user app exprs)
+	Macros
+srv.arc
+  Functions
+	arg (req key)
+	ensure-install ()
+	flink (f)
+	fnid (f)
+	gifname (sym)
+	handle-post (i o op n cooks ip)
+	handle-request (s (o life threadlife*))
+	handle-request-thread (i o ip)
+	harvest-fnids ((o n 20000))
+	new-fnid ()
+	parseargs (s)
+	parsecookies (s)
+	parseheader (lines)
+	parseurl (s)
+	reassemble-args (req)
+	respond (str op args cooks ip)
+	respond-err (str msg . args)
+	rflink (f)
+	save-optime (name elapsed)
+	serve ((o port 8080))
+	serve1 ((o port 8080))
+	srvlog (type . args)
+	timed-fnid (lasts f)
+	unique-id ((o len 8))
+	url-for (fnid)
+	Macros
+	afnid (f)
+	aform (f . body)
+	aformh (f . body)
+	arform (f . body)
+	arformh (f . body)
+	defop (name parm . body)
+	defop-raw (name parms . body)
+	defopr (name parm . body)
+	defopr-raw (name parms . body)
+	linkf (text parms . body)
+	onlink (text . body)
+	rlinkf (text parms . body)
+	timed-aform (lasts f . body)
+	w/link (expr . body)
+	w/link-if (test expr . body)
+	w/rlink (expr . body)
+strings.arc
+  Functions
+	begins (seq pat (o start 0))
+	blank (s)
+	findsubseq (pat seq (o start 0))
+	headmatch (pat seq (o start 0))
+	latin1-hack (i)
+	multisubst (pairs seq)
+	num (m (o digits 2) (o trail-zeros nil) (o init-zero nil))
+	posmatch (pat seq (o start 0))
+	subst (new old seq)
+	tokens (s (o sep whitec))
+	trim (s where (o test whitec))
+	urldecode (s)
+	Macros
+	endmatch (pat string)
+	litmatch (pat string (o start 0))
+array.arc
+  Functions
+	array (dim (o contents nil))
+	array>list (a)
+	array? (a)
+	copy-array (a)
+	div (a b)
+	expand<- (place val)
+	expand<-list (terms)
+	fill-array! (a val)
+	inv (a)
+	make-array-wrapper (dim store)
+	make-indexer (dim)
+	make-inverse-indexer (dim)
+	set-array! (a tree)
+	share-array! (a dim)
+	size (a)
+	Macros
+	<- args
+classifier.arc
+  Functions
+	catcount (cl cat)
+	categories (cl)
+	classify (cl words)
+	doc-prob (cl cat words (o wcount 15))
+	fcount (cl f cat)
+	fprob (cl f cat)
+	incc (cl cat)
+	incf (cl f cat)
+	naivebayes (cl cat words)
+	sampletrain (cl)
+	totalcount (cl)
+	train (cl words cat)
+	weighted-prob (cl f cat pf w (o ap 0.5))
+	Macros
+	=default (table key de)
+	=tresh (x cat v)
+	cc (x)
+	fc (x)
+	mkcls ((o tresholds '(table)))
+	tresh (x cat)
+code.arc
+  Functions
+	code-density (file)
+	codeflat (file)
+	codelines (file)
+	codetree (file)
+	common-operators (files)
+	common-tokens (files)
+	nonop (x)
+	space-eaters (files)
+	tokcount (files)
+	top40 (xs)
+	Macros
+files.arc
+  Functions
+	cp (src dst)
+	file-join parts
+	file-perms (path)
+	file-size (path)
+	mkdir (path)
+	mtime (path)
+	mv (src dst)
+	pwd ()
+	Macros
+heap.arc
+  Functions
+	delmin (h (o <= <=))
+	hmerge (h1 h2 (o <= <=))
+	hmin (h)
+	mkt (x a b)
+	Macros
+	insert (x h (o <= '<=))
+	mptyh ()
+	rank (h)
+import.arc
+  Functions
+	Macros
+	imp modules
+	impas (as module)
+ircbot.arc
+  Functions
+	client (hostname port)
+	irc (nick)
+	irc& (nick)
+	log args
+	out args
+	parse (s)
+	Macros
+optimization.arc
+  Functions
+	annealing (domain costf T cool step (o sol (map (fn ((x y)) (rand-ft x y)) domain)))
+	Macros
+	rand-ft (from to)
+spec.arc
+  Functions
+	assocs (key list)
+	def-result (desc body value)
+	def-results (desc results)
+	print-results (results (o all nil))
+	result-body (result)
+	result-desc (result)
+	result-value (result)
+	results-desc (results)
+	results-results (results)
+	Macros
+	describe body
+	do2 args
+tiny.arc
+  Functions
+	tinyurl (url)
+	urlencode (str)
+	Macros
+unifier.arc
+  Functions
+	Macros
+	lookup (var bindings)
+	mcond (val . pats)
+	var? (x)
+

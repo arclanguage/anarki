@@ -101,7 +101,9 @@
 (define (expand-ssyntax sym)
   (let ((elts (map (lambda (tok)
                      (if (eqv? (car tok) #\~)
-                         `(complement ,(chars->value (cdr tok)))
+                         (if (null? (cdr tok))
+                             'no
+                             `(complement ,(chars->value (cdr tok))))
                          (chars->value tok)))
                    (tokens #\: (symbol->chars sym) '() '()))))
     (if (null? (cdr elts))
@@ -569,6 +571,7 @@
 (xdef '* *)
 (xdef '/ /)
 (xdef 'mod modulo)
+(xdef 'quotient quotient)
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
 

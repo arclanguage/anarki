@@ -4,7 +4,12 @@ here=$(cd $(dirname "$0"); pwd)
 cd "$here"
 
 (
-echo "(do ($ (current-directory \""$here"\"))"
-echo " (load \"irc-client.arc\"))" 
-echo "(irc \"arcbot\")"
+cat <<EOF
+(cd "lib")
+(load "tiny.arc")
+(load "irc-bot.arc")
+(= bot* (thread (fn () (irc "arcbot"))))
+(prn "bot is running in background")
+EOF
+cat /dev/stdin
 ) | ../arc.sh
