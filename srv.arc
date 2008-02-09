@@ -63,6 +63,8 @@
                     (close i)))))
       (sleep .2)))
 
+; Currently trapping errors and responding with 500 error and message. 
+; Headers already committed though so you get both 200 and 500 headers.
 (def handle-request-thread (i o ip)
   (with (nls 0 lines nil line nil responded nil)
     (after
@@ -72,10 +74,12 @@
             (if (is (++ nls) 2) 
                 (do (let (type op args n cooks) (parseheader (rev lines))
                       (srvlog 'srv ip type op cooks)
-                      (case type
-                        get  (respond o op args cooks ip)
-                        post (handle-post i o op n cooks ip)
-                             (respond-err o "Unknown request: " (car lines))))
+                      (on-err (fn (c) (respond-err o 500 (details c)))
+                        (fn () 
+                          (case type
+                            get  (respond o op args cooks ip)
+                            post (handle-post i o op n cooks ip)
+                                 (respond-err o 404 "Unknown request: " (car lines))))))
                     (= responded t))
                 (do (push (coerce (rev line) 'string) lines)
                     (= line nil)))
@@ -92,7 +96,7 @@
 (def handle-post (i o op n cooks ip)
   (if srv-noisy* (pr "Post Contents: "))
   (if (no n)
-      (respond-err o "Post request without Content-Length.")
+      (respond-err o 500 "Post request without Content-Length.")
       (let line nil
         (whilet c (and (> n 0) (readc i))
           (if srv-noisy* (pr c))
@@ -106,14 +110,18 @@
 (= srvops* (table) redirectors* (table) optimes* (table))
 
 (= statuscodes* (listtab '((200 "OK") (302 "Moved Temporarily") (404 "Not Found") (500 "Internal Server Error"))))
+(= ext-mimetypes* (listtab '(("gif" "image/gif") ("jpg" "image/jpeg") ("png" "image/png") 
+                             ("css" "text/css") ("pdf" "application/pdf") ("swf" "application/x-shockwave-flash"))))
 
-(def header ((o type "text/html;charset=utf-8") (o code 200))
+(= textmime* "text/html;charset=utf-8")
+
+(def header ((o type textmime*) (o code 200))
   (string "HTTP/1.0 " code " " (statuscodes* code) "
 Content-Type: " type "
 Connection: close"))
 
-(def err-header ((o code 404))
-  (header "text/html" code))
+(def err-header (code)
+  (header textmime* code))
 
 (def save-optime (name elapsed)
   (unless (optimes* name) (= (optimes* name) (queue)))
@@ -156,16 +164,27 @@ Connection: close"))
 
 (= unknown-msg* "Unknown operator.")
 
+(def extension (file)
+  (let tok (tokens file #\.)
+    (if (is (len tok) 1)
+        tok 
+        (car (rev tok)))))
+
+(def filemime (file)
+   (aif (ext-mimetypes* (extension file))
+        it
+        textmime*))
+
 (def respond (str op args cooks ip)
   (w/stdout str
-    (if (gifname op)
-        (do (prn (header "image/gif"))
-            (prn)
-            (w/infile i (coerce op 'string)
-              (whilet b (readb i)
-                (writeb b str))))
-        (aif (srvops* op)
-             (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+    (aif (and (~empty (coerce op 'string)) (file-exists (coerce op 'string)))
+           (do (prn (header (filemime it)))
+               (prn)
+               (w/infile i it
+                 (whilet b (readb i)
+                 (writeb b str))))
+         (srvops* op)
+           (let req (inst 'request 'args args 'cooks cooks 'ip ip)
                (if (redirectors* op)
                    (do (prn rdheader*)
                        (let loc (it str req) ; may write to str, e.g. cookies
@@ -173,15 +192,11 @@ Connection: close"))
                        (prn))
                    (do (prn (header))
                        (it str req))))
-             (respond-err str unknown-msg*)))))
+         (respond-err str 404 unknown-msg*))))
 
-(def gifname (sym)
-  (let str (coerce sym 'string)
-    (and (endmatch ".gif" str) (~find #\/ str))))
-
-(def respond-err (str msg . args)
+(def respond-err (str code msg . args)
   (w/stdout str
-    (prn (err-header)) 
+    (prn (err-header code)) 
     (prn)
     (apply pr msg args)))
 
@@ -484,5 +499,3 @@ Connection: close"))
     (create-acct "frug" "frug")
     (writefile1 'frug adminfile*))
   (load-userinfo))
-
-
