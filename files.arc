@@ -34,7 +34,7 @@
 
 (def mkdir (path)
    " Creates a directory. "
-   ($ (make-directory path))
+   ($ (make-directory ,path))
    nil)
 
 ; This could be defined in pure Arc, but we don't really have a good way of
