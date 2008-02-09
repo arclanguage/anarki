@@ -571,6 +571,7 @@
 (xdef '* *)
 (xdef '/ /)
 (xdef 'mod modulo)
+(xdef 'quotient quotient)
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
 

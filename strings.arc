@@ -218,7 +218,7 @@
 
 ; Import Scheme's regular expressions
 (= re ($ regexp))
-(= re-match ($ regexp-match))
+(= re-match [no (no (($ regexp-match) _1 _2)) ])
 (= re-pos ($ regexp-match-positions))
 (= re-subst ($ regexp-replace))
 
