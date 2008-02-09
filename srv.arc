@@ -101,17 +101,19 @@
         (if srv-noisy* (pr "\n\n"))
         (respond o op (parseargs (coerce (rev line) 'string)) cooks ip))))
 
-(= header* "HTTP/1.0 200 OK
-Content-Type: text/html
-Connection: close")
-
-(= gif-header* "HTTP/1.0 200 OK
-Content-Type: image/gif
-Connection: close")
-
 (= rdheader* "HTTP/1.0 302 Moved")
 
 (= srvops* (table) redirectors* (table) optimes* (table))
+
+(= statuscodes* (listtab '((200 "OK") (302 "Moved Temporarily") (404 "Not Found") (500 "Internal Server Error"))))
+
+(def header ((o type "text/html;charset=utf-8") (o code 200))
+  (string "HTTP/1.0 " code " " (statuscodes* code) "
+Content-Type: " type "
+Connection: close"))
+
+(def err-header ((o code 404))
+  (header "text/html" code))
 
 (def save-optime (name elapsed)
   (unless (optimes* name) (= (optimes* name) (queue)))
@@ -157,7 +159,7 @@ Connection: close")
 (def respond (str op args cooks ip)
   (w/stdout str
     (if (gifname op)
-        (do (prn gif-header*)
+        (do (prn (header "image/gif"))
             (prn)
             (w/infile i (coerce op 'string)
               (whilet b (readb i)
@@ -169,7 +171,7 @@ Connection: close")
                        (let loc (it str req) ; may write to str, e.g. cookies
                          (prn "Location: " loc))
                        (prn))
-                   (do (prn header*)
+                   (do (prn (header))
                        (it str req))))
              (respond-err str unknown-msg*)))))
 
@@ -179,7 +181,7 @@ Connection: close")
 
 (def respond-err (str msg . args)
   (w/stdout str
-    (prn header*)
+    (prn (err-header)) 
     (prn)
     (apply pr msg args)))
 
