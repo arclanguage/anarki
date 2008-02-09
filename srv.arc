@@ -458,6 +458,7 @@ Connection: close"))
    ))
 (= frontpage-user-links*
   '(
+    ("Arc reference"		"help")
     ("Log out"			"logout")
    ))
 (defop || req

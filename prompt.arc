@@ -117,3 +117,39 @@
         (prn (if err "Error: " "")
              (ellipsize (tostring (write val)) 800)))))
 
+(defop help req
+  (withs
+    (
+      rawargs (listtab:req 'args)
+      args [coerce (rawargs _) 'string]
+      nonempty [if (isnt "" _) _]
+      enempty [if (no _) "" _])
+  (tag (html)
+    (tag (head)
+      (tag (title)
+        (aif (nonempty:args "sym") (pr it " - ")
+          (nonempty:args "str") (pr "\"" it "\" - "))
+        (pr "Online help")))
+    (tag (body)
+        (aif
+          (nonempty:args "sym")
+            (tag xmp (eval `(help ,(coerce it 'sym))))
+          (nonempty:args "str")
+            (eval `(help ,(coerce it 'string)))
+            (pr "Welcome to online help. "
+              "Enter your search below.") )
+        ;Use 'tag because we want to use get method for
+        ;this form, in order to allow the user to bookmark
+        ;search results.
+        (tag (form method 'get action 'help)
+          (inputs "sym" "Search Function "
+            20 (enempty:args "sym")
+            "str" "Search Docstrings "
+            20 (enempty:args "str") )
+          (br)
+          (submit "Search"))
+        ;dummy form to force reload of this operation
+        (tag (form method 'get action 'help)
+          (submit "Clear"))))))
+
+
