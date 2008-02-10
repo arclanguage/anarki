@@ -23,6 +23,9 @@
 
 (set *help* (table))
 
+(set *current-load-file* "arc.arc")
+(set *source-file* (table))
+
 (set do (annotate 'mac
           (fn args `((fn () ,@args)))))
 ;documentation for do itself
@@ -31,6 +34,9 @@
   'do)
 (sref sig
   'args
+  'do)
+(sref *source-file*
+  *current-load-file*
   'do)
 
 (set safeset (annotate 'mac
@@ -49,6 +55,7 @@
                    (if (is (type ',(car body)) 'string)
                        (sref *help* '(fn ,(car body)) ',name)
                        (sref *help* '(fn nil) ',name))
+                   (sref *source-file* *current-load-file* ',name)
                    (safeset ,name (fn ,parms ,@body))))))
 ;documentation for def itself
 (sref *help*
@@ -56,6 +63,9 @@
   'def)
 (sref sig
   '(name parms . body)
+  'def)
+(sref *source-file*
+  *current-load-file*
   'def)
 
 (def caar (xs) " Equivalent to (car (car xs)) " (car (car xs)))
@@ -94,10 +104,11 @@
 (set mac (annotate 'mac
            (fn (name parms . body)
              `(do (sref sig ',parms ',name)
-                   ; Document the macro, including the docstring if present
-                   (if (is (type ',(car body)) 'string)
-                       (sref *help* '(mac ,(car body)) ',name)
-                       (sref *help* '(mac nil) ',name))
+                  ; Document the macro, including the docstring if present
+                  (if (is (type ',(car body)) 'string)
+                      (sref *help* '(mac ,(car body)) ',name)
+                      (sref *help* '(mac nil) ',name))
+                  (sref *source-file* *current-load-file* ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
 (sref *help*
@@ -105,6 +116,9 @@
   'mac)
 (sref sig
   '(name parms . body)
+  'mac)
+(sref *source-file*
+  *current-load-file*
   'mac)
 
 (mac and args
@@ -248,11 +262,23 @@
   " When `test' is not true, do `body'. "
   `(if (no ,test) (do ,@body)))
 
+(mac point (name . body)
+  " Creates a form which may be exited by calling `name' from within `body'. "
+  (w/uniq g
+    `(ccc (fn (,g)
+            (let ,name [,g _]
+              ,@body)))))
+
+(mac catch body
+  " Catches any value returned by `throw' within `body'. "
+  `(point throw ,@body))
+
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop. "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
-        (when ,gp ,@body (,gf ,test)))
+        (point break
+          (when ,gp ,@body (,gf ,test))))
       ,test)))
 
 (def empty (seq)
@@ -675,8 +701,9 @@
   " Loops for the variable `v' from `init' to `max'. "
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
-       (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
-         ,@body))))
+       (point break
+         (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
+           ,@body)))))
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times."
@@ -690,14 +717,16 @@
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
-            ((afn (,g)
+            (point break
+             ((afn (,g)
                (when (acons ,g)
                  (let ,var (car ,g) ,@body)
                  (self (cdr ,g))))
-             ,gseq)
+              ,gseq))
            (isa ,gseq 'table)
-            (maptable (fn (,g ,var) ,@body)
-                      ,gseq)
+            (point break
+              (maptable (fn (,g ,var) ,@body)
+                        ,gseq))
             (for ,g 0 (- (len ,gseq) 1)
               (let ,var (,gseq ,g) ,@body))))))
 
@@ -1117,6 +1146,15 @@
 (def writefile1 (val name)
   " Writes the value to the file `name'. "
   (w/outfile s name (write val s)) val)
+
+(def writefileraw (val name) 
+     "Write a list of bytes in val to a file."
+     (w/outfile s name (writeb (car val) s))
+     (map [writefilebyte _ name] (cdr val)) val)
+
+(def writefilebyte (val name)
+     "Write a single byte to a file"
+     (w/appendfile s name (writeb val s)) val)
 
 (def readall (src (o eof nil))
   " Reads the expressions from the string or stream `src', and returns a
@@ -1872,14 +1910,19 @@
        (pr ,@(parse-format str))))
 )
 
+(nil! *load-file-stack*)
 ;;why not (o hook idfn) ?
 (def load (file (o hook))
   " Reads the expressions in `file' and evaluates them.  Read expressions
     may be preprocessed by `hook'. "
+  (push *current-load-file* *load-file-stack*)
+  (= *current-load-file* file)
   (or= hook idfn)
-  (w/infile f file
-    (whilet e (read f)
-      (eval (hook e)))))
+  (do1
+    (w/infile f file
+      (whilet e (read f)
+        (eval (hook e))))
+    (= *current-load-file* (pop *load-file-stack*))))
 
 (def positive (x)
   " Determines if `x' is a number and is positive. "
@@ -1950,17 +1993,6 @@
        (prn)
        ;(flushout)
        )))
-
-(mac point (name . body)
-  " Creates a form which may be exited by calling `name' from within `body'. "
-  (w/uniq g
-    `(ccc (fn (,g)
-            (let ,name [,g _]
-              ,@body)))))
-
-(mac catch body
-  " Catches any value returned by `throw' within `body'. "
-  `(point throw ,@body))
 
 (def downcase (x)
   " Converts `x' to lowercase, if a character, string, or symbol;
@@ -2056,13 +2088,12 @@
   " Prints all symbols whose documentation matches or partly matches `str'. "
   (let part-match
       (let rx (re (downcase str))
-        (fn (s)
-          (re-match rx (downcase (coerce s 'string)))))
+         [re-match rx (downcase (coerce _ 'string))])
     (prall
       (sort <
         (accum add
           (ontable k (typ d) *help*
-            (when (or (part-match k) (part-match typ) (part-match d))
+            (when (or (part-match k) (part-match typ) (part-match d) (only part-match *source-file* k))
               (add k)))))
       "Related symbols:\n" "\n")
     nil))
@@ -2075,6 +2106,7 @@
          (if verbose (prn name " is not documented."))
          (with (kind  (car h)
                 doc   (cadr h))
+           (aand verbose (only [prn "(from \"" _ "\")"] *source-file* name))
            (pr "[" kind "]" (if (is kind 'mac) " " "  "))
            (prn (if (sig name)
                     (cons name (sig name))))
@@ -2112,6 +2144,7 @@
      ^^ ^
      ^ val))
 
+(set *current-load-file* nil)
 
 ; Lower priority ideas
 
