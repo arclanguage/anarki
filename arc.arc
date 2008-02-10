@@ -262,11 +262,23 @@
   " When `test' is not true, do `body'. "
   `(if (no ,test) (do ,@body)))
 
+(mac point (name . body)
+  " Creates a form which may be exited by calling `name' from within `body'. "
+  (w/uniq g
+    `(ccc (fn (,g)
+            (let ,name [,g _]
+              ,@body)))))
+
+(mac catch body
+  " Catches any value returned by `throw' within `body'. "
+  `(point throw ,@body))
+
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop. "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
-        (when ,gp ,@body (,gf ,test)))
+        (point break
+          (when ,gp ,@body (,gf ,test))))
       ,test)))
 
 (def empty (seq)
@@ -689,8 +701,9 @@
   " Loops for the variable `v' from `init' to `max'. "
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
-       (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
-         ,@body))))
+       (point break
+         (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
+           ,@body)))))
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times."
@@ -704,14 +717,16 @@
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
-            ((afn (,g)
+            (point break
+             ((afn (,g)
                (when (acons ,g)
                  (let ,var (car ,g) ,@body)
                  (self (cdr ,g))))
-             ,gseq)
+              ,gseq))
            (isa ,gseq 'table)
-            (maptable (fn (,g ,var) ,@body)
-                      ,gseq)
+            (point break
+              (maptable (fn (,g ,var) ,@body)
+                        ,gseq))
             (for ,g 0 (- (len ,gseq) 1)
               (let ,var (,gseq ,g) ,@body))))))
 
@@ -1962,17 +1977,6 @@
        (prn)
        ;(flushout)
        )))
-
-(mac point (name . body)
-  " Creates a form which may be exited by calling `name' from within `body'. "
-  (w/uniq g
-    `(ccc (fn (,g)
-            (let ,name [,g _]
-              ,@body)))))
-
-(mac catch body
-  " Catches any value returned by `throw' within `body'. "
-  `(point throw ,@body))
 
 (def downcase (x)
   " Converts `x' to lowercase, if a character, string, or symbol;
