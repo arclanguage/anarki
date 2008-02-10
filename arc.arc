@@ -1527,17 +1527,20 @@
     (nil! (cdr mid))
     (list seq s2)))
 
-(def ssplit (str (o noblanks) (o delim whitec))
-  "Split `str' at each occurrence of `delim', returning a list of
-   strings.  If `noblanks' is non-nil empty strings are excluded."
+(def ssplit (str (o delim whitec) (o keepdelim) (o noblanks))
+  "Split `str' on chars passing the test `delim', returning a list of
+   strings.  If `keepdelim' is non-nil include the delimiters.  If
+   `noblanks' is non-nil empty strings are excluded."
+  (if (isa delim 'string) (= delim [in _ (coerce delim 'cons)]))
   (with (acc nil j 0)
     (forlen i str
-      (if (delim (str i))
-        (do (push (subseq str j i) acc)
-            (= j (+ i 1))))
+      (if (and (or (no keepdelim) (> i 0))
+                   (delim (str i)))
+           (do (push (subseq str j i) acc)
+               (= j (if keepdelim i (+ i 1)))))
       (if (and (atend i str)
                (<= j i))
-        (push (subseq str j (+ i 1)) acc))) ; add 1 because atend is true prematurely
+          (push (subseq str j (+ i 1)) acc))) ; add 1 because atend is true prematurely
     (rev (if noblanks (rem empty acc) acc))))
 
 (mac time (expr)
