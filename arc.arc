@@ -99,14 +99,14 @@
 
 (def map1 (f xs)
   " Return a sequence with function f applied to every element in sequence xs.
-    See also [[map]] [[each]] [[mappend]] [[maps]] "
+    See also [[map]] [[each]] [[mappend]] [[maps]] [[andmap]] [[ormap]] "
   (if (no xs)
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
 (def pair (xs (o f list))
   " Applies pairs of elements to the function `f'.
-    See also [[tuples]] "
+    See also [[tuples]] [[map]] "
   (if (no xs)
        nil
       (no (cdr xs))
@@ -307,7 +307,7 @@
 
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop.
-    See also [[loop]] [[whilet]] [[whiler]] [[repeat]] "
+    See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (point break
@@ -554,7 +554,8 @@
 (def map (f . seqs)
   " Applies the elements of the sequences to the given function.
     Returns a sequence containing the results of the function.
-    See also [[each]] [[map1]] [[maps]] [[mappend]] "
+    See also [[each]] [[map1]] [[maps]] [[mappend]] [[andmap]] [[ormap]]
+    [[reduce]] "
   (if (some [isa _ 'string] seqs)
        (withs (n   (apply min (map len seqs))
                new (newstring n))
@@ -589,7 +590,8 @@
 
 (def nthcdr (n xs)
   " Returns the sublist of `xs' starting on the `n'th element.
-    `n' is 0-based. "
+    `n' is 0-based.
+    See also [[subseq]] [[firstn]] "
   (if (> n 0)
       (nthcdr (- n 1) (cdr xs))
       xs))
@@ -597,34 +599,43 @@
 ; Generalization of pair: (tuples x) = (pair x)
 
 (def tuples (xs (o n 2))
-  " Returns a list of lists of the elements of `xs', grouped by `n'. "
+  " Returns a list of lists of the elements of `xs', grouped by `n'.
+    See also [[pair]] "
   (if (no xs)
       nil
       (cons (firstn n xs)
             (tuples (nthcdr n xs) n))))
 
-(def caris (x val) " Determines if (car x) is `val'. " (and (acons x) (is (car x) val)))
+(def caris (x val)
+  " Determines if (car x) is `val'.
+    See also [[is]] [[car]] "
+  (and (acons x) (is (car x) val)))
 
 (def warn (msg . args)
-  " Displays a warning message on its arguments. "
+  " Displays a warning message on its arguments.
+    See also [[ero]] [[pr]] "
   (disp (+ "Warning: " msg ". "))
   (map [do (write _) (disp " ")] args)
   (disp #\newline))
 
 (mac atomic body
-  " Performs `body' atomically, blocking other threads. "
+  " Performs `body' atomically, blocking other threads.
+    See also [[atlet]] [[atwith]] [[atwiths]] "
   `(atomic-invoke (fn () ,@body)))
 
 (mac atlet args
-  " Performs a `let' atomically, blocking other threads. "
+  " Performs a `let' atomically, blocking other threads.
+    See also [[atomic]] [[atwith]] [[atwiths]] "
   `(atomic (let ,@args)))
 
 (mac atwith args
-  " Performs a `with' atomically, blocking other threads. "
+  " Performs a `with' atomically, blocking other threads.
+    See also [[atomic]] [[atlet]] [[atwiths]] "
   `(atomic (with ,@args)))
 
 (mac atwiths args
   " Performs a `withs' atomically, blocking other threads. "
+    See also [[atomic]] [[atlet]] [[atwith]] "
   `(atomic (withs ,@args)))
 
 ; setforms returns (vars get set) for a place based on car of an expr
@@ -643,7 +654,8 @@
 (set setter (table))
 
 (mac defset (name parms . body)
-  " Defines a setter for the named form. "
+  " Defines a setter for the named form.
+    See also [[=]] "
   (w/uniq gexpr
     `(sref setter
            (fn (,gexpr)
@@ -738,12 +750,14 @@
                   (pair terms))))
 
 (mac = args
-  " Assigns values to variables. "
+  " Assigns values to variables.
+    See also [[t!]] [[nil!]] [[++]] [[--]] [[rotate]] [[defset]] "
   (expand=list args))
 
 (mac loop (start test update . body)
   " First performs `start'; while `test' is true, performs `body' then
-    `update' in a loop. "
+    `update' in a loop.
+    See also [[while]] "
   (w/uniq (gfn gparm)
     `(do ,start
          ((rfn ,gfn (,gparm)
@@ -752,7 +766,8 @@
           ,test))))
 
 (mac for (v init max . body)
-  " Loops for the variable `v' from `init' to `max'. "
+  " Loops for the variable `v' from `init' to `max'.
+    See also [[repeat]] [[forlen]] "
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
        (point break
@@ -760,14 +775,16 @@
            ,@body)))))
 
 (mac repeat (n . body)
-  " Repeats the `body' `n' times."
+  " Repeats the `body' `n' times.
+    See also [[for]] "
   `(for ,(uniq) 1 ,n ,@body))
 
 ; could bind index instead of gensym
 
 (mac each (var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
-    with each element assigned to `var'. "
+    with each element assigned to `var'.
+    See also [[forlen]] [[on]] [[ontable]] "
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
@@ -787,7 +804,8 @@
 ; (nthcdr x y) = (subseq y x).
 
 (def subseq (seq start (o end (len seq)))
-  " Returns a subsequence of the given `seq'. "
+  " Returns a subsequence of the given `seq'.
+    See also [[firstn]] [[nthcdr]] "
   (if (isa seq 'string)
       (let s2 (newstring (- end start))
         (for i 0 (- end start 1)
@@ -802,12 +820,14 @@
 
 (mac ontable (k v h . body)
   " Loops through the entries of table or object `h', with key-value pairs
-    assigned to `k' and `v', respectively. "
+    assigned to `k' and `v', respectively.
+    See also [[each]] [[keys]] "
   `(maptable (fn (,k ,v) ,@body) ,h))
 
 (mac whilet (var test . body)
   " While `test' is true, perform `body' in a loop.
-    The result of `test' is assigned to `var'. "
+    The result of `test' is assigned to `var'.
+    See also [[while]] [[whiler]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (let ,var ,gp
