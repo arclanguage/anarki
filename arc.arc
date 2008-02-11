@@ -297,7 +297,7 @@
     See also [[catch]] "
   (w/uniq g
     `(ccc (fn (,g)
-            (let ,name (fn (_) (,g _))
+            (let ,name [,g _]
               ,@body)))))
 
 (mac catch body
