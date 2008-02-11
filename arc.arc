@@ -292,26 +292,12 @@
     See also [[when]] [[if]] [[no]] "
   `(if (no ,test) (do ,@body)))
 
-(mac point (name . body)
-  " Creates a form which may be exited by calling `name' from within `body'.
-    See also [[catch]] "
-  (w/uniq g
-    `(ccc (fn (,g)
-            (let ,name [,g _]
-              ,@body)))))
-
-(mac catch body
-  " Catches any value returned by `throw' within `body'.
-    See also [[point]] "
-  `(point throw ,@body))
-
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop.
     See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
-        (point break
-          (when ,gp ,@body (,gf ,test))))
+        (when ,gp ,@body (,gf ,test)))
       ,test)))
 
 (def empty (seq)
@@ -770,9 +756,8 @@
     See also [[repeat]] [[forlen]] "
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
-       (point break
-         (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
-           ,@body)))))
+       (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
+         ,@body))))
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times.
@@ -788,16 +773,14 @@
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
-            (point break
-             ((afn (,g)
+            ((afn (,g)
                (when (acons ,g)
                  (let ,var (car ,g) ,@body)
                  (self (cdr ,g))))
-              ,gseq))
+             ,gseq)
            (isa ,gseq 'table)
-            (point break
-              (maptable (fn (,g ,var) ,@body)
-                        ,gseq))
+            (maptable (fn (,g ,var) ,@body)
+                      ,gseq)
             (for ,g 0 (- (len ,gseq) 1)
               (let ,var (,gseq ,g) ,@body))))))
 
@@ -2070,6 +2053,17 @@
        (prn)
        ;(flushout)
        )))
+
+(mac point (name . body)
+  " Creates a form which may be exited by calling `name' from within `body'. "
+  (w/uniq g
+    `(ccc (fn (,g)
+            (let ,name [,g _]
+              ,@body)))))
+
+(mac catch body
+  " Catches any value returned by `throw' within `body'. "
+  `(point throw ,@body))
 
 (def downcase (x)
   " Converts `x' to lowercase, if a character, string, or symbol;
