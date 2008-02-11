@@ -266,7 +266,7 @@
   " Creates a form which may be exited by calling `name' from within `body'. "
   (w/uniq g
     `(ccc (fn (,g)
-            (let ,name [,g _]
+            (let ,name (fn (_) (,g _))
               ,@body)))))
 
 (mac catch body
