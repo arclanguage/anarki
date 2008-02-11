@@ -210,7 +210,11 @@
           (nonempty:args "sym")
             (enformat (eval `(tostring:help ,(coerce it 'sym))))
           (nonempty:args "str")
-            (eval `(help ,(coerce it 'string)))
+            (prall
+              ;mysteriously, at the time of this writing, (+ "?sym=" _) fails
+              (map [tostring (link _ (tostring (pr "?sym=" _)))]
+                (helpsearch-core (coerce it 'string)))
+              "Related symbols:<br>" "<br>")
             (pr "Welcome to online help. "
               "Enter your search below.") )
         ;Use 'tag because we want to use get method for

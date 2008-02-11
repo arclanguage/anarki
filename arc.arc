@@ -2089,17 +2089,20 @@
 
 (def helpsearch (str)
   " Prints all symbols whose documentation matches or partly matches `str'. "
+  (prall (helpsearch-core str) "Related symbols:\n" "\n")
+  nil)
+
+(def helpsearch-core (str)
+  " Returns a list of symbols whose documentation matches or partly matches
+    `str'. "
   (let part-match
       (let rx (re (downcase str))
          [re-match rx (downcase (coerce _ 'string))])
-    (prall
       (sort <
         (accum add
           (ontable k (typ d) *help*
             (when (or (part-match k) (part-match typ) (part-match d) (only part-match *source-file* k))
-              (add k)))))
-      "Related symbols:\n" "\n")
-    nil))
+              (add k)))))))
 
 (def helpstr (name (o verbose t))
   " Returns a help string for the symbol `name'. "
