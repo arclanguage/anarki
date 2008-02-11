@@ -1,4 +1,4 @@
-; (server) then http://tintin.archub.org:8080/foo 
+; (serve) then http://tintin.archub.org:8080/foo 
 
 ; could make form fields that know their value type because of
 ; gensymed names, and so the receiving fn gets args that are not
