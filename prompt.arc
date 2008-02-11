@@ -197,7 +197,7 @@
                         (pr (s i))
                       (is (s i) #\space)
                         (pr "+")
-                        (pr (coerce (code:s i) 'string 16))))))))
+                        (pr "%" (coerce (code:s i) 'string 16))))))))
           (tag (code) (normal)) )))
     (tag (html)
       (tag (head)
