@@ -8,9 +8,7 @@
 
 ; set breaksrv* to t to be able to ^c the server
 
-(= arcdir* "arc/" logdir* "arc/logs/" quitsrv* nil breaksrv* nil) 
-
-(= rootdir* "arc/public_html/")
+(= arcdir* "arc/" logdir* "arc/logs/" rootdir* "arc/public_html/" quitsrv* nil breaksrv* nil) 
  
 ; add the following files to the rootdir to use error pages
 (= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
