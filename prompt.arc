@@ -123,19 +123,98 @@
       rawargs (listtab:req 'args)
       args [coerce (rawargs _) 'string]
       nonempty [if (isnt "" _) _]
-      enempty [if (no _) "" _])
-  (tag (html)
-    (tag (head)
-      (tag (title)
-        (aif (nonempty:args "sym") (pr it " - ")
-          (nonempty:args "str") (pr "\"" it "\" - "))
-        (pr "Online help")))
-    (tag (body)
+      enempty [if (no _) "" _]
+      enformat
+      (fn (s)
+        ;inter-recursion needed, so just assign nothing
+        (let (get normal one-bracket inlink one-close
+            emit-char out-char build build2
+            bldg emit-link urlencode) nil
+          (=
+            get
+            (with (i 0 l (len s))
+              (fn () (if (< i l) (do1 (subseq s i (+ 1 i)) (++ i)))))
+            normal
+            (fn ()
+              (caselet c (get)
+                nil nil
+                "[" (emit-char c one-bracket)
+                  (emit-char c normal)))
+            one-bracket
+            (fn ()
+              (caselet c (get)
+                nil nil
+                "[" (emit-char c inlink)
+                  (emit-char c normal)))
+            inlink
+            (fn ()
+              (caselet c (get)
+                nil nil
+                "]" (one-close)
+                  (build c inlink)))
+            one-close
+            (fn ()
+              (caselet c (get)
+                nil nil
+                "]" (emit-link (fn () (pr "]]") (normal)))
+                  (build2 "]" c inlink)))
+            emit-char
+            (fn (c next)
+              (out-char c)
+              (next))
+            out-char
+            (fn (c)
+              (case c
+                "<"   (pr "&lt;")
+                ">"   (pr "&gt;")
+                "&"   (pr "&amp;")
+                "\""  (pr "&quot;")
+                "/"   (pr "&frasl;")
+                " "   (nbsp)
+                "\n"  (br)
+                (pr c)))
+            build
+            (fn (c next) (push c bldg) (next))
+            build2
+            (fn (c1 c2 next) (push c1 bldg) (push c2 bldg) (next))
+            emit-link
+            (fn (next)
+              (let ln (apply + (rev bldg))
+                (link ln
+                  (if (*help* (coerce ln 'sym))
+                    (+ "?sym=" (urlencode ln))
+                    (+ "?str=" (urlencode ln)))))
+              (nil! bldg)
+              (next))
+            ;not yet implemented in base libs as of this writing.
+            urlencode
+            (fn (s)
+              (let code [coerce _ 'int 16]
+                (tostring
+                  (forlen i s
+                    (if (some (s i)
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
+                        (pr (s i))
+                      (is (s i) #\space)
+                        (pr "+")
+                        (pr "%" (coerce (code:s i) 'string 16))))))))
+          (tag (code) (normal)) )))
+    (tag (html)
+      (tag (head)
+        (tag (title)
+          (aif (nonempty:args "sym") (pr it " - ")
+            (nonempty:args "str") (pr "\"" it "\" - "))
+          (pr "Online help")))
+      (tag (body)
         (aif
           (nonempty:args "sym")
-            (tag xmp (eval `(help ,(coerce it 'sym))))
+            (enformat (eval `(tostring:help ,(coerce it 'sym))))
           (nonempty:args "str")
-            (eval `(help ,(coerce it 'string)))
+            (prall
+              ;mysteriously, at the time of this writing, (+ "?sym=" _) fails
+              (map [tostring (link _ (tostring (pr "?sym=" _)))]
+                (helpsearch-core (coerce it 'string)))
+              "Related symbols:<br>" "<br>")
             (pr "Welcome to online help. "
               "Enter your search below.") )
         ;Use 'tag because we want to use get method for
@@ -150,6 +229,6 @@
           (submit "Search"))
         ;dummy form to force reload of this operation
         (tag (form method 'get action 'help)
-          (submit "Clear"))))))
+          (submit "Clear") )))))
 
 

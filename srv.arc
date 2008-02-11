@@ -8,7 +8,10 @@
 
 ; set breaksrv* to t to be able to ^c the server
 
-(= arcdir* "arc/" logdir* "arc/logs/" quitsrv* nil breaksrv* nil) 
+(= arcdir* "arc/" logdir* "arc/logs/" rootdir* "arc/public_html/" quitsrv* nil breaksrv* nil) 
+ 
+; add the following files to the rootdir to use error pages
+(= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
 (def serve ((o port 8080))
   (nil! quitsrv*)
@@ -74,7 +77,7 @@
             (if (is (++ nls) 2) 
                 (do (let (type op args n cooks) (parseheader (rev lines))
                       (srvlog 'srv ip type op cooks)
-                      (on-err (fn (c) (respond-err o 500 (details c)))
+                      (on-err [respond-err o 500 (details _)]
                         (fn () 
                           (case type
                             get  (respond o op args cooks ip)
@@ -171,35 +174,43 @@ Connection: close"))
         (car (rev tok)))))
 
 (def filemime (file)
-   (aif (ext-mimetypes* (extension file))
-        it
-        textmime*))
+  (aif (ext-mimetypes* (extension file))
+       it
+       textmime*))
+
+(def file-exists-in-root (file)
+  (and (~empty file) (file-exists (string rootdir* file))))
 
 (def respond (str op args cooks ip)
   (w/stdout str
-    (aif (and (~empty (coerce op 'string)) (file-exists (coerce op 'string)))
-           (do (prn (header (filemime it)))
-               (prn)
-               (w/infile i it
-                 (whilet b (readb i)
-                 (writeb b str))))
+    (aif (file-exists-in-root (coerce op 'string))
+         (respond-file str it)
          (srvops* op)
-           (let req (inst 'request 'args args 'cooks cooks 'ip ip)
-               (if (redirectors* op)
-                   (do (prn rdheader*)
-                       (let loc (it str req) ; may write to str, e.g. cookies
-                         (prn "Location: " loc))
-                       (prn))
-                   (do (prn (header))
-                       (it str req))))
+         (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+             (if (redirectors* op)
+                 (do (prn rdheader*)
+                     (let loc (it str req) ; may write to str, e.g. cookies
+                       (prn "Location: " loc))
+                     (prn))
+                 (do (prn (header))
+                     (it str req))))
          (respond-err str 404 unknown-msg*))))
 
+(def respond-file (str file (o code 200))
+  (do (prn (header (filemime file) code))
+      (prn)
+      (w/infile i file
+        (whilet b (readb i)
+          (writeb b str)))))
+        
 (def respond-err (str code msg . args)
-  (w/stdout str
-    (prn (err-header code)) 
-    (prn)
-    (apply pr msg args)))
-
+  (aif (file-exists-in-root (errorpages* code))
+       (respond-file str it code)
+       (w/stdout str
+         (prn (err-header code)) 
+         (prn)
+         (apply pr msg args))))
+  
 (def parseheader (lines)
   (let (type op args) (parseurl (car lines))
     (list type
@@ -496,6 +507,7 @@ Connection: close"))
 (def ensure-install ()
   (ensure-dir arcdir*)
   (ensure-dir logdir*)
+  (ensure-dir rootdir*)
   (when (empty hpasswords*)
     (create-acct "frug" "frug")
     (writefile1 'frug adminfile*))
