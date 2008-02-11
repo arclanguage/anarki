@@ -262,11 +262,23 @@
   " When `test' is not true, do `body'. "
   `(if (no ,test) (do ,@body)))
 
+(mac point (name . body)
+  " Creates a form which may be exited by calling `name' from within `body'. "
+  (w/uniq g
+    `(ccc (fn (,g)
+            (let ,name [,g _]
+              ,@body)))))
+
+(mac catch body
+  " Catches any value returned by `throw' within `body'. "
+  `(point throw ,@body))
+
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop. "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
-        (when ,gp ,@body (,gf ,test)))
+        (point break
+          (when ,gp ,@body (,gf ,test))))
       ,test)))
 
 (def empty (seq)
@@ -689,8 +701,9 @@
   " Loops for the variable `v' from `init' to `max'. "
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
-       (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
-         ,@body))))
+       (point break
+         (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
+           ,@body)))))
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times."
@@ -704,14 +717,16 @@
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
-            ((afn (,g)
+            (point break
+             ((afn (,g)
                (when (acons ,g)
                  (let ,var (car ,g) ,@body)
                  (self (cdr ,g))))
-             ,gseq)
+              ,gseq))
            (isa ,gseq 'table)
-            (maptable (fn (,g ,var) ,@body)
-                      ,gseq)
+            (point break
+              (maptable (fn (,g ,var) ,@body)
+                        ,gseq))
             (for ,g 0 (- (len ,gseq) 1)
               (let ,var (,gseq ,g) ,@body))))))
 
@@ -1550,6 +1565,22 @@
     (nil! (cdr mid))
     (list seq s2)))
 
+(def ssplit (str (o delim whitec) (o keepdelim) (o noblanks))
+  "Split `str' on chars passing the test `delim', returning a list of
+   strings.  If `keepdelim' is non-nil include the delimiters.  If
+   `noblanks' is non-nil empty strings are excluded."
+  (if (isa delim 'string) (= delim [in _ (coerce delim 'cons)]))
+  (with (acc nil j 0)
+    (forlen i str
+      (if (and (or (no keepdelim) (> i 0))
+                   (delim (str i)))
+           (do (push (subseq str j i) acc)
+               (= j (if keepdelim i (+ i 1)))))
+      (if (and (atend i str)
+               (<= j i))
+          (push (subseq str j (+ i 1)) acc))) ; add 1 because atend is true prematurely
+    (rev (if noblanks (rem empty acc) acc))))
+
 (mac time (expr)
   " Prints the time consumed by the `expr', returning the result. "
   (w/uniq (t1 t2)
@@ -1962,17 +1993,6 @@
        (prn)
        ;(flushout)
        )))
-
-(mac point (name . body)
-  " Creates a form which may be exited by calling `name' from within `body'. "
-  (w/uniq g
-    `(ccc (fn (,g)
-            (let ,name [,g _]
-              ,@body)))))
-
-(mac catch body
-  " Catches any value returned by `throw' within `body'. "
-  `(point throw ,@body))
 
 (def downcase (x)
   " Converts `x' to lowercase, if a character, string, or symbol;
