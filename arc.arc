@@ -634,7 +634,7 @@
   `(atomic (with ,@args)))
 
 (mac atwiths args
-  " Performs a `withs' atomically, blocking other threads. "
+  " Performs a `withs' atomically, blocking other threads.
     See also [[atomic]] [[atlet]] [[atwith]] "
   `(atomic (withs ,@args)))
 
