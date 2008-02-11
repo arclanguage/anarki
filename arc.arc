@@ -1918,7 +1918,7 @@
   (push *current-load-file* *load-file-stack*)
   (= *current-load-file* file)
   (or= hook idfn)
-  (do1
+  (do1                                  ;perhaps it would be better to use "after" instead of "do1"
     (w/infile f file
       (whilet e (read f)
         (eval (hook e))))
