@@ -1939,13 +1939,14 @@
     (writec #\space (stderr))))
 
 (def queue ()
-  " Creates a queue. "
+  " Creates a queue.
+    See also [[enq]] [[deq]] [[qlen]] [[qlist]] [[enq-limit]]"
   (list nil nil 0))
 
 ; Despite call to atomic, once had some sign this wasn't thread-safe.
 
 (def enq (obj q)
-  " Adds `obj' to a queue. "
+  " Adds `obj' to a queue.  See also [[queue]] "
   (atomic
     (++ (q 2))
     (if (no (car q))
@@ -1955,21 +1956,23 @@
     (car q)))
 
 (def deq (q)
-  " Removes and returns an item from a queue. "
+  " Removes and returns an item from a queue.  See also [[queue]] "
   (atomic (unless (is (q 2) 0) (-- (q 2)))
           (pop (car q))))
 
 ; Should redef len to do this, and make queues lists annotated queue.
 
-(def qlen (q) " Returns the number of items in a queue. " (q 2))
+(def qlen (q) " Returns the number of items in a queue.  See also [[queue]] "
+  (q 2))
 
-(def qlist (q) " Returns the queue contents as a list. " (car q))
+(def qlist (q) " Returns the queue contents as a list.  See also [[queue]] "
+  (car q))
 
 ;; unsafe - suppose we have (enq-limit x q 10) and (enq-limit x q 1000)
 ;; somewhere else?
 (def enq-limit (val q (o limit 1000))
   " Adds an item to the queue; removes a queue item if `limit' is
-    exceeded. "
+    exceeded.  See also [[queue]] "
   (atomic
      (unless (< (qlen q) limit)
        (deq q))
