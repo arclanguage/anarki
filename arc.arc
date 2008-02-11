@@ -59,7 +59,9 @@
                    (safeset ,name (fn ,parms ,@body))))))
 ;documentation for def itself
 (sref *help*
-  '(fn " Defines a function with the given `name', `parms', and `body'. ")
+  '(fn
+  " Defines a function with the given `name', `parms', and `body'.
+    See also [[fn]] [[mac]] ")
   'def)
 (sref sig
   '(name parms . body)
@@ -74,11 +76,20 @@
 
 (def no (x) " Determines if `x' is `nil'. " (is x nil))
 
-(def acons (x) " Determines if `x' is a `cons' cell or list. " (is (type x) 'cons))
+(def acons (x)
+  " Determines if `x' is a `cons' cell or list.
+    See also [[atom]] [[alist]] [[dotted]] [[isa]] [[cons]] [[list]] "
+  (is (type x) 'cons))
 
-(def atom (x) " Determines if `x' is atomic. " (no (acons x)))
+(def atom (x)
+  " Determines if `x' is atomic.
+    See also [[acons]] [[isa]] "
+  (no (acons x)))
 
-(def list args " Creates a list from the given parameters. " args)
+(def list args
+  " Creates a list from the given parameters.
+    See also [[cons]] [[acons]] "
+  args)
 
 (def idfn (x)
   " Identity function - just returns its argument. "
@@ -87,13 +98,15 @@
 ; Maybe later make this internal.
 
 (def map1 (f xs)
-  " Return a sequence with function f applied to every element in sequence xs. "
+  " Return a sequence with function f applied to every element in sequence xs.
+    See also [[map]] [[each]] [[mappend]] [[maps]] "
   (if (no xs)
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
 (def pair (xs (o f list))
-  " Applies pairs of elements to the function `f'. "
+  " Applies pairs of elements to the function `f'.
+    See also [[tuples]] "
   (if (no xs)
        nil
       (no (cdr xs))
@@ -112,7 +125,9 @@
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
 (sref *help*
-  '(fn " Defines a macro, a special function which transforms code. ")
+  '(fn
+  " Defines a macro, a special function which transforms code.
+    See also [[def]] ")
   'mac)
 (sref sig
   '(name parms . body)
@@ -122,7 +137,8 @@
   'mac)
 
 (mac and args
-  " Evaluates arguments till false is found else returns the last one. "
+  " Evaluates arguments till false is found else returns the last one.
+    See also [[or]] [[aand]] [[andf]] [[andmap]] "
   (if args
       (if (cdr args)
           `(if ,(car args) (and ,@(cdr args)))
@@ -130,7 +146,8 @@
       't))
 
 (def assoc (key al)
-  " Finds a (key value) pair in an associated list. "
+  " Finds a (key value) pair in an associated list.
+    See also [[alref]] [[listtab]] [[tablist]] "
   (if (atom al)
        nil
       (and (acons (car al)) (is (caar al) key))
@@ -138,23 +155,27 @@
       (assoc key (cdr al))))
 
 (def alref (al key)
-  " Get a value from a key in a associated list. "
+  " Get a value from a key in a associated list.
+    See also [[assoc]] [[listtab]] [[tablist]] "
   (cadr (assoc key al)))
 
 (mac with (parms . body)
   " Assigns a set of local variables for the given `body'.
-    Assignment is simultaneous. "
+    Assignment is simultaneous.
+    See also [[withs]] [[let]] [[fn]] [[do]] "
   `((fn ,(map1 car (pair parms))
      ,@body)
     ,@(map1 cadr (pair parms))))
 
 (mac let (var val . body)
-  " Assigns a local variable for the given `body'. "
+  " Assigns a local variable for the given `body'.
+    See also [[with]] [[withs]] [[fn]] [[do]] "
   `(with (,var ,val) ,@body))
 
 (mac withs (parms . body)
   " Assigns local variables for the given `body'.
-    The assignments are made in the given order."
+    The assignments are made in the given order.
+    See also [[with]] [[let]] [[fn]] [[do]] "
   (if (no parms)
       `(do ,@body)
       `(let ,(car parms) ,(cadr parms)
@@ -172,14 +193,14 @@
             (cons (car a) (apply join (cdr a) (cdr args)))))))
 
 (mac rfn (name parms . body)
-  " Self-referencing function expression.
-    Creates a function which calls itself as `name'. "
+  " Creates a function which calls itself as `name'.
+    See also [[fn]] [[afn]] "
   `(let ,name nil
      (set ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
-  " Self-referencing lambda expression.
-    Creates a function which calls itself with the name `self'."
+  " Creates a function which calls itself with the name `self'.
+    See also [[fn]] [[rfn]] "
   `(rfn self ,parms ,@body))
 
 (mac compose args
@@ -197,7 +218,8 @@
 
 (mac complement (f)
   " Arc expands ~x into (complement x)
-    whenever the function returns true this returns false."
+    whenever the function returns true this returns false.
+    See also [[no]] [[isnt]]"
   (let g (uniq)
     `(fn ,g (no (apply ,f ,g)))))
 
@@ -210,7 +232,8 @@
    xs nil))
 
 (def isnt (x y)
-  " Inverse of is. "
+  " Inverse of is.
+    See also [[no]] "
   (no (is x y)))
 
 (mac w/uniq (names . body)
@@ -223,7 +246,8 @@
       `(let ,names (uniq) ,@body)))
 
 (mac or args
-  " Computes arguments until one of them is true and returns that result. "
+  " Computes arguments until one of them is true and returns that result.
+    See also [[and]] [[orf]] [[ormap]] "
   (and args
        (w/uniq g
          `(let ,g ,(car args)
@@ -231,15 +255,18 @@
 
 (def alist (x)
   " Is this a (non-empty) list?
-    Return true if argument consists of cons pairs. "
+    Return true if argument consists of cons pairs.
+    See also [[atom]] [[acons]] [[dotted]] [[isa]] [[cons]] [[list]] "
   (or (no x) (is (type x) 'cons)))
 
 (mac or= (var val)
-  " Performs (or var val) and assigns the result to var. "
+  " Performs (or var val) and assigns the result to var.
+    See also [[or]] [[=]] "
   `(= ,var (or ,var ,val)))
 
 (mac in (x . choices)
-  " Returns true if the first argument is one of the other arguments. "
+  " Returns true if the first argument is one of the other arguments.
+    See also [[some]] [[mem]] "
   (w/uniq g
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
@@ -247,7 +274,8 @@
 ; should take n args
 
 (def iso (x y)
-  " Isomorphic compare - compares structure (can be slow). "
+  " Isomorphic compare - compares structure (can be slow).
+    See also [[is]] "
   (or (is x y)
       (and (acons x)
            (acons y)
@@ -255,26 +283,31 @@
            (iso (cdr x) (cdr y)))))
 
 (mac when (test . body)
-  " When `test' is true, do `body'. "
+  " When `test' is true, do `body'.
+    See also [[unless]] [[if]] "
   `(if ,test (do ,@body)))
 
 (mac unless (test . body)
-  " When `test' is not true, do `body'. "
+  " When `test' is not true, do `body'.
+    See also [[when]] [[if]] [[no]] "
   `(if (no ,test) (do ,@body)))
 
 (mac point (name . body)
-  " Creates a form which may be exited by calling `name' from within `body'. "
+  " Creates a form which may be exited by calling `name' from within `body'.
+    See also [[catch]] "
   (w/uniq g
     `(ccc (fn (,g)
             (let ,name (fn (_) (,g _))
               ,@body)))))
 
 (mac catch body
-  " Catches any value returned by `throw' within `body'. "
+  " Catches any value returned by `throw' within `body'.
+    See also [[point]] "
   `(point throw ,@body))
 
 (mac while (test . body)
-  " While `test' is true, perform `body' in a loop. "
+  " While `test' is true, perform `body' in a loop.
+    See also [[loop]] [[whilet]] [[whiler]] [[repeat]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (point break
@@ -282,16 +315,19 @@
       ,test)))
 
 (def empty (seq)
-  " Test to see if `seq' is an empty list or other sequence. "
+  " Test to see if `seq' is an empty list or other sequence.
+    See also [[no]] [[acons]] [[len]] "
   (or (no seq)
       (and (no (acons seq)) (is (len seq) 0))))
 
 (def reclist (f xs)
-  " Applies the function `f' on the elements of `xs' until `f' returns true. "
+  " Applies the function `f' on the sublists of `xs' until `f' returns true.
+    See also [[ormap]] [[andmap]] [[map]] "
   (and xs (or (f xs) (reclist f (cdr xs)))))
 
 (def recstring (test s (o start 0))
-  " Applies the function `test' on the characters of `s' until `test' returns true. "
+  " Applies the function `test' on indices of `s' until `test' returns true.
+    See also [[map]] [[reclist]] "
   (let n (len s)
     ((afn (i)
        (and (< i (len s))
@@ -300,26 +336,31 @@
      start)))
 
 (def isa (x y)
-  " Checks if x is of type y. "
+  " Checks if x is of type y.
+    See also [[acons]] [[alist]] [[atom]] "
   (is (type x) y))
 
 (def testify (x)
-  " Creates a test that determines if a given argument is `x'. "
+  " Creates a test that determines if a given argument is `x'.
+    See also [[is]] "
   (if (isa x 'fn) x (fn (_) (is _ x))))
 
 (def some (test seq)
-  " Determines if at least one element of `seq' satisfies `test'. "
+  " Determines if at least one element of `seq' satisfies `test'.
+    See also [[all]] [[mem]] [[in]] "
   (let f (testify test)
     (if (alist seq)
         (reclist f:car seq)
         (recstring f:seq seq))))
 
 (def all (test seq)
-  " Determines if all elements of `seq' satisfy `test'. "
+  " Determines if all elements of `seq' satisfy `test'.
+    See also [[some]] "
   (~some (complement (testify test)) seq))
 
 (def dotted (x)
-  " Determines if `x' is a dotted cons pair. "
+  " Determines if `x' is a dotted cons pair.
+    See also [[acons]] [[alist]] "
   (if (atom x)
       nil
       (and (cdr x) (or (atom (cdr x))
@@ -327,14 +368,16 @@
 
 ; I couldn't find a pre-existing total macro-expander
 (def expand (expr)
-  " Completely expands all macros in `expr'. "
+  " Completely expands all macros in `expr'.
+    See also [[macex]] [[mac]] "
   (if (and (acons expr) (~dotted expr))
       (macex (cons (car expr)
                    (map1 expand (cdr expr))))
       expr))
 
 (def makeproper (lst)
-  " Transforms `list' to a proper list if it is a dotted list. "
+  " Transforms `list' to a proper list if it is a dotted list.
+    See also [[dotted]] [[list]] "
   (if (no (acons lst))
       lst
       (cons (car lst)
@@ -343,7 +386,8 @@
               (list (cdr lst))))))
 
 (def andmap (pred seq)
-  " Applies `pred' to elements of `seq' until an element fails. "
+  " Applies `pred' to elements of `seq' until an element fails.
+    See also [[and]] [[andf]] [[map]] "
   (or
     seq
     (and
@@ -351,7 +395,8 @@
       (andmap pred (cdr seq)))))
 
 (def ormap (pred seq)
-  " Applies `pred' to elements of `seq' until an element passes. "
+  " Applies `pred' to elements of `seq' until an element passes.
+    See also [[or]] [[orf]] [[map]] "
   (and
     seq
     (or
@@ -359,7 +404,8 @@
       (ormap pred (cdr seq)))))
 
 (def *mbf-arglist-vars (arglist)
-  " Returns the variables bound in an argument list. "
+  " Returns the variables bound in an argument list.
+    See also [[make-br-fn]] "
   (if (isa arglist 'cons)
     (apply join
       (map1
@@ -374,7 +420,8 @@
 
 (def *mbf-arglist-frees (arglist)
   " Returns the free variables used in default values for optional arguments
-    of an argument list. "
+    of an argument list.
+    See also [[make-br-fn]] "
   (if (isa arglist 'cons)
     (apply join
       (map1
@@ -386,7 +433,8 @@
     nil))
 
 (def *mbf-all-vars (form)
-  " Extracts all the variables in the fully macro-expanded s-expression `form'. "
+  " Extracts all the variables in the fully macro-expanded s-expression `form'.
+    See also [[make-br-fn]] "
   (let head (and (isa form 'cons) (car form))
     (if
       (or (no form) (and (no (isa form 'sym)) (no (isa form 'cons))))
@@ -412,7 +460,8 @@
         (apply join (map1 *mbf-all-vars form)))))
 
 (def *mbf-free? (form var)
-  " Checks if the variable named `var' occurs free (unbound) in `form'. "
+  " Checks if the variable named `var' occurs free (unbound) in `form'.
+    See also [[make-br-fn]] "
   ; I'd like to use case, but it doesn't exist yet.
   (with (kind (type form)
          find (afn (x lst)
@@ -476,12 +525,14 @@
 ;;; NO []s ABOVE THIS LINE ;;;
 
 (def mem (test seq)
-  " Returns the sublist of `seq' whose first element satisfies `test'."
+  " Returns the sublist of `seq' whose first element satisfies `test'.
+    See also [[find]] [[some]] [[in]]"
   (let f (testify test)
     (reclist [if (f:car _) _] seq)))
 
 (def find (test seq)
-  " Returns the first element that matches the test function. "
+  " Returns the first element that matches the test function.
+    See also [[mem]] [[some]] [[in]] "
   (let f (testify test)
     (if (alist seq)
         (reclist   [if (f:car _) (car _)] seq)
@@ -502,7 +553,8 @@
 
 (def map (f . seqs)
   " Applies the elements of the sequences to the given function.
-    Returns a sequence containing the results of the function. "
+    Returns a sequence containing the results of the function.
+    See also [[each]] [[map1]] [[maps]] [[mappend]] "
   (if (some [isa _ 'string] seqs)
        (withs (n   (apply min (map len seqs))
                new (newstring n))
@@ -524,11 +576,13 @@
 (def mappend (f . args)
   " Applies the elements of the seqeunces to the given function.
     Returns a sequence containing the concatenation of the results
-    of the function."
+    of the function.
+    See also [[map]] [[join]] [[maps]] "
   (apply + nil (apply map f args)))
 
 (def firstn (n xs)
-  " Returns the first `n' elements of the given list `xs'. "
+  " Returns the first `n' elements of the given list `xs'.
+    See also [[subseq]] [[nthcdr]] "
   (if (and (> n 0) xs)
       (cons (car xs) (firstn (- n 1) (cdr xs)))
       nil))
