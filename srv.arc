@@ -13,6 +13,7 @@
 ; add the following files to the rootdir to use error pages
 (= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
+; for now the version is <PG's arc num>.<date>
 (= serverheader* "Server: ASV/0.20080212")
 
 (def serve ((o port 8080))
