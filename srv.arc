@@ -13,6 +13,8 @@
 ; add the following files to the rootdir to use error pages
 (= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
+(= serverheader* "Server: ASV/0.20080212")
+
 (def serve ((o port 8080))
   (nil! quitsrv*)
   (ensure-install)
@@ -120,6 +122,7 @@
 
 (def header ((o type textmime*) (o code 200))
   (string "HTTP/1.0 " code " " (statuscodes* code) "
+" serverheader* "
 Content-Type: " type "
 Connection: close"))
 
