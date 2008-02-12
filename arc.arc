@@ -292,6 +292,15 @@
     See also [[when]] [[if]] [[no]] "
   `(if (no ,test) (do ,@body)))
 
+(mac breakable (expr)
+  " Allows a (break ...) form to return a value from within the
+    body of a control structure.
+    Example:
+    (breakable:while t
+      (aif (something) (break it)))
+    See also [[catch]] [[point]] [[accum]] [[while]] "
+  `(point break ,expr))
+
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop.
     See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] "
