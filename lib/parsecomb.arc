@@ -21,7 +21,7 @@
 
 (def peek (s i (o n 1))
   "Get the first n chars of the given string."
-  (subseq s i (+ i n)))
+  (cut s i (+ i n)))
 
 (def return (val i)
   "Signal a successful parse. Parsed chars in val, new index in i."

@@ -584,7 +584,7 @@
 
 (def firstn (n xs)
   " Returns the first `n' elements of the given list `xs'.
-    See also [[subseq]] [[nthcdr]] "
+    See also [[cut]] [[nthcdr]] "
   (if (and (> n 0) xs)
       (cons (car xs) (firstn (- n 1) (cdr xs)))
       nil))
@@ -592,7 +592,7 @@
 (def nthcdr (n xs)
   " Returns the sublist of `xs' starting on the `n'th element.
     `n' is 0-based.
-    See also [[subseq]] [[firstn]] "
+    See also [[cut]] [[firstn]] "
   (if (> n 0)
       (nthcdr (- n 1) (cdr xs))
       xs))
@@ -1641,11 +1641,11 @@
     (forlen i str
       (if (and (or (no keepdelim) (> i 0))
                    (delim (str i)))
-           (do (push (subseq str j i) acc)
+           (do (push (cut str j i) acc)
                (= j (if keepdelim i (+ i 1)))))
       (if (and (atend i str)
                (<= j i))
-          (push (subseq str j (+ i 1)) acc))) ; add 1 because atend is true prematurely
+          (push (cut str j (+ i 1)) acc))) ; add 1 because atend is true prematurely
     (rev (if noblanks (rem empty acc) acc))))
 
 (mac time (expr)
@@ -1756,7 +1756,7 @@
 (def uname nil
   " Returns the name of the operating system. "
   (let val (tostring (system "uname"))
-  (subseq val 0 (- (len val) 1))))
+  (cut val 0 (- (len val) 1))))
 
 (def date ((o time (seconds)))
   " Returns the date as a string in YYYY-MM-DD format. "

@@ -13,7 +13,7 @@
                )
     (car (tokens
           (apply +
-                 (map [subseq _ (len prefix)]
+                 (map [cut _ (len prefix)]
                       (keep  [headmatch (+ prefix targ) _]
                              (let (ip op) (client "tinyurl.com" 80)
                                   (w/stdout op
