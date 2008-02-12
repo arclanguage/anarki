@@ -1,19 +1,22 @@
 ; Main Arc lib.  Ported to Scheme version Jul 06.
 
 ; optimize ~foo in functional position in ac, like compose
-; rename: string, into-string (shorter).  could call intos string,
-;  but then what to call string?
+; make foo~bar equiv of foo:~bar (in expand-ssyntax)
+; rename assert
+; (10 x) for (= x 10)?
+; should (= x)  mean (= x t)?
+; add sigs of ops defined in ac.scm
 ; get hold of error types within arc
+; make srv serve more file types
 ; why is macex defined in scheme instead of using def below?
 ; write disp, read, write in arc
 ; could prob write rmfile and dir in terms of system
-; could I get all of macros up into lib.arc?
-
-; any logical reason I can't say (push x (if foo y z)) ?
-;   eval would have to always ret 2 things, the val and where it came from
-; idea: implicit tables of tables; setf empty field, becomes table
-;   or should setf on a table just take n args?
-; idea: permanent objs that live on disk and are updated when modified
+; could I get all of macros up into arc.arc?
+; warn when shadow a global name
+; permanent objs that live on disk and are updated when modified
+; way to spec default 0 rather than nil for hts
+;  do in access call or when ht created?
+; some simple regexp/parsing plan
 
 ; compromises in this implementation:
 ; no objs in code
@@ -699,10 +702,12 @@
 (def setforms (expr0)
   (let expr (macex expr0)
     (if (isa expr 'sym)
-         (w/uniq (g h)
-           (list (list g expr)
-                 g
-                 `(fn (,h) (set ,expr ,h))))
+         (if (ssyntax expr)
+             (setforms (ssexpand expr))
+             (w/uniq (g h)
+               (list (list g expr) 
+                     g
+                     `(fn (,h) (set ,expr ,h)))))
         ; make it also work for uncompressed calls to compose
         (and (acons expr) (metafn (car expr)))
          (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
@@ -736,7 +741,7 @@
       (err "Can't invert " (cons f args))))
 
 (def expand= (place val)
-  (if (isa place 'sym)
+  (if (and (isa place 'sym) (~ssyntax place))
       `(set ,place ,val)
       (let (vars prev setter) (setforms place)
         (w/uniq g
@@ -796,23 +801,24 @@
             (for ,g 0 (- (len ,gseq) 1)
               (let ,var (,gseq ,g) ,@body))))))
 
-; (nthcdr x y) = (subseq y x).
+; (nthcdr x y) = (cut y x).
 
-(def subseq (seq start (o end (len seq)))
+(def cut (seq start (o end (len seq)))
   " Returns a subsequence of the given `seq'.
     See also [[firstn]] [[nthcdr]] "
-  (if (isa seq 'string)
-      (let s2 (newstring (- end start))
-        (for i 0 (- end start 1)
-          (= (s2 i) (seq (+ start i))))
-        s2)
-      (firstn (- end start) (nthcdr start seq))))
+  (let end (if (< end 0) (+ (len seq) end 1) end)
+    (if (isa seq 'string)
+        (let s2 (newstring (- end start))
+          (for i 0 (- end start 1)
+            (= (s2 i) (seq (+ start i))))
+          s2)
+        (firstn (- end start) (nthcdr start seq)))))
 
 (def prefix (pre str)
   " Determines if `pre' is the same as the first part of `str'. "
   (and (<= (len pre) (len str))
-       (is pre (subseq str 0 (len pre)))))
-
+       (is pre (cut str 0 (len pre)))))
+      
 (mac ontable (k v h . body)
   " Loops through the entries of table or object `h', with key-value pairs
     assigned to `k' and `v', respectively.
@@ -829,11 +835,11 @@
           (when ,var ,@body (,gf ,test))))
       ,test)))
 
-(def last (seq)
+(def last (xs)
   " Returns the last element of `seq'. "
-  (if (no (cdr seq))
-      (car seq)
-      (last (cdr seq))))
+  (if (cdr xs)
+      (last (cdr xs))
+      (car xs)))
 
 (def rem (test seq)
   " Returns a list with the elements of `seq' that pass `test' removed.
@@ -852,7 +858,9 @@
     See also [[rem]] "
   (rem (complement (testify test)) seq))
 
-(def trues (f seq) " Returns a list with all `nil's removed. " (rem nil (map f seq)))
+(def trues (f seq)
+  " Returns a list with all `nil's removed. "
+  (rem nil (map f seq)))
 
 (mac do1 args
   " Performs the body in sequence, then returns the value of the
@@ -979,44 +987,25 @@
 ; as lists of chars annotated with 'string, and modify car and cdr to get
 ; the rep of these.  That would also require hacking the reader.
 
-;(def pr args
-;  (if (isa (car args) 'output)
-;      (do (error "stream arg!" args)
-;          (map1 [disp _ (car args)] (cdr args))
-;          (cadr args))
-;      (do (map1 disp args)
-;          (car args))))
-
 (def pr args
   " Prints the arguments. "
   (map1 disp args)
   (car args))
 
-; Rtm says this version should make the server 20% faster because map1
-; generates so much garbage; in fact makes slower; maybe rewrite map1?
-
-;(def newpr args
-;  (if (isa (car args) 'output)
-;      (do (each a (cdr args) (disp a (car args)))
-;          (cadr args))
-;      (do (each a args (disp a))
-;          (car args))))
-
 (def prn args
   " Prints the arguments followed by a newline. "
   (do1 (apply pr args)
-       (writec #\newline
-               (if (isa (car args) 'output) (car args) (stdout)))))
+       (writec #\newline)))
 
-(mac nil! args
+(mac wipe args
   " Sets each of the given places to nil. "
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
 
-(mac t! args
+(mac assert args
   " Sets each of the given places to t. "
   `(do ,@(map (fn (a) `(= ,a t)) args)))
 
-; Destructing means ambiguity: are pat vars bound in else? (no)
+; Destructuring means ambiguity: are pat vars bound in else? (no)
 
 (mac iflet (var expr then . rest)
   " Checks if `expr' is true, and if so, assigns it to `var' and
@@ -1032,9 +1021,11 @@
 
 (mac aif (expr . body)
   " Similar to `if' but assigns the result of 'expr' to the variable `it'."
-  (if (<= (len body) 2)
-    `(let it ,expr (if it ,@body))
-    `(let it ,expr (if it ,(car body) (aif ,@(cdr body))))))
+  `(let it ,expr
+     (if it
+         ,@(if (cddr body)
+               `(,(car body) (aif ,@(cdr body)))
+               body))))
 
 (mac awhen (expr . body)
   " Similar to `when' but assigns the result of 'expr' to the variable `it'."
@@ -1110,9 +1101,7 @@
          (f (car x) (f (cdr x) acc))))
    x nil))
 
-; Perhaps not the final idea, or at least final name
-
-(mac default (x test alt)
+(mac check (x test (o alt))
   " Returns `x' if it passes `test', otherwise returns `alt'. "
   (w/uniq gx
     `(let ,gx ,x
@@ -1160,6 +1149,9 @@
     " Opens the given string `str' for input, assigning the stream to `var'.
       The stream is automatically closed on exit from the `body'. "
     (expander 'instring var str body))
+
+  (mac w/socket (var port . body)
+    (expander 'open-socket var port body))
   )
 
 (mac w/outstring (var . body)
@@ -1507,20 +1499,23 @@
   " Writes a table or object `h' to the stream `o'. "
   (write (tablist h) o))
 
-(def copy (x)
+(def copy (x . args)
   " Creates a copy of an existing argument `x'. "
-  (case (type x)
-    sym    x
-    cons   (apply (fn args args) x)
-    string (let new (newstring (len x))
-             (forlen i x
-               (= (new i) (x i)))
-             new)
-    table  (let new (table)
-             (ontable k v x
-               (= (new k) v))
-             new)
-           (err "Can't copy " x)))
+  (let x2 (case (type x)
+            sym    x
+            cons   (apply (fn args args) x)
+            string (let new (newstring (len x))
+                     (forlen i x
+                       (= (new i) (x i)))
+                     new)
+            table  (let new (table)
+                     (ontable k v x 
+                       (= (new k) v))
+                     new)
+                   (err "Can't copy " x))
+    (map (fn ((k v)) (= (x2 k) v))
+         (pair args))
+    x2))
 
 (def abs (n)
   " Returns the absolute value of a number. "
@@ -1536,7 +1531,7 @@
 
 (def round (n)
   " Rounds off a fractional value to the nearest whole number. "
-  (withs (base (truncate n) rem (abs (- n base)))
+  (withs (base (trunc n) rem (abs (- n base)))
     (if (> rem 1/2) ((if (> n 0) + -) base 1)
         (< rem 1/2) base
         (odd base)  ((if (> n 0) + -) base 1)
@@ -1545,7 +1540,7 @@
 (def roundup (n)
   " Rounds off a fractional value to the nearest absolute highest
     whole number. "
-  (withs (base (truncate n) rem (abs (- n base)))
+  (withs (base (trunc n) rem (abs (- n base)))
     (if (>= rem 1/2)
         ((if (> n 0) + -) base 1)
         base)))
@@ -1634,7 +1629,7 @@
     split.  See also 'splitn "
   (withs (mid (nthcdr (- pos 1) seq)
           s2  (cdr mid))
-    (nil! (cdr mid))
+    (wipe (cdr mid))
     (list seq s2)))
 
 (def ssplit (str (o delim whitec) (o keepdelim) (o noblanks))
@@ -1672,18 +1667,12 @@
 
 (= templates* (table))
 
-(def maps (fn . args)
-  " Applies the elements of the seqeunces to the given function.
-    Returns a sequence containing the concatenation of the results
-    of the function."
-  (apply join (apply map fn args)))
-
 (mac deftem (tem . fields)
   " Defines an object template for field values, with inclusion for
     existing templates. "
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
     `(= (templates* ',name)
-        (+ (maps templates* ',(rev includes))
+        (+ (mappend templates* ',(rev includes))
            (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
                         (pair fields)))))))
 
@@ -1732,12 +1721,14 @@
 
 (def number (n) " Determines if `n' is a number. " (in (type n) 'int 'num))
 
+(def since (t1) (- (seconds) t1))
+
 (def cache (timef valf)
   " Caches the result of a call to `valf' until a number of seconds
     greater than the result of a call to `timef' have passed. "
   (with (cached nil gentime nil)
     (fn ()
-      (unless (and cached (< (- (seconds) gentime) (timef)))
+      (unless (and cached (< (since gentime) (timef)))
         (= cached  (valf)
            gentime (seconds)))
       cached)))
@@ -1760,7 +1751,7 @@
   " Ensures that the specified directory exists, and creates it if not
     yet created. "
   (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
+    (system (string "mkdir -p -f " path))))
 
 (def uname nil
   " Returns the name of the operating system. "
@@ -1779,11 +1770,7 @@
                         ;; BSD wants -r and epoch seconds
                         (string "-r " time))
                        " \"+%Y-%m-%d\"")))
-    (subseq val 0 (- (len val) 1))))
-
-(def since (t1)
-  " Returns the number of seconds since the given time. "
-  (- (seconds) t1))
+    (cut val 0 (- (len val) 1))))
 
 (def count (test x)
   " Counts the number of elements in `x' which pass `test'. "
@@ -1796,7 +1783,7 @@
   " Trims a string `str' with `...' if it is longer than the given `limit'. "
   (if (<= (len str) limit)
       str
-      (+ (subseq str 0 limit) "...")))
+      (+ (cut str 0 limit) "...")))
 
 (def random-elt (seq)
   " Returns an element of `seq' chosen by random. "
@@ -1823,7 +1810,7 @@
 
 (def atend (i s)
   " Determines if the index `i' is at or beyond the end of the sequence `s'. "
-  (>= i (- (len s) 1)))
+  (> i (- (len s) 2)))
 
 (def multiple (x y)
   " Determines if `x' is a multiple of `y'. "
@@ -1863,6 +1850,7 @@
       (if (,gf ,gx) (cons ,gx ,y) ,y))))
 
 ; Could rename this get, but don't unless it's frequently used.
+; Could combine with firstn if put f arg last, default to (fn (x) t).
 
 (def firstn-that (n f xs)
   " Returns the first `n' elements of `xs' which pass `f'. "
@@ -1878,7 +1866,7 @@
     (each x xs
       (unless (h x)
         (push x acc)
-        (t! (h x))))
+        (assert (h x))))
     (rev acc)))
 
 (def single (x)
@@ -1913,17 +1901,6 @@
       (when (> v n) (= winner k n v)))
     (list winner n)))
 
-(def splitn (n xs)
-  " Splits `xs' at offset `n', returning a two-element list of the
-    split.  See also 'split "
-  (let acc nil
-    ((afn (n xs)
-       (if (or (no xs) (<= n 0))
-           (list (rev acc) xs)
-           (do (push (car xs) acc)
-               (self (- n 1) (cdr xs)))))
-     n xs)))
-
 ; In the normal case, the result of reduce is the combined result of function's
 ; being applied to successive pairs of elements of sequence. If the sequence
 ; contains exactly one element and no init is given, then that element is returned
@@ -1934,7 +1911,6 @@
 ; other than two arguments.
 
 (let initsym (uniq)
-
   ; Left-associative
   (def reduce (f xs (o init initsym))
     " Applies `f' to an accumulated result on the elements of `xs'.
@@ -1966,10 +1942,10 @@
                (whilet c (readc s)
                  (case c
                    #\# (do (a (coerce (rev chars) 'string))
-                           (nil! chars)
+                           (wipe chars)
                            (a (read s)))
                    #\~ (do (a (coerce (rev chars) 'string))
-                           (nil! chars)
+                           (wipe chars)
                            (readc s)
                            (a (list argsym (++ i))))
                        (push c chars))))
@@ -2006,9 +1982,12 @@
 
 (def ero args
   " Outputs `args' to error output. "
-  (each a args
-    (write a (stderr))
-    (writec #\space (stderr))))
+  (w/stdout (stderr) 
+    (each a args 
+      (write a)
+      (writec #\space))
+    (writec #\newline))
+  (car args))
 
 (def queue ()
   " Creates a queue.
@@ -2016,6 +1995,7 @@
   (list nil nil 0))
 
 ; Despite call to atomic, once had some sign this wasn't thread-safe.
+; Keep an eye on it.
 
 (def enq (obj q)
   " Adds `obj' to a queue.  See also [[queue]] "
@@ -2052,7 +2032,7 @@
 
 (def median (ns)
   " Computes the median of an unsorted list. "
-  ((sort > ns) (truncate (/ (len ns) 2))))
+  ((sort > ns) (trunc (/ (len ns) 2))))
 
 (mac noisy-each (n var val . body)
   " Performs `body' for each element of the sequence returned by `expr',
@@ -2126,7 +2106,7 @@
   " Creates a membership table which returns t for each element in `ks' and
     nil otherwise. "
   (let h (table)
-    (each k ks (t! (h k)))
+    (each k ks (assert (h k)))
     h))
 
 (= bar* " | ")
@@ -2141,9 +2121,16 @@
                        (unless (is ,out "")
                          (if ,needbars
                              (pr bar* ,out)
-                             (do (t! ,needbars)
+                             (do (assert ,needbars)
                                  (pr ,out))))))
                   body)))))
+
+(def len< (x n) (< (len x) n))
+
+(def len> (x n) (> (len x) n))
+
+(mac thread body 
+  `(new-thread (fn () ,@body)))
 
 (mac redef (name parms . body)
   " Redefine a function.  The old function definitiaion may be used within
@@ -2235,7 +2222,11 @@
 
 (set *current-load-file* nil)
 
-; Lower priority ideas
+
+; any logical reason I can't say (push x (if foo y z)) ?
+;   eval would have to always ret 2 things, the val and where it came from
+; idea: implicit tables of tables; setf empty field, becomes table
+;   or should setf on a table just take n args?
 
 ; solution to the "problem" of improper lists: allow any atom as a list
 ;  terminator, not just nil.  means list recursion should terminate on
@@ -2248,6 +2239,7 @@
 ;  by map, so can use map in cases when don't want all the vals
 ; idea: anaph macro so instead of (aand x y) say (anaph and x y)
 ; idea: foo.bar!baz as an abbrev for (foo bar 'baz)
+;  or something a bit more semantic?
 ; could uniq be (def uniq () (annotate 'symbol (list 'u))) again?
 ; idea: use x- for (car x) and -x for (cdr x)  (but what about math -?)
 ; idea: get rid of strings and just use symbols
@@ -2256,4 +2248,16 @@
 ; idea: parameter (p foo) means in body foo is (pair arg)
 ; idea: make ('string x) equiv to (coerce x 'string) ?  or isa?
 ;   quoted atoms in car valuable unused semantic space
-
+; idea: if (defun foo (x y) ...), make (foo 1) return (fn (y) (foo 1 y))
+;   probably would lead to lots of errors when call with missing args
+;   but would be really dense with . notation, (foo.1 2)
+; or use special ssyntax for currying: (foo@1 2)
+; remember, can also double; could use foo::bar to mean something
+; wild idea: inline defs for repetitive code
+;  same args as fn you're in
+; variant of compose where first fn only applied to first arg?
+;  (> (len x) y)  means (>+len x y)
+; use ssyntax underscore for a var?
+;  foo_bar means [foo _ bar]
+;  what does foo:_:bar mean?
+; matchcase

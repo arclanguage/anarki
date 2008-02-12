@@ -116,8 +116,8 @@
     (if (cookie->user* id) (new-user-cookie) id)))
 
 (def logout-user (user)
-  (nil! (logins* user))
-  (nil! (cookie->user* (user->cookie* user)) (user->cookie* user))
+  (wipe (logins* user))
+  (wipe (cookie->user* (user->cookie* user)) (user->cookie* user))
   (save-table cookie->user* cookfile*))
 
 (def create-acct (user pw)
@@ -235,7 +235,7 @@
   (let fname (+ "/tmp/shash" (rand-string 10))
     (w/outfile f fname (disp str f))
     (let res (tostring (system (+ "openssl dgst -sha1 <" fname)))
-      (do1 (subseq res 0 (- (len res) 1))
+      (do1 (cut res 0 (- (len res) 1))
            (rmfile fname)))))
 
 (def bad-newacct (user pw)
@@ -321,7 +321,7 @@
        (err "unknown varfield type" typ)))
 
 (def text-rows (text wid (o pad 3))
-  (+ (truncate (/ (len text) (* wid .8))) pad))
+  (+ (trunc (/ (len text) (* wid .8))) pad))
 
 (def needrows (text cols (o pad 0))
   (+ pad (max (+ 1 (count #\newline text))
@@ -451,7 +451,7 @@
                            (or (litmatch "http://" s i) 
                                (litmatch "https://" s i)))
                        (withs (n   (urlend s i)
-                               url (subseq s i n))
+                               url (cut s i n))
                          (tag (a href url rel 'nofollow)
                            (pr (if (no maxurl) url (ellipsize url maxurl))))
                          (= i (- n 1)))
@@ -521,18 +521,18 @@
           (litmatch "<a href=" s i)
            (let endurl (posmatch [in _ #\> #\space] s (+ i 9))
              (if endurl
-                 (do (pr (subseq s (+ i 9) (- endurl 1)))
+                 (do (pr (cut s (+ i 9) (- endurl 1)))
                      (= i (aif (posmatch "</a>" s endurl)
                                (+ it 3)
                                endurl)))
                  (writec (s i))))
           (litmatch "<pre><code>" s i)
            (awhen (findsubseq "</code></pre>" s (+ i 12))
-             (pr (subseq s (+ i 11) it))
+             (pr (cut s (+ i 11) it))
              (= i (+ it 12)))
           (litmatch "<pre><code>" s i)
            (awhen (findsubseq "</code></pre>" s (+ i 12))
-             (pr (subseq s (+ i 11) it))
+             (pr (cut s (+ i 11) it))
              (= i (+ it 12)))
           (writec (s i))))))
 
