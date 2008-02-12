@@ -30,7 +30,10 @@
           (fn args `((fn () ,@args)))))
 ;documentation for do itself
 (sref *help*
-  '(fn " Evaluates each expression in sequence. ")
+  '(fn
+  " Evaluates each expression in sequence and returns the result of the
+    last expression.
+    See also [[do1]] ")
   'do)
 (sref sig
   'args
@@ -770,7 +773,7 @@
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times.
-    See also [[for]] "
+    See also [[for]] [[forlen]] "
   `(for ,(uniq) 1 ,n ,@body))
 
 ; could bind index instead of gensym
@@ -833,7 +836,8 @@
       (last (cdr seq))))
 
 (def rem (test seq)
-  " Returns a list with the elements of `seq' that pass `test' removed. "
+  " Returns a list with the elements of `seq' that pass `test' removed.
+    See also [[keep]] "
   (let f (testify test)
     (if (alist seq)
         ((afn (s)
@@ -844,14 +848,16 @@
         (coerce (rem test (coerce seq 'cons)) 'string))))
 
 (def keep (test seq)
-  " Returns a list with the elements of `seq' that pass `test'. "
+  " Returns a list with the elements of `seq' that pass `test'.
+    See also [[rem]] "
   (rem (complement (testify test)) seq))
 
 (def trues (f seq) " Returns a list with all `nil's removed. " (rem nil (map f seq)))
 
 (mac do1 args
   " Performs the body in sequence, then returns the value of the
-    first expression. "
+    first expression.
+    See also [[do]] "
   (w/uniq g
     `(let ,g ,(car args)
        ,@(cdr args)
