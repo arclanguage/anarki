@@ -754,7 +754,7 @@
 
 (mac = args
   " Assigns values to variables.
-    See also [[t!]] [[nil!]] [[++]] [[--]] [[rotate]] [[defset]] "
+    See also [[assert]] [[wipe]] [[++]] [[--]] [[rotate]] [[defset]] "
   (expand=list args))
 
 (mac loop (start test update . body)
@@ -1958,7 +1958,7 @@
        (pr ,@(parse-format str))))
 )
 
-(nil! *load-file-stack*)
+(wipe *load-file-stack*)
 ;;why not (o hook idfn) ?
 (def load (file (o hook))
   " Reads the expressions in `file' and evaluates them.  Read expressions
@@ -2261,3 +2261,4 @@
 ;  foo_bar means [foo _ bar]
 ;  what does foo:_:bar mean?
 ; matchcase
+
