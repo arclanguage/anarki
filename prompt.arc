@@ -124,12 +124,24 @@
       args [coerce (rawargs _) 'string]
       nonempty [if (isnt "" _) _]
       enempty [if (no _) "" _]
+      ;not yet implemented in base libs as of this writing.
+      urlencode
+      (fn (s)
+        (let code [coerce _ 'int 16]
+          (tostring
+            (forlen i s
+              (if (some (s i)
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
+                  (pr (s i))
+                (is (s i) #\space)
+                  (pr "+")
+                  (pr "%" (coerce (code:s i) 'string 16)))))))
       enformat
       (fn (s)
         ;inter-recursion needed, so just assign nothing
         (let (get normal one-bracket inlink one-close
             emit-char out-char build build2
-            bldg emit-link urlencode) nil
+            bldg emit-link) nil
           (=
             get
             (with (i 0 l (len s))
@@ -185,19 +197,7 @@
                     (+ "?sym=" (urlencode ln))
                     (+ "?str=" (urlencode ln)))))
               (wipe bldg)
-              (next))
-            ;not yet implemented in base libs as of this writing.
-            urlencode
-            (fn (s)
-              (let code [coerce _ 'int 16]
-                (tostring
-                  (forlen i s
-                    (if (some (s i)
-"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
-                        (pr (s i))
-                      (is (s i) #\space)
-                        (pr "+")
-                        (pr "%" (coerce (code:s i) 'string 16))))))))
+              (next)))
           (tag (code) (normal)) )))
     (tag (html)
       (tag (head)
@@ -212,7 +212,9 @@
           (nonempty:args "str")
             (prall
               ;mysteriously, at the time of this writing, (+ "?sym=" _) fails
-              (map [tostring (link _ (tostring (pr "?sym=" _)))]
+              (map
+                [tostring
+                  (link _ (tostring (pr "?sym=" (urlencode (string _)))))]
                 (helpsearch-core (coerce it 'string)))
               "Related symbols:<br>" "<br>")
             (pr "Welcome to online help. "
