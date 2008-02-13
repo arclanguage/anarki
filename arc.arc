@@ -2006,11 +2006,11 @@
   (push *current-load-file* *load-file-stack*)
   (= *current-load-file* file)
   (or= hook idfn)
-  (do1                                  ;perhaps it would be better to use "after" instead of "do1"
+  (after
     (w/infile f file
       (whilet e (read f)
         (eval (hook e))))
-    (= *current-load-file* (pop *load-file-stack*))))
+    (do (= *current-load-file* (pop *load-file-stack*)) nil)))
 
 (= *required-files* (table))
 
