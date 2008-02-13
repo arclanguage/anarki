@@ -1962,7 +1962,8 @@
 ;;why not (o hook idfn) ?
 (def load (file (o hook))
   " Reads the expressions in `file' and evaluates them.  Read expressions
-    may be preprocessed by `hook'. "
+    may be preprocessed by `hook'.
+    See also [[require]]. "
   (push *current-load-file* *load-file-stack*)
   (= *current-load-file* file)
   (or= hook idfn)
@@ -1971,6 +1972,18 @@
       (whilet e (read f)
         (eval (hook e))))
     (= *current-load-file* (pop *load-file-stack*))))
+
+(= *required-files* (table))
+
+(def require (file)
+  " Loads `file' if it has not yet been `require'd.  Can be fooled by changing
+    the name ((require \"foo.arc\") as opposed to (require \"./foo.arc\")), but
+    this should not be a problem.
+    See also [[load]]. "
+  (or (*required-files* file)
+      (do
+        (= (*required-files* file) t)
+        (load file))))
 
 (def positive (x)
   " Determines if `x' is a number and is positive. "
