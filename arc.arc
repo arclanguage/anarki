@@ -1626,7 +1626,7 @@
 
 (def split (seq pos)
   " Splits `seq' at offset `pos', returning a two-element list of the
-    split.  See also 'splitn "
+    split. "
   (withs (mid (nthcdr (- pos 1) seq)
           s2  (cdr mid))
     (wipe (cdr mid))

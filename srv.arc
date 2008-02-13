@@ -11,6 +11,9 @@
 ; add the following files to the rootdir to use error pages
 (= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
+; for now the version is <PG's arc num>.<date>
+(= serverheader* "Server: ASV/1.20080212")
+
 (def serve ((o port 8080))
   (wipe quitsrv*)
   (ensure-srvinstall)
@@ -73,7 +76,7 @@
                   (case type
                     get  (respond o op args cooks ip)
                     post (handle-post i o op n cooks ip)
-                         (respond-err o "Unknown request: " (car lines)))
+                         (respond-err o 404 "Unknown request: " (car lines)))
                   (assert responded))
                 (do (push (string (rev line)) lines)
                     (wipe line)))
@@ -98,27 +101,6 @@
         (if srv-noisy* (pr "\n\n"))
         (respond o op (parseargs (string (rev line))) cooks ip))))
 
-(= header* "HTTP/1.0 200 OK
-Content-Type: text/html; charset=utf-8
-Connection: close")
-
-(= srv-header* (table))
-
-(= (srv-header* 'gif) 
-"HTTP/1.0 200 OK
-Content-Type: image/gif
-Connection: close")
-
-(= (srv-header* 'jpg) 
-"HTTP/1.0 200 OK
-Content-Type: image/jpeg
-Connection: close")
-
-(= (srv-header* 'text/html) 
-"HTTP/1.0 200 OK
-Content-Type: text/html; charset=utf-8
-Connection: close")
-
 (= rdheader* "HTTP/1.0 302 Moved")
 
 (= srvops* (table) redirector* (table) optimes* (table))
@@ -127,10 +109,11 @@ Connection: close")
 (= ext-mimetypes* (listtab '(("gif" "image/gif") ("jpg" "image/jpeg") ("png" "image/png") 
                              ("css" "text/css") ("pdf" "application/pdf") ("swf" "application/x-shockwave-flash"))))
 
-(= textmime* "text/html;charset=utf-8")
+(= textmime* "text/html; charset=utf-8")
 
 (def header ((o type textmime*) (o code 200))
   (string "HTTP/1.0 " code " " (statuscodes* code) "
+" serverheader* "
 Content-Type: " type "
 Connection: close"))
 
@@ -200,37 +183,11 @@ Connection: close"))
                 (do (prn rdheader*)
                     (prn "Location: " (it str req))
                     (prn))
-                (do (prn header*)
+                (do (prn (header))
                     (it str req))))
-         (static-filetype op)
-          (do (prn (srv-header* it))
-              (prn)
-              (w/infile i (string op)
-                (whilet b (readb i)
-                  (writeb b str))))
-          (respond-err str unknown-msg*))))
-
-(def gifname (sym)
-  (let str (string sym)
-    (and (endmatch ".gif" str) (~find #\/ str))))
-
-(def static-filetype (sym)
-  (let fname (string sym)
-    (and (~find #\/ fname)
-         (case (last (check (tokens fname #\.) ~single))
-           "gif"  'gif
-           "jpg"  'jpg
-           "css"  'text/html
-           "txt"  'text/html
-           "html" 'text/html
-           "arc"  'text/html
-           ))))
-
-(def respond-err (str msg . args)
-  (w/stdout str
-    (prn header*)
-    (prn)
-    (apply pr msg args)))
+         (file-exists-in-root (string op))
+          (respond-file str it)
+         (respond-err str 404 unknown-msg*))))
 
 (def respond-file (str file (o code 200))
   (do (prn (header (filemime file) code))

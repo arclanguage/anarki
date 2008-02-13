@@ -184,7 +184,7 @@
                   (if (*help* (coerce ln 'sym))
                     (+ "?sym=" (urlencode ln))
                     (+ "?str=" (urlencode ln)))))
-              (nil! bldg)
+              (wipe bldg)
               (next))
             ;not yet implemented in base libs as of this writing.
             urlencode
