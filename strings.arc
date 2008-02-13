@@ -119,11 +119,12 @@
     (if p1
         (cut s 
              (if (in where 'front 'both) p1 0)
-             (when (in where 'end 'both)
+             (if (in where 'end 'both)
                (let i (- (len s) 1)
                  (while (and (> i p1) (f (s i)))
-                   (-- i))
-                 (+ i 1))))
+                        (-- i))
+                 (+ i 1))
+               (len s)))
         "")))
 
 (def num (m (o digits 2) (o trail-zeros nil) (o init-zero nil))
