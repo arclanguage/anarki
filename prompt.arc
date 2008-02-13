@@ -213,8 +213,11 @@
             (prall
               ;mysteriously, at the time of this writing, (+ "?sym=" _) fails
               (map
-                [tostring
-                  (link _ (tostring (pr "?sym=" (urlencode (string _)))))]
+                (compose
+                  [tostring
+                    (link (eschtml _)
+                      (tostring (pr "?sym=" (urlencode _))))]
+                  string)
                 (helpsearch-core (coerce it 'string)))
               "Related symbols:<br>" "<br>")
             (pr "Welcome to online help. "
