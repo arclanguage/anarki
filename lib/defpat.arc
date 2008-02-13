@@ -16,9 +16,12 @@
 ; )
 ;<docstring> := <string>
 ;<pattern> :=
-;  <const> | <var> | (<pattern>*) | (<pattern>* . <pattern>)
+;  <const> | <var> | <guarded> | (<pattern>*) | (<pattern>* . <pattern>)
 ;<const> := anything that is: (not a symbol), or (t and nil), or a 'symbol form.
 ;<var> := anything that is a symbol, but isn't t and isn't nil
+;<guarded> := ,(<var> <test(var)>)
+;<test(var)> := an expression involving var; this pattern matches if 
+;  this expression returns true for that var
 ;<clause> := any expression
 ;
 ; - like any Arc conditional form, if the last clause doesn't have a
@@ -75,6 +78,9 @@
 	" Composes the form for the `defpat' macro; used for debug. "
 	(withs
 		(
+			;in case pg decides to change ,x some time in the
+			;future
+			unquote-sym (car ',x)
 			docstring
 			(if (isa (car origbody) 'string) (car origbody))
 			body
@@ -91,9 +97,14 @@
 			;check if variable name
 			varp [and (isnt _ nil) (isnt _ t) (isa _ 'sym)]
 			;check if 'x form
-			quoteformp [and (acons _) (is 'quote (car _)) (isa (cadr _) 'sym)]
+			quoteformp [caris _ 'quote]
 			;check if constant
 			constp (orf (andf atom ~varp) quoteformp)
+			;check if ,(x (test x)) form
+			guardedp [caris _ unquote-sym]
+			;accessors of ,(x (test x))
+			var-guarded car:cadr
+			test-guarded cadr:cadr
 			;cuts out dotted portions of dotted lists
 			cutdotted
 			(fn (l)
@@ -147,6 +158,8 @@
 							nil 
 						(varp p)
 							(ret `(,p ((compose ,@path) ,a)))
+						(guardedp p)
+							(ret `(,(var-guarded p) ((compose ,@path) ,a)))
 							(do
 								(self (car p) (cons 'car path))
 								(self (cdr p) (cons 'cdr path)) ) ))
@@ -159,6 +172,9 @@
 					`(is ,a ,p)
 				(varp p)
 					`t
+				(guardedp p)
+					`(let ,(var-guarded p) ,a
+						,(test-guarded p))
 					`(and
 						(acons ,a)
 						(let ,a (car ,a) ,(self a (car p)))
@@ -254,4 +270,29 @@
 	((x y . zs) f)	`(,(f x y) ,@(*defpat-pair zs f))
 	((x) f)		`((,x)) ;this is how the arc0 pair does it
 	(() f)		())
+
+(defpat *defpat-rpn
+	" Example/testcase for defpat in using
+	  ,(x (test x)) guarded patterns "
+	;start with an empty stack
+	(lst)
+		(*defpat-rpn lst '())
+	;all done; return what's on the stack
+	(()				(x))
+		x
+	;extra stuff on the stack
+	(()				(_ . __))
+		(ero "extra stuff on the stack")
+	;divide by zero
+	((,(f (is f /)) . _)		(0 x . __))
+		(ero "divide by zero")
+	;pop, pop, push...
+	((,(f (isa f 'fn)) . xs)	(b a . s))
+		(*defpat-rpn xs `(,(f a b) ,@s) )
+	;not enough to pop
+	((,(f (isa f 'fn)) . xs)	x)
+		(ero "too few parameters")
+	;just push
+	((x . xs)			s)
+		(*defpat-rpn xs `(,x ,@s)))
 
