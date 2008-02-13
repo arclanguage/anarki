@@ -447,7 +447,7 @@
                                (pr txt))
                           (= i (+ 1 urlend)))
                       (and (no nolinks)
-                           (t! gotthere)
+                           (assert gotthere)
                            (or (litmatch "http://" s i) 
                                (litmatch "https://" s i)))
                        (withs (n   (urlend s i)
