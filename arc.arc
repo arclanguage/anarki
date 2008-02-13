@@ -815,7 +815,8 @@
       \"bcd\"
 
     See also [[firstn]] [[nthcdr]] "
-  (let end (if (< end 0) (+ (len seq) end) end)
+  (with (end (if (< end 0) (+ (len seq) end) end)
+         start (if (< start 0) (+ (len seq) start) start))
     (if (isa seq 'string)
         (let s2 (newstring (- end start))
           (for i 0 (- end start 1)
