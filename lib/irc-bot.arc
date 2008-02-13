@@ -65,4 +65,4 @@
               (log "?"))))))))
 
 (def irc& (nick)
-  (= bot* (thread (fn () (irc nick)))))
+  (= bot* (thread (irc nick))))
