@@ -36,7 +36,7 @@
   '(fn
   " Evaluates each expression in sequence and returns the result of the
     last expression.
-    See also [[do1]] ")
+    See also [[do1]] [[after]] ")
   'do)
 (sref sig
   'args
@@ -206,14 +206,15 @@
 
 (mac afn (parms . body)
   " Creates a function which calls itself with the name `self'.
-    See also [[fn]] [[rfn]] "
+    See also [[fn]] [[rfn]] [[aif]] [[awhen]] [[aand]] "
   `(rfn self ,parms ,@body))
 
 (mac compose args
   " Arc expands x:y:z into (compose x y z)
     quick way to write (x(y(z)))
     Only used when the call to compose doesn't occur in functional position.
-    Composes in functional position are transformed away by ac. "
+    Composes in functional position are transformed away by ac.
+    See also [[complement]] "
   (let g (uniq)
     `(fn ,g
        ,((afn (fs)
@@ -225,7 +226,7 @@
 (mac complement (f)
   " Arc expands ~x into (complement x)
     whenever the function returns true this returns false.
-    See also [[no]] [[isnt]]"
+    See also [[no]] [[isnt]] [[compose]]"
   (let g (uniq)
     `(fn ,g (no (apply ,f ,g)))))
 
@@ -239,12 +240,13 @@
 
 (def isnt (x y)
   " Inverse of is.
-    See also [[no]] "
+    See also [[no]] [[is]] "
   (no (is x y)))
 
 (mac w/uniq (names . body)
   " Assigns a set of variables to unique symbols.
-    Generally used for macro functions. "
+    Generally used for macro functions.
+    See also [[uniq]] "
   (if (acons names)
       `(with ,(apply + nil (map1 (fn (n) (list n '(uniq)))
                              names))
@@ -253,7 +255,7 @@
 
 (mac or args
   " Computes arguments until one of them is true and returns that result.
-    See also [[and]] [[orf]] [[ormap]] "
+    See also [[and]] [[orf]] [[ormap]] [[check]] "
   (and args
        (w/uniq g
          `(let ,g ,(car args)
@@ -290,7 +292,7 @@
 
 (mac when (test . body)
   " When `test' is true, do `body'.
-    See also [[unless]] [[if]] "
+    See also [[unless]] [[if]] [[awhen]] "
   `(if ,test (do ,@body)))
 
 (mac unless (test . body)
@@ -309,7 +311,7 @@
 
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop.
-    See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] "
+    See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] [[drain]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (when ,gp ,@body (,gf ,test)))
@@ -348,7 +350,7 @@
 
 (def some (test seq)
   " Determines if at least one element of `seq' satisfies `test'.
-    See also [[all]] [[mem]] [[in]] "
+    See also [[all]] [[mem]] [[in]] [[pos]] "
   (let f (testify test)
     (if (alist seq)
         (reclist f:car seq)
@@ -835,7 +837,7 @@
 (mac whilet (var test . body)
   " While `test' is true, perform `body' in a loop.
     The result of `test' is assigned to `var'.
-    See also [[while]] [[whiler]] "
+    See also [[while]] [[whiler]] [[drain]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (let ,var ,gp
@@ -850,7 +852,7 @@
 
 (def rem (test seq)
   " Returns a list with the elements of `seq' that pass `test' removed.
-    See also [[keep]] "
+    See also [[keep]] [[pull]] "
   (let f (testify test)
     (if (alist seq)
         ((afn (s)
@@ -862,7 +864,7 @@
 
 (def keep (test seq)
   " Returns a list with the elements of `seq' that pass `test'.
-    See also [[rem]] "
+    See also [[rem]] [[pull]] "
   (rem (complement (testify test)) seq))
 
 (def trues (f seq)
@@ -883,7 +885,8 @@
 
 (mac caselet (var expr . args)
   " Matches the result of `expr' to arguments until one matches.
-    The result of `expr' is assigned to `var'. "
+    The result of `expr' is assigned to `var'.
+    See also [[case]] [[if]] [[iflet]] "
   (let ex (afn (args)
             (if (no (cdr args))
                 (car args)
@@ -893,11 +896,13 @@
     `(let ,var ,expr ,(ex args))))
 
 (mac case (expr . args)
-  " Matches the result of `expr' to arguments until one matches. "
+  " Matches the result of `expr' to arguments until one matches.
+    See also [[caselet]] [[if]] "
   `(caselet ,(uniq) ,expr ,@args))
 
 (mac push (x place)
-  " Pushes the value `x' on the front of the list in `place'. "
+  " Pushes the value `x' on the front of the list in `place'.
+    See also [[pop]] [[cons]] "
   (w/uniq gx
     (let (binds val setter) (setforms place)
       `(let ,gx ,x
@@ -905,7 +910,8 @@
            (,setter (cons ,gx ,val)))))))
 
 (mac swap (place1 place2)
-  " Swaps the values of the specified places. "
+  " Swaps the values of the specified places.
+    See also [[rotate]] [[=]] "
   (w/uniq (g1 g2)
     (with ((binds1 val1 setter1) (setforms place1)
            (binds2 val2 setter2) (setforms place2))
@@ -914,7 +920,8 @@
          (,setter2 ,g1)))))
 
 (mac rotate places
-  " Rotates the values of the specified places, from right to left. "
+  " Rotates the values of the specified places, from right to left.
+    See also [[swap]] [[=]] "
   (with (vars (map [uniq] places)
          forms (map setforms places))
     `(atwiths ,(mappend (fn (g (binds val setter))
@@ -927,7 +934,8 @@
               forms))))
 
 (mac pop (place)
-  " Pops a value from the front of the list in `place'."
+  " Pops a value from the front of the list in `place'.
+    See also [[push]] [[car]] "
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ binds (list g val))
@@ -936,28 +944,32 @@
 
 (def adjoin (x xs (o test iso))
   " Returns a list with `x' in front of `xs', unless `test' returns true
-    for some element of `xs' when matched with `x'. "
+    for some element of `xs' when matched with `x'.
+    See also [[cons]] [[pushnew]] [[consif]] "
   (if (some [test x _] xs)
       xs
       (cons x xs)))
 
 (mac pushnew (x place . args)
   " Pushes `x' into the front of the list in `place' unless it is
-    already in that list. "
+    already in that list.
+    See also [[push]] [[adjoin]] [[cons]] [[consif]] "
   (w/uniq gx
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ (list gx x) binds)
          (,setter (adjoin ,gx ,val ,@args))))))
 
 (mac pull (test place)
-  " Pulls all elements that pass `test' from the list in `place'."
+  " Removes all elements that pass `test' from the list in `place'.
+    See also [[rem]] [[keep]] "
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ (list g test) binds)
          (,setter (rem ,g ,val))))))
 
 (mac ++ (place (o i 1))
-  " Increments `place' by the given increment `i' (defaults to 1). "
+  " Increments `place' by the given increment `i' (defaults to 1).
+    See also [[--]] [[zap]] [[=]] "
   (if (isa place 'sym)
       `(= ,place (+ ,place ,i))
       (w/uniq gi
@@ -966,7 +978,8 @@
              (,setter (+ ,val ,gi)))))))
 
 (mac -- (place (o i 1))
-  " Decrements `place' by the given decrement `i' (defaults to 1). "
+  " Decrements `place' by the given decrement `i' (defaults to 1).
+    See also [[++]] [[zap]] [[=]] "
   (if (isa place 'sym)
       `(= ,place (- ,place ,i))
       (w/uniq gi
@@ -977,7 +990,9 @@
 ; E.g. (inc x) equiv to (zap + x 1)
 
 (mac zap (op place . args)
-  " Modifies `place' with the result of `op' on that `place'. "
+  " Modifies `place' with the result of `op' on that `place'.
+    See also [[++]] [[--]] [[pull]] [[push]] [[pop]] [[=]]
+    [[wipe]] [[assert]] "
   (with (gop    (uniq)
          gargs  (map [uniq] args)
          mix    (afn seqs
@@ -995,39 +1010,46 @@
 ; the rep of these.  That would also require hacking the reader.
 
 (def pr args
-  " Prints the arguments. "
+  " Prints the arguments.
+    See also [[prn]] [[warn]] [[ero]] "
   (map1 disp args)
   (car args))
 
 (def prn args
-  " Prints the arguments followed by a newline. "
+  " Prints the arguments followed by a newline.
+    See also [[pr]] [[warn]] [[ero]] "
   (do1 (apply pr args)
        (writec #\newline)))
 
 (mac wipe args
-  " Sets each of the given places to nil. "
+  " Sets each of the given places to nil.
+    See also [[assert]] [[zap]] [[=]] "
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
 
 (mac assert args
-  " Sets each of the given places to t. "
+  " Sets each of the given places to t.
+    See also [[wipe]] [[zap]] [[=]] "
   `(do ,@(map (fn (a) `(= ,a t)) args)))
 
 ; Destructuring means ambiguity: are pat vars bound in else? (no)
 
 (mac iflet (var expr then . rest)
   " Checks if `expr' is true, and if so, assigns it to `var' and
-    performs the `then' clause. "
+    performs the `then' clause.
+    See also [[caselet]] [[whenlet]] [[if]] "
   (w/uniq gv
     `(let ,gv ,expr
        (if ,gv (let ,var ,gv ,then) ,@rest))))
 
 (mac whenlet (var expr . body)
   " Checks if `expr' is true, and if so, assigns it to `var' and
-    performs the `body'."
+    performs the `body'.
+    See also [[caselet]] [[iflet]] [[when]] [[if]] "
   `(iflet ,var ,expr (do ,@body)))
 
 (mac aif (expr . body)
-  " Similar to `if' but assigns the result of 'expr' to the variable `it'."
+  " Similar to `if' but assigns the result of 'expr' to the variable `it'.
+    See also [[if]] [[awhen]] [[aand]] [[afn]] "
   `(let it ,expr
      (if it
          ,@(if (cddr body)
@@ -1035,11 +1057,13 @@
                body))))
 
 (mac awhen (expr . body)
-  " Similar to `when' but assigns the result of 'expr' to the variable `it'."
+  " Similar to `when' but assigns the result of 'expr' to the variable `it'.
+    See also [[when]] [[aif]] [[aand]] [[afn]] "
   `(let it ,expr (if it (do ,@body))))
 
 (mac aand args
-  " Similar to `and' but assigns the previous expression to the variable `it'."
+  " Similar to `and' but assigns the previous expression to the variable `it'.
+    See also [[and]] [[aif]] [[awhen]] [[afn]] "
   (if (no args)
       't
       (no (cdr args))
@@ -1048,7 +1072,8 @@
 
 (mac accum (accfn . body)
   " Collects or accumulates the values given to all calls to `accfn' within
-    `body' and returns a list of those values. "
+    `body' and returns a list of those values.
+    See also [[summing]] "
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
@@ -1058,7 +1083,8 @@
 
 (mac drain (expr (o eof nil))
   " Repeatedly evaluates `expr' until it returns nil, then returns a list
-    of the true values. "
+    of the true values.
+    See also [[while]] [[whiler]] [[whilet]] "
   (w/uniq (gacc gdone gres)
     `(with (,gacc nil ,gdone nil)
        (while (no ,gdone)
@@ -1073,7 +1099,8 @@
 
 (mac whiler (var expr endval . body)
   " Performs `body' while `expr' is not `endval', assigning the result of
-    `expr' to `var'."
+    `expr' to `var'.
+    See also [[while]] [[whilet]] [[drain]] "
   (w/uniq (gf ge)
     `(let ,ge ,endval
         ((rfn ,gf (,var)
@@ -1091,7 +1118,8 @@
 ;            e))))
 
 (def consif (x y)
-  " Adds `x' to the front of the list `y' if `x' is true. "
+  " Adds `x' to the front of the list `y' if `x' is true.
+    See also [[cons]] [[if]] [[adjoin]] "
   (if x (cons x y) y))
 
 (def string args
@@ -1099,7 +1127,8 @@
   (apply + "" (map [coerce _ 'string] args)))
 
 (def flat (x (o stringstoo))
-  " Flattens a nested list. "
+  " Flattens a nested list.
+    See also [[list]] "
   ((rfn f (x acc)
      (if (or (no x) (and stringstoo (is x "")))
           acc
@@ -1109,13 +1138,15 @@
    x nil))
 
 (mac check (x test (o alt))
-  " Returns `x' if it passes `test', otherwise returns `alt'. "
+  " Returns `x' if it passes `test', otherwise returns `alt'.
+    See also [[or]] "
   (w/uniq gx
     `(let ,gx ,x
        (if (,test ,gx) ,gx ,alt))))
 
 (def pos (test seq (o start 0))
-  " Returns the position of the first element in `seq' that passes `test'. "
+  " Returns the position of the first element in `seq' that passes `test'.
+    See also [[some]] "
   (let f (testify test)
     (if (alist seq)
         ((afn (seq n)
@@ -1128,13 +1159,14 @@
          start)
         (recstring [if (f (seq _)) _] seq start))))
 
-(def even (n) " Determines if a number is even. " (is (mod n 2) 0))
+(def even (n) " Determines if a number is even.  See also [[odd]] " (is (mod n 2) 0))
 
-(def odd (n) " Determines if a number is odd. " (no (even n)))
+(def odd (n) " Determines if a number is odd.  See also [[even]] " (no (even n)))
 
 (mac after (x . ys)
   " Ensures that the body is performed after the expression `x',
-    even if it fails."
+    even if it fails.
+    See also [[do]]"
   `(protect (fn () ,x) (fn () ,@ys)))
 
 (let expander
