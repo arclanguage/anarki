@@ -133,7 +133,7 @@
           (=
             get
             (with (i 0 l (len s))
-              (fn () (if (< i l) (do1 (subseq s i (+ 1 i)) (++ i)))))
+              (fn () (if (< i l) (do1 (cut s i (+ 1 i)) (++ i)))))
             normal
             (fn ()
               (caselet c (get)
