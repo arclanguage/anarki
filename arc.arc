@@ -105,7 +105,7 @@
 
 (def map1 (f xs)
   " Return a sequence with function f applied to every element in sequence xs.
-    See also [[map]] [[each]] [[mappend]] [[maps]] [[andmap]] [[ormap]] "
+    See also [[map]] [[each]] [[mappend]] [[andmap]] [[ormap]] "
   (if (no xs)
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
@@ -578,7 +578,7 @@
        seqs)))
 
 (def mappend (f . args)
-  " Applies the elements of the seqeunces to the given function.
+  " Applies the elements of the sequences to the given function.
     Returns a sequence containing the concatenation of the results
     of the function.
     See also [[map]] [[join]] "
@@ -815,7 +815,8 @@
       \"bcd\"
 
     See also [[firstn]] [[nthcdr]] "
-  (let end (if (< end 0) (+ (len seq) end) end)
+  (with (end (if (< end 0) (+ (len seq) end) end)
+         start (if (< start 0) (+ (len seq) start) start))
     (if (isa seq 'string)
         (let s2 (newstring (- end start))
           (for i 0 (- end start 1)
