@@ -19,7 +19,8 @@
 ;  <const> | <var> | <guarded> | (<pattern>*) | (<pattern>* . <pattern>)
 ;<const> := anything that is: (not a symbol), or (t and nil), or a 'symbol form.
 ;<var> := anything that is a symbol, but isn't t and isn't nil
-;<guarded> := ,(<var> <test(var)>)
+;<guarded> :=
+;   ,(<var> <test(var)>) | ,@(<test(_)>)
 ;<test(var)> := an expression involving var; this pattern matches if 
 ;  this expression returns true for that var
 ;<clause> := any expression
@@ -78,9 +79,10 @@
 	" Composes the form for the `defpat' macro; used for debug. "
 	(withs
 		(
-			;in case pg decides to change ,x some time in the
-			;future
+			;in case pg decides to change ,x and ,@x some time
+			;in the future
 			unquote-sym (car ',x)
+			unquote-at-sym (car ',@x)
 			docstring
 			(if (isa (car origbody) 'string) (car origbody))
 			body
@@ -102,9 +104,13 @@
 			constp (orf (andf atom ~varp) quoteformp)
 			;check if ,(x (test x)) form
 			guardedp [caris _ unquote-sym]
+			;check if ,@(test _) form
+			guarded-atp [caris _ unquote-at-sym]
 			;accessors of ,(x (test x))
 			var-guarded car:cadr
 			test-guarded cadr:cadr
+			;accessors of ,@(test _)
+			test-guarded-at cadr
 			;cuts out dotted portions of dotted lists
 			cutdotted
 			(fn (l)
@@ -160,6 +166,8 @@
 							(ret `(,p ((compose ,@path) ,a)))
 						(guardedp p)
 							(ret `(,(var-guarded p) ((compose ,@path) ,a)))
+						(guarded-atp p)
+							nil
 							(do
 								(self (car p) (cons 'car path))
 								(self (cdr p) (cons 'cdr path)) ) ))
@@ -175,6 +183,9 @@
 				(guardedp p)
 					`(let ,(var-guarded p) ,a
 						,(test-guarded p))
+				(guarded-atp p)
+					`(let _ ,a
+						,(test-guarded-at p))
 					`(and
 						(acons ,a)
 						(let ,a (car ,a) ,(self a (car p)))
@@ -265,11 +276,9 @@
 	" Example/testcase for defpat in redefining
 	  the `pair' function. "
 	((x y . zs))	`((,x ,y) ,@(*defpat-pair zs))
-	((x))		`((,x))
-	(())		()
 	((x y . zs) f)	`(,(f x y) ,@(*defpat-pair zs f))
-	((x) f)		`((,x)) ;this is how the arc0 pair does it
-	(() f)		())
+	((x) . _)	`((,x)) ;this is how the arc0 pair does it
+	(() . _)	())
 
 (defpat *defpat-rpn
 	" Example/testcase for defpat in using
@@ -284,13 +293,13 @@
 	(()				(_ . __))
 		(ero "extra stuff on the stack")
 	;divide by zero
-	((,(f (is f /)) . _)		(0 x . __))
+	((,@(is _ /) . _)		(0 x . __))
 		(ero "divide by zero")
 	;pop, pop, push...
 	((,(f (isa f 'fn)) . xs)	(b a . s))
 		(*defpat-rpn xs `(,(f a b) ,@s) )
 	;not enough to pop
-	((,(f (isa f 'fn)) . xs)	x)
+	((,@(isa _ 'fn) . xs)		x)
 		(ero "too few parameters")
 	;just push
 	((x . xs)			s)
