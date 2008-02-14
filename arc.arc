@@ -557,7 +557,7 @@
 (def map (f . seqs)
   " Applies the elements of the sequences to the given function.
     Returns a sequence containing the results of the function.
-    See also [[each]] [[map1]] [[maps]] [[mappend]] [[andmap]] [[ormap]]
+    See also [[each]] [[map1]] [[mappend]] [[andmap]] [[ormap]]
     [[reduce]] "
   (if (some [isa _ 'string] seqs)
        (withs (n   (apply min (map len seqs))
@@ -581,7 +581,7 @@
   " Applies the elements of the seqeunces to the given function.
     Returns a sequence containing the concatenation of the results
     of the function.
-    See also [[map]] [[join]] [[maps]] "
+    See also [[map]] [[join]] "
   (apply + nil (apply map f args)))
 
 (def firstn (n xs)
@@ -1123,7 +1123,8 @@
   (if x (cons x y) y))
 
 (def string args
-  " Creates a string from its arguments "
+  " Creates a string from its arguments
+    See also [[sym]] "
   (apply + "" (map [coerce _ 'string] args)))
 
 (def flat (x (o stringstoo))
@@ -1270,7 +1271,8 @@
    (if (isa src 'string) (instring src) src)))
 
 (def sym (x)
-  " Returns the symbol for `x'. "
+  " Returns the symbol for `x'.
+    See also [[string]] "
   (coerce x 'sym))
 
 (mac rand-choice exprs
@@ -1302,7 +1304,9 @@
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
-  " Loops across the sequence `s', assigning each element to `var', and providing the current index in `index'.  "
+  " Loops across the sequence `s', assigning each element to `var',
+    and providing the current index in `index'.
+    See also [[each]] [[forlen]] "
   (if (is var 'index)
       (err "Can't use index as first arg to on.")
       (w/uniq gs
