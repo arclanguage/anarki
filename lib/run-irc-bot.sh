@@ -8,7 +8,7 @@ cat <<EOF
 (cd "lib")
 (load "tiny.arc")
 (load "irc-bot.arc")
-(= bot* (thread (fn () (irc "arcbot"))))
+(= bot* (thread (irc "arcbot")))
 (prn "bot is running in background")
 EOF
 cat /dev/stdin

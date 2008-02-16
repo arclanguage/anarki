@@ -11,9 +11,9 @@
 
 (defmemo hex>color (str)
   (and (is (len str) 6)
-       (with (r (dehex (subseq str 0 2))
-              g (dehex (subseq str 2 4))
-              b (dehex (subseq str 4 6)))
+       (with (r (dehex (cut str 0 2))
+              g (dehex (cut str 2 4))
+              b (dehex (cut str 4 6)))
          (and r g b
               (color r g b)))))
 
@@ -28,11 +28,11 @@
 ; hack: intern key pair till have implicit tables of tables
 
 (mac opmeth (tag opt)
-  `(opmeths* (sym (+ (coerce ,tag 'string) "."  (coerce ,opt 'string)))))
+  `(opmeths* (sym (+ (string ,tag) "."  (string ,opt)))))
 
 (mac attribute (tag opt f)
 ; `(= (opmeth ',tag ',opt) ,f)
-  `(= (opmeths* ',(sym (+ (coerce tag 'string) "."  (coerce opt 'string))))
+  `(= (opmeths* ',(sym (+ (string tag) "."  (string opt))))
       ,f))
 
 (= hexreps (table))
@@ -333,13 +333,13 @@
   (let intag nil
     (tostring
       (each c s
-        (if (is c #\<) (t! intag)
-            (is c #\>) (nil! intag)
+        (if (is c #\<) (assert intag)
+            (is c #\>) (wipe intag)
             (no intag) (pr c))))))
 
 (def shortlink (url)
   (unless (or (no url) (< (len url) 7))
-    (link (subseq url 7) url)))
+    (link (cut url 7) url)))
 
 ; this should be one regexp
 
@@ -348,10 +348,10 @@
     (tostring
       (each c str
         (pr c)
-        (unless (whitec c) (t! ink))
+        (unless (whitec c) (assert ink))
         (when (is c #\newline)
           (unless ink (pr "<p>"))
-          (nil! ink))))))
+          (wipe ink))))))
 
 (mac spanclass (name . body)
   `(tag (span class ',name) ,@body))

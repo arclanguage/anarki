@@ -13,5 +13,7 @@
 (aload "arc.arc")
 (aload "libs.arc") 
 
-(tl)
+(when (file-exists? "~/.arcshrc")
+  (aload "~/.arcshrc"))
 
+(tl)

@@ -1,31 +1,33 @@
-; (server) then http://tintin.archub.org:8080/foo 
+; HTTP Server.
 
 ; could make form fields that know their value type because of
 ; gensymed names, and so the receiving fn gets args that are not
 ; strings but parsed values.
 
-; write w/socket
+; if you want to be able to ^C the server, set breaksrv* to t
 
-; set breaksrv* to t to be able to ^c the server
+(= arcdir* "arc/" logdir* "arc/logs/" rootdir* "arc/public_html/" quitsrv* nil breaksrv* nil) 
+ 
+; add the following files to the rootdir to use error pages
+(= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
-(= arcdir* "arc/" logdir* "arc/logs/" quitsrv* nil breaksrv* nil) 
+; for now the version is <PG's arc num>.<date>
+(= serverheader* "Server: ASV/1.20080212")
 
 (def serve ((o port 8080))
-  (nil! quitsrv*)
-  (ensure-install)
-  (let s (open-socket port) 
-    (prn "ready to serve port " port) ; (flushout)
+  (wipe quitsrv*)
+  (ensure-srvinstall)
+  (w/socket s port
+    (prn "ready to serve port " port)
     (= currsock* s)
-    (after (while (no quitsrv*) 
-             (if breaksrv* 
-                 (handle-request s)
-                 (errsafe (handle-request s))))
-           (close s)
-           (prn "quit server"))))
+    (until quitsrv*
+      (if breaksrv* 
+          (handle-request s)
+          (errsafe (handle-request s)))))
+  (prn "quit server"))
 
 (def serve1 ((o port 8080))
-  (let s (open-socket port)
-    (after (handle-request s) (close s))))
+  (w/socket s port (handle-request s)))
 
 (= srv-noisy* nil)
 
@@ -43,24 +45,21 @@
 
 ; Could auto-throttle ips, e.g. if one has more than x% of recent requests.
 
-(= requests* 0 requests/ip* (table) throttle-ips* (table) throttle-time* 60)
+(= requests* 0 requests/ip* (table) throttle-ips* (table) throttle-time* 30)
 
 (def handle-request (s (o life threadlife*))
-  (if (< (len (= srvthreads* (rem dead srvthreads*))) 
-              threadlimit*)
-      (with ((i o ip) (socket-accept s))
+  (if (len< (pull dead srvthreads*) threadlimit*)
+      (let (i o ip) (socket-accept s)
         (++ requests*)
         (= (requests/ip* ip) (+ 1 (or (requests/ip* ip) 0)))
-        (let th (thread (fn () 
-                          (if (throttle-ips* ip) (sleep (rand throttle-time*)))
-                          (handle-request-thread i o ip)))
+        (let th (thread 
+                  (if (throttle-ips* ip) (sleep (rand throttle-time*)))
+                  (handle-request-thread i o ip))
           (push th srvthreads*)
-          (thread (fn ()
-                    (sleep life)
-                    (unless (dead th) (prn "srv thread took too long"))
-                    (break-thread th)
-                    (close o)
-                    (close i)))))
+          (thread (sleep life)
+                  (unless (dead th) (prn "srv thread took too long"))
+                  (break-thread th)
+                  (close i o))))
       (sleep .2)))
 
 ; Currently trapping errors and responding with 500 error and message. 
@@ -68,26 +67,23 @@
 (def handle-request-thread (i o ip)
   (with (nls 0 lines nil line nil responded nil)
     (after
-      (whilet c (and (no responded) (readc i))
+      (whilet c (unless responded (readc i))
         (if srv-noisy* (pr c))
         (if (is c #\newline)
             (if (is (++ nls) 2) 
-                (do (let (type op args n cooks) (parseheader (rev lines))
-                      (srvlog 'srv ip type op cooks)
-                      (on-err (fn (c) (respond-err o 500 (details c)))
-                        (fn () 
-                          (case type
-                            get  (respond o op args cooks ip)
-                            post (handle-post i o op n cooks ip)
-                                 (respond-err o 404 "Unknown request: " (car lines))))))
-                    (= responded t))
-                (do (push (coerce (rev line) 'string) lines)
-                    (= line nil)))
+                (let (type op args n cooks) (parseheader (rev lines))
+                  (srvlog 'srv ip type op cooks)
+                  (case type
+                    get  (respond o op args cooks ip)
+                    post (handle-post i o op n cooks ip)
+                         (respond-err o 404 "Unknown request: " (car lines)))
+                  (assert responded))
+                (do (push (string (rev line)) lines)
+                    (wipe line)))
             (unless (is c #\return)
               (push c line)
               (= nls 0))))
-      (close o)
-      (close i)))
+      (close i o)))
   (harvest-fnids))
 
 ; Could ignore return chars (which come from textarea fields) here by
@@ -103,20 +99,21 @@
           (-- n)
           (push c line)) 
         (if srv-noisy* (pr "\n\n"))
-        (respond o op (parseargs (coerce (rev line) 'string)) cooks ip))))
+        (respond o op (parseargs (string (rev line))) cooks ip))))
 
 (= rdheader* "HTTP/1.0 302 Moved")
 
-(= srvops* (table) redirectors* (table) optimes* (table))
+(= srvops* (table) redirector* (table) optimes* (table))
 
 (= statuscodes* (listtab '((200 "OK") (302 "Moved Temporarily") (404 "Not Found") (500 "Internal Server Error"))))
 (= ext-mimetypes* (listtab '(("gif" "image/gif") ("jpg" "image/jpeg") ("png" "image/png") 
                              ("css" "text/css") ("pdf" "application/pdf") ("swf" "application/x-shockwave-flash"))))
 
-(= textmime* "text/html;charset=utf-8")
+(= textmime* "text/html; charset=utf-8")
 
 (def header ((o type textmime*) (o code 200))
   (string "HTTP/1.0 " code " " (statuscodes* code) "
+" serverheader* "
 Content-Type: " type "
 Connection: close"))
 
@@ -139,7 +136,7 @@ Connection: close"))
                  (save-optime ',name (- (msec) ,t1))))))))
 
 (mac defopr-raw (name parms . body)
-  `(= (redirectors* ',name) t
+  `(= (redirector* ',name) t
       (srvops* ',name)      (fn ,parms ,@body)))
 
 (mac defop (name parm . body)
@@ -151,7 +148,7 @@ Connection: close"))
 
 (mac defopr (name parm . body)
   (w/uniq gs
-    `(do (t! (redirectors* ',name))
+    `(do (assert (redirector* ',name))
          (defop-raw ,name (,gs ,parm)
            ,@body))))
 
@@ -171,35 +168,42 @@ Connection: close"))
         (car (rev tok)))))
 
 (def filemime (file)
-   (aif (ext-mimetypes* (extension file))
-        it
-        textmime*))
+  (aif (ext-mimetypes* (extension file))
+       it
+       textmime*))
+
+(def file-exists-in-root (file)
+  (and (~empty file) (file-exists (string rootdir* file))))
 
 (def respond (str op args cooks ip)
   (w/stdout str
-    (aif (and (~empty (coerce op 'string)) (file-exists (coerce op 'string)))
-           (do (prn (header (filemime it)))
-               (prn)
-               (w/infile i it
-                 (whilet b (readb i)
-                 (writeb b str))))
-         (srvops* op)
-           (let req (inst 'request 'args args 'cooks cooks 'ip ip)
-               (if (redirectors* op)
-                   (do (prn rdheader*)
-                       (let loc (it str req) ; may write to str, e.g. cookies
-                         (prn "Location: " loc))
-                       (prn))
-                   (do (prn (header))
-                       (it str req))))
+    (aif (srvops* op)
+          (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+            (if (redirector* op)
+                (do (prn rdheader*)
+                    (prn "Location: " (it str req))
+                    (prn))
+                (do (prn (header))
+                    (it str req))))
+         (file-exists-in-root (string op))
+          (respond-file str it)
          (respond-err str 404 unknown-msg*))))
 
+(def respond-file (str file (o code 200))
+  (do (prn (header (filemime file) code))
+      (prn)
+      (w/infile i file
+        (whilet b (readb i)
+          (writeb b str)))))
+        
 (def respond-err (str code msg . args)
-  (w/stdout str
-    (prn (err-header code)) 
-    (prn)
-    (apply pr msg args)))
-
+  (aif (file-exists-in-root (errorpages* code))
+       (respond-file str it code)
+       (w/stdout str
+         (prn (err-header code)) 
+         (prn)
+         (apply pr msg args))))
+  
 (def parseheader (lines)
   (let (type op args) (parseurl (car lines))
     (list type
@@ -220,13 +224,13 @@ Connection: close"))
 (def parseurl (s)
   (let (type url) (tokens s)
     (let (base args) (tokens url #\?)
-      (list (coerce (downcase type) 'sym)
-            (coerce (subseq base 1) 'sym)
+      (list (sym (downcase type))
+            (sym (cut base 1))
             (if args
                 (parseargs args)
                 nil)))))
 
-; don't urldecode field names or anything in cookies; correct?
+; I don't urldecode field names or anything in cookies; correct?
 
 (def parseargs (s)
   (map (fn ((k v)) (list k (urldecode v)))
@@ -244,9 +248,8 @@ Connection: close"))
 (def reassemble-args (req)
   (aif (req 'args)
        (apply string "?" (intersperse '&
-                                      (map (fn (pair)
-                                            (let (k v) pair
-                                              (string k '= v)))
+                                      (map (fn ((k v))
+                                             (string k '= v))
                                            it)))
        ""))
 
@@ -255,10 +258,7 @@ Connection: close"))
 ; count on huge (expt 64 10) size of fnid space to avoid clashes
 
 (def new-fnid ()
-  (let key (sym (rand-string 10))
-    (if (fns* key)
-        (new-fnid)
-        key)))
+  (check (sym (rand-string 10)) ~fns* (new-fnid)))
 
 (def fnid (f)
   (atlet key (new-fnid)
@@ -293,48 +293,47 @@ Connection: close"))
 ; limit there-- beyond that the only solution is to buy more memory.
 
 (def harvest-fnids ((o n 20000)) 
-  (when (> (len fns*) n) 
-    (atomic
-      (pull (fn ((id created lasts))
-              (when (> (- (seconds) created) lasts)    
-                (nil! (fns* id))
-                t))
-            timed-fnids*))
-    (atlet nharvest (truncate (/ n 10))
-      (let (kill keep) (splitn nharvest (rev fnids*)) 
+  (when (len> fns* n) 
+    (pull (fn ((id created lasts))
+            (when (> (since created) lasts)    
+              (wipe (fns* id))
+              t))
+          timed-fnids*)
+    (atlet nharvest (trunc (/ n 10))
+      (let (kill keep) (split (rev fnids*) nharvest)
         (= fnids* (rev keep)) 
         (each id kill 
-          (nil! (fns* id)))))))
+          (wipe (fns* id)))))))
 
 (= fnurl* "x" rfnurl* "r" rfnurl2* "y" jfnurl* "a")
+
+(= dead-msg* "\nUnknown or expired link.")
  
 (defop-raw x (str req)
-  (let id (sym (arg req "fnid"))
-    (aif (fns* id)
-         (w/stdout str (it req))
-         (w/stdout str (prn) (pr "unknown or expired link")))))
+  (w/stdout str 
+    (aif (fns* (sym (arg req "fnid")))
+         (it req)
+         (pr dead-msg*))))
 
 (defopr-raw y (str req)
-  (let id (sym (arg req "fnid"))
-    (aif (fns* id)
-         (w/stdout str (it req))
-         "deadlink")))
+  (aif (fns* (sym (arg req "fnid")))
+       (w/stdout str (it req))
+       "deadlink"))
 
 ; For asynchronous calls; discards the page.  Would be better to tell
 ; the fn not to generate it.
 
 (defop-raw a (str req)
-  (let id (sym (arg req "fnid"))
-    (aif (fns* id) (tostring (it req)))))
+  (aif (fns* (sym (arg req "fnid")))
+       (tostring (it req))))
 
 (defopr r req
-  (let id (sym (arg req "fnid"))
-    (aif (fns* id)
-         (it req)
-         "deadlink")))
+  (aif (fns* (sym (arg req "fnid")))
+       (it req)
+       "deadlink"))
 
 (defop deadlink req
-  (pr "unknown or expired link"))
+  (pr dead-msg*))
 
 (def url-for (fnid)
   (string fnurl* "?fnid=" fnid))
@@ -342,22 +341,18 @@ Connection: close"))
 (def flink (f)
   (string fnurl* "?fnid=" (fnid (fn (req) (prn) (f req)))))
 
-; couldn't I just say (fnid f) here?
-
 (def rflink (f)
-  (string rfnurl* "?fnid=" (fnid (fn (req) (f req)))))
+  (string rfnurl* "?fnid=" (fnid f)))
   
 ; Since it's just an expr, gensym a parm for (ignored) args.
 
 (mac w/link (expr . body)
-  (w/uniq g
-    `(tag (a href (flink (fn (,g) ,expr)))
-       ,@body)))
+  `(tag (a href (flink (fn (,(uniq)) ,expr)))
+     ,@body))
 
 (mac w/rlink (expr . body)
-  (w/uniq g
-    `(tag (a href (rflink (fn (,g) ,expr)))
-       ,@body)))
+  `(tag (a href (rflink (fn (,(uniq)) ,expr)))
+     ,@body))
 
 (mac onlink (text . body)
   `(w/link (do ,@body) (pr ,text)))
@@ -375,22 +370,23 @@ Connection: close"))
 ;(defop testf req (w/link (pr "ha ha ha") (pr "laugh")))
 
 (mac w/link-if (test expr . body)
-  (w/uniq g
-    `(tag-if ,test (a href (flink (fn (,g) ,expr)))
-       ,@body)))
+  `(tag-if ,test (a href (flink (fn (,(uniq)) ,expr)))
+     ,@body))
+
+(def fnid-field (id)
+  (gentag input type 'hidden name 'fnid value id))
 
 ; f should be a fn of one arg, which will be http request args.
 ; Could also make a version that uses just an expr, and var capture.
 ; Is there a way to ensure user doesn't use "fnid" as a key?
 
 (mac aform (f . body)
-  (w/uniq (gi ga)
-    `(let ,gi (fnid (fn (,ga)
-                      (prn)
-                      (,f ,ga)))
-       (tag (form method 'post action fnurl*)
-         (gentag input type 'hidden name 'fnid value ,gi)
-         ,@body))))
+  (w/uniq ga
+    `(tag (form method 'post action fnurl*)
+       (fnid-field (fnid (fn (,ga)
+                           (prn)
+                           (,f ,ga))))
+       ,@body)))
 
 ; Like aform except creates a fnid that will last for lasts seconds
 ; (unless the server is restarted).
@@ -398,32 +394,25 @@ Connection: close"))
 (mac timed-aform (lasts f . body)
   (w/uniq (gl gf gi ga)
     `(withs (,gl ,lasts
-             ,gf (fn (,ga) (prn) (,f ,ga))
-             ,gi (if ,gl (timed-fnid ,lasts ,gf) (fnid ,gf)))
+             ,gf (fn (,ga) (prn) (,f ,ga)))
        (tag (form method 'post action fnurl*)
-         (gentag input type 'hidden name 'fnid value ,gi)
+         (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
          ,@body))))
 
 (mac arform (f . body)
-  (w/uniq gi
-    `(let ,gi (fnid ,f)
-       (tag (form method 'post action rfnurl*)
-         (gentag input type 'hidden name 'fnid value ,gi)
-         ,@body))))
+  `(tag (form method 'post action rfnurl*)
+     (fnid-field (fnid ,f))
+     ,@body))
 
 (mac aformh (f . body)
-  (w/uniq gi
-    `(let ,gi (fnid ,f)
-       (tag (form method 'post action fnurl*)
-         (gentag input type 'hidden name 'fnid value ,gi)
-         ,@body))))
+  `(tag (form method 'post action fnurl*)
+     (fnid-field (fnid ,f))
+     ,@body))
 
 (mac arformh (f . body)
-  (w/uniq gi
-    `(let ,gi (fnid ,f)
-       (tag (form method 'post action rfnurl2*)
-         (gentag input type 'hidden name 'fnid value ,gi)
-         ,@body))))
+  `(tag (form method 'post action rfnurl2*)
+     (fnid-field (fnid ,f))
+     ,@body))
 
 ; only unique per server invocation
 
@@ -434,7 +423,6 @@ Connection: close"))
     (if (unique-ids* id)
         (unique-id)
         (= (unique-ids* id) id))))
-
 
 (def srvlog (type . args)
   (w/appendfile o (string logdir* type "-" (memodate))
@@ -478,6 +466,8 @@ Connection: close"))
         (br)
         (link "Log in" "login") ))))
 
+; make-string: expects type <non-negative exact integer> as 1st argument, given: -1; other arguments were: #\0
+
 (defop topips req
   (when (admin (get-user req))
     (whitepage
@@ -491,12 +481,19 @@ Connection: close"))
                              requests/ip*)
                    leaders)
           (let n (requests/ip* ip)
-            (row ip n (num (* 100 (/ n requests*)) 1))))))))
+            (row ip n (pr (num (* 100 (/ n requests*)) 1)))))))))
 
-(def ensure-install ()
+(def ttest (ip)
+  (let n (requests/ip* ip) 
+    (list ip n (num (* 100 (/ n requests*)) 1))))
+
+(def ensure-srvinstall ()
   (ensure-dir arcdir*)
   (ensure-dir logdir*)
-  (when (empty hpasswords*)
-    (create-acct "frug" "frug")
-    (writefile1 'frug adminfile*))
+  (ensure-dir rootdir*)
+; why did I do this?
+; (when (empty hpasswords*)
+;   (create-acct "frug" "frug")
+;   (writefile1 'frug adminfile*))
   (load-userinfo))
+

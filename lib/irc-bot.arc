@@ -21,8 +21,8 @@
                       (cons (map sym (tokens (car ts) #\!))
                             (map sym (cdr ts)))))
     (aif (findsubseq ":" s 1) 
-         (join (toks (subseq s 0 it))
-               (list (subseq s (+ it 1))))
+         (join (toks (cut s 0 it))
+               (list (cut s (+ it 1))))
          (toks s))))
 
 (def irc (nick)
@@ -57,12 +57,12 @@
                                grab-matches (fn (re str)
                                                 (drain (aif (re-pos re str)
                                                             (let (start . stop) (car it)
-                                                                 (do1 (subseq str start stop)
-                                                                      (= str (subseq str stop))))))))
+                                                                 (do1 (cut str start stop)
+                                                                      (= str (cut str stop))))))))
                               (map [out "NOTICE " dest " :" (tinyurl _)]
                                    (keep [< 75 (len _)] (grab-matches url-regexp text))
                                    ))
               (log "?"))))))))
 
 (def irc& (nick)
-  (= bot* (thread (fn () (irc nick)))))
+  (= bot* (thread (irc nick))))

@@ -16,9 +16,13 @@
 ; )
 ;<docstring> := <string>
 ;<pattern> :=
-;  <const> | <var> | (<pattern>*) | (<pattern>* . <pattern>)
+;  <const> | <var> | <guarded> | (<pattern>*) | (<pattern>* . <pattern>)
 ;<const> := anything that is: (not a symbol), or (t and nil), or a 'symbol form.
 ;<var> := anything that is a symbol, but isn't t and isn't nil
+;<guarded> :=
+;   ,(<var> <test(var)>) | ,@(<test(_)>)
+;<test(var)> := an expression involving var; this pattern matches if 
+;  this expression returns true for that var
 ;<clause> := any expression
 ;
 ; - like any Arc conditional form, if the last clause doesn't have a
@@ -68,13 +72,55 @@
 ;alternatively, throw it on http://arclanguage.org/forum
 
 (mac defpat (name . body)
-	" Defines a function named `name' using pattern-matching. "
-	(*defpat-internal name body))
+	" Defines a function named `name' using pattern-matching.
+	  See also [[pat-match]] "
+	`(pat-match:def ,name ,@body))
 
-(def *defpat-internal (name origbody)
+(mac pat-match ((macro . body))
+	" Modifies a function definition form to use patterns-matching.
+          (pat-match:afn
+             ((x . xs))  (cons (f x) (self xs))
+             (())       ())
+	  See also [[defpat]] "
+	;special handling for some macros because
+	;their signatures are not in the (sig ...)
+	;table
+	(if (in macro 'def 'mac)
+		`(,macro ,(car body) ,@(*defpat-internal (cdr body)))
+	(is macro 'fn)
+		`(fn ,@(*defpat-internal body))
+	;else
+		(let s (sig macro)
+			(unless s
+				(err (string "pat-match: unknown macro "
+						macro)))
+			(unless (dotted s)
+				(err (string "pat-match: macro " macro
+						" does not accept body")))
+			;count the number of places to skip
+			(withs
+				(
+					counter
+					(fn (l)
+						((afn (l n)
+							(if (acons l)
+								(self (cdr l) (+ n 1))
+								n))
+							l 0))
+					;assuming parms is just before the body
+					skips (- (counter s) 1)
+					preparms (cut body 0 skips)
+					pat-pairs (nthcdr skips body))
+				`(,macro ,@preparms ,@(*defpat-internal pat-pairs))))))
+
+(def *defpat-internal (origbody)
 	" Composes the form for the `defpat' macro; used for debug. "
 	(withs
 		(
+			;in case pg decides to change ,x and ,@x some time
+			;in the future
+			unquote-sym (car ',x)
+			unquote-at-sym (car ',@x)
 			docstring
 			(if (isa (car origbody) 'string) (car origbody))
 			body
@@ -85,15 +131,24 @@
 			;for else clauses there are no patterns
 			properclauses (keep [is 2 (len _)] clauses)
 			;extract the pattern
-			pat (fn (x) (if (is 2 (len x)) (car x)))
+			patn (fn (x) (if (is 2 (len x)) (car x)))
 			;extract the expression
 			exp (fn (x) (if (is 2 (len x)) (cadr x)))
 			;check if variable name
 			varp [and (isnt _ nil) (isnt _ t) (isa _ 'sym)]
 			;check if 'x form
-			quoteformp [and (acons _) (is 'quote (car _)) (isa (cadr _) 'sym)]
+			quoteformp [caris _ 'quote]
 			;check if constant
 			constp (orf (andf atom ~varp) quoteformp)
+			;check if ,(x (test x)) form
+			guardedp [caris _ unquote-sym]
+			;check if ,@(test _) form
+			guarded-atp [caris _ unquote-at-sym]
+			;accessors of ,(x (test x))
+			var-guarded car:cadr
+			test-guarded cadr:cadr
+			;accessors of ,@(test _)
+			test-guarded-at cadr
 			;cuts out dotted portions of dotted lists
 			cutdotted
 			(fn (l)
@@ -113,10 +168,10 @@
 			; in clauses
 			isrest
 			(or
-				(apply ~is (map lenif:cutdotted:pat properclauses))
-				(some (orf dotted:pat varp:pat)
+				(apply ~is (map lenif:cutdotted:patn properclauses))
+				(some (orf dotted:patn varp:patn)
 					properclauses))
-			numarg (best < (map lenif:cutdotted:pat properclauses))
+			numarg (best < (map lenif:cutdotted:patn properclauses))
 			arglist
 			( (afn (n)
 				(if (is 0 n)
@@ -147,6 +202,10 @@
 							nil 
 						(varp p)
 							(ret `(,p ((compose ,@path) ,a)))
+						(guardedp p)
+							(ret `(,(var-guarded p) ((compose ,@path) ,a)))
+						(guarded-atp p)
+							nil
 							(do
 								(self (car p) (cons 'car path))
 								(self (cdr p) (cons 'cdr path)) ) ))
@@ -159,6 +218,12 @@
 					`(is ,a ,p)
 				(varp p)
 					`t
+				(guardedp p)
+					`(let ,(var-guarded p) ,a
+						,(test-guarded p))
+				(guarded-atp p)
+					`(let _ ,a
+						,(test-guarded-at p))
 					`(and
 						(acons ,a)
 						(let ,a (car ,a) ,(self a (car p)))
@@ -171,9 +236,9 @@
 				(if (is 1 (len c))
 					c
 					(list
-						([patcheck a (pat _)]
+						([patcheck a (patn _)]
 								c)
-						`(with ,(apply join ([patwith a (pat _)] c))
+						`(with ,(apply join ([patwith a (patn _)] c))
 							,(exp c)))))
 			;creates the dispatch form
 			dispatch
@@ -191,7 +256,7 @@
 								[clausecheck
 									a _]
 								clauses))))))
-		`(def ,name ,arglist
+		`(,arglist
 			,@(if docstring (list docstring))
 			,(dispatch))))
 
@@ -249,9 +314,38 @@
 	" Example/testcase for defpat in redefining
 	  the `pair' function. "
 	((x y . zs))	`((,x ,y) ,@(*defpat-pair zs))
-	((x))		`((,x))
-	(())		()
 	((x y . zs) f)	`(,(f x y) ,@(*defpat-pair zs f))
-	((x) f)		`((,x)) ;this is how the arc0 pair does it
-	(() f)		())
+	((x) . _)	`((,x)) ;this is how the arc0 pair does it
+	(() . _)	())
+
+(defpat *defpat-rpn
+	" Example/testcase for defpat in using
+	  ,(x (test x)) guarded patterns "
+	;start with an empty stack
+	(lst)
+		(*defpat-rpn lst '())
+	;all done; return what's on the stack
+	(()				(x))
+		x
+	;extra stuff on the stack
+	(()				(_ . __))
+		(ero "extra stuff on the stack")
+	;divide by zero
+	((,@(is _ /) . _)		(0 x . __))
+		(ero "divide by zero")
+	;pop, pop, push...
+	((,(f (isa f 'fn)) . xs)	(b a . s))
+		(*defpat-rpn xs `(,(f a b) ,@s) )
+	;not enough to pop
+	((,@(isa _ 'fn) . xs)		x)
+		(ero "too few parameters")
+	;just push
+	((x . xs)			s)
+		(*defpat-rpn xs `(,x ,@s)))
+
+(def *defpat-afn-test (x)
+	((pat-match:afn
+		((x . xs))	(cons (+ 1 x) (self xs))
+		(())		nil)
+	x))
 

@@ -89,7 +89,7 @@
 (define (has-ssyntax-char? string i)
   (and (>= i 0)
        (or (let ((c (string-ref string i)))
-             (or (eqv? c #\:) (eqv? c #\~)))
+             (or (eqv? c #\:) (eqv? c #\~) (eqv? c #\.) (eqv? c #\!)))
            (has-ssyntax-char? string (- i 1)))))
 
 (define (read-from-string str)
@@ -99,16 +99,51 @@
       val)))
 
 (define (expand-ssyntax sym)
+  ((cond ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
+         ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
+         (#t (error "Unknown ssyntax" sym)))
+   sym))
+
+(define (expand-compose sym)
   (let ((elts (map (lambda (tok)
                      (if (eqv? (car tok) #\~)
                          (if (null? (cdr tok))
                              'no
                              `(complement ,(chars->value (cdr tok))))
                          (chars->value tok)))
-                   (tokens #\: (symbol->chars sym) '() '()))))
+                   (tokens (lambda (c) (eqv? c #\:))
+                           (symbol->chars sym) 
+                           '() 
+                           '() 
+                           #f))))
     (if (null? (cdr elts))
         (car elts)
         (cons 'compose elts))))
+
+(define (expand-sexpr sym)
+  (build-sexpr (tokens (lambda (c) (or (eqv? c #\.) (eqv? c #\!)))
+                       (symbol->chars sym)
+                       '()
+                       '()
+                       #t)))
+
+; no error-checking!
+
+(define (build-sexpr toks)
+  (cond ((null? toks) 
+         '())
+        ((eqv? (car toks) #\.)
+         (cons (chars->value (cadr toks)) 
+               (build-sexpr (cddr toks))))
+        ((eqv? (car toks) #\!)
+         (cons (list 'quote (chars->value (cadr toks)))
+               (build-sexpr (cddr toks))))
+        (#t
+         (cons (chars->value (car toks))
+               (build-sexpr (cdr toks))))))
+                      
+
+(define (insym? char sym) (member char (symbol->chars sym)))
 
 (define (symbol->chars x) (string->list (symbol->string x)))
 
@@ -117,19 +152,24 @@
 ; result will contain || if separator at end of symbol; could use
 ; that to mean something
 
-(define (tokens separator source token acc)
+(define (tokens test source token acc keepsep?)
   (cond ((null? source)
          (reverse (cons (reverse token) acc)))
-        ((eqv? (car source) separator)
-         (tokens separator
+        ((test (car source))
+         (tokens test
                  (cdr source)
                  '()
-                 (cons (reverse token) acc)))
+                 (let ((rec (cons (reverse token) acc)))
+                   (if keepsep?
+                       (cons (car source) rec)
+                       rec))
+                 keepsep?))
         (#t
-         (tokens separator
+         (tokens test
                  (cdr source)
                  (cons (car source) token)
-                 acc))))
+                 acc
+                 keepsep?))))
 
 ; Purely an optimization.  Could in principle do it with a preprocessor
 ; instead of adding a line to ac, but only want to do it for evaluated
@@ -532,16 +572,17 @@
           (#t (and (pred (car args) (cadr args))
                    (pairwise pred (cdr args) base))))))
 
+(define (tnil x) (if x 't 'nil))
+
 ; not quite right, because behavior of underlying eqv unspecified
 ; in many cases according to r5rs
 ; do we really want is to ret t for distinct strings?
 
 (xdef 'is (lambda args
-            (if (or (all (lambda (a) (eqv? (car args) a)) (cdr args))
+            (tnil (or (all (lambda (a) (eqv? (car args) a)) (cdr args))
                     (and (all string? args)
                          (apply string=? args))
-                    (all ar-false? args))
-                't 'nil)))
+                    (all ar-false? args)))))
 
 (xdef 'err err)
 (xdef 'nil 'nil)
@@ -587,7 +628,8 @@
                                       #f))
         ((all char?   args) (pairwise char>?   args #f))
         (#t                 (apply > args))))
-(xdef '>  (lambda args (if (apply arc> args) 't 'nil)))
+
+(xdef '>  (lambda args (tnil (apply arc> args))))
 
 (define (arc< . args)
   (cond ((all number? args) (apply < args))
@@ -599,7 +641,8 @@
                                       #f))
         ((all char?   args) (pairwise char<?   args #f))
         (#t                 (apply < args))))
-(xdef '<  (lambda args (if (apply arc< args) 't 'nil)))
+
+(xdef '<  (lambda args (tnil (apply arc< args))))
 
 (xdef 'len (lambda (x)
              (cond ((string? x) (string-length x))
@@ -612,6 +655,7 @@
 (define (ar-tag type rep)
   (cond ((eqv? (ar-type rep) type) rep)
         (#t (vector 'tagged type rep))))
+
 (xdef 'annotate ar-tag)
 
 ; (type nil) -> sym
@@ -632,6 +676,7 @@
         ((tcp-listener? x)  'socket)
         ((exn? x)           'exception)
         ((regexp? x)        're)
+        ((thread? x)        'thread)
         (#t                 (err "Type: unknown type" x))))
 (xdef 'type ar-type)
 
@@ -639,14 +684,17 @@
   (if (ar-tagged? x)
       (vector-ref x 2)
       x))
+
 (xdef 'rep ar-rep)
 
 ; currently rather a joke: returns interned symbols
 
 (define ar-gensym-count 0)
+
 (define (ar-gensym)
   (set! ar-gensym-count (+ ar-gensym-count 1))
   (string->symbol (string-append "gs" (number->string ar-gensym-count))))
+
 (xdef 'uniq ar-gensym)
 
 (xdef 'ccc call-with-current-continuation)
@@ -666,11 +714,13 @@
 
 (xdef 'inside get-output-string)
 
-(xdef 'close (lambda (p)
-               (cond ((input-port? p)   (close-input-port p))
-                     ((output-port? p)  (close-output-port p))
-                     ((tcp-listener? p) (tcp-close p))
-                     (#t (err "Can't close " p)))
+(xdef 'close (lambda args
+               (map (lambda (p)
+                      (cond ((input-port? p)   (close-input-port p))
+                            ((output-port? p)  (close-output-port p))
+                            ((tcp-listener? p) (tcp-close p))
+                            (#t (err "Can't close " p))))
+                    args)
                'nil))
 
 (xdef 'stdout current-output-port)  ; should be a vars
@@ -807,7 +857,7 @@
                                  (let-values (((us them) (tcp-addresses out)))
                                    them))))))
 
-(xdef 'thread thread)
+(xdef 'new-thread thread)
 (xdef 'kill-thread kill-thread)
 (xdef 'break-thread break-thread)
 
@@ -990,14 +1040,14 @@
                         (f)))))))
 (xdef 'on-err on-err)
 
-(define (write-to-string x)
+(define (disp-to-string x)
   (let ((o (open-output-string)))
-    (write x o)
+    (display x o)
     (close-output-port o)
     (get-output-string o)))
 
 (xdef 'details (lambda (c)
-                 (write-to-string (exn-message c))))
+                 (disp-to-string (exn-message c))))
 
 (xdef 'scar (lambda (x val)
               (if (string? x)
@@ -1041,17 +1091,18 @@
                             #t
                             (lambda () #f)))
 
-(xdef 'bound (lambda (x) (if (bound? x) 't 'nil)))
+(xdef 'bound (lambda (x) (tnil (bound? x))))
 
 (xdef 'newstring make-string)
 
-(xdef 'truncate (lambda (x) (inexact->exact (truncate x))))
+(xdef 'trunc (lambda (x) (inexact->exact (truncate x))))
 
-(xdef 'exact (lambda (x) (and (integer? x) (exact? x))))
+(xdef 'exact (lambda (x) 
+               (tnil (and (integer? x) (exact? x)))))
 
-(xdef 'msec current-milliseconds)
+(xdef 'msec                         current-milliseconds)
 (xdef 'current-process-milliseconds current-process-milliseconds)
-(xdef 'current-gc-milliseconds current-gc-milliseconds)
+(xdef 'current-gc-milliseconds      current-gc-milliseconds)
 
 (xdef 'seconds current-seconds)
 
@@ -1067,8 +1118,11 @@
 ; whether this thread already holds the lock.
 ; XXX make sure cell is set #f after an exception?
 ; maybe it doesn't matter since thread will die?
+
 (define ar-the-sema (make-semaphore 1))
+
 (define ar-sema-cell (make-thread-cell #f))
+
 (xdef 'atomic-invoke (lambda (f)
                        (if (thread-cell-ref ar-sema-cell)
                            (ar-apply f '())
@@ -1081,14 +1135,14 @@
                                (thread-cell-set! ar-sema-cell #f)
                                ret)))))
 
-(xdef 'dead thread-dead?)
+(xdef 'dead (lambda (x) (tnil (thread-dead? x))))
 
 ; Added because Mzscheme buffers output.  Not sure if want as official
 ; part of Arc.
 
 ;(xdef 'flushout (lambda () (flush-output) 't))
 
-(xdef 'ssyntax (lambda (x) (if (ssyntax? x) 't 'nil)))
+(xdef 'ssyntax (lambda (x) (tnil (ssyntax? x))))
 
 (xdef 'ssexpand (lambda (x)
                   (if (symbol? x) (expand-ssyntax x) x)))
