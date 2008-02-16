@@ -72,10 +72,48 @@
 ;alternatively, throw it on http://arclanguage.org/forum
 
 (mac defpat (name . body)
-	" Defines a function named `name' using pattern-matching. "
-	(*defpat-internal name body))
+	" Defines a function named `name' using pattern-matching.
+	  See also [[pat-match]] "
+	`(pat-match:def ,name ,@body))
 
-(def *defpat-internal (name origbody)
+(mac pat-match ((macro . body))
+	" Modifies a function definition form to use patterns-matching.
+          (pat-match:afn
+             ((x . xs))  (cons (f x) (self xs))
+             (())       ())
+	  See also [[defpat]] "
+	;special handling for some macros because
+	;their signatures are not in the (sig ...)
+	;table
+	(if (in macro 'def 'mac)
+		`(,macro ,(car body) ,@(*defpat-internal (cdr body)))
+	(is macro 'fn)
+		`(fn ,@(*defpat-internal body))
+	;else
+		(let s (sig macro)
+			(unless s
+				(err (string "pat-match: unknown macro "
+						macro)))
+			(unless (dotted s)
+				(err (string "pat-match: macro " macro
+						" does not accept body")))
+			;count the number of places to skip
+			(withs
+				(
+					counter
+					(fn (l)
+						((afn (l n)
+							(if (acons l)
+								(self (cdr l) (+ n 1))
+								n))
+							l 0))
+					;assuming parms is just before the body
+					skips (- (counter s) 1)
+					preparms (cut body 0 skips)
+					pat-pairs (nthcdr skips body))
+				`(,macro ,@preparms ,@(*defpat-internal pat-pairs))))))
+
+(def *defpat-internal (origbody)
 	" Composes the form for the `defpat' macro; used for debug. "
 	(withs
 		(
@@ -93,7 +131,7 @@
 			;for else clauses there are no patterns
 			properclauses (keep [is 2 (len _)] clauses)
 			;extract the pattern
-			pat (fn (x) (if (is 2 (len x)) (car x)))
+			patn (fn (x) (if (is 2 (len x)) (car x)))
 			;extract the expression
 			exp (fn (x) (if (is 2 (len x)) (cadr x)))
 			;check if variable name
@@ -130,10 +168,10 @@
 			; in clauses
 			isrest
 			(or
-				(apply ~is (map lenif:cutdotted:pat properclauses))
-				(some (orf dotted:pat varp:pat)
+				(apply ~is (map lenif:cutdotted:patn properclauses))
+				(some (orf dotted:patn varp:patn)
 					properclauses))
-			numarg (best < (map lenif:cutdotted:pat properclauses))
+			numarg (best < (map lenif:cutdotted:patn properclauses))
 			arglist
 			( (afn (n)
 				(if (is 0 n)
@@ -198,9 +236,9 @@
 				(if (is 1 (len c))
 					c
 					(list
-						([patcheck a (pat _)]
+						([patcheck a (patn _)]
 								c)
-						`(with ,(apply join ([patwith a (pat _)] c))
+						`(with ,(apply join ([patwith a (patn _)] c))
 							,(exp c)))))
 			;creates the dispatch form
 			dispatch
@@ -218,7 +256,7 @@
 								[clausecheck
 									a _]
 								clauses))))))
-		`(def ,name ,arglist
+		`(,arglist
 			,@(if docstring (list docstring))
 			,(dispatch))))
 
@@ -304,4 +342,10 @@
 	;just push
 	((x . xs)			s)
 		(*defpat-rpn xs `(,x ,@s)))
+
+(def *defpat-afn-test (x)
+	((pat-match:afn
+		((x . xs))	(cons (+ 1 x) (self xs))
+		(())		nil)
+	x))
 

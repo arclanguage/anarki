@@ -2169,7 +2169,7 @@
 (= bar* " | ")
 
 (mac w/bars body
-  " Prints out the strings returned by each expression in `body',
+  " Prints out the strings printed by each expression in `body',
     separated by vertical bars. "
   (w/uniq (out needbars)
     `(let ,needbars nil
