@@ -311,7 +311,8 @@
 
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop.
-    See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] [[drain]] "
+    See also [[until]] [[loop]] [[whilet]] [[whiler]] [[for]]
+    [[repeat]] [[drain]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (when ,gp ,@body (,gf ,test)))
@@ -780,7 +781,7 @@
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times.
-    See also [[for]] [[forlen]] "
+    See also [[for]] [[forlen]] [[n-of]] "
   `(for ,(uniq) 1 ,n ,@body))
 
 ; could bind index instead of gensym
@@ -869,7 +870,8 @@
   (rem (complement (testify test)) seq))
 
 (def trues (f seq)
-  " Returns a list with all `nil's removed. "
+  " Returns a list with all `nil's removed.
+    See also [[rem]] [[keep]] "
   (rem nil (map f seq)))
 
 (mac do1 args
@@ -1277,14 +1279,16 @@
   (coerce x 'sym))
 
 (mac rand-choice exprs
-  " Returns the result of one of the given `exprs', chosen at random. "
+  " Returns the result of one of the given `exprs', chosen at random.
+    See also [[random-elt]] "
   `(case (rand ,(len exprs))
      ,@(let key -1
          (mappend [list (++ key) _]
                   exprs))))
 
 (mac n-of (n expr)
-  " Repeats `expr' `n' times, then returns the results in a list. "
+  " Repeats `expr' `n' times, then returns the results in a list.
+    See also [[repeat]] "
   (w/uniq ga
     `(let ,ga nil
        (repeat ,n (push ,expr ,ga))
@@ -1301,7 +1305,8 @@
             'string)))
 
 (mac forlen (var s . body)
-  " Loops across the length of the sequence `s'. "
+  " Loops across the length of the sequence `s'.
+    See also [[repeat]] [[each]] [[on]] "
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
@@ -1830,11 +1835,13 @@
       (+ (cut str 0 limit) "...")))
 
 (def random-elt (seq)
-  " Returns an element of `seq' chosen by random. "
+  " Returns an element of `seq' chosen by random.
+    See also [[rand-choice]] "
   (seq (rand (len seq))))
 
 (mac until (test . body)
-  " While `test' is false, perform `body' in a loop. "
+  " While `test' is false, perform `body' in a loop.
+    See also [[while]] "
   `(while (no ,test) ,@body))
 
 (def before (x y seq (o i 0))
