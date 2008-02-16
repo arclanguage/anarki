@@ -72,14 +72,16 @@
 ;alternatively, throw it on http://arclanguage.org/forum
 
 (mac defpat (name . body)
-	" Defines a function named `name' using pattern-matching. "
+	" Defines a function named `name' using pattern-matching.
+	  See also [[pat-match]] "
 	`(pat-match:def ,name ,@body))
 
 (mac pat-match ((macro . body))
 	" Modifies a function definition form to use patterns-matching.
-          (pat:afn
+          (pat-match:afn
              ((x . xs))  (cons (f x) (self xs))
-             (())       ()) "
+             (())       ())
+	  See also [[defpat]] "
 	;special handling for some macros because
 	;their signatures are not in the (sig ...)
 	;table
