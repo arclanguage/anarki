@@ -3,6 +3,20 @@ Because anyone can push code, it's important to keep the style as
 clean and uniform as possible, so that the underlying code can be more
 easily understood.
 
+COMPATIBILITY
+  Since Anarki isn't the official Arc codebase, it's important to keep
+  it compatible with the official distribution. As such, please don't
+  add any changes that make it incompatible with the latest official
+  arcn release. This means that code that runs with arcn should always
+  run with Anarki code.
+
+  Since it's also important to experiment with more radical ideas that
+  will break compatibility, feel free to create branches
+  ("git branch <branchname>" followed by "git checkout <branchname>")
+  and commit your work there. To create a new branch in the remote
+  repository, run "git push <branchname>:refs/heads/<branchname>".
+  After the remote branch is created, just "git push" will work.
+
 DOCUMENTATION
   It's useful for functions and macros to include docstrings, although
   this isn't mandatory to encourage exploratory
