@@ -54,7 +54,7 @@ INDENTATION
   If the newline were instead after `and', we would write
 
     (and
-     foo bar baz)
+      foo bar baz)
 
   There are a few exceptions to this rule. These exceptions are
   usually made only for macros that take a certain number of arguments
