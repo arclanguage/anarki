@@ -62,9 +62,6 @@
 ;   from most specific to most generic patterns for now.  Obviously it's
 ;   possible to do this programatically but I will defer it for now.
 ; - code cleanup
-; - quote forms such as '(dd) or '4 should raise an exception or
-;   something.
-; - 'fnpat, 'afnpat, 'rfnpat forms
 ;
 ;
 ;please report any bugs you don't want to fix yourself to:
@@ -243,10 +240,10 @@
   " The first test for defpat, testing arity-checks.
     (*defpat-test1 1) should reach the last clause, and
     must be different from (*defpat-test1 1 nil) "
-  (1 2) (prn "You chose the (1 2) form!")
-  (1 x) (prn "You didn't choose the (1 2) form, you chose the (1 " x ") !")
-  (1 2 x)       (prn "You added an " x " to a (1 2) form!")
-  (x)   (prn "You only gave one parameter, " x "!"))
+  (1 2)   (prn "You chose the (1 2) form!")
+  (1 x)   (prn "You didn't choose the (1 2) form, you chose the (1 " x ") !")
+  (1 2 x) (prn "You added an " x " to a (1 2) form!")
+  (x)     (prn "You only gave one parameter, " x "!"))
 
 (defpat *defpat-test2
   " The second test for defpat, testing fixed-arity function. "
@@ -255,37 +252,39 @@
              " (2 x) instead, with x = " x)
   (x y) (prn "Hey!  You could have chosen a (2 3) or (2 x) form,"
              " but you got (x y), with x = " x ", y = " y)
-  (prn "what the... you couldn't possibly have gotten here!"))
+  #||#  (prn "what the... you couldn't possibly have gotten here!"))
 
 (defpat *defpat-test3
   " The third test for defpat, testing list destructuring. "
-  (4 5) (prn "You chose the (4 5) form!")
+  (4 5)
+    (prn "You chose the (4 5) form!")
   ((4 5) x)
-  (prn "You chose the (4 5) form... oops, you put it in too"
-       " much!  You got the ((4 5) x) with x = " x " !!")
+    (prn "You chose the (4 5) form... oops, you put it in too"
+         " much!  You got the ((4 5) x) with x = " x " !!")
   ((x y) z)
-  (prn "You chose the... okay, you not only put in too much,"
-       " you got the (4 5) wrong... you gave me ((" x " "
-       y ") " z ")")
+    (prn "You chose the... okay, you not only put in too much,"
+         " you got the (4 5) wrong... you gave me ((" x " "
+         y ") " z ")")
   (z 5)
-  (prn "You chose the (z 5) form, with z = " z " .... Maybe"
-       " I can interest you in the (4 5) form instead?")
-  x    (prn "What?  I don't understand your parameters " x " !!"))
+    (prn "You chose the (z 5) form, with z = " z " .... Maybe"
+         " I can interest you in the (4 5) form instead?")
+  x
+    (prn "What?  I don't understand your parameters " x " !!"))
 
 (defpat *defpat-test4
   " The fourth test for defpat, testing quoted symbols "
   ('start)
-  (prn "Vroom, vroom... started!")
+    (prn "Vroom, vroom... started!")
   ('go mph)
-  (prn "Going at " mph " miles per hour!!")
+    (prn "Going at " mph " miles per hour!!")
   ('on "light")
-  (prn "Turned on the lights!  Bright street!")
+    (prn "Turned on the lights!  Bright street!")
   ('on "radio")
-  (prn "Yeah, I'm jamming to them music, yeah!")
+    (prn "Yeah, I'm jamming to them music, yeah!")
   ('stop)
-  (prn "Eeeeeeek!  Stopped!")
+    (prn "Eeeeeeek!  Stopped!")
   ; otherwise
-  (prn "Hey, your car can't understand that!"))
+    (prn "Hey, your car can't understand that!"))
 
 (defpat *defpat-pair
   " Example/testcase for defpat in redefining
