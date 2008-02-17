@@ -125,7 +125,7 @@
   (make-local-variable 'normal-auto-fill-function)
   (setq normal-auto-fill-function 'lisp-mode-auto-fill)
   (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'lisp-indent-line)
+  (setq indent-line-function 'arc-indent-line)
   (make-local-variable 'parse-sexp-ignore-comments)
   (setq parse-sexp-ignore-comments t)
   (make-local-variable 'outline-regexp)
@@ -165,10 +165,9 @@
 (defvar arc-mode-line-process "")
 
 (defvar arc-mode-map
-  (let ((smap (make-sparse-keymap))
-	(map (make-sparse-keymap "Arc")))
-    (set-keymap-parent smap lisp-mode-shared-map)
-    (define-key smap [menu-bar arc] (cons "Arc" map))
+  (let ((map (make-sparse-keymap "Arc")))
+    (set-keymap-parent map lisp-mode-shared-map)
+    (define-key map [menu-bar arc] (cons "Arc" map))
     (define-key map [run-arc] '("Run Inferior Arc" . run-arc))
     (define-key map [uncomment-region]
       '("Uncomment Out Region" . (lambda (beg end)
@@ -176,11 +175,12 @@
                                    (comment-region beg end '(4)))))
     (define-key map [comment-region] '("Comment Out Region" . comment-region))
     (define-key map [indent-region] '("Indent Region" . indent-region))
-    (define-key map [indent-line] '("Indent Line" . lisp-indent-line))
+    (define-key map [indent-line] '("Indent Line" . arc-indent-line))
+    (define-key map "\t" 'arc-indent-line)
     (put 'comment-region 'menu-enable 'mark-active)
     (put 'uncomment-region 'menu-enable 'mark-active)
     (put 'indent-region 'menu-enable 'mark-active)
-    smap)
+    map)
   "Keymap for Arc mode.
 All commands in `lisp-mode-shared-map' are inherited by this map.")
 
@@ -303,10 +303,48 @@ See `run-hooks'."
   (lisp-font-lock-syntactic-face-function state))
 
 
+
+;; Copied from lisp-indent-line,
+;; because Arc doesn't care about how many comment chars you use.
+(defun arc-indent-line (&optional whole-exp)
+  "Indent current line as Arc code.
+With argument, indent any additional lines of the same expression
+rigidly along with this one."
+  (interactive "P")
+  (let ((indent (calculate-lisp-indent)) shift-amt end
+	(pos (- (point-max) (point)))
+	(beg (progn (beginning-of-line) (point))))
+    (skip-chars-forward " \t")
+    (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
+	;; Don't alter indentation of a ;;; comment line
+	;; or a line that starts in a string.
+	(goto-char (- (point-max) pos))
+      (if (listp indent) (setq indent (car indent)))
+      (setq shift-amt (- indent (current-column)))
+      (if (zerop shift-amt)
+          nil
+        (delete-region beg (point))
+        (indent-to indent)))
+      ;; If initial point was within line's indentation,
+      ;; position after the indentation.  Else stay at same point in text.
+      (if (> (- (point-max) pos) (point))
+	  (goto-char (- (point-max) pos)))
+      ;; If desired, shift remaining lines of expression the same amount.
+      (and whole-exp (not (zerop shift-amt))
+	   (save-excursion
+	     (goto-char beg)
+	     (forward-sexp 1)
+	     (setq end (point))
+	     (goto-char beg)
+	     (forward-line 1)
+	     (setq beg (point))
+	     (> end beg))
+	   (indent-code-rigidly beg end shift-amt))))
+
 (defvar calculate-lisp-indent-last-sexp)
 
 ;; Copied from lisp-indent-function, but with gets of
-;; arc-indent-{function,hook}.
+;; arc-indent-{function,hok}.
 (defun arc-indent-function (indent-point state)
   (let ((normal-indent (current-column)))
     (goto-char (1+ (elt state 1)))
