@@ -144,6 +144,15 @@ Connection: close"))
     `(defop-raw ,name (,gs ,parm) 
        (w/stdout ,gs (prn) ,@body))))
 
+(mac defsop (name parm auth . body)
+  (w/uniq test
+    `(let ,test (if (acons ,auth) [some _ ,auth] (testify ,auth))
+        (defop ,name ,parm
+           (if (,test (,parm 'ip))
+               ,@body
+               (pr "Permission denied"))))))
+
+
 ; Defines op as a redirector.  Its retval is new location.
 
 (mac defopr (name parm . body)
