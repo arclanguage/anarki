@@ -105,7 +105,7 @@
                    (self (cdr l) (+ n 1))
                    n))
              l 0))
-	  ; assuming parms is just before the body
+          ; assuming parms is just before the body
           skips     (- (counter s) 1)
           preparms  (cut body 0 skips)
           pat-pairs (nthcdr skips body))
@@ -243,23 +243,23 @@
   " The first test for defpat, testing arity-checks.
     (*defpat-test1 1) should reach the last clause, and
     must be different from (*defpat-test1 1 nil) "
-  (1 2)	(prn "You chose the (1 2) form!")
-  (1 x)	(prn "You didn't choose the (1 2) form, you chose the (1 " x ") !")
-  (1 2 x)	(prn "You added an " x " to a (1 2) form!")
-  (x)	(prn "You only gave one parameter, " x "!"))
+  (1 2) (prn "You chose the (1 2) form!")
+  (1 x) (prn "You didn't choose the (1 2) form, you chose the (1 " x ") !")
+  (1 2 x)       (prn "You added an " x " to a (1 2) form!")
+  (x)   (prn "You only gave one parameter, " x "!"))
 
 (defpat *defpat-test2
   " The second test for defpat, testing fixed-arity function. "
-  (2 3)	(prn "You chose the (2 3) form!")
-  (2 x)	(prn "You could have chosen the (2 3) form, but you chose"
+  (2 3) (prn "You chose the (2 3) form!")
+  (2 x) (prn "You could have chosen the (2 3) form, but you chose"
              " (2 x) instead, with x = " x)
-  (x y)	(prn "Hey!  You could have chosen a (2 3) or (2 x) form,"
+  (x y) (prn "Hey!  You could have chosen a (2 3) or (2 x) form,"
              " but you got (x y), with x = " x ", y = " y)
   (prn "what the... you couldn't possibly have gotten here!"))
 
 (defpat *defpat-test3
   " The third test for defpat, testing list destructuring. "
-  (4 5)	(prn "You chose the (4 5) form!")
+  (4 5) (prn "You chose the (4 5) form!")
   ((4 5) x)
   (prn "You chose the (4 5) form... oops, you put it in too"
        " much!  You got the ((4 5) x) with x = " x " !!")
@@ -290,7 +290,7 @@
 (defpat *defpat-pair
   " Example/testcase for defpat in redefining
     the `pair' function. "
-  ((x y . zs))	 `((,x ,y) ,@(*defpat-pair zs))
+  ((x y . zs))   `((,x ,y) ,@(*defpat-pair zs))
   ((x y . zs) f) `(,(f x y) ,@(*defpat-pair zs f))
   ((x) . _)      `((,x)) ; this is how the arc0 pair does it
   (() . _)       ())
@@ -309,7 +309,7 @@
   ; pop, pop, push...
   ((,(f (isa f 'fn)) . xs) (b a . s)) (*defpat-rpn xs `(,(f a b) ,@s) )
   ; not enough to pop
-  ((,@(isa _ 'fn) . xs)	x)  (ero "too few parameters")
+  ((,@(isa _ 'fn) . xs) x)  (ero "too few parameters")
   ;just push
   ((x . xs) s) (*defpat-rpn xs `(,x ,@s)))
 
