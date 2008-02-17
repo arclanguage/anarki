@@ -53,6 +53,16 @@ INDENTATION
       (fn args
         (f (apply g args))))
 
+  Also, for macros that take a condition-code pair forms, (e.g.  if,
+  case), it's generally better to indent the code in the pair more
+  than the condition.  For example:
+
+    (if
+      (something-or-other foo bar)
+        (do (this))
+      (some-other-thing bar foo)
+        (do (that)))
+
 GIT
   The first line of a commit message should function like the
   "Subject:" header of an email. It's assumed to be the title of the
