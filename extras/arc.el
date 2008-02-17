@@ -222,7 +222,7 @@ See `run-hooks'."
      ;; Declarations.
      (list 
       (concat "(" (regexp-opt 
-		   '("def" "mac" "defop" "defmemo" "defset" "deftem" "set") 
+		   '("def" "mac" "defop" "defmemo" "defset" "deftem" "set" "=")
 		   t)
 	      "\\>"
 	      ;; Any whitespace and declared object.
@@ -245,12 +245,12 @@ See `run-hooks'."
       (cons
        (concat
 	"(" (regexp-opt
-	     '("fn" "def" "set" "defset" "defop" "deftem" "defmemo"
+	     '("fn" "rfn" "afn" "def" "mac" "set"
+               "defset" "defop" "deftem" "defmemo"
 	       "when" "unless"
 	       "do" "while" "until" "only" "each" "if" "=" "for" "repeat"
 	       "case" "zap"
-	       "let" "with"
-	       "mac"
+	       "let" "with" "withs"
 	       "apply" "in"
 	       ;; Hannes Haug <hannes.haug@student.uni-tuebingen.de> wants:
 	       "and" "or"
@@ -408,22 +408,28 @@ rigidly along with this one."
     (lisp-indent-specform 1 state indent-point normal-indent)))
 
 ;; (put 'begin 'arc-indent-function 0), say, causes begin to be indented
-;; like defun if the first form is placed on the next line, otherwise
+;; like def if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
 (put 'case 'arc-indent-function 1)
 (put 'with 'arc-indent-function 1)
+(put 'withs 'arc-indent-function 1)
 (put 'when 'arc-indent-function 1)
 (put 'awhen 'arc-indent-function 1)
+(put 'w/uniq 'arc-indent-function 1)
 (put 'w/stdout 'arc-indent-function 1)
 (put 'w/appendfile 'arc-indent-function 1)
 (put 'w/stdin 'arc-indent-function 1)
 (put 'w/infile 'arc-indent-function 2)
 (put 'whilet 'arc-indent-function 2)
+(put 'accum 'arc-indent-function 1)
 (put 'def 'arc-indent-function 2)
+(put 'mac 'arc-indent-function 2)
+(put 'fn 'arc-indent-function 1)
+(put 'afn 'arc-indent-function 1)
+(put 'rfn 'arc-indent-function 2)
 (put 'do 'arc-indent-function 0)
 (put 'let 'arc-indent-function 'arc-let-indent)
-
 
 
 (provide 'arc)
