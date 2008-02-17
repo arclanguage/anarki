@@ -3,6 +3,27 @@ Because anyone can push code, it's important to keep the style as
 clean and uniform as possible, so that the underlying code can be more
 easily understood.
 
+DOCUMENTATION
+  It's useful for functions and macros to include docstrings, although
+  this isn't mandatory to encourage exploratory
+  programming. Docstrings can be accessed via `help' and associated
+  functions. Docstrings are just strings that are put as the first
+  line of a function or macro definition and which describe how the
+  function or macro is to be used. If a docstring takes up more than
+  one line, further lines should be indented to match the beginning of
+  the text of the original line. For example:
+
+    (def identity (a)
+      "Returns its argument.
+       Potentially good for mapping or something."
+      a)
+
+  Comment formatting can be flexible, as comments are useful for all
+  sorts of things that may have different stylistic
+  requirements. However, for the sake of readability, please put at
+  least one space between the semicolon and the beginning of the
+  comment.
+
 INDENTATION
   All indentation should be in spaces, as literal tab characters
   render inconsistently across editors.
