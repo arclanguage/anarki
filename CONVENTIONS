@@ -28,7 +28,7 @@ INDENTATION
   All indentation should be in spaces, as literal tab characters
   render inconsistently across editors.
 
-  The general rules for indenting Arc are the same as for any other
+  The general rule for indenting Arc are the same as for any other
   Lisp. In general, the first expression in a new line should be
   aligned with its leftmost sibling in the line above.
   For example, if we wanted to put a newline in `(and foo bar baz)'
@@ -37,15 +37,12 @@ INDENTATION
     (and foo bar
          baz)
 
-  If the first expression has no siblings on the line above, it should
-  be indented by two spaces with respect to that line.
-  For example, if we wanted to put a newline in `(and foo bar baz)'
-  after `and', we would write
+  If the newline were instead after `and', we would write
 
     (and
-      foo bar baz)
+     foo bar baz)
 
-  There are a few exceptions to the rules above. These exceptions are
+  There are a few exceptions to this rule. These exceptions are
   usually made only for macros that take a certain number of arguments
   followed by a "body" of code that those arguments act on (e.g. def,
   fn, while, let). All arguments before the "body" of these macros are
