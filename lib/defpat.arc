@@ -73,12 +73,12 @@
 
 (mac defpat (name . body)
 	" Defines a function named `name' using pattern-matching.
-	  See also [[pat-match]] "
-	`(pat-match:def ,name ,@body))
+	  See also [[p-m]] "
+	`(p-m:def ,name ,@body))
 
-(mac pat-match ((macro . body))
+(mac p-m ((macro . body))
 	" Modifies a function definition form to use patterns-matching.
-          (pat-match:afn
+          (p-m:afn
              ((x . xs))  (cons (f x) (self xs))
              (())       ())
 	  See also [[defpat]] "
@@ -92,10 +92,10 @@
 	;else
 		(let s (sig macro)
 			(unless s
-				(err (string "pat-match: unknown macro "
+				(err (string "p-m: unknown macro "
 						macro)))
 			(unless (dotted s)
-				(err (string "pat-match: macro " macro
+				(err (string "p-m: macro " macro
 						" does not accept body")))
 			;count the number of places to skip
 			(withs
@@ -344,7 +344,7 @@
 		(*defpat-rpn xs `(,x ,@s)))
 
 (def *defpat-afn-test (x)
-	((pat-match:afn
+	((p-m:afn
 		((x . xs))	(cons (+ 1 x) (self xs))
 		(())		nil)
 	x))
