@@ -145,8 +145,12 @@ Connection: close"))
        (w/stdout ,gs (prn) ,@body))))
 
 (mac defsop (name parm auth . body)
-  (w/uniq test
-    `(let ,test (if (acons ,auth) [some _ ,auth] (testify ,auth))
+  (w/uniq (test auth-var)
+    `(withs
+         ( ,auth-var ,auth
+           ,test     (if (acons ,auth-var)
+                         [some _ ,auth-var]
+                         (testify ,auth-var)))
         (defop ,name ,parm
            (if (,test (,parm 'ip))
                ,@body
