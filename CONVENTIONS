@@ -3,6 +3,38 @@ Because anyone can push code, it's important to keep the style as
 clean and uniform as possible, so that the underlying code can be more
 easily understood.
 
+INDENTATION
+  All indentation should be in spaces, as literal tab characters
+  render inconsistently across editors.
+
+  The general rules for indenting Arc are the same as for any other
+  Lisp. In general, the first expression in a new line should be
+  aligned with its leftmost sibling in the line above.
+  For example, if we wanted to put a newline in `(and foo bar baz)'
+  after `bar', we would write
+
+    (and foo bar
+         baz)
+
+  If the first expression has no siblings on the line above, it should
+  be indented by two spaces with respect to that line.
+  For example, if we wanted to put a newline in `(and foo bar baz)'
+  after `and', we would write
+
+    (and
+      foo bar baz)
+
+  There are a few exceptions to the rules above. These exceptions are
+  usually made only for macros that take a certain number of arguments
+  followed by a "body" of code that those arguments act on (e.g. def,
+  fn, while, let). All arguments before the "body" of these macros are
+  placed on the same line as the macro call, and the body itself is
+  placed on the following lines, indented two spaces. For example:
+
+    (def compose (f g)
+      (fn args
+        (f (apply g args))))
+
 GIT
   The first line of a commit message should function like the
   "Subject:" header of an email. It's assumed to be the title of the
