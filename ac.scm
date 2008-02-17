@@ -1195,6 +1195,15 @@
 
 (xdef 'quit exit)
 
+; Added outgoing tcp/ip ports
+; (= socket (connect-socket host port))
+; (= outport (car (cdr socket))
+; (= inport (car socket))
+; (write "hello" outport)
+; (read inport)
+(xdef 'connect-socket (lambda (host port)
+       (let-values ([(in out) (tcp-connect host port)]) (list in out))))
+(xdef 'flush-socket (lambda (s) (flush-output s)))
 
 )
 
