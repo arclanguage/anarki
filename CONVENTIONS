@@ -1,0 +1,22 @@
+This file details the conventions for code that's pushed to Anarki.
+Because anyone can push code, it's important to keep the style as
+clean and uniform as possible, so that the underlying code can be more
+easily understood.
+
+GIT
+  The first line of a commit message should function like the
+  "Subject:" header of an email. It's assumed to be the title of the
+  commit; any further description should be put after the first
+  line. This means that you should *not*:
+    * Put part of a sentence on the first line and continue it in the
+      rest of the patch.
+    * Put a long, verbose description of the patch on the first line.
+
+  When you try to git-push changes, you may get a message to the
+  effect that the remote repository contains changes that aren't in
+  your local repository. If you just git-pull and merge the changes,
+  you get an unsightly commit saying "Merged with origin." To avoid
+  this, use git-rebase instead. This will merge your local repo with
+  the remote one in such a way that there's no monolithic merge stage
+  that needs to be recorded.
+  
