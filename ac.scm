@@ -498,6 +498,8 @@
 ;       ((or (number? fn) (symbol? fn)) fn)
 ; another possibility: constant in functional pos means it gets
 ; passed to the first arg, i.e. ('kids item) means (item 'kids).
+; or: number in functional pos means evaluate expression as infix.
+        ((number? fn) (infix-eval (cons fn args)))
         (#t (err "Function call on inappropriate object" fn args))))
 
 (xdef 'apply (lambda (fn . args)
@@ -615,6 +617,48 @@
 (xdef 'quotient quotient)
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
+
+; infix math with operator precedence
+
+(define precedences `((,+ 1) (,(eval (ac-global-name '+)) 1) (,- 1)
+                      (,* 2) (,/ 2)))
+
+(define (precedence op)
+  (let ((n (assoc op precedences)))
+    (if (and n (pair? n) (pair? (cdr n)))
+        (cadr n)
+        0)))
+
+(define (infix-eval expr)
+  (define (in-to-pre infix prefix operators)
+    (if (pair? infix)
+      (cond ((number? (car infix))
+             (in-to-pre (cdr infix) (cons (car infix) prefix) operators))
+            ((procedure? (car infix))
+             (if (and (pair? operators)
+                      (<= (precedence (car infix))
+                          (precedence (car operators))))
+                 (in-to-pre infix
+                            (cons (list (car operators)
+                                        (car prefix) (cadr prefix))
+                                  (cddr prefix))
+                            (cdr operators))
+                 (in-to-pre (cdr infix) prefix (cons (car infix) operators)))))
+      (if (pair? operators)
+          (if (pair? (cdr operators))
+              (in-to-pre infix
+                         (cons (list (car operators)
+                                     (car prefix) (cadr prefix))
+                               (cddr prefix))
+                         (cdr operators))
+              (in-to-pre infix (list (cons (car operators) prefix))
+                         (cdr operators)))
+          prefix)))
+
+  (let ((infix (in-to-pre (reverse expr) '() '())))
+    (if (pair? infix)
+        (eval (car infix))
+        (eval infix))))
 
 ; generic comparison
 
