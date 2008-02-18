@@ -2208,6 +2208,14 @@
    " Allows access to the underlying Scheme. "
    (list 'seval (cons 'quasiquote body)))
 
+(redef table args
+  " Creates a table initializing table entries from passed
+    key-value pairs. "
+  (let tb (old)
+    (each (k v) (pair args)
+      (= tb.k v))
+    tb))
+
 (mac help ( (o name 'help))
    " Prints the documentation for the given symbol.  To use, type
      (help symbol) ; you may also use (help \"string\") to search
