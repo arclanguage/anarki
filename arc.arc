@@ -2212,8 +2212,7 @@
   " Creates a table initializing table entries from passed
     key-value pairs. "
   (let tb (old)
-    (each (k v) (pair args)
-      (= tb.k v))
+    (fill-table tb args)
     tb))
 
 (mac help ( (o name 'help))
