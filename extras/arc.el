@@ -369,7 +369,8 @@ rigidly along with this one."
                                         (progn (forward-sexp 1) (point))))
             method)
         (setq method (or (get (intern-soft function) 'arc-indent-function)
-                         (get (intern-soft function) 'arc-indent-hook)))
+                         (get (intern-soft function) 'arc-indent-hook)
+                         0))
         (cond ((or (eq method 'defun)
                    (and (null method)
                         (> (length function) 3)
@@ -428,7 +429,6 @@ rigidly along with this one."
 (put 'fn 'arc-indent-function 1)
 (put 'afn 'arc-indent-function 1)
 (put 'rfn 'arc-indent-function 2)
-(put 'do 'arc-indent-function 0)
 (put 'let 'arc-indent-function 'arc-let-indent)
 
 
