@@ -1,0 +1,20 @@
+This file details known issues in Anarki.
+
+***************************************************************************
+COMPATIBILITY ISSUES
+ This section documents incompatibilites between Anarki and Arc1.
+ See also the CONVENTIONS file.
+
+
+***************************************************************************
+ARC1 ISSUES
+ This section documents bugs in the official Arc distribution. They are 
+ also present in Anarki unless otherwise noted.
+
+
+*2007/02/18* Interpreter reads "!:.a" as the EOF character. 
+ Arc1 treats EOF as an error, which this probably should be anyway.
+ However, Anarki quits on EOF. This also applies to things like "is!:.a",
+ which should arguably be equivalent to "(is ': a)".
+
+***************************************************************************
