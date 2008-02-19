@@ -1792,7 +1792,8 @@
 
 (mac deftem (tem . fields)
   " Defines an object template for field values, with inclusion for
-    existing templates. "
+    existing templates.
+    See also [[inst]] [[templatize]] [[temread]] [[temload]] [[temloadall]] "
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
     `(= (templates* ',name) 
         (+ (mappend templates* ',(rev includes))
@@ -1807,7 +1808,8 @@
              (templates* ',name))))
 
 (def inst (tem . args)
-  " Creates an object instantiating a given template. "
+  " Creates an object instantiating a given template.
+    See also [[deftem]] [[templatize]] [[temread]] [[temload]] [[temloadall]] "
   (let x (table)
     (each (k v) (templates* tem)
       (unless (no v) (= (x k) (v))))
@@ -1820,7 +1822,8 @@
 (def temread (tem (o str (stdin)))
   " Reads an association list from the stream `str' and creates an
     object instantiating the given template containing the data in
-    the association list. "
+    the association list.
+    See also [[deftem]] [[inst]] [[templatize]] [[temload]] [[temloadall]] "
   (templatize tem (read str)))
 
 ; Converts alist to inst; ugly; maybe should make this part of coerce.
@@ -1828,7 +1831,8 @@
 
 (def templatize (tem raw)
   " Creates an object instantiating a given template containing the
-    data in the association list `raw'. "
+    data in the association list `raw'.
+    See also [[deftem]] [[inst]] [[temread]] [[temload]] [[temloadall]] "
   (with (x (inst tem) fields (templates* tem))
     (each (k v) raw
       (when (assoc k fields)
@@ -1838,16 +1842,23 @@
 (def temload (tem file)
   " Reads an association list from `file' and creates an object
     instantiating the given template containing the data in the
-    association list. "
+    association list.
+    See also [[deftem]] [[inst]] [[templatize]] [[temread]] [[temloadall]] "
   (w/infile i file (temread tem i)))
 
 (def temloadall (tem file)
   " Reads all association lists from `file' and creates a list
     of objects instantiating the given template containing the
-    data in each association list. "
+    data in each association list.
+    See also [[deftem]] [[inst]] [[templatize]] [[temread]] [[temload]]"
   (map (fn (pairs) (templatize tem pairs)) 
        (w/infile in file (readall in))))
 
+(def tems ()
+  " Pretty print templates defined in `templates*'.
+    See also [[deftem]] [[inst]] [[templatize]] [[temread]] [[temload]] "
+  (each k (keys templates*)
+    (prn k " " (map car (templates* k)))))
 
 (def number (n) " Determines if `n' is a number. " (in (type n) 'int 'num))
 
