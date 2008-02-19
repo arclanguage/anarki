@@ -5,12 +5,18 @@ COMPATIBILITY ISSUES
  This section documents incompatibilites between Anarki and Arc1.
  See also the CONVENTIONS file.
 
+*2007/02/19* When loading lib/defpat.arc, the symbol p-m can't be safely
+ used as a variable for a container, or as the symbol for a function.  This
+ problem will also apply for any macro defined in Anarki that is not
+ already defined in Arc1.
 
 ***************************************************************************
 ARC1 ISSUES
  This section documents bugs in the official Arc distribution. They are 
  also present in Anarki unless otherwise noted.
 
+*2007/02/19* Macros will override local variables in (let ...) and other
+ local-variable-creating forms.
 
 *2007/02/18* Interpreter reads "!:.a" as the EOF character. 
  Arc1 treats EOF as an error, which this probably should be anyway.
