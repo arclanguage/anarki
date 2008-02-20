@@ -1,3 +1,7 @@
+;;; This file is the source for the standalone interpreter of Arc.
+;;; To make : mzc --exe arc-exe arc-exe.scm
+;;; It is almost a concatenation of all other .scm files
+;;;
 ; scheme48
 ; ,open tables sockets extended-ports c-system-function ascii i/o-internal
 ; ,open posix-files handle random pp simple-conditions
@@ -42,7 +46,7 @@
 ;          (list 'let var (car args)
 ;                (list 'if var var (cons 'or (cdr args)))))))
 
-(module arc1 mzscheme
+(module arc-exe mzscheme
 
 (provide (all-defined))
 (require (lib "port.ss"))
