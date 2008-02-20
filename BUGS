@@ -20,7 +20,7 @@ ARC1 ISSUES
  This section documents bugs in the official Arc distribution. They are 
  also present in Anarki unless otherwise noted.
 
-*2007/02/30* () and '() mysteriously found to be different.
+*2007/02/20* () and '() mysteriously found to be different.
  [[http://arclanguage.org/item?id=2857]]
     (+ '(a b c) '())  =?  (a b c)
     (+ '(a b c)  ())  =>  Error
