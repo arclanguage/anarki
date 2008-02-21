@@ -499,6 +499,7 @@
 
 (define (ar-apply fn args)
   (cond ((procedure? fn) (apply fn args))
+        ((vector? fn) (vector-ref fn (car args)))
         ((pair? fn) (list-ref fn (car args)))
         ((string? fn) (string-ref fn (car args)))
         ((hash-table? fn) (ar-nill (hash-table-get fn (car args) #f)))
@@ -701,6 +702,7 @@
 
 (xdef 'len (lambda (x)
              (cond ((string? x) (string-length x))
+                   ((vector? x) (vector-length x))
                    ((hash-table? x) (hash-table-count x))
                    (#t (length (ar-nil-terminate x))))))
 
@@ -725,6 +727,7 @@
         ((string? x)        'string)
         ((integer? x)       'int)
         ((number? x)        'num)     ; unsure about this
+        ((vector? x)        'vec)
         ((hash-table? x)    'table)
         ((output-port? x)   'output)
         ((input-port? x)    'input)
@@ -947,6 +950,12 @@
                                         (char->integer (read-char rstr))
                                         26))))))))))
 
+(xdef 'vec (lambda (n) (make-vector n 'nil)))
+
+(xdef 'vec-ref vector-ref)
+  
+(xdef 'vec-set vector-set!)
+
 ; PLT scheme provides only eq? and equal? hash tables,
 ; we need the latter for strings.
 
@@ -1020,8 +1029,8 @@
               (arc-eval `(input-history-update ',expr))
               (arc-eval `(output-history-update ',val))
               (write (ac-denil val))
-              (namespace-set-variable-value! '_that val)
-              (namespace-set-variable-value! '_thatexpr expr)
+              (namespace-set-variable-value! '_that val #t arc-ns)
+              (namespace-set-variable-value! '_thatexpr expr #t arc-ns)
               (newline)
               (tl2)))))))
 
@@ -1131,6 +1140,7 @@
               (cond ((hash-table? com)  (if (eqv? val 'nil)
                                             (hash-table-remove! com ind)
                                             (hash-table-put! com ind val)))
+                    ((vector? com) (vector-set! com ind val))
                     ((string? com) (string-set! com ind val))
                     ((pair? com)   (nth-set! com ind val))
                     (#t (err "Can't set reference " com ind val)))
