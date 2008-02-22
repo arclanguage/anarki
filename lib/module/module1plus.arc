@@ -26,6 +26,47 @@
 ;    (prn "dog's back...")
 ;    (prn (digger))))
 
+#|
+About interfaces:
+  Suppose we have a largeish module with several dozen functions.
+It's being actively developed, so future versions of the module,
+although maintaining back-compatibility, will keep adding new
+functions.  Now it would be bad to use something like:
+  (use* large-module) ;add all functions in large-module
+  This is because, large-module might, in the future, add a new
+function, which would shadow or collide with the importing module's
+functions, or functions from another imported module.
+
+  Instead, we should really cherry-pick only the functions we need:
+  (use large-module!fun1 large-module!fun2)
+  However, if we need a dozen functions, this is not practical.
+
+  Enter interfaces.  The module writer can write an interface
+with several functions in the module.  Instead of choosing
+individual functions, the module user chooses entire interfaces.
+
+  Of course, this means that module writers should make a promise
+that future version of the module will add new functions in different
+(possibly versioned) interfaces.  This means that once an interface
+is published, it is set in stone, and new functions should be added
+in a newer version of the module's interface.
+
+  Interfaces can also be used to separate levels of complexity.
+For example, a module might have a simple interface for basic,
+everyday programming, and an advanced interface when certain
+hacks are necessary.
+  Fortunately, interfaces, as they are now, can share functions.
+So a function can exist in the simple interface and also be used
+in the advanced interface.
+
+  Because of the nature of Ray Meyer's module1, module!public is
+also an interface, containing all public functions and interfaces
+of the module.
+|#
+
+; suggestion: instead of (interface ...) (use-interface ...)
+; how about (socket ...) (plug ...) ?
+
 (load "lib/module/module1.arc")
 
 (let oldmodule module
