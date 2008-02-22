@@ -32,5 +32,6 @@ ARC1 ISSUES
  Arc1 treats EOF as an error, which this probably should be anyway.
  However, Anarki quits on EOF. This also applies to things like "is!:.a",
  which should arguably be equivalent to "(is ': a)".
+ UPDATE: Other surprise EOFs include "\!".
 
 ***************************************************************************

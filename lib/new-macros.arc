@@ -1,4 +1,4 @@
-; new-macros.arc -- born on 2008-02-20
+; new-macros.arc -- born on 2008/02/20
 ;
 ; Quick and dirty script to find all the macros that are loaded by
 ; default in Anarki. Binds two symbols:

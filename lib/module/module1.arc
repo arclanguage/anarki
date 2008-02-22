@@ -5,7 +5,7 @@
 ; the new `macrolet'?
 ;
 ; (require "lib/module/module1.arc")
-; (module foo (a) (baz)
+; (module foo (a bar) (baz)
 ;   (= a 42)
 ;   (def baz (x) (+ x 2))
 ;   (def bar (x) (+ x 1))
