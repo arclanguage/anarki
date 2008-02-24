@@ -92,6 +92,9 @@
     (define-key m "\C-c\C-l" 'arc-load-file)
     m))
 
+(defvar arc-program-name "arc"
+  "The name of the program used to run Arc.")
+
 ;; Install the process communication commands in the arc-mode keymap.
 (define-key arc-mode-map "\M-\C-x" 'arc-send-definition);gnu convention
 (define-key arc-mode-map "\C-x\C-e" 'arc-send-last-sexp);gnu convention
