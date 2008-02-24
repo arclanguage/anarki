@@ -1,0 +1,100 @@
+This file details the conventions for code that's pushed to Anarki.
+Because anyone can push code, it's important to keep the style as
+clean and uniform as possible, so that the underlying code can be more
+easily understood.
+
+COMPATIBILITY
+  Since Anarki isn't the official Arc codebase, it's important to keep
+  it compatible with the official distribution. As such, please don't
+  add any changes that make it incompatible with the latest official
+  arcn release. This means that code that runs with arcn should always
+  run with Anarki code.
+
+  Since it's also important to experiment with more radical ideas that
+  will break compatibility, feel free to create branches
+  ("git branch <branchname>" followed by "git checkout <branchname>")
+  and commit your work there. To create a new branch in the remote
+  repository, run "git push <branchname>:refs/heads/<branchname>".
+  After the remote branch is created, just "git push" will work.
+
+DOCUMENTATION
+  It's useful for functions and macros to include docstrings, although
+  this isn't mandatory to encourage exploratory
+  programming. Docstrings can be accessed via `help' and associated
+  functions. Docstrings are just strings that are put as the first
+  line of a function or macro definition and which describe how the
+  function or macro is to be used. If a docstring takes up more than
+  one line, further lines should be indented to match the beginning of
+  the text of the original line. For example:
+
+    (def identity (a)
+      "Returns its argument.
+       Potentially good for mapping or something."
+      a)
+
+  Comment formatting can be flexible, as comments are useful for all
+  sorts of things that may have different stylistic
+  requirements. However, for the sake of readability, please put at
+  least one space between the semicolon and the beginning of the
+  comment.
+
+INDENTATION
+  All indentation should be in spaces, as literal tab characters
+  render inconsistently across editors.
+
+  The general rule for indenting Arc are the same as for any other
+  Lisp. In general, the first expression in a new line should be
+  aligned with its leftmost sibling in the line above.
+  For example, if we wanted to put a newline in `(and foo bar baz)'
+  after `bar', we would write
+
+    (and foo bar
+         baz)
+
+  If the newline were instead after `and', we would write
+
+    (and
+      foo bar baz)
+
+  There are a few exceptions to this rule. These exceptions are
+  usually made only for macros that take a certain number of arguments
+  followed by a "body" of code that those arguments act on (e.g. def,
+  fn, while, let). All arguments before the "body" of these macros are
+  placed on the same line as the macro call, and the body itself is
+  placed on the following lines, indented two spaces. For example:
+
+    (def compose (f g)
+      (fn args
+        (f (apply g args))))
+
+  Also, for macros that take a condition-code pair forms, (e.g.  if,
+  case), it's generally better to indent the code in the pair more
+  than the condition.  For example:
+
+    (if
+      (something-or-other foo bar)
+        (do (this))
+      (some-other-thing bar foo)
+        (do (that)))
+
+GIT
+  The first line of a commit message should function like the
+  "Subject:" header of an email. It's assumed to be the title of the
+  commit; any further description should be put after the first
+  line. This means that you should *not*:
+    * Put part of a sentence on the first line and continue it in the
+      rest of the patch.
+    * Put a long, verbose description of the patch on the first line.
+
+  When you try to git-push changes, you may get a message to the
+  effect that the remote repository contains changes that aren't in
+  your local repository. If you just git-pull and merge the changes,
+  you get an unsightly commit saying "Merged with origin." To avoid
+  this, use git-rebase instead. This will merge your local repo with
+  the remote one in such a way that there's no monolithic merge stage
+  that needs to be recorded.
+
+NEWLINES
+  All text should use Unix-style newlines. Be especially sure not to
+  convert existing files into Windows-style newlines, as that screws
+  up the Git history.  

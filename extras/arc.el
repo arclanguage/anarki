@@ -37,7 +37,7 @@
 
 (defvar arc-mode-syntax-table
   (let ((st (make-syntax-table))
-	(i 0))
+        (i 0))
 
     ;; Default is atom-constituent.
     (while (< i 256)
@@ -99,11 +99,11 @@
 
 (defvar arc-imenu-generic-expression
       '((nil
-	 "^(define\\(\\|-\\(generic\\(\\|-procedure\\)\\|method\\)\\)*\\s-+(?\\(\\sw+\\)" 4)
-	("Types"
-	 "^(define-class\\s-+(?\\(\\sw+\\)" 1)
-	("Macros"
-	 "^(\\(defmacro\\|define-macro\\|define-syntax\\)\\s-+(?\\(\\sw+\\)" 2))
+         "^(define\\(\\|-\\(generic\\(\\|-procedure\\)\\|method\\)\\)*\\s-+(?\\(\\sw+\\)" 4)
+        ("Types"
+         "^(define-class\\s-+(?\\(\\sw+\\)" 1)
+        ("Macros"
+         "^(\\(defmacro\\|define-macro\\|define-syntax\\)\\s-+(?\\(\\sw+\\)" 2))
   "Imenu generic expression for Arc mode.  See `imenu-generic-expression'.")
 
 (defun arc-mode-variables ()
@@ -125,7 +125,7 @@
   (make-local-variable 'normal-auto-fill-function)
   (setq normal-auto-fill-function 'lisp-mode-auto-fill)
   (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'lisp-indent-line)
+  (setq indent-line-function 'arc-indent-line)
   (make-local-variable 'parse-sexp-ignore-comments)
   (setq parse-sexp-ignore-comments t)
   (make-local-variable 'outline-regexp)
@@ -148,7 +148,7 @@
   (set (make-local-variable 'imenu-case-fold-search) t)
   (setq imenu-generic-expression arc-imenu-generic-expression)
   (set (make-local-variable 'imenu-syntax-alist)
-	'(("+-*/.<>=?!$%_&~^:" . "w")))
+        '(("+-*/.<>=?!$%_&~^:" . "w")))
   (set (make-local-variable 'font-lock-defaults)
        '((arc-font-lock-keywords
           arc-font-lock-keywords-1 arc-font-lock-keywords-2)
@@ -165,10 +165,9 @@
 (defvar arc-mode-line-process "")
 
 (defvar arc-mode-map
-  (let ((smap (make-sparse-keymap))
-	(map (make-sparse-keymap "Arc")))
-    (set-keymap-parent smap lisp-mode-shared-map)
-    (define-key smap [menu-bar arc] (cons "Arc" map))
+  (let ((map (make-sparse-keymap "Arc")))
+    (set-keymap-parent map lisp-mode-shared-map)
+    (define-key map [menu-bar arc] (cons "Arc" map))
     (define-key map [run-arc] '("Run Inferior Arc" . run-arc))
     (define-key map [uncomment-region]
       '("Uncomment Out Region" . (lambda (beg end)
@@ -176,11 +175,12 @@
                                    (comment-region beg end '(4)))))
     (define-key map [comment-region] '("Comment Out Region" . comment-region))
     (define-key map [indent-region] '("Indent Region" . indent-region))
-    (define-key map [indent-line] '("Indent Line" . lisp-indent-line))
+    (define-key map [indent-line] '("Indent Line" . arc-indent-line))
+    (define-key map "\t" 'arc-indent-line)
     (put 'comment-region 'menu-enable 'mark-active)
     (put 'uncomment-region 'menu-enable 'mark-active)
     (put 'indent-region 'menu-enable 'mark-active)
-    smap)
+    map)
   "Keymap for Arc mode.
 All commands in `lisp-mode-shared-map' are inherited by this map.")
 
@@ -222,17 +222,17 @@ See `run-hooks'."
      ;; Declarations.
      (list 
       (concat "(" (regexp-opt 
-		   '("def" "mac" "defop" "defmemo" "defset" "deftem" "set") 
-		   t)
-	      "\\>"
-	      ;; Any whitespace and declared object.
-	      "[ \t]*(?"
-	      "\\(\\sw+\\)?")
+                   '("def" "mac" "defop" "defmemo" "defset" "deftem" "set" "=")
+                   t)
+              "\\>"
+              ;; Any whitespace and declared object.
+              "[ \t]*(?"
+              "\\(\\sw+\\)?")
       '(1 font-lock-keyword-face)
       '(2 (cond ((match-beginning 2) font-lock-function-name-face)
-		((match-beginning 5) font-lock-variable-name-face)
-		(t font-lock-type-face))
-	  nil t))
+                ((match-beginning 5) font-lock-variable-name-face)
+                (t font-lock-type-face))
+          nil t))
      ))
   "Subdued expressions to highlight in Arc modes.")
 
@@ -244,20 +244,20 @@ See `run-hooks'."
       ;; Control structures.
       (cons
        (concat
-	"(" (regexp-opt
-	     '("fn" "def" "set" "defset" "defop" "deftem" "defmemo"
-	       "when" "unless"
-	       "do" "while" "until" "only" "each" "if" "=" "for" "repeat"
-	       "case" "zap"
-	       "let" "with"
-	       "mac"
-	       "apply" "in"
-	       ;; Hannes Haug <hannes.haug@student.uni-tuebingen.de> wants:
-	       "and" "or"
-	       ;; Stefan Monnier <stefan.monnier@epfl.ch> says don't bother:
-	       ;;"quasiquote" "quote" "unquote" "unquote-splicing"
-	       "map" "sort") t)
-	"\\>") 1)
+        "(" (regexp-opt
+             '("fn" "rfn" "afn" "def" "mac" "set"
+               "defset" "defop" "deftem" "defmemo"
+               "when" "unless"
+               "do" "while" "until" "only" "each" "if" "=" "for" "repeat"
+               "case" "zap"
+               "let" "with" "withs"
+               "apply" "in"
+               ;; Hannes Haug <hannes.haug@student.uni-tuebingen.de> wants:
+               "and" "or"
+               ;; Stefan Monnier <stefan.monnier@epfl.ch> says don't bother:
+               ;;"quasiquote" "quote" "unquote" "unquote-splicing"
+               "map" "sort") t)
+        "\\>") 1)
       )))
   "Gaudy expressions to highlight in Arc modes.")
 
@@ -303,10 +303,48 @@ See `run-hooks'."
   (lisp-font-lock-syntactic-face-function state))
 
 
+
+;; Copied from lisp-indent-line,
+;; because Arc doesn't care about how many comment chars you use.
+(defun arc-indent-line (&optional whole-exp)
+  "Indent current line as Arc code.
+With argument, indent any additional lines of the same expression
+rigidly along with this one."
+  (interactive "P")
+  (let ((indent (calculate-lisp-indent)) shift-amt end
+        (pos (- (point-max) (point)))
+        (beg (progn (beginning-of-line) (point))))
+    (skip-chars-forward " \t")
+    (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
+        ;; Don't alter indentation of a ;;; comment line
+        ;; or a line that starts in a string.
+        (goto-char (- (point-max) pos))
+      (if (listp indent) (setq indent (car indent)))
+      (setq shift-amt (- indent (current-column)))
+      (if (zerop shift-amt)
+          nil
+        (delete-region beg (point))
+        (indent-to indent)))
+      ;; If initial point was within line's indentation,
+      ;; position after the indentation.  Else stay at same point in text.
+      (if (> (- (point-max) pos) (point))
+          (goto-char (- (point-max) pos)))
+      ;; If desired, shift remaining lines of expression the same amount.
+      (and whole-exp (not (zerop shift-amt))
+           (save-excursion
+             (goto-char beg)
+             (forward-sexp 1)
+             (setq end (point))
+             (goto-char beg)
+             (forward-line 1)
+             (setq beg (point))
+             (> end beg))
+           (indent-code-rigidly beg end shift-amt))))
+
 (defvar calculate-lisp-indent-last-sexp)
 
 ;; Copied from lisp-indent-function, but with gets of
-;; arc-indent-{function,hook}.
+;; arc-indent-{function,hok}.
 (defun arc-indent-function (indent-point state)
   (let ((normal-indent (current-column)))
     (goto-char (1+ (elt state 1)))
@@ -320,7 +358,7 @@ See `run-hooks'."
               (progn (goto-char calculate-lisp-indent-last-sexp)
                      (beginning-of-line)
                      (parse-partial-sexp (point)
-					 calculate-lisp-indent-last-sexp 0 t)))
+                                         calculate-lisp-indent-last-sexp 0 t)))
           ;; Indent under the list or under the first sexp on the same
           ;; line as calculate-lisp-indent-last-sexp.  Note that first
           ;; thing on that line has to be complete sexp since we are
@@ -328,20 +366,21 @@ See `run-hooks'."
           (backward-prefix-chars)
           (current-column))
       (let ((function (buffer-substring (point)
-					(progn (forward-sexp 1) (point))))
-	    method)
-	(setq method (or (get (intern-soft function) 'arc-indent-function)
-			 (get (intern-soft function) 'arc-indent-hook)))
-	(cond ((or (eq method 'defun)
-		   (and (null method)
-			(> (length function) 3)
-			(string-match "\\`def" function)))
-	       (lisp-indent-defform state indent-point))
-	      ((integerp method)
-	       (lisp-indent-specform method state
-				     indent-point normal-indent))
-	      (method
-		(funcall method state indent-point normal-indent)))))))
+                                        (progn (forward-sexp 1) (point))))
+            method)
+        (setq method (or (get (intern-soft function) 'arc-indent-function)
+                         (get (intern-soft function) 'arc-indent-hook)
+                         0))
+        (cond ((or (eq method 'defun)
+                   (and (null method)
+                        (> (length function) 3)
+                        (string-match "\\`def" function)))
+               (lisp-indent-defform state indent-point))
+              ((integerp method)
+               (lisp-indent-specform method state
+                                     indent-point normal-indent))
+              (method
+                (funcall method state indent-point normal-indent)))))))
 
 
 ;;; Let is different in Arc
@@ -370,22 +409,27 @@ See `run-hooks'."
     (lisp-indent-specform 1 state indent-point normal-indent)))
 
 ;; (put 'begin 'arc-indent-function 0), say, causes begin to be indented
-;; like defun if the first form is placed on the next line, otherwise
+;; like def if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
 (put 'case 'arc-indent-function 1)
 (put 'with 'arc-indent-function 1)
+(put 'withs 'arc-indent-function 1)
 (put 'when 'arc-indent-function 1)
 (put 'awhen 'arc-indent-function 1)
+(put 'w/uniq 'arc-indent-function 1)
 (put 'w/stdout 'arc-indent-function 1)
 (put 'w/appendfile 'arc-indent-function 1)
 (put 'w/stdin 'arc-indent-function 1)
 (put 'w/infile 'arc-indent-function 2)
 (put 'whilet 'arc-indent-function 2)
+(put 'accum 'arc-indent-function 1)
 (put 'def 'arc-indent-function 2)
-(put 'do 'arc-indent-function 0)
+(put 'mac 'arc-indent-function 2)
+(put 'fn 'arc-indent-function 1)
+(put 'afn 'arc-indent-function 1)
+(put 'rfn 'arc-indent-function 2)
 (put 'let 'arc-indent-function 'arc-let-indent)
-
 
 
 (provide 'arc)

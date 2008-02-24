@@ -1,3 +1,7 @@
+;;; This file is the source for the standalone interpreter of Arc.
+;;; To make : mzc --exe arc-exe arc-exe.scm
+;;; It is almost a concatenation of all other .scm files
+;;;
 ; scheme48
 ; ,open tables sockets extended-ports c-system-function ascii i/o-internal
 ; ,open posix-files handle random pp simple-conditions
@@ -42,12 +46,14 @@
 ;          (list 'let var (car args)
 ;                (list 'if var var (cons 'or (cdr args)))))))
 
-(module ac mzscheme
+(module arc-exe mzscheme
 
 (provide (all-defined))
 (require (lib "port.ss"))
 (require (lib "process.ss"))
 (require (lib "pretty.ss"))
+  
+(define arc-ns (make-namespace))  ; Arc's namespace
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
@@ -67,7 +73,6 @@
           ((eq? head 'if) (ac-if (cdr s) env))
           ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
           ((eq? head 'set) (ac-set (cdr s) env))
-          ((eq? head 'lset) (ac-lset (cdr s) env))
           ; this line could be removed without changing semantics
           ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
           ((pair? s) (ac-call (car s) (cdr s) env))
@@ -79,7 +84,6 @@
       (char? x)
       (string? x)
       (number? x)
-      (procedure? x) ; to allow (eval `(,+ 3 4))
       (eq? x '())))
 
 (define (ssyntax? x)
@@ -336,14 +340,11 @@
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a ,name))
                      (#t `(namespace-set-variable-value! ',(ac-global-name a)
-                                                         ,name)))
+                                                         ,name
+                                                         #t
+                                                         arc-ns)))
                name))
       (err "First arg to set must be a symbol" a)))
-
-(define (ac-lset x env)
-  (if (null? x) '()
-      `(define ,(ac-macex (ac-global-name (car x)))
-         ,(ac (cadr x) env))))
 
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
@@ -377,7 +378,8 @@
   (if (symbol? fn)
       (let ((v (namespace-variable-value (ac-global-name fn)
                                          #t
-                                         (lambda () #f))))
+                                         (lambda () #f)
+                                         arc-ns)))
         (if (and v
                  (ar-tagged? v)
                  (eq? (ar-type v) 'mac))
@@ -441,7 +443,7 @@
 ; run-time primitive procedures
 
 (define (xdef a b)
-  (namespace-set-variable-value! (ac-global-name a) b)
+  (namespace-set-variable-value! (ac-global-name a) b #t arc-ns)
   b)
 
 (define fn-signatures (make-hash-table 'equal))
@@ -450,7 +452,7 @@
 ; Haven't started using it yet.
 
 (define (odef a parms b)
-  (namespace-set-variable-value! (ac-global-name a) b)
+  (namespace-set-variable-value! (ac-global-name a) b #t arc-ns)
   (hash-table-put! fn-signatures a (list parms))
   b)
 
@@ -506,9 +508,8 @@
 ;       ((or (number? fn) (symbol? fn)) fn)
 ; another possibility: constant in functional pos means it gets
 ; passed to the first arg, i.e. ('kids item) means (item 'kids).
-; or both: (1) is 1, (3 + 4) is (+ 3 4).
-        ((or (number? fn) (symbol? fn))
-         (if (pair? args) (apply (car args) fn (cdr args)) fn))
+; or: number in functional pos means evaluate expression as infix.
+        ((number? fn) (infix-eval (cons fn args)))
         (#t (err "Function call on inappropriate object" fn args))))
 
 (xdef 'apply (lambda (fn . args)
@@ -627,31 +628,75 @@
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
 
+; infix math with operator precedence
+
+(define precedences `((,+ 1) (,(eval (ac-global-name '+) arc-ns) 1) (,- 1)
+                      (,* 2) (,/ 2)))
+
+(define (precedence op)
+  (let ((n (assoc op precedences)))
+    (if (and n (pair? n) (pair? (cdr n)))
+        (cadr n)
+        0)))
+
+(define (infix-eval expr)
+  (define (in-to-pre infix prefix operators)
+    (if (pair? infix)
+      (cond ((number? (car infix))
+             (in-to-pre (cdr infix) (cons (car infix) prefix) operators))
+            ((procedure? (car infix))
+             (if (and (pair? operators)
+                      (<= (precedence (car infix))
+                          (precedence (car operators))))
+                 (in-to-pre infix
+                            (cons (list (car operators)
+                                        (car prefix) (cadr prefix))
+                                  (cddr prefix))
+                            (cdr operators))
+                 (in-to-pre (cdr infix) prefix (cons (car infix) operators)))))
+      (if (pair? operators)
+          (if (pair? (cdr operators))
+              (in-to-pre infix
+                         (cons (list (car operators)
+                                     (car prefix) (cadr prefix))
+                               (cddr prefix))
+                         (cdr operators))
+              (in-to-pre infix (list (cons (car operators) prefix))
+                         (cdr operators)))
+          prefix)))
+
+  (let ((infix (in-to-pre (reverse expr) '() '())))
+    (if (pair? infix)
+        (eval (car infix) arc-ns)
+        (eval infix arc-ns))))
+
 ; generic comparison
 
 (define (arc> . args)
-  (cond ((all number? args) (apply > args))
-        ((all string? args) (pairwise string>? args #f))
-        ((all symbol? args) (pairwise (lambda (x y)
-                                        (string>? (symbol->string x)
-                                                  (symbol->string y)))
-                                      args
-                                      #f))
-        ((all char?   args) (pairwise char>?   args #f))
-        (#t                 (apply > args))))
+  (let ((head (car args)))
+    (cond ((number? args) (apply > args))
+          ((string? args) (pairwise string>? args #f))
+          ((symbol? args) (pairwise (lambda (x y)
+                                      (string>? (symbol->string x)
+                                                (symbol->string y)))
+                                    args
+                                    #f))
+          ((char?   args) (pairwise char>?   args #f))
+          (#t             (apply > args)))))
 
 (xdef '>  (lambda args (tnil (apply arc> args))))
 
 (define (arc< . args)
-  (cond ((all number? args) (apply < args))
-        ((all string? args) (pairwise string<? args #f))
-        ((all symbol? args) (pairwise (lambda (x y)
-                                        (string<? (symbol->string x)
-                                                  (symbol->string y)))
-                                      args
-                                      #f))
-        ((all char?   args) (pairwise char<?   args #f))
-        (#t                 (apply < args))))
+  (let ((head (car args)))
+    (cond ((number? head) (apply < args))
+          ((string? head) (pairwise string<? args #f))
+          ((symbol? head) (pairwise (lambda (x y)
+                                      (string<? (symbol->string x)
+                                                (symbol->string y)))
+                                    args
+                                    #f))
+          ((char?   head) (pairwise char<?   args #f))
+          (#t             (apply < args)))))
 
 (xdef '<  (lambda args (tnil (apply arc< args))))
 
@@ -952,7 +997,7 @@
 ; tle kept as a way to get a break loop when a scheme err
 
 (define (arc-eval expr)
-  (eval (ac expr '()) (interaction-environment)))
+  (eval (ac expr '()) arc-ns))
 
 (define (tle)
   (display "Arc> ")
@@ -984,8 +1029,8 @@
               (arc-eval `(input-history-update ',expr))
               (arc-eval `(output-history-update ',val))
               (write (ac-denil val))
-              (namespace-set-variable-value! '_that val)
-              (namespace-set-variable-value! '_thatexpr expr)
+              (namespace-set-variable-value! '_that val #t arc-ns)
+              (namespace-set-variable-value! '_thatexpr expr #t arc-ns)
               (newline)
               (tl2)))))))
 
@@ -1022,7 +1067,7 @@
     (if (eof-object? x)
         #t
         (let ((scm (ac x '())))
-          (eval scm (interaction-environment))
+          (eval scm arc-ns)
           (pretty-print scm op)
           (newline op)
           (newline op)
@@ -1045,7 +1090,7 @@
 (xdef 'macex1 (lambda (e) (ac-macex (ac-denil e) 'once)))
 
 (xdef 'eval (lambda (e)
-              (eval (ac (ac-denil e) '()) (interaction-environment))))
+              (eval (ac (ac-denil e) '()) arc-ns)))
 
 ; If an err occurs in an on-err expr, no val is returned and code
 ; after it doesn't get executed.  Not quite what I had in mind.
@@ -1167,7 +1212,7 @@
 (xdef 'ssexpand (lambda (x)
                   (if (symbol? x) (expand-ssyntax x) x)))
 
-(xdef 'seval (lambda (x) (eval (ac-denil x))))
+(xdef 'seval (lambda (x) (eval (ac-denil x) arc-ns)))
 
 (xdef 'quit exit)
 
@@ -1180,8 +1225,48 @@
 (xdef 'connect-socket (lambda (host port)
        (let-values ([(in out) (tcp-connect host port)]) (list in out))))
 (xdef 'flush-socket (lambda (s) (flush-output s)))
+  
+(xdef 'bit-and bitwise-and)
+(xdef 'bit-or bitwise-ior)
+(xdef 'bit-not bitwise-not)
+(xdef 'bit-xor bitwise-xor)
+(xdef 'bit-shift arithmetic-shift)
+  
+(define (read-square-brackets ch port src line col pos)
+  `(make-br-fn ,(read/recursive port #\[ #f)))
+  
+; a readtable that is just like the builtin except for []s
 
+(define bracket-readtable
+  (make-readtable #f #\[ 'terminating-macro read-square-brackets))
+  
+(define (use-bracket-readtable)
+  (current-readtable bracket-readtable))
+
+  
+(define (*read . args)
+  (parameterize ((current-readtable bracket-readtable))
+    (read (if (null? args) (current-input-port) (car args)))))
+
+(define (*read-syntax src port)
+  (parameterize ((current-readtable bracket-readtable))
+    (read-syntax src port)))
+  
+  (use-bracket-readtable)
+  
+  (namespace-set-variable-value! 'ar-funcall0 ar-funcall0 #t arc-ns)
+  (namespace-set-variable-value! 'ar-funcall1 ar-funcall1 #t arc-ns)
+  (namespace-set-variable-value! 'ar-funcall2 ar-funcall2 #t arc-ns)
+  (namespace-set-variable-value! 'ar-funcall3 ar-funcall3 #t arc-ns)
+  (namespace-set-variable-value! 'ar-funcall4 ar-funcall4 #t arc-ns)
+  (namespace-set-variable-value! 'ar-apply ar-apply #t arc-ns)
+  (namespace-set-variable-value! 'ar-false? ar-false? #t arc-ns)
+  (namespace-set-variable-value! 'ar-xcar ar-xcar #t arc-ns)
+  (namespace-set-variable-value! 'ar-xcdr ar-xcdr #t arc-ns)
+  (namespace-set-variable-value! 'ar-nil-terminate ar-nil-terminate #t arc-ns)
+  (namespace-set-variable-value! 'arc-ns arc-ns #t arc-ns)
+
+  (aload "arc.arc")
+  (aload "libs.arc")
+  (tl)
 )
-
-(require ac)
-

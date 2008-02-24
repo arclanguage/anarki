@@ -311,7 +311,8 @@
 
 (mac while (test . body)
   " While `test' is true, perform `body' in a loop.
-    See also [[loop]] [[whilet]] [[whiler]] [[for]] [[repeat]] [[drain]] "
+    See also [[until]] [[loop]] [[whilet]] [[whiler]] [[for]]
+    [[repeat]] [[drain]] "
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
         (when ,gp ,@body (,gf ,test)))
@@ -373,7 +374,7 @@
 (def expand (expr)
   " Completely expands all macros in `expr'.
     See also [[macex]] [[mac]] "
-  (if (and (acons expr) (~dotted expr))
+  (if (and (acons expr) (~dotted expr) (~is 'quote (car expr)))
       (macex (cons (car expr)
                    (map1 expand (cdr expr))))
       expr))
@@ -780,7 +781,7 @@
 
 (mac repeat (n . body)
   " Repeats the `body' `n' times.
-    See also [[for]] [[forlen]] "
+    See also [[for]] [[forlen]] [[n-of]] "
   `(for ,(uniq) 1 ,n ,@body))
 
 ; could bind index instead of gensym
@@ -869,7 +870,8 @@
   (rem (complement (testify test)) seq))
 
 (def trues (f seq)
-  " Returns a list with all `nil's removed. "
+  " Returns a list with all `nil's removed.
+    See also [[rem]] [[keep]] "
   (rem nil (map f seq)))
 
 (mac do1 args
@@ -1178,31 +1180,41 @@
 
   (mac w/infile (var name . body)
     " Opens the given file `name' for input, assigning the stream to `var'.
-      The stream is automatically closed on exit from the `body'. "
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/outfile]] [[w/instring]] [[w/stdin]] [[w/socket]] "
     (expander 'infile var name body))
 
   (mac w/outfile (var name . body)
     " Opens the given file `name' for output, assigning the stream to `var'.
-      The stream is automatically closed on exit from the `body'. "
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/infile]] [[w/appendfile]] [[w/outstring]] [[w/stdout]] "
     (expander 'outfile var name body))
 
   (mac w/instring (var str . body)
     " Opens the given string `str' for input, assigning the stream to `var'.
-      The stream is automatically closed on exit from the `body'. "
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/outstring]] [[fromstring]] [[w/infile]] [[w/stdin]]
+      [[w/socket]] "
     (expander 'instring var str body))
 
   (mac w/socket (var port . body)
+    " Opens the port for listening, assigning the stream to `var'.
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/infile]] [[w/instring]] [[w/stdin]] "
     (expander 'open-socket var port body))
   )
 
 (mac w/outstring (var . body)
   " Opens a string for output, assigning the stream to `var'.
-    The stream is automatically closed on exit from the `body'. "
+    The stream is automatically closed on exit from the `body'.
+    The contents of the string can be accessed via (inside `var')
+    See also [[w/instring]] [[tostring]] [[w/outfile]] [[w/stdout]] "
   `(let ,var (outstring) ,@body))
 
 (mac w/appendfile (var name . body)
   " Opens a file `name' for append, assigning the stream to `var'.
-    The stream is automatically closed on exit from the `body'. "
+    The stream is automatically closed on exit from the `body'.
+    See also [[w/outfile]] [[w/infile]] "
   `(let ,var (outfile ,name 'append)
      (after (do ,@body) (close ,var))))
 
@@ -1210,33 +1222,39 @@
 
 (mac w/stdout (str . body)
   " Opens the stream `str' for output; normal printed output from `body'
-    is redirected to the stream. "
+    is redirected to the stream.
+    See also [[w/stdin]] [[w/outfile]] [[w/outstring]] "
   `(call-w/stdout ,str (fn () ,@body)))
 
 (mac w/stdin (str . body)
   " Opens the stream `str' for input; normal read input from `body'
-    is redirected from the stream. "
+    is redirected from the stream.
+    See also [[w/stdout]] [[w/infile]] [[w/instring]] [[w/socket]] "
   `(call-w/stdin ,str (fn () ,@body)))
 
 (mac tostring body
-  " Returns the printed output from `body' as a string. "
+  " Returns the printed standard output from `body' as a string.
+    See also [[fromstring]] [[w/stdout]] [[w/outstring]] "
   (w/uniq gv
    `(w/outstring ,gv
       (w/stdout ,gv ,@body)
       (inside ,gv))))
 
 (mac fromstring (str . body)
-  " Redirects input to `body' from the given string `str'. "
+  " Redirects read standard input to `body' from the given string `str'.
+    See also [[tostring]] [[w/stdin]] [[w/instring]] "
   (w/uniq gv
    `(w/instring ,gv ,str
       (w/stdin ,gv ,@body))))
 
 (def readstring1 (s (o eof nil))
-  " Reads a single expression from the string. "
+  " Reads a single expression from the string.
+    See also [[read]] "
   (w/instring i s (read i eof)))
 
 (def read ((o x (stdin)) (o eof nil))
-  " Reads a single expression from a string or stream. "
+  " Reads a single expression from a string or stream.
+    See also [[readstring1]] "
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
 (def readfile (name)
@@ -1277,14 +1295,16 @@
   (coerce x 'sym))
 
 (mac rand-choice exprs
-  " Returns the result of one of the given `exprs', chosen at random. "
+  " Returns the result of one of the given `exprs', chosen at random.
+    See also [[random-elt]] "
   `(case (rand ,(len exprs))
      ,@(let key -1
          (mappend [list (++ key) _]
                   exprs))))
 
 (mac n-of (n expr)
-  " Repeats `expr' `n' times, then returns the results in a list. "
+  " Repeats `expr' `n' times, then returns the results in a list.
+    See also [[repeat]] "
   (w/uniq ga
     `(let ,ga nil
        (repeat ,n (push ,expr ,ga))
@@ -1301,7 +1321,8 @@
             'string)))
 
 (mac forlen (var s . body)
-  " Loops across the length of the sequence `s'. "
+  " Loops across the length of the sequence `s'.
+    See also [[repeat]] [[each]] [[on]] "
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
@@ -1317,7 +1338,9 @@
                ,@body))))))
 
 (def best (f seq)
-  " Selects the best element of `seq' according to `f'. "
+  " Selects the best element of `seq' according to `f'.
+    `f' is a comparison function between elements of `seq'.
+    See also [[max]] [[most]] "
   (if (no seq)
       nil
       (let wins (car seq)
@@ -1325,15 +1348,23 @@
           (if (f elt wins) (= wins elt)))
         wins)))
 
-(def max args " Returns the highest argument. " (best > args))
-(def min args " Returns the lowest argument. " (best < args))
+(def max args
+  " Returns the highest argument.
+    See also [[min]] [[best]] [[most]] "
+  (best > args))
+(def min args
+  " Returns the lowest argument.
+    See also [[max]] [[best]] [[most]] "
+  (best < args))
 
 ; (mac max2 (x y)
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
 (def most (f seq)
-  " Selects the element of `seq' with the highest [f _]. "
+  " Selects the element of `seq' with the highest [f _].
+    `f' is a score function for elements of `seq'.
+    See also [[best]] "
   (unless (no seq)
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
@@ -1830,11 +1861,13 @@
       (+ (cut str 0 limit) "...")))
 
 (def random-elt (seq)
-  " Returns an element of `seq' chosen by random. "
+  " Returns an element of `seq' chosen by random.
+    See also [[rand-choice]] "
   (seq (rand (len seq))))
 
 (mac until (test . body)
-  " While `test' is false, perform `body' in a loop. "
+  " While `test' is false, perform `body' in a loop.
+    See also [[while]] "
   `(while (no ,test) ,@body))
 
 (def before (x y seq (o i 0))
@@ -2200,6 +2233,13 @@
 (mac $ body
    " Allows access to the underlying Scheme. "
    (list 'seval (cons 'quasiquote body)))
+
+(redef table args
+  " Creates a table initializing table entries from passed
+    key-value pairs. "
+  (let tb (old)
+    (fill-table tb args)
+    tb))
 
 (mac help ( (o name 'help))
    " Prints the documentation for the given symbol.  To use, type
