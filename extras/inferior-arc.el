@@ -163,13 +163,13 @@ Paragraphs are separated only by blank lines.  Semicolons start comments.
 If you accidentally suspend your process, use \\[comint-continue-subjob]
 to continue it."
   ;; Customize in inferior-arc-mode-hook
-  (setq comint-prompt-read-only t)
-  (setq comint-use-prompt-regexp t)
-  (setq comint-prompt-regexp "^[^>\n]*>+ *")
   (arc-mode-variables)
-  (setq mode-line-process '(":%s"))
-  (setq comint-input-filter (function arc-input-filter))
-  (setq comint-get-old-input (function arc-get-old-input)))
+  (set (make-local-variable 'comint-prompt-read-only) t)
+  (set (make-local-variable 'comint-use-prompt-regexp) t)
+  (set (make-local-variable 'comint-prompt-regexp) "^[^>\n]*>+ *")
+  (set (make-local-variable 'comint-input-filter) (function arc-input-filter))
+  (set (make-local-variable 'comint-get-old-input) (function arc-get-old-input))
+  (setq mode-line-process '(":%s")))
 
 (defcustom inferior-arc-filter-regexp "\\`\\s *\\S ?\\S ?\\s *\\'"
   "*Input matching this regexp are not saved on the history list.
