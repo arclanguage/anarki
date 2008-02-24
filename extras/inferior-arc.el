@@ -92,7 +92,7 @@
     (define-key m "\C-c\C-l" 'arc-load-file)
     m))
 
-(defvar arc-program-name "arc"
+(defvar arc-program-name "arc --no-rl"
   "The name of the program used to run Arc.")
 
 ;; Install the process communication commands in the arc-mode keymap.
@@ -200,8 +200,10 @@ is run).
                          (read-string "Run Arc: " arc-program-name)
                          arc-program-name)))
   (when (not (comint-check-proc "*arc*"))
-    (set-buffer (make-comint "arc" cmd))
-    (inferior-arc-mode))
+    (let ((cmdlist (split-string cmd)))
+      (set-buffer (apply 'make-comint "arc" (car cmdlist)
+                         nil (cdr cmdlist)))
+      (inferior-arc-mode)))
   (setq arc-program-name cmd)
   (setq arc-buffer "*arc*")
   (pop-to-buffer "*arc*"))
