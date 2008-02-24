@@ -90,6 +90,14 @@
 (attribute body       marginwidth    opnum)
 (attribute body       topmargin      opnum)
 (attribute body       vlink          opcolor)
+(attribute div        align          opsym)
+(attribute div        class          opstring)
+(attribute div        dir            opsym)
+(attribute div        id             opsym)
+(attribute div        lang           opstring)
+(attribute div        onclick        opstring)
+(attribute div        style          opstring)
+(attribute div        title          opstring)
 (attribute font       color          opcolor)
 (attribute font       face           opstring)
 (attribute font       size           opnum)
@@ -355,6 +363,12 @@
 
 (mac spanclass (name . body)
   `(tag (span class ',name) ,@body))
+
+(mac div (args . body)
+  `(tag (div ,@args) ,@body))
+
+(mac divclass (name . body)
+  `(tag (div class ',name) ,@body))
 
 (def pagemessage (text)
   (when text (prn text) (br2)))
