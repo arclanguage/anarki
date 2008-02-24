@@ -41,39 +41,30 @@
 ;        (let var (tag 'symbol (list 'or))
 ;          (list 'let var (car args)
 ;                (list 'if var var (cons 'or (cdr args)))))))
-
 (module ac mzscheme
-
-(provide (all-defined))
-(require (lib "port.ss"))
-(require (lib "process.ss"))
-(require (lib "pretty.ss"))
-
-; compile an Arc expression into a Scheme expression,
+	
+	
+	(require (lib "port.ss"))
+	(require (lib "process.ss"))
+	(require (lib "pretty.ss"))
+	
+					; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
-; env is a list of lexically bound variables, which we
-; need in order to decide whether set should create a global.
+					; env is a list of lexically bound variables, which we
+					; need in order to decide whether set should create a global.
 
-(define (ac s env)
-  (let ((head (xcar s)))
-    (cond ((string? s) (string-copy s))  ; to avoid immutable strings
-          ((literal? s) s)
-          ((eqv? s 'nil) (list 'quote 'nil))
-          ((ssyntax? s) (ac (expand-ssyntax s) env))
-          ((symbol? s) (ac-var-ref s env))
-          ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
-          ((eq? head 'quote) (list 'quote (ac-niltree (cadr s))))
-          ((eq? head 'quasiquote) (ac-qq (cadr s) env))
-          ((eq? head 'if) (ac-if (cdr s) env))
-          ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
-          ((eq? head 'set) (ac-set (cdr s) env))
-          ((eq? head 'lset) (ac-lset (cdr s) env))
-          ; this line could be removed without changing semantics
-          ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
-          ((pair? s) (ac-call (car s) (cdr s) env))
-          ((eof-object? s) (exit))
-          (#t (err "Bad object in expression" s)))))
-
+	(define (ac s env)
+	  (let ((head (xcar s)))
+	    (cond ((string? s) (string-copy s))  ; to avoid immutable strings
+		  ((literal? s) s)
+		  ((eqv? s 'nil) (list 'quote 'nil))
+		  ((ssyntax? s) (ac (expand-ssyntax s) env))
+		  ((symbol? s) (ac-var-ref s env))
+		  ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
+		  ((pair? s) (ac-call (car s) (cdr s) env))
+		  ((eof-object? s) (exit))
+		  (#t (err "Bad object in expression" s)))))
+	
 (define (literal? x)
   (or (boolean? x)
       (char? x)
@@ -215,8 +206,7 @@
 
 ; (if) -> nil
 ; (if x) -> x
-; (if t a ...) -> a
-; (if nil a b) -> b
+; (if t a ...) ->  (if nil a b) -> b
 ; (if nil a b c) -> (if b c)
 
 (define (ac-if args env)
@@ -351,11 +341,14 @@
 ; which results in 1/2 the CPU time going to GC. Instead:
 ;   (ar-funcall2 _pr 1 2)
 (define (ac-call fn args env)
-  (let ((macfn (ac-macro? fn)))
-    (if macfn
-      (ac-mac-call macfn args env)
-      (let ((afn (ac fn env))
-            (aargs (map (lambda (x) (ac x env)) args))
+  (let ((macfn (ac-macro? fn))
+	(sf    (ac-sf? fn)))
+    (cond (macfn (ac-mac-call macfn args env))
+	  (sf (ac-sf-call sf args env))
+	  (else
+	    (let ((afn (ac fn env))
+            
+		 (aargs (map (lambda (x) (ac x env)) args))
             (nargs (length args)))
         (cond
           ((eqv? (xcar fn) 'fn)
@@ -364,13 +357,24 @@
            `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
               ,afn ,@aargs))
           (#t
-           `(ar-apply ,afn (list ,@aargs))))))))
+           `(ar-apply ,afn (list ,@aargs)))))))))
 
 (define (ac-mac-call m args env)
   (let ((x1 (apply m (map ac-niltree args))))
     (let ((x2 (ac (ac-denil x1) env)))
       x2)))
-
+(define (ac-sf-call sf args env)
+  (cond ((eq? sf 'if)
+	 (ac-if args env))
+	((eq? sf 'set)
+	 (ac-set args env))
+	((eq? sf 'fn)
+	 (ac-fn (car args) (cdr args) env))
+	((eq? sf 'quote)
+	 (list 'quote (ac-niltree (car args))))
+	((eq? sf 'quasiquote)
+	 (ac-qq (car args) env))
+	(else (error "Bad Special Form"))))
 ; returns #f or the macro function
 
 (define (ac-macro? fn)
@@ -384,7 +388,17 @@
             (ar-rep v)
             #f))
       #f))
-
+(define (ac-sf? fn)
+  (if (symbol? fn)
+      (let ((v (namespace-variable-value (ac-global-name fn)
+                                         #t
+                                         (lambda () #f))))
+        (if (and v
+                 (ar-tagged? v)
+                 (eq? (ar-type v) 'sf))
+            (ar-rep v)
+            #f))
+      #f))
 ; macroexpand the outer call of a form as much as possible
 
 (define (ac-macex e . once)
@@ -1174,14 +1188,16 @@
 ; Added outgoing tcp/ip ports
 ; (= socket (connect-socket host port))
 ; (= outport (car (cdr socket))
-; (= inport (car socket))
+; (= inport rcar socket))
 ; (write "hello" outport)
 ; (read inport)
 (xdef 'connect-socket (lambda (host port)
        (let-values ([(in out) (tcp-connect host port)]) (list in out))))
 (xdef 'flush-socket (lambda (s) (flush-output s)))
-
-)
-
+(xdef 'quasiquote '#(tagged sf quasiquote))
+(xdef 'if         '#(tagged sf if))
+(xdef 'quote      '#(tagged sf quote))
+(xdef 'set        '#(tagged sf set))
+(xdef 'fn         '#(tagged sf fn))
+(provide (all-defined)))
 (require ac)
-
