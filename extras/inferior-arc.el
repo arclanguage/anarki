@@ -163,6 +163,7 @@ Paragraphs are separated only by blank lines.  Semicolons start comments.
 If you accidentally suspend your process, use \\[comint-continue-subjob]
 to continue it."
   ;; Customize in inferior-arc-mode-hook
+  (setq comint-use-prompt-regexp t)
   (setq comint-prompt-regexp "^[^>\n]*>+ *")
   (arc-mode-variables)
   (setq mode-line-process '(":%s"))
