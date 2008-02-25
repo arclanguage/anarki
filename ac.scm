@@ -43,29 +43,29 @@
 ;          (list 'let var (car args)
 ;                (list 'if var var (cons 'or (cdr args)))))))
 (module ac mzscheme
-	
-	
-	(require (lib "port.ss"))
-	(require (lib "process.ss"))
-	(require (lib "pretty.ss"))
-	
-					; compile an Arc expression into a Scheme expression,
-; both represented as s-expressions.
-					; env is a list of lexically bound variables, which we
-					; need in order to decide whether set should create a global.
 
-	(define (ac s env)
-	  (let ((head (xcar s)))
-	    (cond ((string? s) (string-copy s))  ; to avoid immutable strings
-		  ((literal? s) s)
-		  ((eqv? s 'nil) (list 'quote 'nil))
-		  ((ssyntax? s) (ac (expand-ssyntax s) env))
-		  ((symbol? s) (ac-var-ref s env))
-		  ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
-		  ((pair? s) (ac-call (car s) (cdr s) env))
-		  ((eof-object? s) (exit))
-		  (#t (err "Bad object in expression" s)))))
-	
+
+(require (lib "port.ss"))
+(require (lib "process.ss"))
+(require (lib "pretty.ss"))
+
+; compile an Arc expression into a Scheme expression,
+; both represented as s-expressions.
+; env is a list of lexically bound variables, which we
+; need in order to decide whether set should create a global.
+
+(define (ac s env)
+  (let ((head (xcar s)))
+    (cond ((string? s) (string-copy s))  ; to avoid immutable strings
+          ((literal? s) s)
+          ((eqv? s 'nil) (list 'quote 'nil))
+          ((ssyntax? s) (ac (expand-ssyntax s) env))
+          ((symbol? s) (ac-var-ref s env))
+          ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
+          ((pair? s) (ac-call (car s) (cdr s) env))
+          ((eof-object? s) (exit))
+          (#t (err "Bad object in expression" s)))))
+        
 (define (literal? x)
   (or (boolean? x)
       (char? x)
@@ -343,22 +343,22 @@
 ;   (ar-funcall2 _pr 1 2)
 (define (ac-call fn args env)
   (let ((macfn (ac-macro? fn))
-	(sf    (ac-sf? fn)))
+        (sf    (ac-sf? fn)))
     (cond (macfn (ac-mac-call macfn args env))
-	  (sf (ac-sf-call sf args env))
-	  (else
-	    (let ((afn (ac fn env))
-            
-		 (aargs (map (lambda (x) (ac x env)) args))
-            (nargs (length args)))
-        (cond
-          ((eqv? (xcar fn) 'fn)
-           `(,afn ,@aargs))
-          ((and (>= nargs 0) (<= nargs 4))
-           `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
-              ,afn ,@aargs))
-          (#t
-           `(ar-apply ,afn (list ,@aargs)))))))))
+          (sf (ac-sf-call sf args env))
+          (else
+           (let ((afn (ac fn env))
+                 
+                 (aargs (map (lambda (x) (ac x env)) args))
+                 (nargs (length args)))
+             (cond
+              ((eqv? (xcar fn) 'fn)
+               `(,afn ,@aargs))
+              ((and (>= nargs 0) (<= nargs 4))
+               `(,(string->symbol (string-append "ar-funcall" (number->string nargs)))
+                 ,afn ,@aargs))
+              (#t
+               `(ar-apply ,afn (list ,@aargs)))))))))
 
 (define (ac-mac-call m args env)
   (let ((x1 (apply m (map ac-niltree args))))
@@ -366,16 +366,16 @@
       x2)))
 (define (ac-sf-call sf args env)
   (cond ((eq? sf 'if)
-	 (ac-if args env))
-	((eq? sf 'set)
-	 (ac-set args env))
-	((eq? sf 'fn)
-	 (ac-fn (car args) (cdr args) env))
-	((eq? sf 'quote)
-	 (list 'quote (ac-niltree (car args))))
-	((eq? sf 'quasiquote)
-	 (ac-qq (car args) env))
-	(else (error "Bad Special Form"))))
+         (ac-if args env))
+        ((eq? sf 'set)
+         (ac-set args env))
+        ((eq? sf 'fn)
+         (ac-fn (car args) (cdr args) env))
+        ((eq? sf 'quote)
+         (list 'quote (ac-niltree (car args))))
+        ((eq? sf 'quasiquote)
+         (ac-qq (car args) env))
+        (else (error "Bad Special Form"))))
 ; returns #f or the macro function
 
 (define (ac-macro? fn)
@@ -1200,5 +1200,10 @@
 (xdef 'quote      '#(tagged sf quote))
 (xdef 'set        '#(tagged sf set))
 (xdef 'fn         '#(tagged sf fn))
-(provide (all-defined)))
+
+(provide (all-defined))
+
+)
+
+
 (require ac)
