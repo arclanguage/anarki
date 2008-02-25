@@ -204,6 +204,16 @@ if that value is non-nil."
   (arc-mode-variables)
   (run-mode-hooks 'arc-mode-hook))
 
+(autoload 'run-arc "inferior-arc"
+  "Run an inferior Arc process, input and output via buffer `*arc*'.
+If there is a process already running in `*arc*', switch to that buffer.
+With argument, allows you to edit the command line (default is value
+of `arc-program-name').
+Runs the hook `inferior-arc-mode-hook' \(after the `comint-mode-hook'
+is run).
+\(Type \\[describe-mode] in the process buffer for a list of commands.)"
+  t)
+
 (defgroup arc nil
   "Editing Arc code."
   :link '(custom-group-link :tag "Font Lock Faces group" font-lock-faces)
@@ -426,6 +436,7 @@ rigidly along with this one."
 (put 'accum 'arc-indent-function 1)
 (put 'def 'arc-indent-function 2)
 (put 'mac 'arc-indent-function 2)
+(put 'defset 'arc-indent-function 2)
 (put 'fn 'arc-indent-function 1)
 (put 'afn 'arc-indent-function 1)
 (put 'rfn 'arc-indent-function 2)

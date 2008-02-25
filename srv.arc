@@ -16,7 +16,7 @@
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
-  (ensure-srvinstall)
+  (ensure-srvdirs)
   (w/socket s port
     (prn "ready to serve port " port)
     (= currsock* s)
@@ -28,6 +28,10 @@
 
 (def serve1 ((o port 8080))
   (w/socket s port (handle-request s)))
+
+(def ensure-srvdirs ()
+  (ensure-dir arcdir*)
+  (ensure-dir logdir*))
 
 (= srv-noisy* nil)
 
@@ -137,7 +141,7 @@ Connection: close"))
 
 (mac defopr-raw (name parms . body)
   `(= (redirector* ',name) t
-      (srvops* ',name)      (fn ,parms ,@body)))
+      (srvops* ',name)     (fn ,parms ,@body)))
 
 (mac defop (name parm . body)
   (w/uniq gs
@@ -484,7 +488,7 @@ Connection: close"))
 (defop topips req
   (when (admin (get-user req))
     (whitepage
-      (spacetable
+      (sptab
         (each ip (let leaders nil 
                    (maptable (fn (ip n)
                                (when (> n 100)

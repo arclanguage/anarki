@@ -30,29 +30,29 @@
     (when u (= (logins* u) (req 'ip)))
     u))
 
-(mac when-usermatch (user req . body)
+(mac when-umatch (user req . body)
   `(if (is ,user (get-user ,req))
        (do ,@body)
        (mismatch-message)))
 
 (def mismatch-message () (prn "Dead link: users don't match."))
 
-(mac when-usermatchr (user req . body)
+(mac when-umatch/r (user req . body)
   `(if (is ,user (get-user ,req))
        (do ,@body)
        "mismatch"))
 
 (defop mismatch req (mismatch-message))
 
-(mac matchform (user req after . body)
+(mac uform (user req after . body)
   `(aform (fn (,req)
-            (when-usermatch ,user ,req
+            (when-umatch ,user ,req
               ,after))
      ,@body))
 
-(mac matchrform (user req after . body)
+(mac urform (user req after . body)
   `(arform (fn (,req)
-             (when-usermatchr ,user ,req 
+             (when-umatch/r ,user ,req 
                ,after))
      ,@body))
 
@@ -63,7 +63,7 @@
 (mac userlink (user text . body)  
   (w/uniq req
     `(linkf ,text (,req) 
-       (when-usermatch ,user ,req ,@body))))
+       (when-umatch ,user ,req ,@body))))
 
 
 (defop admin req (admin-gate (get-user req)))
@@ -89,7 +89,7 @@
     (when msg (hspace 10) (map pr msg))
     (br2)
     (aform (fn (req)
-             (when-usermatch user req
+             (when-umatch user req
                (with (u (arg req "u") p (arg req "p"))
                  (if (or (no u) (no p) (is u "") (is p ""))
                       (pr "Bad data.")
@@ -218,7 +218,7 @@
 (= good-logins* (queue) bad-logins* (queue))
 
 (def good-login (user pw ip)
-  (let record (list (seconds) ip user pw)
+  (let record (list (seconds) ip user)
     (if (and user pw (aand (shash pw) (is it (hpasswords* user))))
         (do (unless (user->cookie* user) (cook-user user))
             (enq-limit record good-logins*)
@@ -312,7 +312,7 @@
            (pr " ")
            (tag (font size -2)
              (link "help" formatdoc-url* (gray 175)))))
-      (and (acons typ) (is (car typ) 'choice))
+      (caris typ 'choice)
        (menu id (cddr typ) val)
       (is typ 'yesno)
        (menu id '("yes" "no") (if val "yes" "no"))
@@ -331,7 +331,7 @@
   (if (in typ 'users 'syms 'toks 'bigtoks)  (apply prs val)
       (is typ 'lines)                       (map prn val)
       (is typ 'yesno)                       (pr (if val 'yes 'no))
-      (is typ 'choice)                      (varline (cadr typ) nil val)
+      (caris typ 'choice)                   (varline (cadr typ) nil val)
       (text-type typ)                       (pr (or val ""))
                                             (pr val)))
 
@@ -383,7 +383,7 @@
 (def vars-form (user fields f done (o button "update") (o lasts))
   (timed-aform lasts
                (fn (req)
-                 (when-usermatch user req
+                 (when-umatch user req
                    (each (k v) (req 'args)
                      (let name (sym k)
                        (awhen (find [is (cadr _) name] fields)
