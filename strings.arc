@@ -153,6 +153,13 @@
                 (string (unless (empty final) ".")
                         final)))))))
 
+; English
+
+(def plural (n str)
+  (if (or (is n 1) (single n))
+      str
+      (string str "s")))
+          
 
 ; http://www.eki.ee/letter/chardata.cgi?HTML4=1
 ; http://jrgraphix.net/research/unicode_blocks.php?block=1

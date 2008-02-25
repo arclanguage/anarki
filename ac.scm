@@ -593,9 +593,7 @@
   (or (null? seq) 
       (and (test (car seq)) (all test (cdr seq)))))
 
-; rather strictly excludes ()
-
-(define (arc-list? x) (or (pair? x) (eqv? x 'nil)))
+(define (arc-list? x) (or (pair? x) (eqv? x 'nil) (eqv? x '())))
       
 ; generic +: strings, lists, numbers.
 ; problem with generic +: what to return when no args?
@@ -774,23 +772,17 @@
                                 (current-output-port)))
                 b))
 
-(xdef 'write (lambda args
-               (if (pair? args)
-                   (write (ac-denil (car args))
-                          (if (pair? (cdr args))
-                              (cadr args)
-                              (current-output-port))))
-               (flush-output)
-               'nil))
+(define (printwith f args)
+  (let ((port (if (> (length args) 1)
+                  (cadr args)
+                  (current-output-port))))
+    (when (pair? args)
+      (f (ac-denil (car args)) port))
+    (flush-output port))
+    'nil)
 
-(xdef 'disp (lambda args
-              (if (pair? args)
-                  (display (ac-denil (car args)) 
-                           (if (pair? (cdr args)) 
-                               (cadr args)
-                               (current-output-port))))
-              (flush-output)
-              'nil))
+(xdef 'write (lambda args (printwith write   args)))
+(xdef 'disp  (lambda args (printwith display args)))
 
 ; sread = scheme read. eventually replace by writing read
 
