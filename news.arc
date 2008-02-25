@@ -1,6 +1,9 @@
 ; News.  2 Sep 06.
 
-; to run news: (nsv)
+
+; to run news: 
+; arc> (load "news.arc")
+; arc> (nsv)
 ; put usernames of admins, separated by whitespace, in arc/admins
 
 (= this-site*    "My Forum"
@@ -10,6 +13,8 @@
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   orange
    prefer-url*   t)
+
+(= rootdir* "arc/news_public_html/")
 
 
 ; Structures
