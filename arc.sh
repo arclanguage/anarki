@@ -7,7 +7,7 @@ else
 fi
 arc_dir=`dirname $arc_dir`
 
-mzscheme="/Users/seano/Desktop/MzScheme v372/bin/mzscheme"
+mzscheme=mzscheme
 
 if [ "$(type -p rlwrap)" ]; then
   rlwrap -C arc "$mzscheme" -m -d "$arc_dir/as.scm"
