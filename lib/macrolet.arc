@@ -20,7 +20,7 @@
           (if (and (acons x) (isnt (car x) 'quote))
                (aif (macros (car x))
                  (self (apply it (cdr x)))
-                 (map self x))
+                 (map self (macex x)))
               x)))
    `(do ,@(map scanner body))))
 

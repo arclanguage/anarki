@@ -21,7 +21,9 @@
 
 (= white    (gray 255) 
    black    (gray 0)
-   linkblue (color 0 0 190))
+   linkblue (color 0 0 190)
+   orange   (color 255 102 0)
+   )
 
 (= opmeths* (table))
 
@@ -90,6 +92,14 @@
 (attribute body       marginwidth    opnum)
 (attribute body       topmargin      opnum)
 (attribute body       vlink          opcolor)
+(attribute div        align          opsym)
+(attribute div        class          opstring)
+(attribute div        dir            opsym)
+(attribute div        id             opsym)
+(attribute div        lang           opstring)
+(attribute div        onclick        opstring)
+(attribute div        style          opstring)
+(attribute div        title          opstring)
 (attribute font       color          opcolor)
 (attribute font       face           opstring)
 (attribute font       size           opnum)
@@ -205,7 +215,9 @@
 
 (mac prbold body `(tag b (pr ,@body)))
 
-(def para () (gentag p))
+(def para args 
+  (gentag p)
+  (when args (apply pr args)))
 
 (def menu (name items (o sel nil))
   (tag (select name name)
@@ -219,13 +231,7 @@
 
 (def errpage args (whitepage (apply prn args)))
 
-(= local-images* nil)   ; set to t when developing offline
-
-(def img-url (file) 
-  (string (unless local-images* "http://ycombinator.com/images/") file))
-
-(def blank-url ()
-  (if local-images* "s.gif" "http://ycombinator.com/images/s.gif"))
+(def blank-url () "s.gif")
 
 ; Could memoize these.
 
@@ -250,7 +256,7 @@
   `(tag (table border 0 cellpadding 0 cellspacing 0)
      ,@body))
 
-(mac spacetable body
+(mac sptab body
   `(tag (table border 0 cellpadding 0 cellspacing 7) ,@body))
 
 (mac widtable (w . body)
@@ -300,6 +306,17 @@
                                          size ,len 
                                          value ,text)))))))
             (tuples args 4))))
+
+(def single-input (label name chars btext (o pwd))
+  (pr label)
+  (gentag input type (if pwd 'password 'text) name name size chars)
+  (sp)
+  (submit btext))
+
+(mac cdata body
+  `(do (pr "<![CDATA[") 
+       ,@body
+       (pr "]]>")))
 
 (def eschtml (str)
   (tostring 
@@ -355,6 +372,12 @@
 
 (mac spanclass (name . body)
   `(tag (span class ',name) ,@body))
+
+(mac div (args . body)
+  `(tag (div ,@args) ,@body))
+
+(mac divclass (name . body)
+  `(tag (div class ',name) ,@body))
 
 (def pagemessage (text)
   (when text (prn text) (br2)))

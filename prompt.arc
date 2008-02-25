@@ -27,7 +27,7 @@
                 (userlink user 'delete (rem-app  user app))))))
     (br2)
     (aform (fn (req)
-             (when-usermatch user req
+             (when-umatch user req
                (aif (goodname (arg req "app"))
                     (edit-app user it)
                     (prompt-page user "Bad name."))))

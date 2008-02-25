@@ -2,13 +2,13 @@ This file details known issues in Anarki.
 
 ***************************************************************************
 COMPATIBILITY ISSUES
-This section documents incompatibilites between Anarki and Arc1.
+This section documents incompatibilites between Anarki and Arc2.
 See also the CONVENTIONS file.
 
 The current thinking is that new macros generally don't need to be
 mentioned here. It should be understood that defining new macros could
 potentially break code. To get a list of the added macros in Anarki,
-use: (require "lib/new-macros.arc") (new-macros)
+use: (load "lib/new-macros.arc") (new-macros)
 
 *2007/02/19* When loading lib/defpat.arc, the symbol p-m can't be safely
  used as a variable for a container, or as the symbol for a function.  This
@@ -20,11 +20,6 @@ ARC1 ISSUES
  This section documents bugs in the official Arc distribution. They are 
  also present in Anarki unless otherwise noted.
 
-*2007/02/20* () and '() mysteriously found to be different.
- [[http://arclanguage.org/item?id=2857]]
-    (+ '(a b c) '())  =?  (a b c)
-    (+ '(a b c)  ())  =>  Error
-
 *2007/02/19* Macros will override local variables in (let ...) and other
  local-variable-creating forms.
 
@@ -32,5 +27,6 @@ ARC1 ISSUES
  Arc1 treats EOF as an error, which this probably should be anyway.
  However, Anarki quits on EOF. This also applies to things like "is!:.a",
  which should arguably be equivalent to "(is ': a)".
+ UPDATE: Other surprise EOFs include "\!". Still present in Arc2.
 
 ***************************************************************************
