@@ -2291,7 +2291,7 @@
       (sort <
         (accum add
           (ontable k (typ d) *help*
-            (when (or (part-match k) (part-match typ) (part-match d) (only part-match *source-file* k))
+            (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (*source-file* k)))
               (add k)))))))
 
 (def helpstr (name (o verbose t))
@@ -2302,7 +2302,7 @@
          (if verbose (prn name " is not documented."))
          (with (kind  (car h)
                 doc   (cadr h))
-           (aand verbose (only [prn "(from \"" _ "\")"] *source-file* name))
+           (aand verbose ((only [prn "(from \"" _ "\")"]) (*source-file* name)))
            (pr "[" kind "]" (if (is kind 'mac) " " "  "))
            (prn (if (sig name)
                     (cons name (sig name))))
