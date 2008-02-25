@@ -369,6 +369,8 @@
          (ac-if args env))
         ((eq? sf 'set)
          (ac-set args env))
+        ((eq? sf 'lset)
+         (ac-lset args env))
         ((eq? sf 'fn)
          (ac-fn (car args) (cdr args) env))
         ((eq? sf 'quote)
@@ -1199,6 +1201,7 @@
 (xdef 'if         '#(tagged sf if))
 (xdef 'quote      '#(tagged sf quote))
 (xdef 'set        '#(tagged sf set))
+(xdef 'lset       '#(tagged sf lset))
 (xdef 'fn         '#(tagged sf fn))
 
 (provide (all-defined))
