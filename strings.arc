@@ -154,11 +154,19 @@
                 (string (unless (empty final) ".")
                         final)))))))
 
+; English
+
+(def plural (n str)
+  (if (or (is n 1) (single n))
+      str
+      (string str "s")))
+
 ; Import Scheme's regular expressions
 (= re ($ regexp))
 (= re-match [no (no (($ regexp-match) _1 _2)) ])
 (= re-pos ($ regexp-match-positions))
 (= re-subst ($ regexp-replace))
+
 
 ; http://www.eki.ee/letter/chardata.cgi?HTML4=1
 ; http://jrgraphix.net/research/unicode_blocks.php?block=1

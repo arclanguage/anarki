@@ -6,4 +6,5 @@
             "html.arc"
             "srv.arc"
             "app.arc"
-            "prompt.arc"))
+            "prompt.arc"
+            "news.arc"))
