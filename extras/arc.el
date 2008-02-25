@@ -436,6 +436,7 @@ rigidly along with this one."
 (put 'accum 'arc-indent-function 1)
 (put 'def 'arc-indent-function 2)
 (put 'mac 'arc-indent-function 2)
+(put 'defset 'arc-indent-function 2)
 (put 'fn 'arc-indent-function 1)
 (put 'afn 'arc-indent-function 1)
 (put 'rfn 'arc-indent-function 2)
