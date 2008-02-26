@@ -7,7 +7,7 @@ else
 fi
 arc_dir=`dirname $arc_dir`
 
-mzscheme="mzscheme -q -m -d"
+mzscheme="mzscheme --no-init-file --mute-banner --load-cd"
 
 if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" ]; then
   rlwrap -C arc $mzscheme "$arc_dir/as.scm"
