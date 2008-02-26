@@ -164,8 +164,6 @@ If you accidentally suspend your process, use \\[comint-continue-subjob]
 to continue it."
   ;; Customize in inferior-arc-mode-hook
   (arc-mode-variables)
-  (set (make-local-variable 'comint-prompt-read-only) t)
-  (set (make-local-variable 'comint-use-prompt-regexp) t)
   (set (make-local-variable 'comint-prompt-regexp) "^[^>\n]*>+ *")
   (set (make-local-variable 'comint-input-filter) (function arc-input-filter))
   (set (make-local-variable 'comint-get-old-input) (function arc-get-old-input))
