@@ -21,10 +21,10 @@
 
 (let *_ *
   (tostring
-  (def * args
-    (if (some [isa _ 'fn] args)
-        (infix-eval (cons (car args) (cons * (cdr args))))
-        (apply *_ args)))))
+   (def * args
+     (if (some [isa _ 'fn] args)
+         (infix-eval (cons (car args) (cons * (cdr args))))
+         (apply *_ args)))))
 
 (let /_ /
   (tostring
