@@ -12,7 +12,7 @@
 (= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
 ; for now the version is <PG's arc num>.<date>
-(= serverheader* "Server: ASV/1.20080212")
+(= serverheader* "Server: ASV/2.20080224")
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
