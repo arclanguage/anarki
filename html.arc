@@ -385,3 +385,6 @@
 
 (def pagemessage (text)
   (when text (prn text) (br2)))
+
+(mac doctype (name version flavor)
+  `(prn "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD " (upcase ,name) " " ,version " " ,flavor "//EN\">"))
