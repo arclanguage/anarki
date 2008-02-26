@@ -195,21 +195,22 @@ of the module.
                ,@finalbody)))))))
 
 (def *module-export-helper (args)
+  (if (ssyntax (car args)) (zap ssexpand (car args)))
   (if (no args)
       ()
-      (if (is (cadr args) '->)
-          `(,(car:cdr:cdr args) ,(car args) ,@(*module-export-helper (cdr:cdr:cdr args)))
-          `(,(cadr:cadr (car args)) ,(car args) ,@(*module-export-helper (cdr args))) )))
+      (do
+        ; make sure it's module!symbol syntax
+        (let f (car args)
+          (unless
+            (and (acons f) (is (len f) 2) (is (car:car:cdr f) 'quote))
+            (err:string "module-export: must specify module!symbol - " f)))
+        (if (is (cadr args) '->)
+            `(,(car:cdr:cdr args) ,(car args) ,@(*module-export-helper (cdr:cdr:cdr args)))
+            `(,(cadr:cadr (car args)) ,(car args) ,@(*module-export-helper (cdr args))) ))))
 
 (mac module-export args
   " Exports the specified module functions to the current namespace.
     See also [[module]] "
-  (if (ssyntax (car args)) (zap ssexpand (car args)))
-  ; make sure it's module!symbol syntax
-  (let f (car args)
-    (unless
-      (and (acons f) (is (len f) 2) (is (car:car:cdr f) 'quote))
-      (err:string "module-export: must specify module!symbol - " f)))
   `(=
     ,@(*module-export-helper args)))
 
