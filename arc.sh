@@ -9,7 +9,7 @@ arc_dir=`dirname $arc_dir`
 
 mzscheme=mzscheme
 
-if [ "$(type -p rlwrap)" ]; then
+if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" ]; then
   rlwrap -C arc "$mzscheme" -m -d "$arc_dir/as.scm"
 else
   "$mzscheme" -m -d "$arc_dir/as.scm"
