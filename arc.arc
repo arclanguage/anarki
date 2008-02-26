@@ -788,7 +788,7 @@
 (mac each (var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
     with each element assigned to `var'.
-    See also [[forlen]] [[on]] [[ontable]] "
+    See also [[forlen]] [[on]] [[map]] [[ontable]] "
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
