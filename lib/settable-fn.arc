@@ -4,7 +4,7 @@
 ; That said, I would like to know if anyone finds anything
 ; that might be a bug.
 
-; NOTE: requires arc-wiki ($ ...) macro
+; NOTE: requires arc-wiki ($ ...) and redef macros
 
 (let (attached tagged) nil
   (= attached
@@ -40,12 +40,10 @@
         ; else
           (($ vector) 'tagged (type s) s (fill-table (table) (list k v))))))
 
-(let oldsref sref
-  (= sref
-    (fn (c v . rest)
-      (aif (get-attachment '= c)
-        (apply it v rest)
-        (apply oldsref c v rest)))))
+(redef sref (c v . rest)
+  (aif (get-attachment '= c)
+       (apply it v rest)
+       (apply old c v rest)))
 
 (= *test-settable-fn
   (let (x y) nil
