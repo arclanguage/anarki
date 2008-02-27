@@ -1845,7 +1845,7 @@
   " Ensures that the specified directory exists, and creates it if not
     yet created. "
   (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
+    (mkdir path)))
 
 (def pad (val digits (o char #\ ))
   (= val (string val))
