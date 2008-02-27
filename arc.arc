@@ -1078,12 +1078,24 @@
 
 (mac accum (accfn . body)
   " Collects or accumulates the values given to all calls to `accfn' within
-    `body' and returns a list of those values.
-    See also [[summing]] "
+    `body' and returns a list of those values.  Order is not preserved.
+    See also [[accums]] [[summing]] "
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
        ,gacc)))
+
+(mac accums (accfns . body)
+  " Collects or accumulates the values given to all calls to functions
+    named in `accfns' in body.  Returns a list of lists of those values.
+    Order is not preserved.
+    See also [[accum]] "
+  (let gaccs (map [uniq] accfns)
+    `(withs ,(mappend (fn (gacc accfn)
+                        (list gacc 'nil accfn `[push _ ,gacc]))
+                      gaccs accfns)
+       ,@body
+       (list ,@(map [list 'rev _] gaccs)))))
 
 ; Repeatedly evaluates its body till it returns nil, then returns vals.
 
