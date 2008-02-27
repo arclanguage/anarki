@@ -100,11 +100,13 @@
 (attribute div        onclick        opstring)
 (attribute div        style          opstring)
 (attribute div        title          opstring)
+(attribute feed       xmlns          opstring)
 (attribute font       color          opcolor)
 (attribute font       face           opstring)
 (attribute font       size           opnum)
 (attribute form       action         opstring)
 (attribute form       method         opsym)
+(attribute html       id             opsym)
 (attribute html       lang           opstring)
 (attribute html       xml:lang       opstring)
 (attribute html       xmlns          opstring)
@@ -120,6 +122,8 @@
 (attribute input      size           opnum)
 (attribute input      type           opsym)
 (attribute input      value          opesc)
+(attribute link       href           opstring)
+(attribute link       rel            opstring)
 (attribute option     selected       opsel)
 (attribute select     name           opstring)
 (attribute table      bgcolor        opcolor)
@@ -143,7 +147,6 @@
 (attribute span       align          opstring)
 (attribute span       id             opsym)
 (attribute rss        version        opstring)
-
 
 (mac gentag args (start-tag args))
      
