@@ -9,16 +9,29 @@
 (let (attached tagged) nil
   (= attached
      (fn (s)
-       (if (and (($ vector?) s) (is (($ vector-ref) s 0) 'tagged) (> (($ vector-length) s) 3))
-         t)))
+       (and (($ vector?) s)
+            (is (($ vector-ref) s 0) 'tagged)
+            (> (($ vector-length) s) 3))))
   (= tagged
      (fn (s)
-       (if (and (($ vector?) s) (is (($ vector-ref) s 0) 'tagged) (is (($ vector-length) s) 3))
-         t)))
+       (and (($ vector?) s)
+            (is (($ vector-ref) s 0) 'tagged)
+            (is (($ vector-length) s) 3))))
   (def get-attachment (k s)
+    " Determines if an object is attached to the key `k' of the
+      object `s'.
+      Currently used for assignable collection-like objects, and
+      may be used for other purposes besides.
+      See also [[add-attachment]] [[type]] "
     (if (attached s)
         ((($ vector-ref) s 3) k)))
   (def add-attachment (k v s)
+    " Attaches `v' to the key `k' of the object `s'.
+      Currently used for assignable connection-like objects, and
+      may be used for other purposes besides.
+      Other references to the original object `s' may not be
+      valid after executing this function.
+      See also [[get-attachment]] [[annotate]] "
     (if (attached s)
           (do (= ((($ vector-ref) s 3) k) v)
             s)
