@@ -32,9 +32,20 @@
    " Returns the current directory. "
    ($ (path->string (current-directory))))
 
-(def mkdir (path)
-   " Creates a directory. "
-   ($ (make-directory ,path))
+(def mkdir (path (o parents))
+   " Creates a directory.
+     If `parents' is non-nil, parent directories are created as needed."
+   ((if parents
+        (let os (which-os)
+          (if
+            ; If we're running Unix, MzScheme <571 has a bug
+            ; where make-directory* sets the sticky bit.
+            ; Thus, we want to use system instead.
+            (or (is os 'unix) (is os 'macosx))
+             [system (string "mkdir -p " _)]
+            ($ make-directory*)))
+        ($ make-directory))
+    path)
    nil)
 
 ; This could be defined in pure Arc, but we don't really have a good way of
