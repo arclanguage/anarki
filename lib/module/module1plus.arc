@@ -59,7 +59,7 @@ hacks are necessary.
 So a function can exist in the simple interface and also be used
 in the advanced interface.
 
-  Because of the nature of Ray Meyer's module1, module!public is
+  Because of the nature of Ray Myers' module1, module!public is
 also an interface, containing all public functions and interfaces
 of the module.
 |#
