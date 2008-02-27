@@ -386,5 +386,21 @@
 (def pagemessage (text)
   (when text (prn text) (br2)))
 
-(mac doctype (name version flavor)
-  `(prn "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD " (upcase ,name) " " ,version " " ,flavor "//EN\">"))
+(mac doctype args
+  `(prn (apply doctype-str ',args)))
+
+(def doctype-str ((o name 'xhtml) (o version) (o type))
+  (case name
+    html
+    (case type
+      strict   "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"
+      frameset "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" \"http://www.w3.org/TR/html4/frameset.dtd\">"
+      "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">")
+    xhtml
+    (case version
+      1.1 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">"
+      (case type
+        strict       "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"
+        frameset     "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">"
+        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"))
+    (err "Undefined doctype" name)))

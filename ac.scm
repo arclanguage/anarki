@@ -497,11 +497,11 @@
 
 (define (ar-apply fn args)
   (cond ((procedure? fn) (apply fn args))
-        ((vector? fn) (vector-ref fn (car args)))
         ((pair? fn) (list-ref fn (car args)))
         ((string? fn) (string-ref fn (car args)))
         ((hash-table? fn) (ar-nill (hash-table-get fn (car args) #f)))
         ((ar-tagged? fn) (ar-apply (ar-rep fn) args))
+        ((vector? fn) (vector-ref fn (car args)))
 ; experiment: means e.g. [1] is a constant fn
 ;       ((or (number? fn) (symbol? fn)) fn)
 ; another possibility: constant in functional pos means it gets

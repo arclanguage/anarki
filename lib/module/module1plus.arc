@@ -151,11 +151,17 @@ of the module.
                     (do
                       (addimport (symbol-of (car args)) (car args))
                       (self (cdr args))))))
+            module-export-syntax
+            (fn (args)
+              (each sym (map car (pair (*module-export-helper args)))
+                (addprivate sym)))
             form-handler
             (fn (fun args el)
                 (case fun
                   module     (addprivate (car args))
                   def        (addprivate (car args))
+                  module-export
+                             (module-export-syntax args)
                   mac        (err "module: macros not yet supported!")
                              nil))
             ; handles ssyntax.  Really a hack to support p-m:def ^^
@@ -187,4 +193,25 @@ of the module.
                (= ,@(apply join (accum co (ontable alias real imports
                                                 (co `(,alias ,real))))))
                ,@finalbody)))))))
+
+(def *module-export-helper (args)
+  (if (ssyntax (car args)) (zap ssexpand (car args)))
+  (if (no args)
+      ()
+      (do
+        ; make sure it's module!symbol syntax
+        (let f (car args)
+          (unless
+            (and (acons f) (is (len f) 2) (is (car:car:cdr f) 'quote))
+            (err:string "module-export: must specify module!symbol - " f)))
+        (if (is (cadr args) '->)
+            `(,(car:cdr:cdr args) ,(car args) ,@(*module-export-helper (cdr:cdr:cdr args)))
+            `(,(cadr:cadr (car args)) ,(car args) ,@(*module-export-helper (cdr args))) ))))
+
+(mac module-export args
+  " Exports the specified module functions to the current namespace.
+    See also [[module]] "
+  `(=
+    ,@(*module-export-helper args)))
+
 

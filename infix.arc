@@ -5,33 +5,25 @@
 ;; Released under the Perl Foundation's Artistic License 2.0.
 ;; http://www.perlfoundation.org/artistic_license_2_0
 
-(let +_ +
-  (tostring
-   (def + args
-     (if (some [isa _ 'fn] args)
-         (infix-eval (cons (car args) (cons + (cdr args))))
-         (apply +_ args)))))
+(redef + args
+  (if (some [isa _ 'fn] args)
+      (infix-eval (cons (car args) (cons + (cdr args))))
+      (apply old args)))
 
-(let -_ -
-  (tostring
-   (def - args
-     (if (some [isa _ 'fn] args)
-         (infix-eval (cons (car args) (cons - (cdr args))))
-         (apply -_ args)))))
+(redef - args
+  (if (some [isa _ 'fn] args)
+      (infix-eval (cons (car args) (cons - (cdr args))))
+      (apply old args)))
 
-(let *_ *
-  (tostring
-   (def * args
-     (if (some [isa _ 'fn] args)
-         (infix-eval (cons (car args) (cons * (cdr args))))
-         (apply *_ args)))))
+(redef * args
+  (if (some [isa _ 'fn] args)
+      (infix-eval (cons (car args) (cons * (cdr args))))
+      (apply old args)))
 
-(let /_ /
-  (tostring
-   (def / args
-     (if (some [isa _ 'fn] args)
-         (infix-eval (cons (car args) (cons / (cdr args))))
-         (apply /_ args)))))
+(redef / args
+  (if (some [isa _ 'fn] args)
+      (infix-eval (cons (car args) (cons / (cdr args))))
+      (apply old args)))
 
 (let precedences `((,+ 1) (,- 1) (,* 2) (,/ 2))
   (def precedence (op)

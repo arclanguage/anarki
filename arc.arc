@@ -141,6 +141,10 @@
   *current-load-file*
   'mac)
 
+(mac $ body
+   " Allows access to the underlying Scheme. "
+   (list 'seval (cons 'quasiquote body)))
+
 (mac and args
   " Evaluates arguments till false is found else returns the last one.
     See also [[or]] [[aand]] [[andf]] [[andmap]] "
@@ -788,7 +792,7 @@
 (mac each (var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
     with each element assigned to `var'.
-    See also [[forlen]] [[on]] [[ontable]] "
+    See also [[forlen]] [[on]] [[map]] [[ontable]] "
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
@@ -1837,30 +1841,16 @@
   (or (errsafe (load-table filename))
       (table)))
 
-(def ensure-dir (path)
-  " Ensures that the specified directory exists, and creates it if not
-    yet created. "
-  (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
-
-(def uname nil
-  " Returns the name of the operating system. "
-  (let val (tostring (system "uname"))
-  (cut val 0 (- (len val) 1))))
+(def pad (val digits (o char #\ ))
+  (= val (string val))
+  (string (n-of (- digits (len val)) char) val))
 
 (def date ((o time (seconds)))
   " Returns the date as a string in YYYY-MM-DD format. "
-  (let val (tostring (system
-                      (string
-                       "date -u "
-                       (if
-                        (is (uname) "Linux")
-                        ;; Linux wants -d and an interval
-                        (string "-d \"" (- 1 (since time)) " seconds\"")
-                        ;; BSD wants -r and epoch seconds
-                        (string "-r " time))
-                       " \"+%Y-%m-%d\"")))
-    (cut val 0 (- (len val) 1))))
+  (let date ($ (seconds->date ,(seconds)))
+    (string (pad ($ (date-year ,date)) 4 #\0) "-"
+            (pad ($ (date-month ,date)) 2 #\0) "-"
+            (pad ($ (date-day ,date)) 2 #\0))))
 
 (def count (test x)
   " Counts the number of elements in `x' which pass `test'. "
@@ -2239,6 +2229,11 @@
 
 (= hooks* (table))
 
+(def which-os ()
+  " Returns a symbol representing which operating system Arc is running on.
+    Possible values are unix, windows, macos, macosx, and oskit. "
+  ($ (system-type)))
+
 (def hook (name . args)
   (aif (hooks* name) (apply it args)))
 
@@ -2252,10 +2247,6 @@
         (let old ,name
           (def ,name ,parms ,@body)))
        ,name))
-
-(mac $ body
-   " Allows access to the underlying Scheme. "
-   (list 'seval (cons 'quasiquote body)))
 
 (redef table args
   " Creates a table initializing table entries from passed
