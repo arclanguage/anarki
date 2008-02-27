@@ -58,5 +58,4 @@
 (def ensure-dir (path)
   " Ensures that the specified directory exists, and creates it if not
     yet created. "
-  (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
+  (mkdir path t))
