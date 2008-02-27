@@ -1841,12 +1841,6 @@
   (or (errsafe (load-table filename))
       (table)))
 
-(def ensure-dir (path)
-  " Ensures that the specified directory exists, and creates it if not
-    yet created. "
-  (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
-
 (def pad (val digits (o char #\ ))
   (= val (string val))
   (string (n-of (- digits (len val)) char) val))
