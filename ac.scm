@@ -67,6 +67,7 @@
           ((eq? head 'if) (ac-if (cdr s) env))
           ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
           ((eq? head 'set) (ac-set (cdr s) env))
+          ((eq? head 'lset) (ac-lset (cdr s) env))
           ; this line could be removed without changing semantics
           ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
           ((pair? s) (ac-call (car s) (cdr s) env))
@@ -78,6 +79,7 @@
       (char? x)
       (string? x)
       (number? x)
+      (procedure? x) ; to allow (eval `(,+ 3 4))
       (eq? x '())))
 
 (define (ssyntax? x)
@@ -338,6 +340,11 @@
                name))
       (err "First arg to set must be a symbol" a)))
 
+(define (ac-lset x env)
+  (if (null? x) '()
+      `(define ,(ac-macex (ac-global-name (car x)))
+         ,(ac (cadr x) env))))
+
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
 ;   (ar-apply _pr (list 1 2))
@@ -494,10 +501,14 @@
         ((string? fn) (string-ref fn (car args)))
         ((hash-table? fn) (ar-nill (hash-table-get fn (car args) #f)))
         ((ar-tagged? fn) (ar-apply (ar-rep fn) args))
+        ((vector? fn) (vector-ref fn (car args)))
 ; experiment: means e.g. [1] is a constant fn
 ;       ((or (number? fn) (symbol? fn)) fn)
 ; another possibility: constant in functional pos means it gets
 ; passed to the first arg, i.e. ('kids item) means (item 'kids).
+; or both: (1) is 1, (3 + 4) is (+ 3 4).
+        ((or (number? fn) (symbol? fn))
+         (if (pair? args) (apply (car args) fn (cdr args)) fn))
         (#t (err "Function call on inappropriate object" fn args))))
 
 (xdef 'apply (lambda (fn . args)
@@ -592,10 +603,8 @@
   (or (null? seq)
       (and (test (car seq)) (all test (cdr seq)))))
 
-; rather strictly excludes ()
-
-(define (arc-list? x) (or (pair? x) (eqv? x 'nil)))
-
+(define (arc-list? x) (or (pair? x) (eqv? x 'nil) (eqv? x '())))
+      
 ; generic +: strings, lists, numbers.
 ; problem with generic +: what to return when no args?
 ; could even coerce based on type of first arg...
@@ -646,6 +655,7 @@
 
 (xdef 'len (lambda (x)
              (cond ((string? x) (string-length x))
+                   ((vector? x) (vector-length x))
                    ((hash-table? x) (hash-table-count x))
                    (#t (length (ar-nil-terminate x))))))
 
@@ -670,6 +680,7 @@
         ((string? x)        'string)
         ((integer? x)       'int)
         ((number? x)        'num)     ; unsure about this
+        ((vector? x)        'vec)
         ((hash-table? x)    'table)
         ((output-port? x)   'output)
         ((input-port? x)    'input)
@@ -774,26 +785,17 @@
                                 (current-output-port)))
                 b))
 
-(xdef 'write (lambda args
-               (let ((port (if (pair? (cdr args))
-                               (cadr args)
-                               (current-output-port))))
-                 (if (pair? args)
-                     (write (ac-denil (car args))
-                            port))
-                 (flush-output port))
-               'nil))
+(define (printwith f args)
+  (let ((port (if (> (length args) 1)
+                  (cadr args)
+                  (current-output-port))))
+    (when (pair? args)
+      (f (ac-denil (car args)) port))
+    (flush-output port))
+    'nil)
 
-(xdef 'disp (lambda args
-              (let ((port (if (pair? (cdr args))
-                              (cadr args)
-                              (current-output-port))))
-                (if (pair? args)
-                    (display (ac-denil (car args))
-                             port))
-                (flush-output port))
-
-              'nil))
+(xdef 'write (lambda args (printwith write   args)))
+(xdef 'disp  (lambda args (printwith display args)))
 
 ; sread = scheme read. eventually replace by writing read
 
@@ -891,6 +893,12 @@
                                       (modulo
                                         (char->integer (read-char rstr))
                                         26))))))))))
+
+(xdef 'vec (lambda (n) (make-vector n 'nil)))
+
+(xdef 'vec-ref vector-ref)
+  
+(xdef 'vec-set vector-set!)
 
 ; PLT scheme provides only eq? and equal? hash tables,
 ; we need the latter for strings.
@@ -1076,6 +1084,7 @@
               (cond ((hash-table? com)  (if (eqv? val 'nil)
                                             (hash-table-remove! com ind)
                                             (hash-table-put! com ind val)))
+                    ((vector? com) (vector-set! com ind val))
                     ((string? com) (string-set! com ind val))
                     ((pair? com)   (nth-set! com ind val))
                     (#t (err "Can't set reference " com ind val)))
@@ -1151,6 +1160,15 @@
 
 (xdef 'quit exit)
 
+; Added outgoing tcp/ip ports
+; (= socket (connect-socket host port))
+; (= outport (car (cdr socket))
+; (= inport (car socket))
+; (write "hello" outport)
+; (read inport)
+(xdef 'connect-socket (lambda (host port)
+       (let-values ([(in out) (tcp-connect host port)]) (list in out))))
+(xdef 'flush-socket (lambda (s) (flush-output s)))
 
 )
 

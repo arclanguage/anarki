@@ -12,11 +12,11 @@
 (= errorpages* (listtab '((404 "404.html") (500 "500.html"))))
 
 ; for now the version is <PG's arc num>.<date>
-(= serverheader* "Server: ASV/1.20080212")
+(= serverheader* "Server: ASV/2.20080224")
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
-  (ensure-srvinstall)
+  (ensure-srvdirs)
   (w/socket s port
     (prn "ready to serve port " port)
     (= currsock* s)
@@ -28,6 +28,10 @@
 
 (def serve1 ((o port 8080))
   (w/socket s port (handle-request s)))
+
+(def ensure-srvdirs ()
+  (ensure-dir arcdir*)
+  (ensure-dir logdir*))
 
 (= srv-noisy* nil)
 
@@ -106,7 +110,7 @@
 (= srvops* (table) redirector* (table) optimes* (table))
 
 (= statuscodes* (listtab '((200 "OK") (302 "Moved Temporarily") (404 "Not Found") (500 "Internal Server Error"))))
-(= ext-mimetypes* (listtab '(("gif" "image/gif") ("jpg" "image/jpeg") ("png" "image/png") 
+(= ext-mimetypes* (listtab '(("gif" "image/gif") ("jpg" "image/jpeg") ("png" "image/png") ("ico" "image/x-icon") 
                              ("css" "text/css") ("pdf" "application/pdf") ("swf" "application/x-shockwave-flash"))))
 
 (= textmime* "text/html; charset=utf-8")
@@ -137,12 +141,25 @@ Connection: close"))
 
 (mac defopr-raw (name parms . body)
   `(= (redirector* ',name) t
-      (srvops* ',name)      (fn ,parms ,@body)))
+      (srvops* ',name)     (fn ,parms ,@body)))
 
 (mac defop (name parm . body)
   (w/uniq gs
     `(defop-raw ,name (,gs ,parm) 
        (w/stdout ,gs (prn) ,@body))))
+
+(mac defsop (name parm auth . body)
+  (w/uniq (test auth-var)
+    `(withs
+         ( ,auth-var ,auth
+           ,test     (if (acons ,auth-var)
+                         [some _ ,auth-var]
+                         (testify ,auth-var)))
+        (defop ,name ,parm
+           (if (,test (,parm 'ip))
+               ,@body
+               (pr "Permission denied"))))))
+
 
 ; Defines op as a redirector.  Its retval is new location.
 
@@ -471,7 +488,7 @@ Connection: close"))
 (defop topips req
   (when (admin (get-user req))
     (whitepage
-      (spacetable
+      (sptab
         (each ip (let leaders nil 
                    (maptable (fn (ip n)
                                (when (> n 100)

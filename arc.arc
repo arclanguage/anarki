@@ -7,7 +7,6 @@
 ; should (= x)  mean (= x t)?
 ; add sigs of ops defined in ac.scm
 ; get hold of error types within arc
-; make srv serve more file types
 ; why is macex defined in scheme instead of using def below?
 ; write disp, read, write in arc
 ; could prob write rmfile and dir in terms of system
@@ -15,7 +14,7 @@
 ; warn when shadow a global name
 ; permanent objs that live on disk and are updated when modified
 ; way to spec default 0 rather than nil for hts
-;  do in access call or when ht created?
+;  do in access call or when ht created?  simply have ++ nil -> 1?
 ; some simple regexp/parsing plan
 
 ; compromises in this implementation:
@@ -101,7 +100,7 @@
   " Identity function - just returns its argument. "
   x)
 
-; Maybe later make this internal.
+; Maybe later make this internal.  Useful to let xs be a fn?
 
 (def map1 (f xs)
   " Return a sequence with function f applied to every element in sequence xs.
@@ -141,6 +140,10 @@
 (sref *source-file*
   *current-load-file*
   'mac)
+
+(mac $ body
+   " Allows access to the underlying Scheme. "
+   (list 'seval (cons 'quasiquote body)))
 
 (mac and args
   " Evaluates arguments till false is found else returns the last one.
@@ -374,7 +377,7 @@
 (def expand (expr)
   " Completely expands all macros in `expr'.
     See also [[macex]] [[mac]] "
-  (if (and (acons expr) (~dotted expr))
+  (if (and (acons expr) (~dotted expr) (~is 'quote (car expr)))
       (macex (cons (car expr)
                    (map1 expand (cdr expr))))
       expr))
@@ -588,17 +591,17 @@
 (def firstn (n xs)
   " Returns the first `n' elements of the given list `xs'.
     See also [[cut]] [[nthcdr]] "
-  (if (and (> n 0) xs)
-      (cons (car xs) (firstn (- n 1) (cdr xs)))
-      nil))
+  (if (no n)            xs
+      (and (> n 0) xs)  (cons (car xs) (firstn (- n 1) (cdr xs)))
+                        nil))
 
 (def nthcdr (n xs)
   " Returns the sublist of `xs' starting on the `n'th element.
     `n' is 0-based.
     See also [[cut]] [[firstn]] "
-  (if (> n 0)
-      (nthcdr (- n 1) (cdr xs))
-      xs))
+  (if (no n)  xs
+      (> n 0) (nthcdr (- n 1) (cdr xs))
+              xs))
 
 ; Generalization of pair: (tuples x) = (pair x)
 
@@ -789,7 +792,7 @@
 (mac each (var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
     with each element assigned to `var'.
-    See also [[forlen]] [[on]] [[ontable]] "
+    See also [[forlen]] [[on]] [[map]] [[ontable]] "
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
@@ -1180,31 +1183,41 @@
 
   (mac w/infile (var name . body)
     " Opens the given file `name' for input, assigning the stream to `var'.
-      The stream is automatically closed on exit from the `body'. "
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/outfile]] [[w/instring]] [[w/stdin]] [[w/socket]] "
     (expander 'infile var name body))
 
   (mac w/outfile (var name . body)
     " Opens the given file `name' for output, assigning the stream to `var'.
-      The stream is automatically closed on exit from the `body'. "
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/infile]] [[w/appendfile]] [[w/outstring]] [[w/stdout]] "
     (expander 'outfile var name body))
 
   (mac w/instring (var str . body)
     " Opens the given string `str' for input, assigning the stream to `var'.
-      The stream is automatically closed on exit from the `body'. "
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/outstring]] [[fromstring]] [[w/infile]] [[w/stdin]]
+      [[w/socket]] "
     (expander 'instring var str body))
 
   (mac w/socket (var port . body)
+    " Opens the port for listening, assigning the stream to `var'.
+      The stream is automatically closed on exit from the `body'.
+      See also [[w/infile]] [[w/instring]] [[w/stdin]] "
     (expander 'open-socket var port body))
   )
 
 (mac w/outstring (var . body)
   " Opens a string for output, assigning the stream to `var'.
-    The stream is automatically closed on exit from the `body'. "
+    The stream is automatically closed on exit from the `body'.
+    The contents of the string can be accessed via (inside `var')
+    See also [[w/instring]] [[tostring]] [[w/outfile]] [[w/stdout]] "
   `(let ,var (outstring) ,@body))
 
 (mac w/appendfile (var name . body)
   " Opens a file `name' for append, assigning the stream to `var'.
-    The stream is automatically closed on exit from the `body'. "
+    The stream is automatically closed on exit from the `body'.
+    See also [[w/outfile]] [[w/infile]] "
   `(let ,var (outfile ,name 'append)
      (after (do ,@body) (close ,var))))
 
@@ -1212,33 +1225,39 @@
 
 (mac w/stdout (str . body)
   " Opens the stream `str' for output; normal printed output from `body'
-    is redirected to the stream. "
+    is redirected to the stream.
+    See also [[w/stdin]] [[w/outfile]] [[w/outstring]] "
   `(call-w/stdout ,str (fn () ,@body)))
 
 (mac w/stdin (str . body)
   " Opens the stream `str' for input; normal read input from `body'
-    is redirected from the stream. "
+    is redirected from the stream.
+    See also [[w/stdout]] [[w/infile]] [[w/instring]] [[w/socket]] "
   `(call-w/stdin ,str (fn () ,@body)))
 
 (mac tostring body
-  " Returns the printed output from `body' as a string. "
+  " Returns the printed standard output from `body' as a string.
+    See also [[fromstring]] [[w/stdout]] [[w/outstring]] "
   (w/uniq gv
    `(w/outstring ,gv
       (w/stdout ,gv ,@body)
       (inside ,gv))))
 
 (mac fromstring (str . body)
-  " Redirects input to `body' from the given string `str'. "
+  " Redirects read standard input to `body' from the given string `str'.
+    See also [[tostring]] [[w/stdin]] [[w/instring]] "
   (w/uniq gv
    `(w/instring ,gv ,str
       (w/stdin ,gv ,@body))))
 
 (def readstring1 (s (o eof nil))
-  " Reads a single expression from the string. "
+  " Reads a single expression from the string.
+    See also [[read]] "
   (w/instring i s (read i eof)))
 
 (def read ((o x (stdin)) (o eof nil))
-  " Reads a single expression from a string or stream. "
+  " Reads a single expression from a string or stream.
+    See also [[readstring1]] "
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
 (def readfile (name)
@@ -1322,7 +1341,9 @@
                ,@body))))))
 
 (def best (f seq)
-  " Selects the best element of `seq' according to `f'. "
+  " Selects the best element of `seq' according to `f'.
+    `f' is a comparison function between elements of `seq'.
+    See also [[max]] [[most]] "
   (if (no seq)
       nil
       (let wins (car seq)
@@ -1330,15 +1351,23 @@
           (if (f elt wins) (= wins elt)))
         wins)))
 
-(def max args " Returns the highest argument. " (best > args))
-(def min args " Returns the lowest argument. " (best < args))
+(def max args
+  " Returns the highest argument.
+    See also [[min]] [[best]] [[most]] "
+  (best > args))
+(def min args
+  " Returns the lowest argument.
+    See also [[max]] [[best]] [[most]] "
+  (best < args))
 
 ; (mac max2 (x y)
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
 (def most (f seq)
-  " Selects the element of `seq' with the highest [f _]. "
+  " Selects the element of `seq' with the highest [f _].
+    `f' is a score function for elements of `seq'.
+    See also [[best]] "
   (unless (no seq)
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
@@ -1449,11 +1478,12 @@
          ,@body)
        ,gc)))
 
-(def trav (f base tree)
+(def treewise (f base tree)
   " Traverses a list as a binary tree. "
   (if (atom tree)
       (base tree)
-      (f (trav f base (car tree)) (trav f base (cdr tree)))))
+      (f (treewise f base (car tree)) 
+         (treewise f base (cdr tree)))))
 
 (def carif (x)
   " Returns the first element of a list if the argument is a list. "
@@ -1714,6 +1744,10 @@
   " Prints the time consumed by executing `expr' 10 times "
   `(time (repeat 10 ,expr)))
 
+(def union (f xs ys)
+  (+ xs (rem (fn (y) (some [f _ y] xs))
+             ys)))
+
 (= templates* (table))
 
 (mac deftem (tem . fields)
@@ -1724,6 +1758,13 @@
         (+ (mappend templates* ',(rev includes))
            (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
                         (pair fields)))))))
+
+(mac addtem (name . fields)
+  `(= (templates* ',name) 
+      (union (fn (x y) (is (car x) (car y)))
+             (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
+                          (pair fields)))
+             (templates* ',name))))
 
 (def inst (tem . args)
   " Creates an object instantiating a given template. "
@@ -1772,6 +1813,10 @@
 
 (def since (t1) (- (seconds) t1))
 
+(def hours-since (t1) (/ (since t1) 60))
+
+(def days-since (t1) (/ (since t1) 86400))
+
 (def cache (timef valf)
   " Caches the result of a call to `valf' until a number of seconds
     greater than the result of a call to `timef' have passed. "
@@ -1796,30 +1841,16 @@
   (or (errsafe (load-table filename))
       (table)))
 
-(def ensure-dir (path)
-  " Ensures that the specified directory exists, and creates it if not
-    yet created. "
-  (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
-
-(def uname nil
-  " Returns the name of the operating system. "
-  (let val (tostring (system "uname"))
-  (cut val 0 (- (len val) 1))))
+(def pad (val digits (o char #\ ))
+  (= val (string val))
+  (string (n-of (- digits (len val)) char) val))
 
 (def date ((o time (seconds)))
   " Returns the date as a string in YYYY-MM-DD format. "
-  (let val (tostring (system
-                      (string
-                       "date -u "
-                       (if
-                        (is (uname) "Linux")
-                        ;; Linux wants -d and an interval
-                        (string "-d \"" (- 1 (since time)) " seconds\"")
-                        ;; BSD wants -r and epoch seconds
-                        (string "-r " time))
-                       " \"+%Y-%m-%d\"")))
-    (cut val 0 (- (len val) 1))))
+  (let date ($ (seconds->date ,(seconds)))
+    (string (pad ($ (date-year ,date)) 4 #\0) "-"
+            (pad ($ (date-month ,date)) 2 #\0) "-"
+            (pad ($ (date-day ,date)) 2 #\0))))
 
 (def count (test x)
   " Counts the number of elements in `x' which pass `test'. "
@@ -1889,10 +1920,10 @@
 ;(def compare (comparer scorer)
 ;  (fn args (apply comparer map scorer args)))
 
-(def only (f g . args)
-  " Applies `f' to the results of `g' on `args', but only if the result of
-    `g' is true. "
-  (aif (apply g args) (f it)))
+; (def only (f g . args) (aif (apply g args) (f it)))
+
+(def only (f) 
+  (fn args (if (car args) (apply f args))))
 
 (mac conswhen (f x y)
   " Adds `x' to the front of `y' if `x' passes the test `f'. "
@@ -1923,13 +1954,6 @@
 (def single (x)
   " Determines if `x' is a list with only one element. "
   (and (acons x) (no (cdr x))))
-
-(def plural (n str)
-  " Adds the character `s' to `str' if `n' is more than 1 or is a list
-    with more than one element. "
-  (if (or (is n 1) (single n))
-      str
-      (string str "s")))
 
 (def intersperse (x ys)
   " Inserts `x' between elements of `ys'. "
@@ -2196,6 +2220,26 @@
 (mac thread body 
   `(new-thread (fn () ,@body)))
 
+(mac trav (x . fs)
+  (w/uniq g
+    `((afn (,g)
+        (when ,g
+          ,@(map [list _ g] fs)))
+      ,x)))
+
+(= hooks* (table))
+
+(def which-os ()
+  " Returns a symbol representing which operating system Arc is running on.
+    Possible values are unix, windows, macos, macosx, and oskit. "
+  ($ (system-type)))
+
+(def hook (name . args)
+  (aif (hooks* name) (apply it args)))
+
+(mac defhook (name . rest)
+  `(= (hooks* ',name) (fn ,@rest)))
+
 (mac redef (name parms . body)
   " Redefine a function.  The old function definitiaion may be used within
     `body' as the name `old'. "
@@ -2204,9 +2248,12 @@
           (def ,name ,parms ,@body)))
        ,name))
 
-(mac $ body
-   " Allows access to the underlying Scheme. "
-   (list 'seval (cons 'quasiquote body)))
+(redef table args
+  " Creates a table initializing table entries from passed
+    key-value pairs. "
+  (let tb (old)
+    (fill-table tb args)
+    tb))
 
 (mac help ( (o name 'help))
    " Prints the documentation for the given symbol.  To use, type
@@ -2235,7 +2282,7 @@
       (sort <
         (accum add
           (ontable k (typ d) *help*
-            (when (or (part-match k) (part-match typ) (part-match d) (only part-match *source-file* k))
+            (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (*source-file* k)))
               (add k)))))))
 
 (def helpstr (name (o verbose t))
@@ -2246,7 +2293,7 @@
          (if verbose (prn name " is not documented."))
          (with (kind  (car h)
                 doc   (cadr h))
-           (aand verbose (only [prn "(from \"" _ "\")"] *source-file* name))
+           (aand verbose ((only [prn "(from \"" _ "\")"]) (*source-file* name)))
            (pr "[" kind "]" (if (is kind 'mac) " " "  "))
            (prn (if (sig name)
                     (cons name (sig name))))
@@ -2325,4 +2372,7 @@
 ;  foo_bar means [foo _ bar]
 ;  what does foo:_:bar mean?
 ; matchcase
+; crazy that finding the top 100 nos takes so long:
+;  (let bb (n-of 1000 (rand 50)) (time10 (bestn 100 > bb)))
+;  time: 2237 msec.  -> now down to 850 msec
 
