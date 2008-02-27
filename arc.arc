@@ -1214,6 +1214,9 @@
   (or (errsafe (load-table filename))
       (table)))
 
+(def which-os ()
+  ($ (system-type)))
+
 (def mkdir (path (o parents))
    ((if parents
         (let os (which-os)
