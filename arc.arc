@@ -2229,6 +2229,11 @@
 
 (= hooks* (table))
 
+(def which-os ()
+  " Returns a symbol representing which operating system Arc is running on.
+    Possible values are unix, windows, macos, macosx, and oskit. "
+  ($ (system-type)))
+
 (def hook (name . args)
   (aif (hooks* name) (apply it args)))
 
