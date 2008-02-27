@@ -1,11 +1,12 @@
 #!/bin/bash
  
+arc_dir=$0
+
 if [ -L "$0" ]; then
-  arc_dir=`readlink $0`
-else
-  arc_dir=$0
+  arc_dir=$(readlink "$0")
 fi
-arc_dir=`dirname $arc_dir`
+
+arc_dir=$(dirname "$arc_dir")
 
 if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" ]; then
   rl="rlwrap -C arc"
