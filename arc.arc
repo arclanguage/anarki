@@ -2221,11 +2221,24 @@
   `(new-thread (fn () ,@body)))
 
 (mac trav (x . fs)
+  " Traverses an object `x'; the object is applied to each function
+    in `fs', and sub-nodes of the object may be traversed by
+    (self <node>) in any of the functions.
+    See also [[trav+]] "
   (w/uniq g
     `((afn (,g)
         (when ,g
           ,@(map [list _ g] fs)))
       ,x)))
+
+(mac trav+ ((go n) s . body)
+  " Traverses an object `s'; the object is named by `n' and sub-nodes
+    of the object may be traversed by (`go' ...) in `body'.
+    See also [[trav]]
+    p.s. a more lisplike version of pg's trav "
+  `((rfn ,go (,n)
+      (when ,n ,@body))
+     ,s))
 
 (= hooks* (table))
 
