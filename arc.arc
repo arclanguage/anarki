@@ -74,6 +74,9 @@
              `(do (sref sig ',parms ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
+(mac $ body
+   (list 'seval (cons 'quasiquote body)))
+
 (mac and args
   (if args
       (if (cdr args)
@@ -1213,22 +1216,15 @@
   (unless (dir-exists path)
     (system (string "mkdir -p " path))))
 
-(def uname nil 
-  (let val (tostring (system "uname"))
-  (cut val 0 (- (len val) 1))))
+(def pad (val digits (o char #\ ))
+  (= val (string val))
+  (string (n-of (- digits (len val)) char) val))
 
 (def date ((o time (seconds)))
-  (let val (tostring (system 
-                      (string
-                       "date -u "
-                       (if 
-                        (is (uname) "Linux")
-                        ;; Linux wants -d and an interval
-                        (string "-d \"" (- 1 (since time)) " seconds\"")
-                        ;; BSD wants -r and epoch seconds
-                        (string "-r " time))
-                       " \"+%Y-%m-%d\"")))
-    (cut val 0 (- (len val) 1))))
+  (let date ($ (seconds->date ,(seconds)))
+    (string (pad ($ (date-year ,date)) 4 #\0) "-"
+            (pad ($ (date-month ,date)) 2 #\0) "-"
+            (pad ($ (date-day ,date)) 2 #\0))))
 
 (def count (test x)
   (with (n 0 testf (testify test))
@@ -1511,8 +1507,6 @@
   `(= (hooks* ',name) (fn ,@rest)))
   
 
-(mac $ body
-   (list 'seval (cons 'quasiquote body)))
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
