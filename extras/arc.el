@@ -232,7 +232,7 @@ See `run-hooks'."
      ;; Declarations.
      (list 
       (concat "(" (regexp-opt 
-                   '("def" "mac" "defop" "defmemo" "defset" "deftem" "defcall" "set" "=")
+                   '("def" "mac" "defop" "defmemo" "defset" "deftem" "defcall" "redef" "set" "=")
                    t)
               "\\>"
               ;; Any whitespace and declared object.
@@ -438,6 +438,7 @@ rigidly along with this one."
 (put 'mac 'arc-indent-function 2)
 (put 'defset 'arc-indent-function 2)
 (put 'defcall 'arc-indent-function 2)
+(put 'redef 'arc-indent-function 2)
 (put 'fn 'arc-indent-function 1)
 (put 'afn 'arc-indent-function 1)
 (put 'rfn 'arc-indent-function 2)
