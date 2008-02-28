@@ -496,20 +496,11 @@
 ; should figure out the best way to exploit it.
 
 (define (ar-apply fn args)
-  (cond ((procedure? fn) (apply fn args))
-        ((pair? fn) (list-ref fn (car args)))
-        ((string? fn) (string-ref fn (car args)))
-        ((hash-table? fn) (ar-nill (hash-table-get fn (car args) #f)))
-        ((ar-tagged? fn) (ar-apply (ar-rep fn) args))
-        ((vector? fn) (vector-ref fn (car args)))
-; experiment: means e.g. [1] is a constant fn
-;       ((or (number? fn) (symbol? fn)) fn)
-; another possibility: constant in functional pos means it gets
-; passed to the first arg, i.e. ('kids item) means (item 'kids).
-; or both: (1) is 1, (3 + 4) is (+ 3 4).
-        ((or (number? fn) (symbol? fn))
-         (if (pair? args) (apply (car args) fn (cdr args)) fn))
-        (#t (err "Function call on inappropriate object" fn args))))
+  (if (procedure? fn) (apply fn args)
+      (begin
+        (let ((call (hash-table-get (arc-eval '*call*) (ar-type fn) #f)))
+          (if call (apply call (cons fn args))
+              (err "Function call on inappropriate object" fn args))))))
 
 (xdef 'apply (lambda (fn . args)
                (ar-apply fn (ar-apply-args args))))
@@ -1089,6 +1080,13 @@
                     ((pair? com)   (nth-set! com ind val))
                     (#t (err "Can't set reference " com ind val)))
               val))
+
+(xdef 'ref (lambda (com ind)
+             (cond ((hash-table? com) (hash-table-get com ind 'nil))
+                   ((vector? com) (vector-ref com ind))
+                   ((string? com) (string-ref com ind))
+                   ((pair? com)   (list-ref   com ind))
+                   (#t (err "Can't get reference " com ind)))))
 
 (define (nth-set! lst n val)
   (set-car! (list-tail lst n) val))
