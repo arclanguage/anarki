@@ -30,10 +30,10 @@
 ; call behavior for numbers is to switch functional position and first parameter
 
 (defcall int (n . args)
-  (if (acons args) (apply (car args) n (cdr args)) n))
+  (if args (apply (car args) n (cdr args)) n))
 
 (defcall num (n . args)
-  (if (acons args) (apply (car args) n (cdr args)) n))
+  (if args (apply (car args) n (cdr args)) n))
 
 ; operator precedences
 
