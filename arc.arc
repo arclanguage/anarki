@@ -423,10 +423,11 @@
 ; the rest are the arguments to the object.
 
 (mac defcall (name parms . body)
-  "Defines a function to run when an object of the given type
-   is encountered in functional position.
-   The first argument to this function is the object,
-   and the rest are passed as arguments to the object."
+  " Defines a function to run when an object of the given type
+    is encountered in functional position.
+    The first argument to this function is the `rep' of the object,
+    and the rest are passed as arguments to the object.
+    See also [[rep]] [[annotate]] [[type]] "
   `(sref *call* (fn ,parms ,@body) ',name))
 
 (defcall num (num . args)
