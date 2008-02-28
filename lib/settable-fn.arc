@@ -70,11 +70,6 @@ actually work with tagged objects yet.
 
 ; NOTE: requires arc-wiki ($ ...) and redef macros
 
-; This is neccessary to allow non-functions pseudo-tagged as functions
-; to be called as functions.
-(defcall fn (f . args)
-  (apply f args))
-
 (let (attached tagged) nil
   (= attached
      (fn (s)
@@ -114,6 +109,17 @@ actually work with tagged objects yet.
          s
          (self (cdr:cdr args) (add-attachment (car args) (cadr args) s))))
      args s)))
+
+(redef ref (c . ind)
+  (if (isa c 'fn) (apply c ind)
+      (old c (car ind))))
+
+; Have to redefine these so they get the new `ref'
+(= (*call* 'cons) ref)
+(= (*call* 'cons) ref)
+(= (*call* 'table) ref)
+(= (*call* 'vec) ref)
+(= (*call* 'fn) ref)
 
 (redef sref (c v . rest)
   (aif (get-attachment '= c)
