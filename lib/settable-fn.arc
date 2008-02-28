@@ -1,10 +1,65 @@
 ; settable-fn.arc
 ; by AmkG
+; adds the concept of "attachments", which are key-value
+; pairs attached to an object.
+; Some keys are then made to work with a few redefined arc
+; "builtins"
+
+; An ordinary fn can be used as if it were a readable
+; table:
+;   (= tbl
+;    (let ....
+;     (fn (k) ...)))
+;   tbl!foo
+; However, normally assignments cannot be made:
+;   (= tbl!foo 42) ; error!
+; By using attachments and this library, you can attach
+; any arbitrary function as the setter for that function:
+;   (= tbl
+;     (let ...
+;       (= writer (fn (value k) ...))
+;       (= reader (fn (k) ...))
+;       (add-attachment
+;         '= writer
+;         reader)))
+; Then the form:
+;   (= tbl!foo 42)
+; will call the writer:
+;   (writer 42 'foo)
+#|
+Predefined attachments:
+
+  '= (fn (v . args) ...)
+A function which acts as the setter for the main object.
+The arguments to the function are passed via args, while
+the value to be assigned is passed as the first argument.
+The valuse is passed as the first argument in order to
+support setterfunctions with variable number of arguments.
+
+ 'keys (fn () ...)
+A function which returns a list of valid keys for the main
+object.  Must return a list.  Note that this function takes
+zero arguments, on the assumption that you've already bound
+or curried the main object in this function.
+
+ 'len (fn () ...)
+A function which returns a number specifying the number of
+elements in the main object.  Must return a number.  Note
+that again this function takes zero arguments, on the
+assumption that you've already bound or curried the main
+object in this function.
+|#
+;
 ; NOTE.  Experimental.  Use at your own risk.
 ; That said, I would like to know if anyone finds anything
 ; that might be a bug.
+;
+; Please report bugs you don't want to fix yourself to:
+;  almkglor@gmail.com
+; or throw it on the arclanguage forum
 
 ; NOTE: requires arc-wiki ($ ...) and redef macros
+
 
 (let (attached tagged) nil
   (= attached
