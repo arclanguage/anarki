@@ -84,10 +84,10 @@
          (fn (v f)
            ; silently transform symbols to strings
            (if (isa f 'sym) (= f (string f)))
-           (if (isa v 'sym) (= v (string v)))
+           (if (and v (isa v 'sym)) (= v (string v)))
            (checkf f)
-           (if (~isa v 'string)
-             (err:string "file-table writer: value is not a string - " v))
+           (if (and v (~isa v 'string))
+             (err:string "file-table writer: value is not a string or nil - " v))
            (let pf (prepath f)
              (if (dir-exists pf)
                (err:string "file-table writer: key " f " would overwrite directory - " pf)
