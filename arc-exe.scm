@@ -1002,15 +1002,15 @@
           (arc-eval x)
           (aload1 p)))))
 
-(define (cload1 p)
-  (let ((x (read p)))
+(define (cload1 in out)
+  (let ((x (read in)))
     (if (eof-object? x)
         #t
         (begin
           (arc-eval x)
-          (print (compile (ac x '())))
-          (newline)
-          (cload1 p)))))
+          (print (compile (ac x '())) out)
+          (newline out)
+          (cload1 in out)))))
 
 (define (atests1 p)
   (let ((x (read p)))
@@ -1030,7 +1030,11 @@
   (call-with-input-file filename aload1))
 
 (define (cload filename)
-  (call-with-input-file filename cload1))
+  (let ((in (open-input-file filename))
+        (out (open-output-file (string-append filename "c"))))
+    (cload1 in out)
+    (close-input-port in)
+    (close-output-port out)))
 
 (define (test filename)
   (call-with-input-file filename atests1))
@@ -1336,11 +1340,17 @@
 (define _bit-xor bitwise-xor)
 (define _bit-shift arithmetic-shift)
 
-(load "arc.arcc")
+(if (not (file-exists? "arc.arcc"))
+  (cload "arc.arc")
+  (load "arc.arcc"))
+
+(if (not (file-exists? "libs.arcc"))
+  (cload "libs.arc")
+  (load "libs.arcc"))
 
 (let ((args (current-command-line-arguments)))
   (cond ((= 0 (vector-length args)) (tl)) ; No argument : REPL
-        ((equal? (vector-ref args 0) "-cc") (cload (vector-ref args 1))) ; compile code
+        ((equal? (vector-ref args 0) "-cc") (cload (vector-ref args 1))) ; compile & run code
         ((equal? (vector-ref args 0) "-lc") (load (vector-ref args 1)))  ; load compiled code
         (#t (aload (vector-ref args 0))))) ; no switch : load regular arc code
 )
