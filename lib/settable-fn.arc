@@ -114,7 +114,7 @@ actually work with tagged objects yet.
      args s)))
 
 (redef ref (c . ind)
-  (if (isnt (type c) (type (rep c))) (apply ref c ind)
+  (if (isnt (type c) (type (rep c))) (apply ref (rep c) ind)
       (isa c 'fn) (apply c ind)
       (old c (car ind))))
 
