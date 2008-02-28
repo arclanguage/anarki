@@ -1082,9 +1082,7 @@
               val))
 
 (xdef 'ref (lambda (com . ind)
-             (cond ((ar-tagged? com) (ar-apply (ar-rep com) ind))
-                   ((procedure? com) (apply com ind))
-                   ((hash-table? com) (hash-table-get com (car ind) 'nil))
+             (cond ((hash-table? com) (hash-table-get com (car ind) 'nil))
                    ((vector? com) (vector-ref com (car ind)))
                    ((string? com) (string-ref com (car ind)))
                    ((pair? com)   (list-ref   com (car ind)))

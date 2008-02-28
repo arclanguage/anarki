@@ -30,7 +30,6 @@
 (sref *call* ref 'string)
 (sref *call* ref 'table)
 (sref *call* ref 'vec)
-(sref *call* ref 'fn)
 
 (set *current-load-file* "arc.arc")
 (set *source-file* (table))

@@ -70,6 +70,10 @@ actually work with tagged objects yet.
 
 ; NOTE: requires arc-wiki ($ ...) and redef macros
 
+; This is neccessary to allow non-functions pseudo-tagged as functions
+; to be called as functions.
+(defcall fn (f . args)
+  (apply f args))
 
 (let (attached tagged) nil
   (= attached
