@@ -82,8 +82,11 @@ actually work with tagged objects yet.
       Currently used for assignable collection-like objects, and
       may be used for other purposes besides.
       See also [[add-attachment]] [[type]] "
-    (if (attached s)
-        ((($ vector-ref) s 3) k)))
+    (if
+      (attached s)
+        ((($ vector-ref) s 3) k)
+      (isnt s (rep s))
+        (get-attachment k (rep s))))
   (def add-attachment (k v s)
     " Attaches `v' to the key `k' of the object `s'.
       Currently used for assignable collection-like objects, and
@@ -112,6 +115,7 @@ actually work with tagged objects yet.
 
 (redef ref (c . ind)
   (if (isa c 'fn) (apply c ind)
+      (isnt (type c) (type (rep c))) (apply ref ind)
       (old c (car ind))))
 
 ; Have to redefine these so they get the new `ref'
