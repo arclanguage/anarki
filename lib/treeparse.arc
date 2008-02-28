@@ -8,9 +8,9 @@
 ;
 ;     (<parsed list> <remaining list> <actions>)
 ;
-; If the parse failed the parser returns nil.
+; Parsers return nil on failure.
 ;
-; An example that should parse a scheme-ish binary number
+; To parse a scheme-ish binary number
 ;    e.g. ("#" "b" 0 0 0 1 0 1 0 1 0)
 ; (= bin-digit    (alt 0 1)
 ;    binary (seq "#" "b" (many1 bin-digit)))
@@ -20,8 +20,13 @@
 ; Use `sem' to embed semantics.
 ; Use `filt' to embed filters.
 ;
-; More examples soon to come.
+; Examples in "lib/treeparse-examples.arc"
 
+(mac delay-parser (p)
+  "Delay evaluation of a parser, in case it is not yet defined."
+  (let rem (uniq)
+    `(fn (,rem)
+       (parse ,p ,rem))))
 
 (def return (val rem (o actions nil))
   "Signal a successful parse. Parsed list in val, remaining tokens in rem."
@@ -34,22 +39,22 @@
       (parse (lit parser) rem)))
 
 (def parse-list (parsers li)
-  (when (alist li)
+  (when (and (alist li) (alist (car li)))
     (iflet (parsed rem actions) (seq-r parsers (car li) nil nil)
            (unless rem (return (list parsed)
                                (cdr li) actions)))))
 
 (def lit (a)
-  "Creates a parser that matches a literal."
+  "Creates a parser that matches a literal. You shouldn't need to
+call this directly, `parse' should wrap up literals for you."
   (fn (rem)
     (when (and (acons rem) (iso a (car rem)))
       (return (list (car rem)) (cdr rem)))))
 
-(mac seq parsers
+(def seq parsers
   "Applies parsers in sequential order."
-  (let rem (uniq)
-    `(fn (,rem)
-       (seq-r (list ,@parsers) ,rem nil nil))))
+  (fn (rem)
+    (seq-r parsers rem nil nil)))
 
 (def seq-r (parsers li acc act-acc)
   (if (no parsers) (return acc li act-acc)
@@ -58,11 +63,9 @@
                     (join acc parsed)
                     (join act-acc actions)))))
 
-(mac alt parsers
+(def alt parsers
   "Alternatives, like Parsec's <|>."
-  (let rem (uniq)
-    `(fn (,rem)
-       (alt-r (list ,@parsers) ,rem))))
+  (fn (rem) (alt-r parsers rem)))
 
 (def alt-r (parsers rem)
   (if (no parsers) nil
@@ -73,6 +76,10 @@
   "A parser that consumes nothing."
   (return nil rem))
 
+(def at-end (rem)
+  "A parser that succeeds only if input is empty."
+  (unless rem (return nil nil)))
+
 (def anything (rem)
   "A parser that consumes one token."
   (when (acons rem)
@@ -82,16 +89,15 @@
   "Parser appears once, or not."
   (alt parser nothing))
 
-(mac cant-see (parser)
+(def cant-see (parser)
   "Parser does not appear next in the input stream."
-  `(fn (rem)
-     (if (parse ,parser rem) nil
-         (return nil rem))))
+  (fn (rem)
+    (if (parse parser rem) nil
+        (return nil rem))))
 
-(mac many (parser)
+(def many (parser)
   "Parser is repeated zero or more times."
-  (let rem (uniq)
-    `(fn (,rem) (many-r ,parser ,rem nil nil))))
+  (fn (rem) (many-r parser rem nil nil)))
 
 (def many-r (parser li acc act-acc)
   (iflet (parsed rem actions) (parse parser li)
@@ -100,11 +106,13 @@
                  (join act-acc actions))
          (return acc li act-acc)))
 
-(mac many1 (parser)
+(def many1 (parser)
   "Parser is repeated one or more times."
-  (let rem (uniq)
-    `(fn (,rem)
-       (parse (seq ,parser (many ,parser)) ,rem))))
+  (seq parser (many parser)) rem)
+
+(def many2 (parser)
+  "Parser is repeated two or more times."
+  (seq parser (many1 parser)))
 
 (def sem (fun parser)
   "Attach semantics to a parser."
