@@ -40,14 +40,24 @@ support setterfunctions with variable number of arguments.
 A function which returns a list of valid keys for the main
 object.  Must return a list.  Note that this function takes
 zero arguments, on the assumption that you've already bound
-or curried the main object in this function.
+or curried the main object in this function.  If you want
+to create a table-like object, you will generally want to
+attach this.
 
  'len (fn () ...)
 A function which returns a number specifying the number of
 elements in the main object.  Must return a number.  Note
 that again this function takes zero arguments, on the
 assumption that you've already bound or curried the main
-object in this function.
+object in this function.  If you want to create a sequence
+object, you will generally want to attach this.
+
+
+In spite of its name, settable-fn is not limited to
+functions.  You can attach anything to any object, although
+be warned that most of the basic Arc functions don't
+actually work with tagged objects yet.
+
 |#
 ;
 ; NOTE.  Experimental.  Use at your own risk.
