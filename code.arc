@@ -7,7 +7,7 @@
   (w/infile in file
     (summing test
       (whilet line (readline in)
-        (test (aand (pos nonwhite line) (isnt it #\;)))))))
+        (test (aand (pos nonwhite line) (isnt line.it #\;)))))))
 
 (def codeflat (file)
   (len (flat (readall (infile file)))))
