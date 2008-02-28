@@ -5,6 +5,8 @@
 ;; Released under the Perl Foundation's Artistic License 2.0.
 ;; http://www.perlfoundation.org/artistic_license_2_0
 
+; define +-*/ to know what to do with fns in args
+
 (redef + args
   (if (some [isa _ 'fn] args)
       (infix-eval (cons (car args) (cons + (cdr args))))
@@ -25,6 +27,16 @@
       (infix-eval (cons (car args) (cons / (cdr args))))
       (apply old args)))
 
+; call behavior for numbers is to switch functional position and first parameter
+
+(defcall int (n . args)
+  (if (acons args) (apply (car args) n (cdr args)) n))
+
+(defcall num (n . args)
+  (if (acons args) (apply (car args) n (cdr args)) n))
+
+; operator precedences
+
 (let precedences `((,+ 1) (,- 1) (,* 2) (,/ 2))
   (def precedence (op)
     (or (alref precedences op) 0))
@@ -39,6 +51,8 @@
     (list (list g x)
           `(precedence ,g)
           `(fn (val) (set-precedence ,g val)))))
+
+; precedence comparisons
 
 (def op< args
   (apply < (map precedence args)))
