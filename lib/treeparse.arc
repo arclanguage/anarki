@@ -32,6 +32,16 @@
   "Signal a successful parse."
   (list val remaining actions))
 
+(def parse-all (parser input)
+  "Calls parse, returning the parsed list only if the entire input was
+parsed. Otherwise returns nil and prints an error. Semantics are
+executed on success."
+  (awhen (parse parser input)
+    (if (no:it 1) (do (carry-out it) (it 0))
+                  (do (pr "Parse error: extra tokens '")
+                      (prn (it 1))
+                      nil))))
+
 (def parse (parser remaining)
   "Apply parser (or literal, or list) to input."
   (if (isa parser 'fn) (parser remaining)
@@ -39,7 +49,7 @@
       (parse (lit parser) remaining)))
 
 (def parse-list (parsers li)
-  (when (and (alist li) (alist (car li)))
+  (when (and li (alist li) (alist (car li)))
     (iflet (parsed remaining actions) (seq-r parsers (car li) nil nil)
            (unless remaining (return (list parsed)
                                      (cdr li) actions)))))
@@ -127,6 +137,11 @@ call this directly, `parse' should wrap up literals for you."
   (fn (remaining)
     (iflet (parsed remaining actions) (parse parser remaining)
            (return (fun parsed) remaining actions))))
+
+(def filtcar (fun parser)
+  "Like filt, but only operates on the car of the input.
+  (filtcar foo p) == (filt foo:car p)."
+  (filt fun:car parser))
 
 (def carry-out (result)
   "Execute the semantics of a parser result."
