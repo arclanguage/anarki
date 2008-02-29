@@ -20,7 +20,7 @@
 ;> (form-urlencoded-decode "x%ce%bbx")
 ;"xλx"
 
-; first byte: 0-7F, 1 char; c2-df 2; e0-ef 3, f0-f4 4.
+; first byte: 0-7F, 1 char; c2-df 2; e0-ef 3, f0-f4 4. 
 
 ; Fixed for utf8 by pc.
 
@@ -48,7 +48,7 @@
 
 ; litmatch would be cleaner if map worked for string and integer args:
 
-;             ,@(map (fn (n c)
+;             ,@(map (fn (n c) 
 ;                      `(is ,c (,gstring (+ ,gstart ,n))))
 ;                    (len pat)
 ;                    pat)
@@ -59,7 +59,7 @@
        (unless (> ,(len pat) (len ,gstring))
          (and ,@(let acc nil
                   (forlen i pat
-                    (push `(is ,(pat (- (len pat) 1 i))
+                    (push `(is ,(pat (- (len pat) 1 i)) 
                                (,gstring (- ,glen 1 ,i)))
                            acc))
                   (rev acc)))))))
@@ -74,9 +74,9 @@
     nil))
 
 (def headmatch (pat seq (o start 0))
-  (let p (len pat)
-    ((afn (i)
-       (or (is i p)
+  (let p (len pat) 
+    ((afn (i) 
+       (or (is i p) 
            (and (is (pat i) (seq (+ i start)))
                 (self (+ i 1)))))
      0)))
@@ -87,7 +87,7 @@
 
 (def subst (new old seq)
   (let boundary (+ (- (len seq) (len old)) 1)
-    (tostring
+    (tostring 
       (forlen i seq
         (if (and (< i boundary) (headmatch old seq i))
             (do (++ i (- (len old) 1))
@@ -95,7 +95,7 @@
             (pr (seq i)))))))
 
 (def multisubst (pairs seq)
-  (tostring
+  (tostring 
     (forlen i seq
       (iflet (old new) (find [begins seq (car _) i] pairs)
         (do (++ i (- (len old) 1))
@@ -160,7 +160,7 @@
   (if (or (is n 1) (single n))
       str
       (string str "s")))
-
+          
 ; Import Scheme's regular expressions
 (= re ($ regexp))
 (= re-match [no (no (($ regexp-match) _1 _2)) ])

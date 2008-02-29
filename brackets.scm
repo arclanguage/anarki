@@ -18,14 +18,14 @@
 
 (define bracket-readtable
   (make-readtable #f #\[ 'terminating-macro read-square-brackets))
-
+  
 ; call this to set the global readtable
 
 (provide use-bracket-readtable)
 
 (define (use-bracket-readtable)
   (current-readtable bracket-readtable))
-
+  
 ; these two implement the required functionality for #reader
     
 ;(define (*read inp)

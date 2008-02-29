@@ -17,7 +17,7 @@
 ;  do in access call or when ht created?  simply have ++ nil -> 1?
 ; some simple regexp/parsing plan
 
-; compromises in this implementation:
+; compromises in this implementation: 
 ; no objs in code
 ;  (mac testlit args (listtab args)) breaks when called
 ; separate string type
@@ -68,6 +68,7 @@
                        (sref *help* '(fn nil) ',name))
                    (sref *source-file* *current-load-file* ',name)
                    (safeset ,name (fn ,parms ,@body))))))
+
 ;documentation for def itself
 (sref *help*
   '(fn
@@ -111,7 +112,7 @@
 (def map1 (f xs)
   " Return a sequence with function f applied to every element in sequence xs.
     See also [[map]] [[each]] [[mappend]] [[andmap]] [[ormap]] "
-  (if (no xs)
+  (if (no xs) 
       nil
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
@@ -191,9 +192,9 @@
   " Assigns local variables for the given `body'.
     The assignments are made in the given order.
     See also [[with]] [[let]] [[fn]] [[do]] "
-  (if (no parms)
+  (if (no parms) 
       `(do ,@body)
-      `(let ,(car parms) ,(cadr parms)
+      `(let ,(car parms) ,(cadr parms) 
          (withs ,(cddr parms) ,@body))))
 
 ; Rtm prefers to overload + to do this
@@ -202,8 +203,8 @@
   " Joins all list arguments together. "
   (if (no args)
       nil
-      (let a (car args)
-        (if (no a)
+      (let a (car args) 
+        (if (no a) 
             (apply join (cdr args))
             (cons (car a) (apply join (cdr a) (cdr args)))))))
 
@@ -239,7 +240,7 @@
   (let g (uniq)
     `(fn ,g (no (apply ,f ,g)))))
 
-(def rev (xs)
+(def rev (xs) 
   " Reverses a sequence. "
   ((afn (xs acc)
      (if (no xs)
@@ -294,9 +295,9 @@
   " Isomorphic compare - compares structure (can be slow).
     See also [[is]] "
   (or (is x y)
-      (and (acons x)
-           (acons y)
-           (iso (car x) (car y))
+      (and (acons x) 
+           (acons y) 
+           (iso (car x) (car y)) 
            (iso (cdr x) (cdr y)))))
 
 (mac when (test . body)
@@ -327,10 +328,10 @@
         (when ,gp ,@body (,gf ,test)))
       ,test)))
 
-(def empty (seq)
+(def empty (seq) 
   " Test to see if `seq' is an empty list or other sequence.
     See also [[no]] [[acons]] [[len]] "
-  (or (no seq)
+  (or (no seq) 
       (and (no (acons seq)) (is (len seq) 0))))
 
 (def reclist (f xs)
@@ -366,11 +367,11 @@
         (reclist f:car seq)
         (recstring f:seq seq))))
 
-(def all (test seq)
+(def all (test seq) 
   " Determines if all elements of `seq' satisfy `test'.
     See also [[some]] "
   (~some (complement (testify test)) seq))
-
+       
 (def dotted (x)
   " Determines if `x' is a dotted cons pair.
     See also [[acons]] [[alist]] "
@@ -587,7 +588,7 @@
     Returns a sequence containing the results of the function.
     See also [[each]] [[map1]] [[mappend]] [[andmap]] [[ormap]]
     [[reduce]] "
-  (if (some [isa _ 'string] seqs)
+  (if (some [isa _ 'string] seqs) 
        (withs (n   (apply min (map len seqs))
                new (newstring n))
          ((afn (i)
@@ -596,10 +597,10 @@
                 (do (sref new (apply f (map [_ i] seqs)) i)
                     (self (+ i 1)))))
           0))
-      (no (cdr seqs))
+      (no (cdr seqs)) 
        (map1 f (car seqs))
       ((afn (seqs)
-        (if (some no seqs)
+        (if (some no seqs) 
             nil
             (cons (apply f (map1 car seqs))
                   (self (map1 cdr seqs)))))
@@ -637,7 +638,7 @@
       (cons (firstn n xs)
             (tuples (nthcdr n xs) n))))
 
-(def caris (x val)
+(def caris (x val) 
   " Determines if (car x) is `val'.
     See also [[is]] [[car]] "
   (and (acons x) (is (car x) val)))
@@ -658,7 +659,7 @@
   " Performs a `let' atomically, blocking other threads.
     See also [[atomic]] [[atwith]] [[atwiths]] "
   `(atomic (let ,@args)))
-
+  
 (mac atwith args
   " Performs a `with' atomically, blocking other threads.
     See also [[atomic]] [[atlet]] [[atwiths]] "
@@ -688,7 +689,7 @@
   " Defines a setter for the named form.
     See also [[=]] "
   (w/uniq gexpr
-    `(sref setter
+    `(sref setter 
            (fn (,gexpr)
              (let ,parms (cdr ,gexpr)
                ,@body))
@@ -725,8 +726,8 @@
           `(fn (val) (scdr (cdr ,g) val)))))
 
 ; Note: if expr0 macroexpands into any expression whose car doesn't
-; have a setter, setforms assumes it's a data structure in functional
-; position.  Such bugs will be seen only when the code is executed, when
+; have a setter, setforms assumes it's a data structure in functional 
+; position.  Such bugs will be seen only when the code is executed, when 
 ; sref complains it can't set a reference to a function.
 
 (def setforms (expr0)
@@ -746,7 +747,7 @@
                (f expr)
                ; assumed to be data structure in fn position
                (do (when (caris (car expr) 'fn)
-                     (warn "Inverting what looks like a function call"
+                     (warn "Inverting what looks like a function call" 
                            expr0 expr))
                    (w/uniq (g h)
                      (let argsyms (map [uniq] (cdr expr))
@@ -793,7 +794,7 @@
     See also [[while]] "
   (w/uniq (gfn gparm)
     `(do ,start
-         ((rfn ,gfn (,gparm)
+         ((rfn ,gfn (,gparm) 
             (if ,gparm
                 (do ,@body ,update (,gfn ,test))))
           ,test))))
@@ -891,12 +892,12 @@
           seq)
         (coerce (rem test (coerce seq 'cons)) 'string))))
 
-(def keep (test seq)
+(def keep (test seq) 
   " Returns a list with the elements of `seq' that pass `test'.
     See also [[rem]] [[pull]] "
   (rem (complement (testify test)) seq))
 
-(def trues (f seq)
+(def trues (f seq) 
   " Returns a list with all `nil's removed.
     See also [[rem]] [[keep]] "
   (rem nil (map f seq)))
@@ -918,7 +919,7 @@
     The result of `expr' is assigned to `var'.
     See also [[case]] [[if]] [[iflet]] "
   (let ex (afn (args)
-            (if (no (cdr args))
+            (if (no (cdr args)) 
                 (car args)
                 `(if (is ,var ',(car args))
                      ,(cadr args)
@@ -969,7 +970,7 @@
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ binds (list g val))
-         (do1 (car ,g)
+         (do1 (car ,g) 
               (,setter (cdr ,g)))))))
 
 (def adjoin (x xs (o test iso))
@@ -1025,7 +1026,7 @@
     [[wipe]] [[assert]] "
   (with (gop    (uniq)
          gargs  (map [uniq] args)
-         mix    (afn seqs
+         mix    (afn seqs 
                   (if (some no seqs)
                       nil
                       (+ (map car seqs)
@@ -1037,7 +1038,7 @@
 ; Can't simply mod pr to print strings represented as lists of chars,
 ; because empty string will get printed as nil.  Would need to rep strings
 ; as lists of chars annotated with 'string, and modify car and cdr to get
-; the rep of these.  That would also require hacking the reader.
+; the rep of these.  That would also require hacking the reader.  
 
 (def pr args
   " Prints the arguments.
@@ -1095,7 +1096,7 @@
   " Similar to `and' but assigns the previous expression to the variable `it'.
     See also [[and]] [[aif]] [[awhen]] [[afn]] "
   (if (no args)
-      't
+      't 
       (no (cdr args))
        (car args)
       `(let it ,(car args) (and it (aand ,@(cdr args))))))
@@ -1136,7 +1137,7 @@
                (push ,gres ,gacc))))
        (rev ,gacc))))
 
-; For the common C idiom while (x = snarfdata) != stopval.
+; For the common C idiom while (x = snarfdata) != stopval. 
 ; Rename this if use it often.
 
 (mac whiler (var expr endval . body)
@@ -1193,12 +1194,12 @@
   (let f (testify test)
     (if (alist seq)
         ((afn (seq n)
-           (if (no seq)
+           (if (no seq)   
                 nil
-               (f (car seq))
+               (f (car seq)) 
                 n
                (self (cdr seq) (+ n 1))))
-         (nthcdr start seq)
+         (nthcdr start seq) 
          start)
         (recstring [if (f (seq _)) _] seq start))))
 
@@ -1212,7 +1213,7 @@
     See also [[do]]"
   `(protect (fn () ,x) (fn () ,@ys)))
 
-(let expander
+(let expander 
      (fn (f var name body)
        `(let ,var (,f ,name)
           (after (do ,@body) (close ,var))))
@@ -1337,7 +1338,7 @@
   " Returns the result of one of the given `exprs', chosen at random.
     See also [[random-elt]] "
   `(case (rand ,(len exprs))
-     ,@(let key -1
+     ,@(let key -1 
          (mappend [list (++ key) _]
                   exprs))))
 
@@ -1345,7 +1346,7 @@
   " Repeats `expr' `n' times, then returns the results in a list.
     See also [[repeat]] "
   (w/uniq ga
-    `(let ,ga nil
+    `(let ,ga nil     
        (repeat ,n (push ,expr ,ga))
        (rev ,ga))))
 
@@ -1386,7 +1387,7 @@
         (each elt (cdr seq)
           (if (f elt wins) (= wins elt)))
         wins)))
-
+              
 (def max args
   " Returns the highest argument.
     See also [[min]] [[best]] [[most]] "
@@ -1400,7 +1401,7 @@
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
-(def most (f seq)
+(def most (f seq) 
   " Selects the element of `seq' with the highest [f _].
     `f' is a score function for elements of `seq'.
     See also [[best]] "
@@ -1412,14 +1413,14 @@
       wins)))
 
 ; Insert so that list remains sorted.  Don't really want to expose
-; these but seem to have to because can't include a fn obj in a
+; these but seem to have to because can't include a fn obj in a 
 ; macroexpansion.
-
+  
 (def insert-sorted (test elt seq)
   " Inserts `elt' into a sequence `seq' sorted by `test'. "
   (if (no seq)
-       (list elt)
-      (test elt (car seq))
+       (list elt) 
+      (test elt (car seq)) 
        (cons elt seq)
       (cons (car seq) (insert-sorted test elt (cdr seq)))))
 
@@ -1429,11 +1430,11 @@
 
 (def reinsert-sorted (test elt seq)
   " Inserts `elt' into a sequence `seq', partially sorted by `test'. "
-  (if (no seq)
-       (list elt)
+  (if (no seq) 
+       (list elt) 
       (is elt (car seq))
        (reinsert-sorted test elt (cdr seq))
-      (test elt (car seq))
+      (test elt (car seq)) 
        (cons elt (rem elt seq))
       (cons (car seq) (reinsert-sorted test elt (cdr seq)))))
 
@@ -1442,7 +1443,7 @@
     by `test'. "
   `(zap [reinsert-sorted ,test ,elt _] ,seq))
 
-; Could make this look at the sig of f and return a fn that took the
+; Could make this look at the sig of f and return a fn that took the 
 ; right no of args and didn't have to call apply (or list if 1 arg).
 
 (def memo (f)
@@ -1466,7 +1467,7 @@
 (def <= args
   " Determines if each argument is less than or equal to succeeding
     arguments. "
-  (or (no args)
+  (or (no args) 
       (no (cdr args))
       (and (no (> (car args) (cadr args)))
            (apply <= (cdr args)))))
@@ -1474,11 +1475,11 @@
 (def >= args
   " Determines if each argument is greater than or equal to succeeding
     arguments. "
-  (or (no args)
+  (or (no args) 
       (no (cdr args))
       (and (no (< (car args) (cadr args)))
            (apply >= (cdr args)))))
-
+              
 (def whitec (c)
   " Determines if the given `c' is a whitespace character. "
   (in c #\space #\newline #\tab #\return))
@@ -1498,7 +1499,7 @@
 (def readline ((o str (stdin)))
   " Reads a string terminated by a newline from the stream `str'. "
   (awhen (readc str)
-    (tostring
+    (tostring 
       (writec it)
       (whiler c (readc str) #\newline
         (writec c)))))
@@ -1534,8 +1535,8 @@
     (pr init (car elts))
     (map [pr sep _] (cdr elts))
     elts))
-
-(def prs args
+             
+(def prs args     
   " Prints several arguments separated by spaces. "
   (prall args "" #\space))
 
@@ -1569,11 +1570,11 @@
               (pair args))
        ,g)))
 
-(def keys (h)
+(def keys (h) 
   " Returns a list of keys in the table or object `h'. "
   (accum a (ontable k v h (a k))))
 
-(def vals (h)
+(def vals (h) 
   " Returns a list of values in the table or object `h'. "
   (accum a (ontable k v h (a v))))
 
@@ -1656,7 +1657,7 @@
   " Rounds off a fractional value to the nearest absolute highest
     whole number. "
   (withs (base (trunc n) rem (abs (- n base)))
-    (if (>= rem 1/2)
+    (if (>= rem 1/2) 
         ((if (> n 0) + -) base 1)
         base)))
 
@@ -1667,7 +1668,7 @@
 (def avg (ns) " Averages all numbers in `ns'. " (/ (apply + ns) (len ns)))
 
 ; Use mergesort on assumption that mostly sorting mostly sorted lists
-; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1)
+; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1) 
 
 (def sort (test seq)
   " Sorts `seq' according to `test'. "
@@ -1675,7 +1676,7 @@
       (mergesort test (copy seq))
       (coerce (mergesort test (coerce seq 'cons)) (type seq))))
 
-; Destructive stable merge-sort, adapted from slib and improved
+; Destructive stable merge-sort, adapted from slib and improved 
 ; by Eli Barzilay for MzLib; re-written in Arc.
 
 (def mergesort (less? lst)
@@ -1742,7 +1743,7 @@
 (def split (seq pos)
   " Splits `seq' at offset `pos', returning a two-element list of the
     split. "
-  (withs (mid (nthcdr (- pos 1) seq)
+  (withs (mid (nthcdr (- pos 1) seq) 
           s2  (cdr mid))
     (wipe (cdr mid))
     (list seq s2)))
@@ -1790,7 +1791,7 @@
   " Defines an object template for field values, with inclusion for
     existing templates. "
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
-    `(= (templates* ',name)
+    `(= (templates* ',name) 
         (+ (mappend templates* ',(rev includes))
            (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
                         (pair fields)))))))
@@ -1841,7 +1842,7 @@
   " Reads all association lists from `file' and creates a list
     of objects instantiating the given template containing the
     data in each association list. "
-  (map (fn (pairs) (templatize tem pairs))
+  (map (fn (pairs) (templatize tem pairs)) 
        (w/infile in file (readall in))))
 
 
@@ -1872,7 +1873,7 @@
   " Reads an expression, blocking any errors. "
   (errsafe (read arg)))
 
-(def safe-load-table (filename)
+(def safe-load-table (filename) 
   " Loads a table from `filename', blocking any errors. "
   (or (errsafe (load-table filename))
       (table)))
@@ -1901,7 +1902,7 @@
       str
       (+ (cut str 0 limit) "...")))
 
-(def random-elt (seq)
+(def random-elt (seq) 
   " Returns an element of `seq' chosen by random.
     See also [[rand-choice]] "
   (seq (rand (len seq))))
@@ -1939,7 +1940,7 @@
     or else returns true. "
   `(no (or ,@args)))
 
-; Consider making the default sort fn take compare's two args (when do
+; Consider making the default sort fn take compare's two args (when do 
 ; you ever have to sort mere lists of numbers?) and rename current sort
 ; as prim-sort or something.
 
@@ -2051,7 +2052,7 @@
            (with (chars nil  i -1)
              (w/instring s str
                (whilet c (readc s)
-                 (case c
+                 (case c 
                    #\# (do (a (coerce (rev chars) 'string))
                            (wipe chars)
                            (a (read s)))
@@ -2062,7 +2063,7 @@
                        (push c chars))))
               (when chars
                 (a (coerce (rev chars) 'string)))))))
-
+  
   (mac prf (str . args)
     " Prints according to a format string, replacing ~* with arguments. "
     `(let ,argsym (list ,@args)
@@ -2165,7 +2166,7 @@
     `(with (,gn ,n ,gc 0)
        (each ,var ,val
          (when (multiple (++ ,gc) ,gn)
-           (pr ".")
+           (pr ".") 
            ;(flushout)
            )
          ,@body)
@@ -2288,7 +2289,7 @@
 
 (mac defhook (name . rest)
   `(= (hooks* ',name) (fn ,@rest)))
-
+  
 (mac redef (name parms . body)
   " Redefine a function.  The old function definitiaion may be used within
     `body' as the name `old'. "
@@ -2389,7 +2390,7 @@
 ;   or should setf on a table just take n args?
 
 ; solution to the "problem" of improper lists: allow any atom as a list
-;  terminator, not just nil.  means list recursion should terminate on
+;  terminator, not just nil.  means list recursion should terminate on 
 ;  atom rather than nil, (def empty (x) (or (atom x) (is x "")))
 ; table should be able to take an optional initial-value.  handle in sref.
 ; warn about code of form (if (= )) -- probably mean is
