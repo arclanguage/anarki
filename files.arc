@@ -55,6 +55,10 @@
      " Joins `parts' into a path string. "
      ($ (path->string (build-path ,@parts))))
 
+(def qualified-path (path)
+     " Returns the fully-qualified path of a possibly relative `path'. "
+     ($ (path->string (simplify-path (path->complete-path ,path)))))
+
 (def ensure-dir (path)
   " Ensures that the specified directory exists, and creates it if not
     yet created. "
