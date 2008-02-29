@@ -24,12 +24,12 @@
 ;  (= (cdr (cdr str)) "foo") couldn't work because no way to get str tail
 
 (set help* (table))
-(set *call* (table))
+(set call* (table))
 
-(sref *call* ref 'cons)
-(sref *call* ref 'string)
-(sref *call* ref 'table)
-(sref *call* ref 'vec)
+(sref call* ref 'cons)
+(sref call* ref 'string)
+(sref call* ref 'table)
+(sref call* ref 'vec)
 
 (set *current-load-file* "arc.arc")
 (set *source-file* (table))
@@ -417,7 +417,7 @@
       (pred (car seq))
       (ormap pred (cdr seq)))))
 
-; The *call* table defines how to deal with non-functions
+; The call* table defines how to deal with non-functions
 ; in functional positions.
 ; Each entry is just a (type fn) pair.
 ; The fn should take as its first argument the object itself;
@@ -429,7 +429,7 @@
     The first argument to this function is the `rep' of the object,
     and the rest are passed as arguments to the object.
     See also [[rep]] [[annotate]] [[type]] "
-  `(sref *call* (fn ,parms ,@body) ',name))
+  `(sref call* (fn ,parms ,@body) ',name))
 
 (defcall num (num . args)
   (if (acons args) (apply (car args) num (cdr args))
