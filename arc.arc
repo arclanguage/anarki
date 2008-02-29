@@ -2072,20 +2072,20 @@
        (pr ,@(parse-format str))))
 )
 
-(wipe *load-file-stack*)
+(wipe load-file-stack*)
 ;;why not (o hook idfn) ?
 (def load (file (o hook))
   " Reads the expressions in `file' and evaluates them.  Read expressions
     may be preprocessed by `hook'.
     See also [[require]]. "
-  (push current-load-file* *load-file-stack*)
+  (push current-load-file* load-file-stack*)
   (= current-load-file* file)
   (or= hook idfn)
   (after
     (w/infile f file
       (whilet e (read f)
         (eval (hook e))))
-    (do (= current-load-file* (pop *load-file-stack*)) nil)))
+    (do (= current-load-file* (pop load-file-stack*)) nil)))
 
 (= *required-files* (table))
 
