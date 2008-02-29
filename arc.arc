@@ -1190,7 +1190,9 @@
 
 (def since (t1) (- (seconds) t1))
 
-(def hours-since (t1) (/ (since t1) 60))
+(def minutes-since (t1) (/ (since t1) 60))
+
+(def hours-since (t1) (/ (since t1) 3600))
 
 (def days-since (t1) (/ (since t1) 86400))
 
