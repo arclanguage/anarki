@@ -600,7 +600,7 @@
       (no (cdr seqs)) 
        (map1 f (car seqs))
       ((afn (seqs)
-        (if (some no seqs) 
+        (if (some no seqs)  
             nil
             (cons (apply f (map1 car seqs))
                   (self (map1 cdr seqs)))))
