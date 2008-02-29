@@ -57,7 +57,7 @@
 
 (def qualified-path (path)
      " Returns the fully-qualified path of a possibly relative `path'. "
-     ($ (path->string (simplify-path (path->complete-path ,path)))))
+     ($ (path->string (simplify-path (build-path (simplify-path (path->complete-path ,path)) ".")))))
 
 (def ensure-dir (path)
   " Ensures that the specified directory exists, and creates it if not
