@@ -39,12 +39,13 @@
         (let os (which-os)
           (if
             ; If we're running Unix, MzScheme <371 has a bug
-            ; where make-directory* sets the sticky bit.
+            ; where make-directory sets the sticky bit.
             ; Thus, we want to use system instead.
             (or (is os 'unix) (is os 'macosx))
-             [system (string "mkdir -p " _)]
-            ($ (begin (require (lib "file.ss")) make-directory*))))
-        ($ make-directory))
+             [system (string
+                       "mkdir " (if parents "-p ") _)]
+            ($ (begin (require (lib "file.ss"))
+                      (if (null? ,parents) make-directory make-directory*))))))
     path)
    nil)
 
@@ -62,4 +63,5 @@
 (def ensure-dir (path)
   " Ensures that the specified directory exists, and creates it if not
     yet created. "
-  (mkdir path t))
+  (unless (dir-exists path)
+          (mkdir path t)))
