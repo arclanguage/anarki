@@ -1212,9 +1212,22 @@
   (or (errsafe (load-table filename))
       (table)))
 
+(def mkdir (path (o parents))
+   ((if parents
+        (let os (which-os)
+          (if
+            ; If we're running Unix, MzScheme <371 has a bug
+            ; where make-directory* sets the sticky bit.
+            ; Thus, we want to use system instead.
+            (or (is os 'unix) (is os 'macosx))
+             [system (string "mkdir -p " _)]
+            ($ (begin (require (lib "file.ss")) make-directory*))))
+        ($ make-directory))
+    path)
+   nil)
+
 (def ensure-dir (path)
-  (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
+  (mkdir path t))
 
 (def pad (val digits (o char #\ ))
   (= val (string val))
