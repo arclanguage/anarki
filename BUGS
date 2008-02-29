@@ -5,6 +5,13 @@ COMPATIBILITY ISSUES
 This section documents incompatibilites between Anarki and Arc2.
 See also the CONVENTIONS file.
 
+*2008/02/29* The more efficient version of `whiler' will in Anarki will
+break code which depends on having stopval evaluated each time through
+the loop:
+  (whiler x (read) (prn "You should type me in quotes")
+    t)
+
+--Re: new macros (see bug dated *2007/02/19* below)
 The current thinking is that new macros generally don't need to be
 mentioned here. It should be understood that defining new macros could
 potentially break code. To get a list of the added macros in Anarki,
