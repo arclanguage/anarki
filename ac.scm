@@ -1128,24 +1128,21 @@
 ; inside an atomic-invoke. atomic-invoke is allowed to
 ; nest within a thread; the thread-cell keeps track of
 ; whether this thread already holds the lock.
-; XXX make sure cell is set #f after an exception?
-; maybe it doesn't matter since thread will die?
 
 (define ar-the-sema (make-semaphore 1))
 
 (define ar-sema-cell (make-thread-cell #f))
 
-(xdef 'atomic-invoke (lambda (f)
-                       (if (thread-cell-ref ar-sema-cell)
-                           (ar-apply f '())
-                           (begin
-                             (thread-cell-set! ar-sema-cell #t)
-                             (let ((ret 
-                                    (call-with-semaphore
-                                     ar-the-sema
-                                     (lambda () (ar-apply f '())))))
-                               (thread-cell-set! ar-sema-cell #f)
-                               ret)))))
+(xdef 'atomic-invoke
+  (lambda (f)
+    (if (thread-cell-ref ar-sema-cell)
+        (ar-apply f '())
+        (dynamic-wind
+            (lambda () (thread-cell-set! ar-sema-cell #t))
+            (lambda ()
+              (call-with-semaphore ar-the-sema
+                                   (lambda () (ar-apply f '()))))
+            (lambda () (thread-cell-set! ar-sema-cell #f))))))
 
 (xdef 'dead (lambda (x) (tnil (thread-dead? x))))
 
