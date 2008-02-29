@@ -16,9 +16,12 @@ use: (load "lib/new-macros.arc") (new-macros)
  already defined in Arc1.
 
 ***************************************************************************
-ARC1 ISSUES
+ARC# ISSUES
  This section documents bugs in the official Arc distribution. They are 
  also present in Anarki unless otherwise noted.
+
+*2008/02/29* `markdown` does not wrap the body of text immediately after
+ a <pre> block with the <p> tag.
 
 *2007/02/19* Macros will override local variables in (let ...) and other
  local-variable-creating forms.
