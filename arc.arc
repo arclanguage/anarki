@@ -31,7 +31,7 @@
 (sref call* ref 'table)
 (sref call* ref 'vec)
 
-(set *current-load-file* "arc.arc")
+(set current-load-file* "arc.arc")
 (set *source-file* (table))
 
 (set do (annotate 'mac
@@ -47,7 +47,7 @@
   'args
   'do)
 (sref *source-file*
-  *current-load-file*
+  current-load-file*
   'do)
 
 (set safeset (annotate 'mac
@@ -66,7 +66,7 @@
                    (if (is (type ',(car body)) 'string)
                        (sref help* '(fn ,(car body)) ',name)
                        (sref help* '(fn nil) ',name))
-                   (sref *source-file* *current-load-file* ',name)
+                   (sref *source-file* current-load-file* ',name)
                    (safeset ,name (fn ,parms ,@body))))))
 
 ;documentation for def itself
@@ -79,7 +79,7 @@
   '(name parms . body)
   'def)
 (sref *source-file*
-  *current-load-file*
+  current-load-file*
   'def)
 
 (def caar (xs) " Equivalent to (car (car xs)) " (car (car xs)))
@@ -133,7 +133,7 @@
                   (if (is (type ',(car body)) 'string)
                       (sref help* '(mac ,(car body)) ',name)
                       (sref help* '(mac nil) ',name))
-                  (sref *source-file* *current-load-file* ',name)
+                  (sref *source-file* current-load-file* ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
 (sref help*
@@ -145,7 +145,7 @@
   '(name parms . body)
   'mac)
 (sref *source-file*
-  *current-load-file*
+  current-load-file*
   'mac)
 
 (mac $ body
@@ -2078,14 +2078,14 @@
   " Reads the expressions in `file' and evaluates them.  Read expressions
     may be preprocessed by `hook'.
     See also [[require]]. "
-  (push *current-load-file* *load-file-stack*)
-  (= *current-load-file* file)
+  (push current-load-file* *load-file-stack*)
+  (= current-load-file* file)
   (or= hook idfn)
   (after
     (w/infile f file
       (whilet e (read f)
         (eval (hook e))))
-    (do (= *current-load-file* (pop *load-file-stack*)) nil)))
+    (do (= current-load-file* (pop *load-file-stack*)) nil)))
 
 (= *required-files* (table))
 
@@ -2383,7 +2383,7 @@
      ^^ ^
      ^ val))
 
-(set *current-load-file* nil)
+(set current-load-file* nil)
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?
