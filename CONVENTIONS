@@ -21,6 +21,11 @@ COMPATIBILITY
   repository, run "git push <branchname>:refs/heads/<branchname>".
   After the remote branch is created, just "git push" will work.
 
+NAMING
+  Global variables typically have an asterisk after their name
+  (e.g. hooks*, templates*). All names are lowercase, with hyphen
+  separators if neccessary.
+
 DOCUMENTATION
   It's useful for functions and macros to include docstrings, although
   this isn't mandatory to encourage exploratory
