@@ -10,12 +10,21 @@ COMPATIBILITY
   arcn release. This means that code that runs with arcn should always
   run with Anarki code.
 
+  For the purposes of diffing and so forth, avoid reformatting
+  code from arcn.tar without actually changing the code. This includes
+  removing trailing whitespace, etc.
+
   Since it's also important to experiment with more radical ideas that
   will break compatibility, feel free to create branches
   ("git branch <branchname>" followed by "git checkout <branchname>")
   and commit your work there. To create a new branch in the remote
   repository, run "git push <branchname>:refs/heads/<branchname>".
   After the remote branch is created, just "git push" will work.
+
+NAMING
+  Global variables typically have an asterisk after their name
+  (e.g. hooks*, templates*). All names are lowercase, with hyphen
+  separators if neccessary.
 
 DOCUMENTATION
   It's useful for functions and macros to include docstrings, although

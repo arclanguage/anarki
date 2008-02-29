@@ -502,7 +502,7 @@
 (define (ar-apply fn args)
   (if (procedure? fn) (apply fn args)
       (begin
-        (let ((call (hash-table-get (arc-eval '*call*) (ar-type fn) #f)))
+        (let ((call (hash-table-get (arc-eval 'call*) (ar-type fn) #f)))
           (if call (apply call (cons (ar-rep fn) args))
               (err "Function call on inappropriate object" fn args))))))
 

@@ -20,7 +20,7 @@
   `(do (= ,name (table))
        (with (here ,name ,@(join (intersperse nil (join public private)) '(nil)))
          ; replace 'def with '= so that 'def won't erroneously
-         ; assign *help*, sig, and *source-file* entries
+         ; assign help*, sig, and source-file* entries
 	 ,@(map
              [if (caris _ 'def)
                 ; would have used let (defsym name parms . body) _ but

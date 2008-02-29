@@ -119,11 +119,11 @@ actually work with tagged objects yet.
       (old c (car ind))))
 
 ; Have to redefine these so they get the new `ref'
-(= (*call* 'cons) ref)
-(= (*call* 'cons) ref)
-(= (*call* 'table) ref)
-(= (*call* 'vec) ref)
-(= (*call* 'fn) ref)
+(= (call* 'cons) ref)
+(= (call* 'cons) ref)
+(= (call* 'table) ref)
+(= (call* 'vec) ref)
+(= (call* 'fn) ref)
 
 (redef sref (c v . rest)
   (aif (get-attachment '= c)

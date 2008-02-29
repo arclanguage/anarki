@@ -23,21 +23,21 @@
 ; separate string type
 ;  (= (cdr (cdr str)) "foo") couldn't work because no way to get str tail
 
-(set *help* (table))
-(set *call* (table))
+(set help* (table))
+(set call* (table))
 
-(sref *call* ref 'cons)
-(sref *call* ref 'string)
-(sref *call* ref 'table)
-(sref *call* ref 'vec)
+(sref call* ref 'cons)
+(sref call* ref 'string)
+(sref call* ref 'table)
+(sref call* ref 'vec)
 
-(set *current-load-file* "arc.arc")
-(set *source-file* (table))
+(set current-load-file* "arc.arc")
+(set source-file* (table))
 
 (set do (annotate 'mac
           (fn args `((fn () ,@args)))))
 ;documentation for do itself
-(sref *help*
+(sref help*
   '(fn
   " Evaluates each expression in sequence and returns the result of the
     last expression.
@@ -46,8 +46,8 @@
 (sref sig
   'args
   'do)
-(sref *source-file*
-  *current-load-file*
+(sref source-file*
+  current-load-file*
   'do)
 
 (set safeset (annotate 'mac
@@ -64,13 +64,13 @@
               `(do (sref sig ',parms ',name)
                    ; Document the function, including the docstring if present
                    (if (is (type ',(car body)) 'string)
-                       (sref *help* '(fn ,(car body)) ',name)
-                       (sref *help* '(fn nil) ',name))
-                   (sref *source-file* *current-load-file* ',name)
+                       (sref help* '(fn ,(car body)) ',name)
+                       (sref help* '(fn nil) ',name))
+                   (sref source-file* current-load-file* ',name)
                    (safeset ,name (fn ,parms ,@body))))))
 
 ;documentation for def itself
-(sref *help*
+(sref help*
   '(fn
   " Defines a function with the given `name', `parms', and `body'.
     See also [[fn]] [[mac]] ")
@@ -78,8 +78,8 @@
 (sref sig
   '(name parms . body)
   'def)
-(sref *source-file*
-  *current-load-file*
+(sref source-file*
+  current-load-file*
   'def)
 
 (def caar (xs) " Equivalent to (car (car xs)) " (car (car xs)))
@@ -131,12 +131,12 @@
              `(do (sref sig ',parms ',name)
                   ; Document the macro, including the docstring if present
                   (if (is (type ',(car body)) 'string)
-                      (sref *help* '(mac ,(car body)) ',name)
-                      (sref *help* '(mac nil) ',name))
-                  (sref *source-file* *current-load-file* ',name)
+                      (sref help* '(mac ,(car body)) ',name)
+                      (sref help* '(mac nil) ',name))
+                  (sref source-file* current-load-file* ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
-(sref *help*
+(sref help*
   '(fn
   " Defines a macro, a special function which transforms code.
     See also [[def]] ")
@@ -144,8 +144,8 @@
 (sref sig
   '(name parms . body)
   'mac)
-(sref *source-file*
-  *current-load-file*
+(sref source-file*
+  current-load-file*
   'mac)
 
 (mac $ body
@@ -417,7 +417,7 @@
       (pred (car seq))
       (ormap pred (cdr seq)))))
 
-; The *call* table defines how to deal with non-functions
+; The call* table defines how to deal with non-functions
 ; in functional positions.
 ; Each entry is just a (type fn) pair.
 ; The fn should take as its first argument the object itself;
@@ -429,7 +429,7 @@
     The first argument to this function is the `rep' of the object,
     and the rest are passed as arguments to the object.
     See also [[rep]] [[annotate]] [[type]] "
-  `(sref *call* (fn ,parms ,@body) ',name))
+  `(sref call* (fn ,parms ,@body) ',name))
 
 (defcall num (num . args)
   (if (acons args) (apply (car args) num (cdr args))
@@ -600,7 +600,7 @@
       (no (cdr seqs)) 
        (map1 f (car seqs))
       ((afn (seqs)
-        (if (some no seqs) 
+        (if (some no seqs)  
             nil
             (cons (apply f (map1 car seqs))
                   (self (map1 cdr seqs)))))
@@ -2072,31 +2072,31 @@
        (pr ,@(parse-format str))))
 )
 
-(wipe *load-file-stack*)
+(wipe load-file-stack*)
 ;;why not (o hook idfn) ?
 (def load (file (o hook))
   " Reads the expressions in `file' and evaluates them.  Read expressions
     may be preprocessed by `hook'.
     See also [[require]]. "
-  (push *current-load-file* *load-file-stack*)
-  (= *current-load-file* file)
+  (push current-load-file* load-file-stack*)
+  (= current-load-file* file)
   (or= hook idfn)
   (after
     (w/infile f file
       (whilet e (read f)
         (eval (hook e))))
-    (do (= *current-load-file* (pop *load-file-stack*)) nil)))
+    (do (= current-load-file* (pop load-file-stack*)) nil)))
 
-(= *required-files* (table))
+(= required-files* (table))
 
 (def require (file)
   " Loads `file' if it has not yet been `require'd.  Can be fooled by changing
     the name ((require \"foo.arc\") as opposed to (require \"./foo.arc\")), but
     this should not be a problem.
     See also [[load]]. "
-  (or (*required-files* file)
+  (or (required-files* file)
       (do
-        (= (*required-files* file) t)
+        (= (required-files* file) t)
         (load file))))
 
 (def positive (x)
@@ -2333,19 +2333,19 @@
          [re-match rx (downcase (coerce _ 'string))])
       (sort <
         (accum add
-          (ontable k (typ d) *help*
-            (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (*source-file* k)))
+          (ontable k (typ d) help*
+            (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (source-file* k)))
               (add k)))))))
 
 (def helpstr (name (o verbose t))
   " Returns a help string for the symbol `name'. "
   (tostring
-   (let h (*help* name)
+   (let h (help* name)
      (if (no h)
          (if verbose (prn name " is not documented."))
          (with (kind  (car h)
                 doc   (cadr h))
-           (aand verbose ((only [prn "(from \"" _ "\")"]) (*source-file* name)))
+           (aand verbose ((only [prn "(from \"" _ "\")"]) (source-file* name)))
            (pr "[" kind "]" (if (is kind 'mac) " " "  "))
            (prn (if (sig name)
                     (cons name (sig name))))
@@ -2383,7 +2383,7 @@
      ^^ ^
      ^ val))
 
-(set *current-load-file* nil)
+(set current-load-file* nil)
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?
