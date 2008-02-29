@@ -2369,10 +2369,9 @@
 (mac %%% () nil)
 
 (def input-history-update (expr)
-  (let expandedexpr (expand expr)
-    (= %%% %%
-       %% %)
-    (tostring (mac % () expandedexpr))))
+  (= %%% %%
+     %% %)
+  (tostring (mac % () expr)))
 
 (= ^ nil
    ^^ nil
