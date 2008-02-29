@@ -1233,7 +1233,8 @@
    nil)
 
 (def ensure-dir (path)
-  (mkdir path t))
+  (unless (dir-exists path)
+          (mkdir path t)))
 
 (def pad (val digits (o char #\ ))
   (= val (string val))
