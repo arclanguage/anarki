@@ -1886,7 +1886,7 @@
 
 (def date ((o time (seconds)))
   " Returns the date as a string in YYYY-MM-DD format. "
-  (let date ($ (seconds->date ,time))
+  (let date ($ (seconds->date ,(seconds)))
     (string (pad ($ (date-year ,date)) 4 #\0) "-"
             (pad ($ (date-month ,date)) 2 #\0) "-"
             (pad ($ (date-day ,date)) 2 #\0))))
