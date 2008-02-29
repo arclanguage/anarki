@@ -32,7 +32,7 @@
 (sref call* ref 'vec)
 
 (set current-load-file* "arc.arc")
-(set *source-file* (table))
+(set source-file* (table))
 
 (set do (annotate 'mac
           (fn args `((fn () ,@args)))))
@@ -46,7 +46,7 @@
 (sref sig
   'args
   'do)
-(sref *source-file*
+(sref source-file*
   current-load-file*
   'do)
 
@@ -66,7 +66,7 @@
                    (if (is (type ',(car body)) 'string)
                        (sref help* '(fn ,(car body)) ',name)
                        (sref help* '(fn nil) ',name))
-                   (sref *source-file* current-load-file* ',name)
+                   (sref source-file* current-load-file* ',name)
                    (safeset ,name (fn ,parms ,@body))))))
 
 ;documentation for def itself
@@ -78,7 +78,7 @@
 (sref sig
   '(name parms . body)
   'def)
-(sref *source-file*
+(sref source-file*
   current-load-file*
   'def)
 
@@ -133,7 +133,7 @@
                   (if (is (type ',(car body)) 'string)
                       (sref help* '(mac ,(car body)) ',name)
                       (sref help* '(mac nil) ',name))
-                  (sref *source-file* current-load-file* ',name)
+                  (sref source-file* current-load-file* ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
 (sref help*
@@ -144,7 +144,7 @@
 (sref sig
   '(name parms . body)
   'mac)
-(sref *source-file*
+(sref source-file*
   current-load-file*
   'mac)
 
@@ -2334,7 +2334,7 @@
       (sort <
         (accum add
           (ontable k (typ d) help*
-            (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (*source-file* k)))
+            (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (source-file* k)))
               (add k)))))))
 
 (def helpstr (name (o verbose t))
@@ -2345,7 +2345,7 @@
          (if verbose (prn name " is not documented."))
          (with (kind  (car h)
                 doc   (cadr h))
-           (aand verbose ((only [prn "(from \"" _ "\")"]) (*source-file* name)))
+           (aand verbose ((only [prn "(from \"" _ "\")"]) (source-file* name)))
            (pr "[" kind "]" (if (is kind 'mac) " " "  "))
            (prn (if (sig name)
                     (cons name (sig name))))
