@@ -10,6 +10,10 @@ COMPATIBILITY
   arcn release. This means that code that runs with arcn should always
   run with Anarki code.
 
+  For the purposes of diffing and so forth, avoid reformatting
+  code from arcn.tar without actually changing the code. This includes
+  removing trailing whitespace, etc.
+
   Since it's also important to experiment with more radical ideas that
   will break compatibility, feel free to create branches
   ("git branch <branchname>" followed by "git checkout <branchname>")
