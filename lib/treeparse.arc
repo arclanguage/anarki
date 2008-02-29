@@ -24,66 +24,66 @@
 
 (mac delay-parser (p)
   "Delay evaluation of a parser, in case it is not yet defined."
-  (let rem (uniq)
-    `(fn (,rem)
-       (parse ,p ,rem))))
+  (let remaining (uniq)
+    `(fn (,remaining)
+       (parse ,p ,remaining))))
 
-(def return (val rem (o actions nil))
-  "Signal a successful parse. Parsed list in val, remaining tokens in rem."
-  (list val rem actions))
+(def return (val remaining (o actions nil))
+  "Signal a successful parse."
+  (list val remaining actions))
 
-(def parse (parser rem)
+(def parse (parser remaining)
   "Apply parser (or literal, or list) to input."
-  (if (isa parser 'fn) (parser rem)
-      (acons parser) (parse-list parser rem)
-      (parse (lit parser) rem)))
+  (if (isa parser 'fn) (parser remaining)
+      (acons parser) (parse-list parser remaining)
+      (parse (lit parser) remaining)))
 
 (def parse-list (parsers li)
   (when (and (alist li) (alist (car li)))
-    (iflet (parsed rem actions) (seq-r parsers (car li) nil nil)
-           (unless rem (return (list parsed)
-                               (cdr li) actions)))))
+    (iflet (parsed remaining actions) (seq-r parsers (car li) nil nil)
+           (unless remaining (return (list parsed)
+                                     (cdr li) actions)))))
 
 (def lit (a)
   "Creates a parser that matches a literal. You shouldn't need to
 call this directly, `parse' should wrap up literals for you."
-  (fn (rem)
-    (when (and (acons rem) (iso a (car rem)))
-      (return (list (car rem)) (cdr rem)))))
+  (fn (remaining)
+    (when (and (acons remaining) (iso a (car remaining)))
+      (return (list (car remaining)) (cdr remaining)))))
 
 (def seq parsers
   "Applies parsers in sequential order."
-  (fn (rem)
-    (seq-r parsers rem nil nil)))
+  (fn (remaining)
+    (seq-r parsers remaining nil nil)))
 
 (def seq-r (parsers li acc act-acc)
   (if (no parsers) (return acc li act-acc)
-      (iflet (parsed rem actions) (parse (car parsers) li)
-             (seq-r (cdr parsers) rem 
+      (iflet (parsed remaining actions) (parse (car parsers) li)
+             (seq-r (cdr parsers) remaining 
                     (join acc parsed)
                     (join act-acc actions)))))
 
 (def alt parsers
   "Alternatives, like Parsec's <|>."
-  (fn (rem) (alt-r parsers rem)))
+  (fn (remaining) (alt-r parsers remaining)))
 
-(def alt-r (parsers rem)
+(def alt-r (parsers remaining)
   (if (no parsers) nil
-      (or (parse (car parsers) rem)
-          (alt-r (cdr parsers) rem))))
+      (or (parse (car parsers) remaining)
+          (alt-r (cdr parsers) remaining))))
 
-(def nothing (rem)
+(def nothing (remaining)
   "A parser that consumes nothing."
-  (return nil rem))
+  (return nil remaining))
 
-(def at-end (rem)
+(def at-end (remaining)
   "A parser that succeeds only if input is empty."
-  (unless rem (return nil nil)))
+  (unless remaining (return nil nil)))
 
-(def anything (rem)
+(def anything (remaining)
   "A parser that consumes one token."
-  (when (acons rem)
-    (return (list (car rem)) (cdr rem))))
+  (when (acons remaining)
+    (return (list (car remaining)) (cdr remaining))))
 
 (def maybe (parser)
   "Parser appears once, or not."
@@ -91,24 +91,24 @@ call this directly, `parse' should wrap up literals for you."
 
 (def cant-see (parser)
   "Parser does not appear next in the input stream."
-  (fn (rem)
-    (if (parse parser rem) nil
-        (return nil rem))))
+  (fn (remaining)
+    (if (parse parser remaining) nil
+        (return nil remaining))))
 
 (def many (parser)
   "Parser is repeated zero or more times."
-  (fn (rem) (many-r parser rem nil nil)))
+  (fn (remaining) (many-r parser remaining nil nil)))
 
 (def many-r (parser li acc act-acc)
-  (iflet (parsed rem actions) (parse parser li)
-         (many-r parser rem
+  (iflet (parsed remaining actions) (parse parser li)
+         (many-r parser remaining
                  (join acc parsed) 
                  (join act-acc actions))
          (return acc li act-acc)))
 
 (def many1 (parser)
   "Parser is repeated one or more times."
-  (seq parser (many parser)) rem)
+  (seq parser (many parser)))
 
 (def many2 (parser)
   "Parser is repeated two or more times."
@@ -116,17 +116,17 @@ call this directly, `parse' should wrap up literals for you."
 
 (def sem (fun parser)
   "Attach semantics to a parser."
-  (fn (rem)
-    (iflet (parsed rem actions) (parse parser rem)
-      (return parsed rem
-              (join actions
-                    (list (fn () (fun parsed))))))))
+  (fn (remaining)
+    (iflet (parsed remaining actions) (parse parser remaining)
+           (return parsed remaining
+                   (join actions
+                         (list (fn () (fun parsed))))))))
 
 (def filt (fun parser)
   "Attach filter to a parser."
-  (fn (rem)
-    (iflet (parsed rem actions) (parse parser rem)
-      (return (fun parsed) rem actions))))
+  (fn (remaining)
+    (iflet (parsed remaining actions) (parse parser remaining)
+           (return (fun parsed) remaining actions))))
 
 (def carry-out (result)
   "Execute the semantics of a parser result."
