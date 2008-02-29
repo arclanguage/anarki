@@ -1,16 +1,34 @@
 ;; Examples of using "treeparse.arc"
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Example 1: Pattern matching with guard clauses.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require "lib/defpat.arc")
 (require "lib/treeparse.arc")
-
 (mac w/nils (vars . body)
-  `(with ,(join (intersperse nil vars) '(nil))
-     ,@body))
+  `(with ,(intersperse nil vars) ,@body))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Example 1: Traditional Lisp cond using if and do.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Demonstrates the use of filters to simultaneously parse a tree
+;; and transform it. 
+
+(w/nils (s clause)
+  (= forms (filt [list:cons 'do _] (many anything)))
+  (= clause (filt car (list (seq anything forms))))
+  (= s (filt [cons 'if _] (many clause)))
+  (mac cond clauses (parse-all s clauses)))
+
+;; This is how the cond parser looks without the filters.
+;; (= forms  (many anything))
+;; (= clause (list (seq anything forms)))
+;; (= s      (many clause))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Example 2: Pattern matching with guard clauses.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Using filters to construct a more advanced macro, this time
+;; supplementing the `defpat' matching with guard clauses and a
+;; different syntax.
 
 ;; This may help, if you can read EBNF.
-;; stuff     ->  <anything but =, /, or ||>
+;; form      ->  <anything but =, /, or ||>
 ;; arglist   ->  [stuff*]
 ;; guard     ->  stuff*
 ;; body      ->  <anything>
@@ -21,10 +39,9 @@
 ;; a ->  = guard-clause*
 ;; s ->  [arglist a]* [last-body]
 (w/nils (stuff arglist guard body last-body guard-clause a s)
-  (= stuff (seq (cant-see (alt '/ '|| '=))
-                anything))
-  (= arglist (filt list (many stuff)))
-  (= guard (alt (filt list (many2 stuff)) stuff))
+  (= form (seq (cant-see (alt '/ '|| '=)) anything))
+  (= arglist (filt list (many form)))
+  (= guard (alt (filt list (many2 form)) form))
   (= body anything)
   (= last-body (many1 anything))
   (= guard-clause (filt [list (_ 1) (_ 3)] 
@@ -35,7 +52,7 @@
             (maybe last-body)))
   (mac hcase (xs . cases)
     "Haskell style pattern matching."
-    `(apply (p-m:fn ,@(car (s cases))) ,xs)))
+    `(apply (p-m:fn ,@(parse-all s cases)) ,xs)))
 
 ;; An example of the `hcase' pattern matching.
 ;; Gaurd clauses can be denoted either with / or ||.
@@ -51,7 +68,7 @@
     || t     = (cons x (union < xt yt))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Example 2: Brackets.
+;; Example 3: Brackets.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (= brack-parser 
@@ -61,11 +78,11 @@
   "Converts [bracket] lists to normal lists.
   (transform-brackets '([[[a] ([b]) c]]))  =>  ((((a) ((b)) c)))"
   (if (no (acons pats)) pats
-      (let parsed (car ((many brack-parser) pats))
+      (let parsed (parse-all (many brack-parser) pats)
         (map transform-brackets parsed))))
 
-;; `brack-parser' and `tranform-brackets' do the same thing as this,
-;; as long as '[] still evaluates to (make-br-fn nil).
+;; This does roughly the same thing as `tranform-brackets', as long as
+;; '[] still evaluates to (make-br-fn nil).
 (def transform-brackets2 (a)
   "(transform-brackets2 '([] [x]))  =>  (nil (x))"
   (if (and (acons a) (~dotted a))
