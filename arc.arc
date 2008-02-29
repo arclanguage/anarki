@@ -2087,16 +2087,16 @@
         (eval (hook e))))
     (do (= current-load-file* (pop load-file-stack*)) nil)))
 
-(= *required-files* (table))
+(= required-files* (table))
 
 (def require (file)
   " Loads `file' if it has not yet been `require'd.  Can be fooled by changing
     the name ((require \"foo.arc\") as opposed to (require \"./foo.arc\")), but
     this should not be a problem.
     See also [[load]]. "
-  (or (*required-files* file)
+  (or (required-files* file)
       (do
-        (= (*required-files* file) t)
+        (= (required-files* file) t)
         (load file))))
 
 (def positive (x)
