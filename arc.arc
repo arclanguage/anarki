@@ -1241,7 +1241,7 @@
   (string (n-of (- digits (len val)) char) val))
 
 (def date ((o time (seconds)))
-  (let date ($ (seconds->date ,(seconds)))
+  (let date ($ (seconds->date ,time))
     (string (pad ($ (date-year ,date)) 4 #\0) "-"
             (pad ($ (date-month ,date)) 2 #\0) "-"
             (pad ($ (date-day ,date)) 2 #\0))))
