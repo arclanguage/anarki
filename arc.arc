@@ -152,6 +152,9 @@
    " Allows access to the underlying Scheme. "
    (list 'seval (cons 'quasiquote body)))
 
+(mac $ body
+   (list 'seval (cons 'quasiquote body)))
+
 (mac and args
   " Evaluates arguments till false is found else returns the last one.
     See also [[or]] [[aand]] [[andf]] [[andmap]] "
@@ -1151,7 +1154,7 @@
             ,@body
             (,gf ,expr)))
          ,expr))))
-
+  
 ;(def macex (e)
 ;  (if (atom e)
 ;      e
