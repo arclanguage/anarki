@@ -1123,6 +1123,13 @@
                     (#t (err "Can't set reference " com ind val)))
               val))
 
+(xdef 'ref (lambda (com ind)
+             (cond ((hash-table? com) (hash-table-get com ind 'nil))
+                   ((vector? com) (vector-ref com ind))
+                   ((string? com) (string-ref com ind))
+                   ((pair? com)   (list-ref   com ind))
+                   (#t (err "Can't get reference " com ind)))))
+
 (define (nth-set! lst n val)
   (set-car! (list-tail lst n) val))
 
