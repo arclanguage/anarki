@@ -193,7 +193,7 @@
             (fn (next)
               (let ln (apply + (rev bldg))
                 (link ln
-                  (if (*help* (coerce ln 'sym))
+                  (if (help* (coerce ln 'sym))
                     (+ "?sym=" (urlencode ln))
                     (+ "?str=" (urlencode ln)))))
               (wipe bldg)

@@ -23,7 +23,7 @@
 ; separate string type
 ;  (= (cdr (cdr str)) "foo") couldn't work because no way to get str tail
 
-(set *help* (table))
+(set help* (table))
 (set *call* (table))
 
 (sref *call* ref 'cons)
@@ -37,7 +37,7 @@
 (set do (annotate 'mac
           (fn args `((fn () ,@args)))))
 ;documentation for do itself
-(sref *help*
+(sref help*
   '(fn
   " Evaluates each expression in sequence and returns the result of the
     last expression.
@@ -64,13 +64,13 @@
               `(do (sref sig ',parms ',name)
                    ; Document the function, including the docstring if present
                    (if (is (type ',(car body)) 'string)
-                       (sref *help* '(fn ,(car body)) ',name)
-                       (sref *help* '(fn nil) ',name))
+                       (sref help* '(fn ,(car body)) ',name)
+                       (sref help* '(fn nil) ',name))
                    (sref *source-file* *current-load-file* ',name)
                    (safeset ,name (fn ,parms ,@body))))))
 
 ;documentation for def itself
-(sref *help*
+(sref help*
   '(fn
   " Defines a function with the given `name', `parms', and `body'.
     See also [[fn]] [[mac]] ")
@@ -131,12 +131,12 @@
              `(do (sref sig ',parms ',name)
                   ; Document the macro, including the docstring if present
                   (if (is (type ',(car body)) 'string)
-                      (sref *help* '(mac ,(car body)) ',name)
-                      (sref *help* '(mac nil) ',name))
+                      (sref help* '(mac ,(car body)) ',name)
+                      (sref help* '(mac nil) ',name))
                   (sref *source-file* *current-load-file* ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
-(sref *help*
+(sref help*
   '(fn
   " Defines a macro, a special function which transforms code.
     See also [[def]] ")
@@ -2333,14 +2333,14 @@
          [re-match rx (downcase (coerce _ 'string))])
       (sort <
         (accum add
-          (ontable k (typ d) *help*
+          (ontable k (typ d) help*
             (when (or (part-match k) (part-match typ) (part-match d) (only.part-match (*source-file* k)))
               (add k)))))))
 
 (def helpstr (name (o verbose t))
   " Returns a help string for the symbol `name'. "
   (tostring
-   (let h (*help* name)
+   (let h (help* name)
      (if (no h)
          (if verbose (prn name " is not documented."))
          (with (kind  (car h)
