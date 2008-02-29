@@ -2,6 +2,9 @@
 (require "lib/settable-fn.arc")
 
 (def bidir-table ()
+  " Creates a bidirectional table.  Works like a normal
+    table but returns keys when queried with values.
+    See also [[table]] "
   (with (k-to-v (table)
          v-to-k (table))
     (add-attachments
