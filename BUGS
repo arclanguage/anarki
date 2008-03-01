@@ -5,6 +5,11 @@ COMPATIBILITY ISSUES
 This section documents incompatibilites between Anarki and Arc2.
 See also the CONVENTIONS file.
 
+*2008/03/01* Running this code in Arc2 get an error, as it should.
+  arc> ([list (_ 1)] 4)
+  Error: "Function call on inappropriate object 4 (1)"
+On Anarki, this goes into an infinite loop.
+
 *2008/02/29* The more efficient version of `whiler' will in Anarki will
 break code which depends on having stopval evaluated each time through
 the loop:
