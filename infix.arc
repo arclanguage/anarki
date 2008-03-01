@@ -28,12 +28,22 @@
       (apply old args)))
 
 ; call behavior for numbers is to switch functional position and first parameter
+; (unless the first parameter is itself a number, in which case we raise
+; an exception to prevent entering an infinite loop)
 
 (defcall int (n . args)
-  (if args (apply (car args) n (cdr args)) n))
+  (if (acons args)
+      (if (or (isa (car args) 'num) (isa (car args) 'int))
+          (err:tostring:pr "Number applied to number - " n " - parameters were - " args)
+          (apply (car args) n (cdr args)))
+      n))
 
 (defcall num (n . args)
-  (if args (apply (car args) n (cdr args)) n))
+  (if (acons args)
+      (if (or (isa (car args) 'num) (isa (car args) 'int))
+          (err:tostring:pr "Number applied to number - " n " - parameters were - " args)
+          (apply (car args) n (cdr args)))
+      n))
 
 ; operator precedences
 

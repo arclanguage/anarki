@@ -432,7 +432,10 @@
   `(sref call* (fn ,parms ,@body) ',name))
 
 (defcall num (num . args)
-  (if (acons args) (apply (car args) num (cdr args))
+  (if (acons args)
+      (if (or (isa (car args) 'num) (isa (car args) 'int))
+        (err:tostring:prn "Number applied to number - " num " - parameters - " args)
+        (apply (car args) num (cdr args)))
       num))
 
 (def *mbf-arglist-vars (arglist)
