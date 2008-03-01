@@ -1139,6 +1139,14 @@
 
 (xdef 'make-directory make-directory)
 (xdef 'make-directory* make-directory*)
+(xdef 'datetbl
+  (lambda (t)
+    (let ((dat (seconds->date t))
+          (tbl (make-hash-table 'equal)))
+      (hash-table-put! tbl 'year  (date-year dat))
+      (hash-table-put! tbl 'month (date-month dat))
+      (hash-table-put! tbl 'day   (date-day dat))
+      tbl)))
 
 (xdef 'seval (lambda (x) (eval (ac-denil x))))
 

@@ -1236,10 +1236,10 @@
   (string (n-of (- digits (len val)) char) val))
 
 (def date ((o time (seconds)))
-  (let date ($ (seconds->date ,time))
-    (string (pad ($ (date-year ,date)) 4 #\0) "-"
-            (pad ($ (date-month ,date)) 2 #\0) "-"
-            (pad ($ (date-day ,date)) 2 #\0))))
+  (let date (datetbl time)
+    (string (pad (date 'year) 4 #\0) "-"
+            (pad (date 'month) 2 #\0) "-"
+            (pad (date 'day) 2 #\0))))
 
 (def count (test x)
   (with (n 0 testf (testify test))
