@@ -1880,16 +1880,37 @@
   (or (errsafe (load-table filename))
       (table)))
 
+(def mkdir (path (o parents))
+   " Creates a directory.
+     If `parents' is non-nil, parent directories are created as needed."
+  ((let os (which-os)
+     (if
+       ; If we're running Unix, MzScheme <371 has a bug
+       ; where make-directory sets the sticky bit.
+       ; Thus, we want to use system instead.
+       (or (is os 'unix) (is os 'macosx))
+        [system (string "mkdir " (if parents "-p ") _)]
+
+       parents make-directory*
+       make-directory))
+   path))
+
+(def ensure-dir (path)
+  " Ensures that the specified directory exists, and creates it if not
+    yet created. "
+  (unless (dir-exists path)
+          (mkdir path t)))
+
 (def pad (val digits (o char #\ ))
   (= val (string val))
   (string (n-of (- digits (len val)) char) val))
 
 (def date ((o time (seconds)))
   " Returns the date as a string in YYYY-MM-DD format. "
-  (let date ($ (seconds->date ,time))
-    (string (pad ($ (date-year ,date)) 4 #\0) "-"
-            (pad ($ (date-month ,date)) 2 #\0) "-"
-            (pad ($ (date-day ,date)) 2 #\0))))
+  (let date (datetbl time)
+    (string (pad (date 'year) 4 #\0) "-"
+            (pad (date 'month) 2 #\0) "-"
+            (pad (date 'day) 2 #\0))))
 
 (def count (test x)
   " Counts the number of elements in `x' which pass `test'. "
@@ -2280,11 +2301,6 @@
      ,s))
 
 (= hooks* (table))
-
-(def which-os ()
-  " Returns a symbol representing which operating system Arc is running on.
-    Possible values are unix, windows, macos, macosx, and oskit. "
-  ($ (system-type)))
 
 (def hook (name . args)
   (aif (hooks* name) (apply it args)))
