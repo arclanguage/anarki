@@ -9,7 +9,7 @@
 ;; Demonstrates the use of filters to simultaneously parse a tree
 ;; and transform it. 
 
-(w/nils (s clause)
+(w/nils (s clause forms)
   (= forms (filt [list:cons 'do _] (many anything)))
   (= clause (filt car (list (seq anything forms))))
   (= s (filt [cons 'if _] (many clause)))
