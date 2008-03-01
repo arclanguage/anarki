@@ -103,6 +103,9 @@ GIT
   the remote one in such a way that there's no monolithic merge stage
   that needs to be recorded.
 
+  ****Question: How to use git-rebase properly?  Would probably be
+  good to add instructions for this here.
+
 NEWLINES
   All text should use Unix-style newlines. Be especially sure not to
   convert existing files into Windows-style newlines, as that screws
