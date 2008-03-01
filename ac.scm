@@ -48,6 +48,7 @@
 (require (lib "port.ss"))
 (require (lib "process.ss"))
 (require (lib "pretty.ss"))
+(require (lib "file.ss"))
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
@@ -1135,6 +1136,9 @@
                   (if (symbol? x) (expand-ssyntax x) x)))
 
 (xdef 'which-os system-type)
+
+(xdef 'make-directory make-directory)
+(xdef 'make-directory* make-directory*)
 
 (xdef 'seval (lambda (x) (eval (ac-denil x))))
 
