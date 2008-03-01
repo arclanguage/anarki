@@ -1185,5 +1185,3 @@
 (xdef 'flush-socket (lambda (s) (flush-output s)))
 
 )
-
-(require ac)

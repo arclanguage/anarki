@@ -5,7 +5,7 @@
 (module bitops mzscheme
 
 ; so we can use xdef
-(require ac)
+(require "ac.scm")
 
 
 (provide (all-defined))
