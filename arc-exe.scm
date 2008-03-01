@@ -52,6 +52,7 @@
 (require (lib "port.ss"))
 (require (lib "process.ss"))
 (require (lib "pretty.ss"))
+(require (lib "file.ss"))
   
 (define arc-ns (make-namespace))  ; Arc's namespace
 
@@ -1194,6 +1195,9 @@
                   (if (symbol? x) (expand-ssyntax x) x)))
 
 (xdef 'which-os system-type)
+
+(xdef 'make-directory make-directory)
+(xdef 'make-directory* make-directory*)
 
 (xdef 'seval (lambda (x) (eval (ac-denil x) arc-ns)))
 
