@@ -1148,8 +1148,6 @@
       (hash-table-put! tbl 'day   (date-day dat))
       tbl)))
 
-(xdef 'seval (lambda (x) (eval (ac-denil x))))
-
 (xdef 'quit exit)
 
 

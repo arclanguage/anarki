@@ -74,9 +74,6 @@
              `(do (sref sig ',parms ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
-(mac $ body
-   (list 'seval (cons 'quasiquote body)))
-
 (mac and args
   (if args
       (if (cdr args)
