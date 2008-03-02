@@ -95,6 +95,10 @@ call this directly, `parse' should wrap up literals for you."
   (when (acons remaining)
     (return (list (car remaining)) (cdr remaining))))
 
+(def anything-but parsers
+  "Anything that 'parsers' will not accept."
+  (seq (cant-see (apply alt parsers)) anything))
+
 (def maybe (parser)
   "Parser appears once, or not."
   (alt parser nothing))
@@ -123,6 +127,13 @@ call this directly, `parse' should wrap up literals for you."
 (def many2 (parser)
   "Parser is repeated two or more times."
   (seq parser (many1 parser)))
+
+(def pred (test parser)
+  "Create a parser that succeeds if `parser' succeeds and its output
+passes `test'."
+  (fn (remaining)
+    (awhen (parse parser remaining)
+      (and (test (car it)) it))))
 
 (def sem (fun parser)
   "Attach semantics to a parser."
