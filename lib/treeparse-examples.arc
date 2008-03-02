@@ -38,8 +38,8 @@
 ;; a ->  = body
 ;; a ->  = guard-clause*
 ;; s ->  [arglist a]* [last-body]
-(w/nils (stuff arglist guard body last-body guard-clause a s)
-  (= form (seq (cant-see (alt '/ '|| '=)) anything))
+(w/nils (form arglist guard body last-body guard-clause a s)
+  (= form (anything-but '/ '|| '=))
   (= arglist (filt list (many form)))
   (= guard (alt (filt list (many2 form)) form))
   (= body anything)
@@ -48,8 +48,7 @@
                         (seq (alt '|| '/) guard '= body)))
   (= a (alt (filt cdr (seq '= body))
             (filt [list (cons 'if _)] (many1 guard-clause))))
-  (= s (seq (many (seq arglist a))
-            (maybe last-body)))
+  (= s (seq (many (seq arglist a)) (maybe last-body)))
   (mac hcase (xs . cases)
     "Haskell style pattern matching."
     `(apply (p-m:fn ,@(parse-all s cases)) ,xs)))
@@ -66,6 +65,52 @@
     || < x y = (cons x (union < xt ys))
     || < y x = (cons y (union < xs yt))
     || t     = (cons x (union < xt yt))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Example 2.5: Adding some infix sugar.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; In `hcase2', we add more bells and whistles to the pattern matching
+;; example. One new concept is introduced: we use `delay-parser' to
+;; help define `consed-body'. This must be done because `body' has not
+;; been defined yet. Take care with mutually recursive definitions;
+;; they can be problematic.
+
+(w/nils (form infix-predicate infix-guard arglist guard body
+              consed-body last-body guard-clause a s)
+  (= form (anything-but '/ '|| '=))
+  (= infix-predicate (alt '< '<= '> '>=))
+  (= infix-guard (filt [list (_ 1) (_ 0) (_ 2)]
+                       (seq form infix-predicate form)))
+  (= arglist (filt list (many form)))
+  (= guard (alt (filt list infix-guard)
+                (filt list (many2 form))
+                form))
+  (= consed-body (filt [list:list 'cons (_ 0) (_ 2)] 
+                       (seq form ': (delay-parser body))))
+  (= body (alt consed-body anything))
+  (= last-body (many1 body))
+  (= guard-clause (filt [list (_ 1) (_ 3)] 
+                        (seq (alt '|| '/) guard '= body)))
+  (= a (alt (filt cdr (seq '= body))
+            (filt [list (cons 'if _)] (many1 guard-clause))))
+  (= s (seq (many (seq arglist a)) (maybe last-body)))
+  (mac hcase2 (xs . cases)
+    "Haskell style pattern matching."
+    `(apply (p-m:fn ,@(parse-all s cases)) ,xs)))
+
+;; An example of the `hcase2' pattern matching.
+;; In the guard expressions,  x < y  becomes  (< x y)
+;; In the bodies,  x : y  becomes  (cons x y).
+(def union (< xs ys)
+  "Merge two sorted lists, discarding duplicates."
+  (hcase2 `(,xs ,ys)
+    xs () = xs
+    () ys = ys
+    (x . xt) (y . yt)
+    || x < y = x : (union < xt ys)
+    || y < x = y : (union < xs yt)
+    || t     = x : (union < xt yt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Example 3: Brackets.
