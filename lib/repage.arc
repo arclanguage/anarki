@@ -9,20 +9,18 @@
          ntb)))
   (mac repage body
     `((rfn ,rpname (,uarg)
-        ;(ero ,uarg)
         ,@body)
       (table)))
   (mac repage-point body
     (w/uniq code
       `(let ,curcode ',code
-         ;(ero ,curcode)
          (aif (,uarg ,curcode)
               (it)
               (do ,@body)))))
   (mac repage-link (ln . body)
     `(w/link
        (,rpname
-         (fill-table (,copy-table (ero ,uarg))
+         (fill-table (,copy-table ,uarg)
                      (list ,curcode (fn () ,@body))))
        (prn ,ln)))
   (mac repage-back-link (ln)
