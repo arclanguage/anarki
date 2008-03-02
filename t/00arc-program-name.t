@@ -13,5 +13,8 @@ my $program_name =
         "t", "files", "simple-loop.arc"
     );
 
-print $program_name;
-
+# TEST
+is(scalar(`bash arc.sh $program_name`),
+   "Hello 1\nHello 2\nHello 3\nHello 4\nHello 5\n",
+   "Testing that running a program using arc.sh works"
+);

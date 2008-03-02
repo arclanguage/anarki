@@ -12,4 +12,4 @@ if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" ]; then
   rl="rlwrap -C arc"
 fi
 
-$rl mzscheme --no-init-file --mute-banner --load-cd  "$arc_dir/as.scm"
+$rl mzscheme --no-init-file --mute-banner --load-cd  "$arc_dir/as.scm" "$@"

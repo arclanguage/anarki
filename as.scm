@@ -16,4 +16,18 @@
 (when (file-exists? "~/.arcshrc")
   (aload "~/.arcshrc"))
 
-(tl)
+; If we have command-line arguments.
+(if (> (vector-length argv) 0)
+  ; This was copy-and-pasted-and-modified from aload1.
+  (begin
+    (call-with-input-file
+      (vector-ref argv 0)
+      (lambda (p)
+        (let ((x (read p)))
+          (if (eof-object? x)
+            #t
+            (begin
+              (arc-eval x))))))
+    (exit))
+  ; else
+  (tl))
