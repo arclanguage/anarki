@@ -18,19 +18,12 @@
 
 ; If we have command-line arguments.
 (if (> (vector-length argv) 0)
-  ; This was copy-and-pasted-and-modified from aload1.
+  ; If we have a command line argument that represents a file-name of
+  ; a program.
   (begin
     (call-with-input-file
       (vector-ref argv 0)
       aload1)
     (exit))
-;      (vector-ref argv 0)
-;      (lambda (p)
-;        (let ((x (read p)))
-;          (if (eof-object? x)
-;            #t
-;            (begin
-;              (arc-eval x))))))
-;    (exit))
   ; else
   (tl))
