@@ -10,7 +10,7 @@
         (= num-planned num)
         (prn "1.." num)))
 
-(plan 12)
+(plan 17)
 ; TEST
 (ok 1 "1 is a true value")
 ; TEST
@@ -46,4 +46,23 @@
 
 ; TEST
 (ok (<= 3 3) "3 <= 3")
+
+;;; A workaround to get a "not" operator present. Couldn't find anything
+;;; else. -- Shlomi Fish
+(def not (c) (if c nil 1))
+
+; TEST
+(ok (not nil) "nil is false")
+
+; TEST
+(ok (not (> 3 5)) "3 is not > 5")
+
+; TEST
+(ok (not (is 3 5)) "3 is not 5")
+
+; TEST
+(ok (not (< 10 0)) "10 is not less than 0")
+
+; TEST
+(ok (not (<= 5 4)) "5 is not leq than 4")
 
