@@ -10,7 +10,7 @@
         (= num-planned num)
         (prn "1.." num)))
 
-(plan 6)
+(plan 12)
 ; TEST
 (ok 1 "1 is a true value")
 ; TEST
@@ -28,3 +28,22 @@
 
 ; TEST
 (ok (is (* 3 6) 18) "3*6 == 18")
+
+; TEST
+(ok (> 5 3) "5 > 3")
+
+; TEST
+(ok (>= 5 3) "5 >= 3")
+
+; TEST
+(ok (>= 5 5) "5 >= 5")
+
+; TEST
+(ok (< 3 5) "3 < 5")
+
+; TEST
+(ok (<= 3 5) "3 <= 5")
+
+; TEST
+(ok (<= 3 3) "3 <= 3")
+
