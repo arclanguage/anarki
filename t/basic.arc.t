@@ -10,5 +10,10 @@
         (= num-planned num)
         (prn "1.." num)))
 
-(plan 1)
+(plan 3)
+; TEST
 (ok 1 "1 is a true value")
+; TEST
+(ok (is 3 3) "3 is equal to 3")
+; TEST
+(ok (is (+ 20 4) 24) "20+4 is equal to 24")
