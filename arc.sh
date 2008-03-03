@@ -8,7 +8,7 @@ fi
 
 arc_dir=$(dirname "$arc_dir")
 
-if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" ]; then
+if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" -a -z "${EMACS}" ]; then
   rl="rlwrap -C arc"
 fi
 
