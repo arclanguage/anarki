@@ -119,6 +119,11 @@ GIT
     left of each commit. When you're done, close the text editor and
     Git will run all the changes.
 
+    Note that empty commits, like the "Merge branch" messages, won't
+    show up in the "git rebase -i" list. If you just want to get rid
+    of these, it's usually sufficient to just call "git rebase -i
+    origin/master" and then close the text editor immediately.
+
     For more information, run "git help rebase".
 
 NEWLINES
