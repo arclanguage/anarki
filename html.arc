@@ -125,6 +125,7 @@
 (attribute link       href           opstring)
 (attribute link       rel            opstring)
 (attribute option     selected       opsel)
+(attribute option     value          opstring)
 (attribute select     name           opstring)
 (attribute table      bgcolor        opcolor)
 (attribute table      border         opnum)
@@ -230,8 +231,9 @@
 (def menu (name items (o sel nil))
   (tag (select name name)
     (each i items
-      (tag (option selected (is i sel))
-        (pr i)))))
+      (let (v txt) (if (acons i) i (list i i))
+        (tag (option value v selected (is v sel))
+          (pr txt))))))
 
 (mac whitepage body
   `(tag html 
