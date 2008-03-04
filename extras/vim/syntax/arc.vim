@@ -121,7 +121,11 @@ syn match	arclispDelimiter	oneline    !\.$!
 " This keeps all other stuff unhighlighted, except *stuff* and <stuff>:
 
 syn match	arclispOther	oneline    ,[a-z!$%&*/:<=>?^_~+@#%-][-a-z!$%&*/:<=>?^_~0-9+.@#%]*,
-syn match	arclispError	oneline    ,[a-z!$%&*/:<=>?^_~+@#%-][-a-z!$%&*/:<=>?^_~0-9+.@#%]*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
+
+" This seems to display errors on actually useful user-defined constructs
+" so I'm remming it out.
+"    -- Shlomi Fish
+" syn match	arclispError	oneline    ,[a-z!$%&*/:<=>?^_~+@#%-][-a-z!$%&*/:<=>?^_~0-9+.@#%]*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
 
 syn match	arclispOther	oneline    "\.\.\."
 syn match	arclispError	oneline    !\.\.\.[^ \t\[\]()";]\+!
@@ -129,11 +133,13 @@ syn match	arclispError	oneline    !\.\.\.[^ \t\[\]()";]\+!
 
 syn match	arclispConstant	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[ \t\[\]()";],me=e-1
 syn match	arclispConstant	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*$,
-syn match	arclispError	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
+" Likewise as above
+"syn match	arclispError	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
 
 syn match	arclispConstant	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[ \t\[\]()";],me=e-1
 syn match	arclispConstant	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>$,
-syn match	arclispError	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
+" Likewise as above
+" syn match	arclispError	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
 
 " Non-quoted lists, and strings:
 
@@ -159,7 +165,7 @@ syn match	arclispOther	oneline    ![+-]$!
 "
 " This is a useful lax approximation:
 syn match	arclispNumber	oneline    "[-#+0-9.][-#+/0-9a-f@i.boxesfdl]*"
-syn match	arclispError	oneline    ![-#+0-9.][-#+/0-9a-f@i.boxesfdl]*[^-#+/0-9a-f@i.boxesfdl \t\[\]()";][^ \t\[\]()";]*!
+" syn match	arclispError	oneline    ![-#+0-9.][-#+/0-9a-f@i.boxesfdl]*[^-#+/0-9a-f@i.boxesfdl \t\[\]()";][^ \t\[\]()";]*!
 
 syn match	arclispBoolean	oneline    "#[tf]"
 syn match	arclispError	oneline    !#[tf][^ \t\[\]()";]\+!
