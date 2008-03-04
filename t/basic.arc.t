@@ -10,7 +10,7 @@
         (= num-planned num)
         (prn "1.." num)))
 
-(plan 17)
+(plan 18)
 ; TEST
 (ok 1 "1 is a true value")
 ; TEST
@@ -53,6 +53,9 @@
 
 ; TEST
 (ok (not nil) "nil is false")
+
+; TEST
+(ok (not (not 1)) "!!1 is true")
 
 ; TEST
 (ok (not (> 3 5)) "3 is not > 5")
