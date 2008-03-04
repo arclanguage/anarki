@@ -385,7 +385,7 @@
   " Completely expands all macros in `expr'.
     See also [[macex]] [[mac]] "
   (if (and (acons expr) (~dotted expr) (~is 'quote (car expr)))
-      (macex (cons (car expr)
+      (macex (cons (expand (car expr))
                    (map1 expand (cdr expr))))
       expr))
 

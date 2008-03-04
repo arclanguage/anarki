@@ -36,6 +36,18 @@
               (++ i 2))
           (writec c)))))
 
+(def urlencode (s)
+  (tostring
+   (forlen i s
+     (let c (s i)
+       (if (is c #\space)
+             (writec #\+)
+           (in c #\$ #\& #\+ #\, #\/ #\: #\; #\= #\? #\@)
+             (let code (coerce (coerce c 'int) 'string 16)
+               (writec #\%)
+               (each p code (writec p)))
+           (writec c))))))
+
 (mac litmatch (pat string (o start 0))
   (w/uniq (gstring gstart)
     `(with (,gstring ,string ,gstart ,start)
