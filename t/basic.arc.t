@@ -1,3 +1,10 @@
+;;; basic.arc.t - test some basic arc features.
+;;;
+;;; This file is licensed under the MIT X11 License:
+;;; http://www.opensource.org/licenses/mit-license.php
+;;;
+;;; (C) Copyright by Shlomi Fish, 2008
+
 (load "arctap.arc")
 
 (plan 18)
