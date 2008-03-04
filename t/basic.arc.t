@@ -1,14 +1,4 @@
-(with (curr-test 0 num-planned 0)
-    (def ok (value (o msg))
-        (if value (pr "ok") (pr "not ok"))
-        (pr " ")
-        (pr (++ curr-test))
-        (pr " ")
-        (if msg (pr "- " msg))
-        (prn))
-    (def plan (num)
-        (= num-planned num)
-        (prn "1.." num)))
+(load "arctap.arc")
 
 (plan 18)
 ; TEST
@@ -46,10 +36,6 @@
 
 ; TEST
 (ok (<= 3 3) "3 <= 3")
-
-;;; A workaround to get a "not" operator present. Couldn't find anything
-;;; else. -- Shlomi Fish
-(def not (c) (if c nil 1))
 
 ; TEST
 (ok (not nil) "nil is false")
