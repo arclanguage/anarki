@@ -19,15 +19,15 @@
      (with (totals 0 goods 0 errors 0)
        (each result (results-results results)
          (++ totals)
-           (when (result-value result)
-             (if (is 'exception (type (result-value result)))
-                 (++ errors)
-                 (++ goods)))
-           (when (or all (no (result-value result)))
-             (pr "  " (result-desc result) ": "
-                 (if (result-value result) "Passed" "Failed")
-                 "\n")))
-       (pr totals " Tests, "  goods " Passed, " errors " Failed. "  (* 100.0 (/ goods totals)) "% Success\n")
+         (withs (val  (result-value result)
+                 fail (or (no val) (isa val 'exception)))
+           (if fail
+               (++ errors)
+               (++ goods))
+           (when (or all fail)
+             (prn " [" (if val "pass" "FAIL") "] " (result-desc result)))))
+       (prn totals " Tests, "  goods " Passed, " errors " Failed. "
+            (/ (coerce (* 10000.0 (/ goods totals)) 'int) 100) "% Success") ; format?
        (if (is totals goods)
            'green
            'red)))
