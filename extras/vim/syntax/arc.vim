@@ -72,6 +72,7 @@ syn keyword arclispSyntax fn and or if cond case def let with mac
 syn keyword arclispSyntax do delay set! else =>
 syn keyword arclispSyntax quote quasiquote unquote unquote-splicing
 syn keyword arclispSyntax define-syntax let-syntax letrec-syntax syntax-rules
+syn keyword arclispSyntax each for 
 
 syn keyword arclispFunc not boolean? is cons car cdr set-car!
 syn keyword arclispFunc set-cdr! caar cadr cdar cddr caaar caadr cadar caddr
@@ -97,7 +98,7 @@ syn keyword arclispFunc string-set! string=? string-ci=? string<? string-ci<?
 syn keyword arclispFunc string>? string-ci>? string<=? string-ci<=? string>=?
 syn keyword arclispFunc string-ci>=? substring string-append vector? make-vector
 syn keyword arclispFunc vector vector-length vector-ref vector-set! procedure?
-syn keyword arclispFunc apply map for-each call-with-current-continuation
+syn keyword arclispFunc apply map call-with-current-continuation
 syn keyword arclispFunc call-with-input-file call-with-output-file input-port?
 syn keyword arclispFunc output-port? current-input-port current-output-port
 syn keyword arclispFunc open-input-file open-output-file close-input-port
