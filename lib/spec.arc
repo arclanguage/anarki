@@ -25,7 +25,7 @@
                (++ errors)
                (++ goods))
            (when (or all fail)
-             (prn " [" (if val "pass" "FAIL") "] " (result-desc result)))))
+             (prn " [" (if fail "FAIL" "pass") "] " (result-desc result)))))
        (prn totals " Tests, "  goods " Passed, " errors " Failed. "
             (/ (coerce (* 10000.0 (/ goods totals)) 'int) 100) "% Success") ; format?
        (if (is totals goods)
