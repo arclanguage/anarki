@@ -9,6 +9,11 @@ clean:
 	-rm $(exe)
 
 test check: $(exe)
+	# This is not very meaningful because it is too wordy. Better run it
+	# using runprove. See runtest here.
 	find t/ -type f -name '*.arc.t' -exec ./$(exe) {} ';'
 
-.PHONY: clean check test
+runtest runcheck: $(exe)
+	bash Test.sh --exe
+
+.PHONY: clean check test runtest runcheck
