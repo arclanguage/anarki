@@ -1,7 +1,9 @@
 exe=arc.exe
 
-$(exe): arc-exe.scm
-	mzc --exe $@ $^
+SCM_SOURCES = arc-exe-init.scm ac.scm brackets.scm bitops.scm
+
+$(exe): arc-exe.scm $(SCM_SOURCES)
+	mzc --exe $@ $<
 
 clean:
 	-rm $(exe)
