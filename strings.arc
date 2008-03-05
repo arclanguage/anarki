@@ -37,12 +37,14 @@
           (writec c)))))
 
 (def urlencode (s)
+  " Encodes the string `s' using application/x-www-form-urlencoded
+    encodation. "
   (tostring
    (forlen i s
      (let c (s i)
        (if (is c #\space)
              (writec #\+)
-           (in c #\$ #\& #\+ #\, #\/ #\: #\; #\= #\? #\@)
+           ((andf ~alphadig [no (in _ #\_ #\.)]) c)
              (let code (coerce (coerce c 'int) 'string 16)
                (writec #\%)
                (each p code (writec p)))
