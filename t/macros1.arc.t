@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 6)
+(plan 9)
 
 (mac += (var . values)
     `(= ,var (+ ,var ,@values)))
@@ -49,3 +49,14 @@
       ; TEST
       (ok (is i 90) "-= evaluates nested sub-expressions"))
 
+; A bit of contrived example, but let's see if it works.
+(op2assign list)
+
+(with (mylist (list 5 6 7))
+      (list= mylist 8 9 10)
+      ; TEST
+      (ok (is (car (car mylist)) 5) "list= #1")
+      ; TEST
+      (ok (is (car (cdr mylist)) 8) "list= #2")
+      ; TEST
+      (ok (is (car (cddr mylist)) 9) "list= #3"))
