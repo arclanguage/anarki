@@ -1,0 +1,4 @@
+---
+- cmd: ./arc.exe
+  pattern: \.arc(?:\.t)?\z
+  type: regex
