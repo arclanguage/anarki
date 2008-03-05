@@ -211,7 +211,8 @@
         ((eqv? (xcar x) 'quasiquote)
          (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
         ((pair? x)
-         (map (lambda (x) (ac-qq1 level x env)) x))
+         (let ((t (lambda (f) (ac-qq1 level (f x) env)))) 
+           (cons (t car) (t cdr))))
         (#t x)))
 
 ; (if) -> nil

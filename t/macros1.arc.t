@@ -37,5 +37,5 @@
     (ok (is a 30) "-= (and ergo op2assign) works")
     (*= b 3 4 5)
     ; TEST
-    (ok (is a 123) "*= (list) works"))
+    (ok (is b 120) "*= (list) works"))
 
