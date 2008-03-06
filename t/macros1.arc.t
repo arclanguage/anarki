@@ -49,7 +49,7 @@
       ; TEST
       (ok (is i 90) "-= evaluates nested sub-expressions"))
 
-; A bit of contrived example, but let's see if it works.
+; A rather contrived example, but let's see if it works.
 (op2assign list)
 
 (with (mylist (list 5 6 7))
