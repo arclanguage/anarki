@@ -1,6 +1,6 @@
 (load "arctap.arc")
 
-(plan 11)
+(plan 15)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -45,4 +45,22 @@
 
 ; TEST
 (ok (is (factorial1 3) 6) "Simple recursion - #4")
+
+(= myvar 1000)
+
+(with (myvar 50)
+      (def counter1 () 
+           (= myvar (+ myvar 1))))
+
+; TEST
+(ok (is myvar 1000) "myvar is not affected by (with)")
+
+; TEST
+(ok (is (counter1) 51) "counter1 is counting")
+
+; TEST
+(ok (is (counter1) 52) "counter1 is counting")
+
+; TEST
+(ok (is myvar 1000) "myvar is still 1000 after running (counter1)")
 
