@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 9)
+(plan 14)
 
 (mac += (var . values)
     `(= ,var (+ ,var ,@values)))
@@ -60,3 +60,22 @@
       (ok (is (car (cdr mylist)) 8) "list= #2")
       ; TEST
       (ok (is (car (cddr mylist)) 9) "list= #3"))
+
+;;; Let's test recursive macro calls to the ${op}= macros.
+
+(def caddr (l) (car (cddr l)))
+(def cadddr (l) (car (cdr (cddr l))))
+
+(with (l 5 n 100)
+      (list= l 10 (-= n 4))
+      ; TEST
+      (ok (is (car l) 5) "-= inside list= No. 1")
+      ; TEST
+      (ok (is (cadr l) 10) "-= inside list= No. 2")
+      ; TEST
+      (ok (is (caddr l) 96) "-= inside list= No. 3")
+      ; TEST
+      (ok (is n 96) "-= inside list= No. 4")
+      ; TEST
+      (ok (not (cadddr l)) "-= inside list= No. 5"))
+
