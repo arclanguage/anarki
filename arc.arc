@@ -2145,9 +2145,10 @@
 (def ero args
   " Outputs `args' to error output. "
   (w/stdout (stderr) 
-    (each a args 
-      (write a)
-      (writec #\space))
+    (write (car args))
+    (each a (cdr args)
+      (writec #\space)
+      (write a))
     (writec #\newline))
   (car args))
 
