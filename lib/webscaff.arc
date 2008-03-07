@@ -33,21 +33,21 @@
 	      `(whitepage 
 		(center
 		 (widtable 600 
-			   (tag b (link ,scaffold!title "../"))
+			   (tag b (link ,',scaffold!title "../"))
 			   (br 3)
 			   ,@body
 			   (br 3)
-			   (w/bars (link ',ename!-archive)
-				   (link ,(string "new " (ename)) ',ename!new)))))))
+			   (w/bars (link ',',ename!-archive)
+				   (link ,',(string "new " (ename)) ',',ename!new)))))))
 
 (addtemscaff webscaff view
 	     `(defop ,ename!view req
 		(aif (,(ename) (arg req "id")) 
 		     (,ename!-singleton-page (get-user req) it) 
-		     (notfound))))
+		     (,ename!-notfound))))
 
 (addtemscaff webscaff perma
-	     `(def ,ename!-permalink (p) (string ,'(ename) "view?id=" (p 'id))))
+	     `(def ,ename!-permalink (p) (string ',(ename) "view?id=" (p 'id))))
 
 (addtemscaff webscaff singleton-page
 	     `(def ,ename!-singleton-page (user p) (,ename!page (,ename!-display user p))))

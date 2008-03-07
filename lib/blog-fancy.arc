@@ -38,7 +38,7 @@
      `(whitepage 
        (center
 	(widtable 600 
-		  (tag b (link ,scaffold!title "../"))
+		  (tag b (link ,blog!title "../"))
 		  (br 3)
 		  ,title
 		  (br 3)
