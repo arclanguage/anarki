@@ -4,7 +4,6 @@
 ;note that there is a freebee "hidden" are for viewing all comments at http://localhost:8080/comments that could be gated for comment administration activities.
 
 (= blog (inst 'webscaff
-	      'site 'blog
 	      'title "A Blog with Comments."))
 
 ;feature of webscaff allows init code to be put in this function if needed
