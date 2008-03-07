@@ -1,4 +1,4 @@
-(load "scaffold.arc")
+(load "lib/scaffold.arc")
 
 (deftem webscaff)
 

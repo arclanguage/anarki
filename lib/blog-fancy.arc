@@ -1,4 +1,4 @@
-(load "webscaff.arc")
+(load "lib/webscaff.arc")
 
 ;to start the blog, run (blog-start) and go to http://localhost:8080
 ;note that there is a freebee "hidden" are for viewing all comments at http://localhost:8080/comments that could be gated for comment administration activities.
