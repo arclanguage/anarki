@@ -445,12 +445,12 @@ rigidly along with this one."
 (put 'rfn 'arc-indent-function 2)
 (put 'let 'arc-indent-function 'arc-let-indent)
 
-;; archive-mode also wants the .arc extension,
-;; but that screws stuff up.
-(let* ((mode (rassoc 'archive-mode auto-mode-alist))
-       (str (car mode)))
-  (string-match "[Aa][Rr][Cc]\\\\|" str)
-  (setcar mode (replace-match "" nil nil str)))
+;; By default, Emacs thinks .arc is an archive extension.
+;; This makes it normal.
+(dolist (coding auto-coding-alist)
+  (when (and (string-match "[Aa][Rr][Cc]\\\\|" (car coding))
+             (eq (cdr coding) 'no-conversion))
+    (setcar coding (replace-match "" nil nil (car coding)))))
 
 (provide 'arc)
 
