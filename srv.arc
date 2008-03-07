@@ -228,11 +228,11 @@ Connection: close"))
           args
           (and (is type 'post)
                (some (fn (s)
-                       (and (begins s "Content-Length:")
+                       (and (begins (upcase s) "CONTENT-LENGTH:")
                             (coerce (cadr (tokens s)) 'int)))
                      (cdr lines)))
           (some (fn (s)
-                  (and (begins s "Cookie:")
+                  (and (begins (upcase s) "COOKIE:")
                        (parsecookies s)))
                 (cdr lines)))))
 
