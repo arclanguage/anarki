@@ -21,7 +21,7 @@
            value)
       (def chomp (s)
            (let l (len s)
-             (cut s 0 (- l (if (= (s (- l 1)) #\Newline) 1 0)))))
+             (cut s 0 (- l (if (is (s (- l 1)) #\Newline) 1 0)))))
       (def diag (msg)
            (let lines (ssplit (chomp msg) [ is _ #\Newline ])
              (each l lines
@@ -29,7 +29,16 @@
                              (prn "# " l)))))
       (def plan (num)
            (= num-planned num)
-           (prn "1.." num)))
+           (prn "1.." num))
+      (def swrite (v)
+           (tostring (write v)))
+      (def test-is (got expected (o msg))
+           (with (verdict (ok (is got expected)))
+                 (if (not verdict)
+                     (do (diag (tostring (prn "  Failed test '" msg "'")))
+                         (diag (+ "         got: " (swrite got)))
+                         (diag (+ "    expected: " (swrite expected)))))
+                 verdict)))
 
 ;;; A workaround to get a "not" operator present. Couldn't find anything
 ;;; else. -- Shlomi Fish
