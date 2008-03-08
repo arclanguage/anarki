@@ -434,6 +434,8 @@ rigidly along with this one."
 (put 'w/stdin 'arc-indent-function 1)
 (put 'w/infile 'arc-indent-function 2)
 (put 'whilet 'arc-indent-function 2)
+(put 'each 'arc-indent-function 2)
+(put 'on 'arc-indent-function 2)
 (put 'accum 'arc-indent-function 1)
 (put 'def 'arc-indent-function 2)
 (put 'mac 'arc-indent-function 2)
