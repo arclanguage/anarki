@@ -11,17 +11,17 @@
 ;;; Copyright by Shlomi Fish, 2008
 
 (with (curr-test 0 num-planned 0)
-    (def ok (value (o msg))
-        (if value (pr "ok") (pr "not ok"))
-        (pr " ")
-        (pr (++ curr-test))
-        (pr " ")
-        (if msg (pr "- " msg))
-        (prn)
-        value)
-    (def plan (num)
-        (= num-planned num)
-        (prn "1.." num)))
+      (def ok (value (o msg))
+           (if value (pr "ok") (pr "not ok"))
+           (pr " ")
+           (pr (++ curr-test))
+           (pr " ")
+           (if msg (pr "- " msg))
+           (prn)
+           value)
+      (def plan (num)
+           (= num-planned num)
+           (prn "1.." num)))
 
 ;;; A workaround to get a "not" operator present. Couldn't find anything
 ;;; else. -- Shlomi Fish
