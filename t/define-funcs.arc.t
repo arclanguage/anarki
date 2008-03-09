@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 21)
+(plan 24)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -102,4 +102,18 @@
 
 ; TEST
 (test-is (poly2 0 3 2 5 100) 3 "x = 0; 3+... = 3 - testing rfn")
+
+(def *2 args
+     (map (fn (x) (* 2 x)) args))
+
+(with (mylist (*2 5 100 80 9))
+      ; TEST
+      (test-is (car mylist) 10 
+               "Testing the (def func args @body) notation - 1")
+      ; TEST
+      (test-is (car (cdr mylist)) 200
+               "Testing the (def func args @body) notation - 2")
+      ; TEST
+      (ok (not (cdr (cdr (cdr (cdr mylist)))))
+          "Testing the (def func args @body) notation - 3"))
 
