@@ -7,6 +7,13 @@
 ;    (bar z (foo)))
 
 (mac macrolet (macroforms . body)
+  (ero "Warning: 'macrolet is deprecated.  Use 'macwith instead.")
+  `(macwith ,macroforms ,@body))
+
+(mac maclet (m d . body)
+  `(macwith (,m ,d) ,@body))
+
+(mac macwith (macroforms . body)
   (withs
      (
       macros
