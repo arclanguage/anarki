@@ -1,6 +1,6 @@
 (load "arctap.arc")
 
-(plan 18)
+(plan 21)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -79,3 +79,20 @@
 
 ; TEST
 (test-is (poly1 0 3 2 5 100) 3 "x = 0; 3+... = 3 - testing variable arguments")
+
+(def poly2 (x . coeffs)
+     ((rfn r (myrest) 
+                  (if (not myrest)
+                    0 
+                    (+ (car myrest) (* x (r (cdr myrest))))))
+            coeffs))
+
+; TEST
+(test-is (poly2 5 3 2) 13 "x = 5; 3+2x = 13 - testing rfn")
+
+; TEST
+(test-is (poly2 2 3 2) 7 "x = 2; 3+2x = 7 - testing rfn")
+
+; TEST
+(test-is (poly2 0 3 2 5 100) 3 "x = 0; 3+... = 3 - testing rfn")
+
