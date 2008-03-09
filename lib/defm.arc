@@ -9,9 +9,9 @@
   `(redef ,name ,(argmap idfn [if (is (car _) 't) (cadr _) _]
                          args)
      (if (and ,@(map (fn (decl) `(isa ,(car decl) ',(cadr decl)))
-                     (keep ~empty (argmap [idfn nil]
-                                          [if (is (car _) 't) (cdr _) (cadr _)]
-                                          args))))
-          (do ,@body)
+                     (trues (argmap [idfn nil]
+                                    [if (is (car _) 't) (cdr _) (cadr _)]
+                                    args))))
+         (do ,@body)
          (old ,@(argmap idfn [cadr _] args)))))
 
