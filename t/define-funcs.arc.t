@@ -1,6 +1,6 @@
 (load "arctap.arc")
 
-(plan 15)
+(plan 16)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -29,8 +29,7 @@
 (ok (is (1- 0) -1) "Testing 1- - #3")
 
 (def factorial1 (n)
-     (prn n)
-     (if (is n 0) 
+     (if (is n 0)
        1 
        (* n (factorial1 (1- n)))))
 
@@ -64,3 +63,13 @@
 ; TEST
 (ok (is myvar 1000) "myvar is still 1000 after running (counter1)")
 
+(def poly1 (x . coeffs)
+     (with (r 0)
+           (= r (fn (myrest) 
+                  (if (not myrest)
+                    0 
+                    (+ (car myrest) (* x (r (cdr myrest)))))))
+           (r coeffs)))
+
+; TEST
+(test-is (poly1 5 3 2) 13 "x = 5; 3+2x = 13 - testing variable arguments")

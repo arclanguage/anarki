@@ -33,7 +33,7 @@
       (def swrite (v)
            (tostring (write v)))
       (def test-is (got expected (o msg))
-           (with (verdict (ok (is got expected)))
+           (with (verdict (ok (is got expected) msg))
                  (if (not verdict)
                      (do (diag (tostring (prn "  Failed test '" msg "'")))
                          (diag (+ "         got: " (swrite got)))
