@@ -11,7 +11,8 @@ clean:
 test check: $(exe)
 	# This is not very meaningful because it is too wordy. Better run it
 	# using runprove. See runtest here.
-	find t/ -type f -name '*.arc.t' -exec ./$(exe) {} ';'
+	find t/ -type f   -name '*.arc.t' -exec ./$(exe) {} ';'
+	find t/ -type f -name '*.t' ! -name '*.arc.t' -print0 | xargs -0 prove --nocolor
 
 runtest runcheck: $(exe)
 	bash Test.sh --exe
