@@ -71,6 +71,7 @@
 (mac defpat (name . body)
   " Defines a function named `name' using pattern-matching.
     See also [[p-m]] "
+  (ero "Warning: 'defpat is deprecated.  Use 'p-m:def instead.")
   `(p-m:def ,name ,@body))
 
 (mac p-m ((macro . body))
@@ -236,7 +237,7 @@
 
 ; test cases
 
-(defpat *defpat-test1
+(p-m:def *defpat-test1
   " The first test for defpat, testing arity-checks.
     (*defpat-test1 1) should reach the last clause, and
     must be different from (*defpat-test1 1 nil) "
@@ -245,7 +246,7 @@
   (1 2 x) (prn "You added an " x " to a (1 2) form!")
   (x)     (prn "You only gave one parameter, " x "!"))
 
-(defpat *defpat-test2
+(p-m:def *defpat-test2
   " The second test for defpat, testing fixed-arity function. "
   (2 3) (prn "You chose the (2 3) form!")
   (2 x) (prn "You could have chosen the (2 3) form, but you chose"
@@ -254,7 +255,7 @@
              " but you got (x y), with x = " x ", y = " y)
   #||#  (prn "what the... you couldn't possibly have gotten here!"))
 
-(defpat *defpat-test3
+(p-m:def *defpat-test3
   " The third test for defpat, testing list destructuring. "
   (4 5)
     (prn "You chose the (4 5) form!")
@@ -271,7 +272,7 @@
   x
     (prn "What?  I don't understand your parameters " x " !!"))
 
-(defpat *defpat-test4
+(p-m:def *defpat-test4
   " The fourth test for defpat, testing quoted symbols "
   ('start)
     (prn "Vroom, vroom... started!")
@@ -286,7 +287,7 @@
   ; otherwise
     (prn "Hey, your car can't understand that!"))
 
-(defpat *defpat-pair
+(p-m:def *defpat-pair
   " Example/testcase for defpat in redefining
     the `pair' function. "
   ((x y . zs))   `((,x ,y) ,@(*defpat-pair zs))
@@ -294,7 +295,7 @@
   ((x) . _)      `((,x)) ; this is how the arc0 pair does it
   (() . _)       ())
 
-(defpat *defpat-rpn
+(p-m:def *defpat-rpn
   " Example/testcase for defpat in using
     ,(x (test x)) guarded patterns "
   ; start with an empty stack
