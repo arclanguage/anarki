@@ -1,6 +1,6 @@
 (load "arctap.arc")
 
-(plan 16)
+(plan 18)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -73,3 +73,9 @@
 
 ; TEST
 (test-is (poly1 5 3 2) 13 "x = 5; 3+2x = 13 - testing variable arguments")
+
+; TEST
+(test-is (poly1 2 3 2) 7 "x = 2; 3+2x = 7 - testing variable arguments")
+
+; TEST
+(test-is (poly1 0 3 2 5 100) 3 "x = 0; 3+... = 3 - testing variable arguments")
