@@ -122,7 +122,7 @@
                        (file-write pf sv)
                        (= (mt f) (mtime pf))
                        (= (ct f) sv)
-                       (fromfile sv))
+                       v)
                    ; set to nil - delete the file if it exists
                    (file-exists pf)
                      (do
