@@ -423,6 +423,7 @@ rigidly along with this one."
 ;; like def if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
+(put 'unless 'arc-indent-function 1)
 (put 'case 'arc-indent-function 1)
 (put 'with 'arc-indent-function 1)
 (put 'withs 'arc-indent-function 1)
