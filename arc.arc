@@ -816,6 +816,7 @@
   `(for ,(uniq) 1 ,n ,@body))
 
 ; could bind index instead of gensym
+;; the above is done by `on'
 
 (mac each (var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
@@ -1297,29 +1298,34 @@
 
 (def read ((o x (stdin)) (o eof nil))
   " Reads a single expression from a string or stream.
-    See also [[readstring1]] "
+    See also [[readstring1]] [[readfile]] [[readfile1]] [[readall]] "
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
 (def readfile (name)
   " Reads the expressions from the file `name', and returns a list of
-    expressions read from the file. "
+    expressions read from the file.
+    See also [[read]] "
   (w/infile s name (drain (read s))))
 
 (def readfile1 (name)
-  " Reads a single expression from the file `name'. "
+  " Reads a single expression from the file `name'.
+    See also [[read]] "
   (w/infile s name (read s)))
 
 (def writefile1 (val name)
-  " Writes the value to the file `name'. "
+  " Writes the value to the file `name'.
+    See also [[writefileraw]] "
   (w/outfile s name (write val s)) val)
 
 (def writefileraw (val name) 
-     "Write a list of bytes in val to a file."
-     (w/outfile s name (map [writeb _ s] val)))
+  " Write a list of bytes in val to a file.
+    See also [[writefile1]] "
+  (w/outfile s name (map [writeb _ s] val)))
 
 (def readall (src (o eof nil))
   " Reads the expressions from the string or stream `src', and returns a
-    list of expressions read from the file. "
+    list of expressions read from the file.
+    See also [[read]] "
   ((afn (i)
     (let x (read i eof)
       (if (is x eof)
@@ -1415,7 +1421,8 @@
 ; macroexpansion.
   
 (def insert-sorted (test elt seq)
-  " Inserts `elt' into a sequence `seq' sorted by `test'. "
+  " Inserts `elt' into a sequence `seq' sorted by `test'.
+    See also [[sort]] [[insort]] [[reinsert-sorted]] "
   (if (no seq)
        (list elt) 
       (test elt (car seq)) 
@@ -1423,11 +1430,13 @@
       (cons (car seq) (insert-sorted test elt (cdr seq)))))
 
 (mac insort (test elt seq)
-  " Inserts `elt' into a sequence in the place `seq' sorted by `test'. "
+  " Inserts `elt' into a sequence in the place `seq' sorted by `test'.
+    See also [[insert-sorted]] [[sort]] "
   `(zap [insert-sorted ,test ,elt _] ,seq))
 
 (def reinsert-sorted (test elt seq)
-  " Inserts `elt' into a sequence `seq', partially sorted by `test'. "
+  " Inserts `elt' into a sequence `seq', partially sorted by `test'.
+    See also [[insert-sorted]] [[insortnew]] [[sort]] "
   (if (no seq) 
        (list elt) 
       (is elt (car seq))
@@ -1438,7 +1447,8 @@
 
 (mac insortnew (test elt seq)
   " Inserts `elt' into a sequence in the place `seq', partially sorted
-    by `test'. "
+    by `test'.
+    See also [[reinsert-sorted]] [[sort]] "
   `(zap [reinsert-sorted ,test ,elt _] ,seq))
 
 ; Could make this look at the sig of f and return a fn that took the 
@@ -1449,7 +1459,8 @@
     source function.
     For each set of arguments, the source function will only be called
     once; if the memo'ed function is called again with the same arguments,
-    it will return the stored result instead of calling the source function. "
+    it will return the stored result instead of calling the source function.
+    See also [[defmemo]] "
   (let cache (table)
     (fn args
       (or (cache args)
@@ -1459,7 +1470,8 @@
   " Defines a function that automatically stores the results of calls.
     For each set of arguments, this function will only execute once.
     If the function is called again with the same arguments, it will
-    immediately return the stored result for that set of arguments. "
+    immediately return the stored result for that set of arguments.
+    See also [[memo]] "
   `(safeset ,name (memo (fn ,parms ,@body))))
 
 (def <= args
@@ -1479,19 +1491,23 @@
            (apply >= (cdr args)))))
               
 (def whitec (c)
-  " Determines if the given `c' is a whitespace character. "
+  " Determines if the given `c' is a whitespace character.
+    See also [[alphadig]] [[nonwhite]] [[punc]] "
   (in c #\space #\newline #\tab #\return))
 
 (def nonwhite (c)
-  " Determines if the given `c' is not a whitespace character. "
+  " Determines if the given `c' is not a whitespace character.
+    See also [[whitec]] [[alphadig]] [[punc]] "
   (no (whitec c)))
 
 (def alphadig (c)
-  " Determines if the given `c' is an alphanumeric character. "
+  " Determines if the given `c' is an alphanumeric character.
+    See also [[whitec]] [[nonwhite]] [[punc]] "
   (or (<= #\a c #\z) (<= #\A c #\Z) (<= #\0 c #\9)))
 
 (def punc (c)
-  " Determines if the given `c' is punctuation character. "
+  " Determines if the given `c' is punctuation character.
+    See also [[whitec]] [[nonwhite]] [[alphadig]] [[punc]] "
   (in c #\. #\, #\; #\: #\! #\?))
 
 (def readline ((o str (stdin)))
@@ -1506,7 +1522,8 @@
 
 (mac summing (sumfn . body)
   " Counts the number of times `sumfn' is called with a true value
-    within `body'. "
+    within `body'.
+    See also [[accum]] "
   (w/uniq (gc gt)
     `(let ,gc 0
        (let ,sumfn (fn (,gt) (if ,gt (++ ,gc)))
@@ -1514,7 +1531,8 @@
        ,gc)))
 
 (def treewise (f base tree)
-  " Traverses a list as a binary tree. "
+  " Traverses a list as a binary tree.
+    See also [[trav]] [[tree-subst]] [[ontree]] "
   (if (atom tree)
       (base tree)
       (f (treewise f base (car tree)) 
@@ -1528,18 +1546,21 @@
 
 (def prall (elts (o init "") (o sep ", "))
   " Prints several arguments with an initial header and separated by a
-    given separator. "
+    given separator.
+    See also [[prs]] "
   (when elts
     (pr init (car elts))
     (map [pr sep _] (cdr elts))
     elts))
              
 (def prs args     
-  " Prints several arguments separated by spaces. "
+  " Prints several arguments separated by spaces.
+    See also [[prall]] "
   (prall args "" #\space))
 
 (def tree-subst (old new tree)
-  " Replaces an element of a list with that list treated as a binary tree. "
+  " Replaces an element of a list with that list treated as a binary tree.
+    See also [[treewise]] [[trav]] "
   (if (is tree old)
        new
       (atom tree)
@@ -1549,7 +1570,8 @@
 
 (def ontree (f tree)
   " Applies a function across each node of a list with that list treated
-    as a binary tree. "
+    as a binary tree.
+    See also [[treewise]] [[trav]] "
   (f tree)
   (unless (atom tree)
     (ontree f (car tree))
@@ -2208,14 +2230,16 @@
        )))
 
 (mac point (name . body)
-  " Creates a form which may be exited by calling `name' from within `body'. "
+  " Creates a form which may be exited by calling `name' from within `body'.
+    See also [[catch]] [[breakable]] "
   (w/uniq g
     `(ccc (fn (,g)
             (let ,name [,g _]
               ,@body)))))
 
 (mac catch body
-  " Catches any value returned by `throw' within `body'. "
+  " Catches any value returned by `throw' within `body'.
+    See also [[breakable]] [[point]] "
   `(point throw ,@body))
 
 (def downcase (x)
@@ -2294,7 +2318,7 @@
   " Traverses an object `x'; the object is applied to each function
     in `fs', and sub-nodes of the object may be traversed by
     (self <node>) in any of the functions.
-    See also [[trav+]] "
+    See also [[trav+]] [[treewise]] [[ontree]] "
   (w/uniq g
     `((afn (,g)
         (when ,g
