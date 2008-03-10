@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 24)
+(plan 26)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -117,3 +117,10 @@
       (ok (not (cdr (cdr (cdr (cdr mylist)))))
           "Testing the (def func args @body) notation - 3"))
 
+(set a+b=c (fn (a b c) (is (+ a b) c)))
+
+; TEST
+(ok (a+b=c 3 4 7) "Testing (fn) with (set) - 1")
+
+; TEST
+(ok (not (a+b=c 1 10 8)) "Testing (fn) with (set) - 2")
