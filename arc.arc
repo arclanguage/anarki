@@ -107,6 +107,10 @@
   " Identity function - just returns its argument. "
   x)
 
+(def nilfn args
+  " Takes any number of arguments and returns nil. "
+  nil)
+
 ; Maybe later make this internal.  Useful to let xs be a fn?
 
 (def map1 (f xs)
