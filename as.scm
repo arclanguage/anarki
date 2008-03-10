@@ -9,9 +9,10 @@
 (require "brackets.scm")
 (use-bracket-readtable)
 (require "bitops.scm")
+(load "ffi.scm")
 
 (aload "arc.arc")
-(aload "libs.arc") 
+(aload "libs.arc")
 
 (when (file-exists? "~/.arcshrc")
   (aload "~/.arcshrc"))

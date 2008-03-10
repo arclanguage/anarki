@@ -185,7 +185,7 @@
 
 
 (define (ac-global-name s)
-  (string->symbol (string-append "_" (symbol->string s))))
+  (string->symbol (string-append "__" (symbol->string s))))
 
 (define (ac-var-ref s env)
   (if (lex? s env)
@@ -349,9 +349,9 @@
 
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
-;   (ar-apply _pr (list 1 2))
+;   (ar-apply __pr (list 1 2))
 ; which results in 1/2 the CPU time going to GC. Instead:
-;   (ar-funcall2 _pr 1 2)
+;   (ar-funcall2 __pr 1 2)
 (define (ac-call fn args env)
   (let ((macfn (ac-macro? fn)))
     (cond (macfn
@@ -971,8 +971,8 @@
               (arc-eval `(input-history-update ',expr))
               (arc-eval `(output-history-update ',val))
               (write (ac-denil val))
-              (namespace-set-variable-value! '_that val)
-              (namespace-set-variable-value! '_thatexpr expr)
+              (namespace-set-variable-value! '__that val)
+              (namespace-set-variable-value! '__thatexpr expr)
               (newline)
               (tl2)))))))
 
