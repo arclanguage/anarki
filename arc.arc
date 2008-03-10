@@ -2346,6 +2346,10 @@
 (mac defhook (name . rest)
   `(= (hooks* ',name) (fn ,@rest)))
   
+(mac varif (name (o default))
+  "Returns the value of the variable `name' if it exists, or `default' otherwise."
+  `(if (bound ',name) ,name ,default))
+
 (mac redef (name parms . body)
   " Redefine a function.  The old function definitiaion may be used within
     `body' as the name `old'. "
