@@ -2354,7 +2354,7 @@
   " Redefine a function.  The old function definitiaion may be used within
     `body' as the name `old'. "
   `(do (tostring
-        (let old ,name
+        (let old (varif ,name nilfn)
           (def ,name ,parms ,@body)))
        ,name))
 
