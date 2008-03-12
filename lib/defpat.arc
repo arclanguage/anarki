@@ -3,7 +3,7 @@
 ; define using pattern matching
 ;
 ;ex
-;  (defpat map1-pat
+;  (p-m:def map1-pat
 ;     (f ())
 ;       ()
 ;     (f (x . xs))
