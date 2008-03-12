@@ -30,6 +30,8 @@ car and prefix ++ being cdr.
                     'cdr (fn () ...))
     Note that you are responsible for properly
     memoizing the results returned by 'car and 'cdr
+    The use of make-scanner is deprecated in favor
+    of 'scanner.
     See also [[scanner]] [[scanner-string]] [[scanner-input]] "
   (let (a d) nil
     ( (afn ((opt val . args))
@@ -58,7 +60,8 @@ car and prefix ++ being cdr.
          'cdr (...) ) 
     The expressions are evaluated only when 'car or 'cdr is
     applied to the scanner, and the expressions are only
-    evaluated once.  The expressions capture the surrounding
+    evaluated once (the expressions are thus expected to be
+    'pure').  The expressions capture the surrounding
     lexical environment.
     See also [[make-scanner]] "
   (let (a d func) nil
