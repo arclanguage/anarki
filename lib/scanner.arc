@@ -30,7 +30,7 @@ car and prefix ++ being cdr.
                     'cdr (fn () ...))
     Note that you are responsible for properly
     memoizing the results returned by 'car and 'cdr
-    See also [[scanner]] "
+    See also [[scanner]] [[scanner-string]] [[scanner-input]] "
   (let (a d) nil
     ( (afn ((opt val . args))
         (if
@@ -43,6 +43,47 @@ car and prefix ++ being cdr.
      args)
     (annotate 'scanner
       (cons a d))))
+
+; separate in order to dispose of unused
+; closures immediately
+(def *scanner-idfn (c)
+  (fn () c))
+
+(mac scanner args
+  " Creates a scanner, whose 'car and 'cdr operations are
+    the memoized results of expressions given using 'car
+    and 'cdr parameters:
+       (scanner
+         'car (...)
+         'cdr (...) ) 
+    The expressions are evaluated only when 'car or 'cdr is
+    applied to the scanner, and the expressions are only
+    evaluated once.  The expressions capture the surrounding
+    lexical environment.
+    See also [[make-scanner]] "
+  (let (a d func) nil
+    ( (afn ((opt val . args))
+        (if
+          (iso opt ''car)
+            (= a val)
+          (iso opt ''cdr)
+            (= d val)
+            (err:tostring:pr "Unknown option - " opt))
+        (if args (self args)))
+     args)
+     (= func
+        (fn (val ref self)
+          (if (isa val 'sym)
+              `(*scanner-idfn ,val)
+              `(fn ()
+                   ((= (,ref ,self)
+                       (*scanner-idfn ,val)))))))
+     (w/uniq (self)
+       `(let ,self nil
+          (annotate 'scanner
+            (= ,self
+               (cons ,(func a 'car self)
+                     ,(func d 'cdr self))))))))
 
 (redef isa (x y)
   (if (is (type x) 'scanner)
@@ -114,14 +155,9 @@ car and prefix ++ being cdr.
   (if (< start 0) (zap + start (len s)))
   (if (< end 0)   (zap + end (len s)))
   (if (and (< start end) (<= end (len s)))
-    (let (a d d-valid) nil
-      (make-scanner
-        'car (fn () (or a (= a (s start))))
-        'cdr (fn ()
-               (if d-valid
-                   d
-                   (= d-valid t
-                      d (scanner-string s (+ 1 start) end))))))))
+    (scanner
+      'car (s start)
+      'cdr (scanner-string s (+ 1 start) end))))
 
 (def scanner-input (s (o autoclose nil))
   " Creates a scanner for an input stream `s'.
@@ -132,13 +168,8 @@ car and prefix ++ being cdr.
   (let a (readc s)
     (if a
         (let (d d-valid) nil
-          (make-scanner
-            'car (fn () a)
-            'cdr (fn ()
-                   (if d-valid
-                       d
-                       (= d-valid t
-                          d (scanner-input s autoclose))))))
+          (scanner 'car a
+                   'cdr (scanner-input s autoclose)))
         (if autoclose
             (do (close s) nil)))))
 
