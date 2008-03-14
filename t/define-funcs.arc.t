@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 26)
+(plan 27)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -124,3 +124,6 @@
 
 ; TEST
 (ok (not (a+b=c 1 10 8)) "Testing (fn) with (set) - 2")
+
+; TEST
+(ok (a+b=c 100 203 303) "Testing (fn) with (set) - 3")
