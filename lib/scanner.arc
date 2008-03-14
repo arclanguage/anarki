@@ -140,7 +140,7 @@ car and prefix ++ being cdr.
               ; for negative args
               (if (< start 0) (zap + start (len seq)))
               (nthcdr start seq))
-            (old seq start)))
+            (old seq start))
         (do
           (if (isa seq 'scanner)
               (do
@@ -148,7 +148,7 @@ car and prefix ++ being cdr.
                 (if (< end 0) (zap + end (len seq)))
                 (if (< start end)
                     (helper (nthcdr start seq) (- end start))))
-              (old seq start end)))))
+              (old seq start end))))))
 
 (def scanner-string (s (o start 0) (o end (len s)))
   " Creates a scanner for a string `s'.  You may also
