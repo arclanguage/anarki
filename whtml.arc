@@ -94,9 +94,17 @@
 	  ('head ('title (prn \"Page\")))
 	  ('(body style \"font-size: 200%\")
 	    (prn \"HELLO!\")))
-      See also [[tag]] "
+      See also [[tag]] [[w/html-tags]] "
     `(tag html
-       ,@(map helper body))))
+       ,@(map helper body)))
+
+  (mac w/html-tags body
+    " Performs the body; forms starting in ('htmltag ...)
+      are converted to tags.
+      Similar to w/html except the body is not enclosed in
+      <html> tags.
+      See also [[w/html]] "
+    `(do ,@(map helper body))))
 
 
 (def *w/html-test ()
