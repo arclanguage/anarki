@@ -157,7 +157,7 @@ Connection: close"))
                          (testify ,auth-var)))
         (defop ,name ,parm
            (if (,test (,parm 'ip))
-               ,@body
+               (do ,@body)
                (pr "Permission denied"))))))
 
 
