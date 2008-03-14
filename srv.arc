@@ -110,8 +110,18 @@
 (= srvops* (table) redirector* (table) optimes* (table))
 
 (= statuscodes* (listtab '((200 "OK") (302 "Moved Temporarily") (404 "Not Found") (500 "Internal Server Error"))))
-(= ext-mimetypes* (listtab '(("gif" "image/gif") ("jpg" "image/jpeg") ("png" "image/png") ("ico" "image/x-icon") 
-                             ("css" "text/css") ("pdf" "application/pdf") ("swf" "application/x-shockwave-flash"))))
+(= ext-mimetypes* (listtab '(
+  ("gif"  "image/gif")
+  ("jpg"  "image/jpeg")
+  ("png"  "image/png")
+  ("ico"  "image/x-icon")
+  ("css"  "text/css; charset=utf-8")
+  ("js"   "text/javascript; charset=utf-8")
+  ("json" "application/json; charset=utf-8")
+  ("xml"  "application/xml; charset=utf-8")
+  ("pdf"  "application/pdf")
+  ("swf"  "application/x-shockwave-flash")
+  )))
 
 (= textmime* "text/html; charset=utf-8")
 
