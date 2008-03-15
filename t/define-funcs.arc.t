@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 28)
+(plan 31)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -130,4 +130,15 @@
 
 ; TEST
 (test-is ((fn (x) (+ x 5)) 100) 105 "Testing defining an (fn and executing it.")
+
+(def map-first-two (func mylist)
+     (list (func (car mylist)) (func (cadr mylist))))
+
+(with (result (map-first-two (fn (x) (* x 10)) (list 2 4 90)))
+      ; TEST
+      (test-is (car result) 20 "Testing function that accepts an (fn) - 1")
+      ; TEST
+      (test-is (cadr result) 40 "Testing function that accepts an (fn) - 2")
+      ; TEST
+      (test-is (len result) 2 "Testing function that accepts an (fn) - 3"))
 
