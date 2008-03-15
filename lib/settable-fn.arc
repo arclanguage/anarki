@@ -148,6 +148,24 @@ actually work with tagged objects yet.
     (it)
     (old x)))
 
+#|to allow crazy stuff like this:
+(= f (file-table "/some/path"))
+(= b f:urlencode)
+(= (b "~/*stuff?") "nah-uh!")
+|#
+(let old (rep compose)
+  (= compose
+     (annotate 'mac
+       (fn args
+         (w/uniq (ff sub) ;first function, subsequent functions
+           `(with (,ff  ,(car args)
+                   ,sub ,(apply old (cdr args)))
+              (add-attachments
+                '= (fn (v . s) (= (,ff (apply ,sub s)) v))
+                'keys (fn () (keys ,ff))
+                (annotate (type ,ff)
+                  (fn args (,ff (apply ,sub args))) ))))))))
+
 (= *test-settable-fn
   (let (x y) nil
     (add-attachment '=
