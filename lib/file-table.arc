@@ -34,6 +34,9 @@
       See also [[file-table]] "
     (and (isnt f ".") (isnt f "..") (~re-match "[]:/\\*?[]" f)))
 
+  (def file-table-directory (f)
+    (get-attachment 'file-table-directory f))
+
   ; global caches
   ; warning.  Since Arc (unlike underlying scheme) does
   ; *not* have "weak references", we are thus compelled to
@@ -134,6 +137,7 @@
         (add-attachments
            'keys keys
            '= writer
+           'file-table-directory path
            (annotate 'table reader))))))
 
 (def file-table-w/read ((o path "."))
