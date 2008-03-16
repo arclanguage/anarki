@@ -66,7 +66,7 @@
       See also [[file-table-w/read]] "
     (let (tofile fromfile) (get-args (cdr args) 'tofile idfn 'fromfile idfn)
       (let (reader writer checkf validf keys
-            mt ct path) nil
+            mt ct path prepath) nil
         (if args (= path (car args)) (= path "."))
         (zap qualified-path path)
         (if (file-exists path) (err:tostring:write "file-table: file exists - " path))
@@ -138,7 +138,13 @@
            'keys keys
            '= writer
            'file-table-directory path
-           (annotate 'table reader))))))
+           (annotate 'table reader)))))
+
+  (def *file-table-debug ()
+    (prn "ctt :")
+    (prn ctt)
+    (prn "mtt :")
+    (prn mtt)))
 
 (def file-table-w/read ((o path "."))
   " Creates a file-table which can store any object that
