@@ -2355,7 +2355,7 @@
     `body' as the name `old'. "
   `(do (tostring
         (let old (varif ,name nilfn)
-          (def ,name ,parms ,@body)))
+          (= ,name (fn ,parms ,@body))))
        ,name))
 
 (redef table args
