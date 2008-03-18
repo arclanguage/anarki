@@ -27,8 +27,10 @@
 
 ; wiki-arc module
 (= Arkani
-  (let (help* sig source-file* wiki add-wiki
-        wikis _->space space->_ isdigit scan-words scan-logs
+  (let (help* sig source-file*
+        wiki add-wiki wikis
+        _->space space->_ isdigit
+        scan-words scan-logs scan-paras
         serialize
         new-log head-rv get-rv save-page urlencode) nil
     ; protect against arc-wiki 'def bashing the
@@ -118,6 +120,39 @@
                         'log log
                         'diff diff)
             'cdr (scan-logs s i end)))))
+    ; creates a scanner for paragraphs
+    (def scan-paras (s (o start 0) (o end (len s)))
+      (when (< start end)
+        (with (i start
+               j start
+               l start
+               allwhite t)
+          ; NOTE!  The *proper* EOL is \r\n, because
+          ; that's the web standard.
+          ; to simplify, we just define paragraphs
+          ; as being separated by lines consisting
+          ; only of whitespace
+          ; first skip over whitespace-only lines
+          (while (and (< j end) (whitec (s j)))
+            (when (is (s j) #\newline) (= i (+ 1 j)))
+            (++ j))
+          ; now start searching for a whitespace-only line
+          (= l j)
+          (breakable:while (< j end)
+            (if
+              (is (s j) #\newline)
+                (if allwhite
+                    (break nil)
+                    (= l j
+                       allwhite t))
+              (nonwhite (s j))
+                (= allwhite nil))
+            (++ j))
+          ; didn't find a terminating empty line
+          (if (>= j end) (= l end))
+          (scanner
+            'car (scanner-string s i l)
+            'cdr (scan-paras s l end)))))
     ; serializes a diff
     (def serialize (diff)
       (each e diff
@@ -345,7 +380,10 @@
                ; ~!TODO: Change this to handle formatting
                display-content
                (fn (ct)
-                 (pr:eschtml ct))
+                 (w/html-tags
+                   (each p (scan-paras ct)
+                     ('p
+                       (each c p (pr c))))))
                display
                (fn ()
                  (*wiki-page (+ (_->space p) " - " name) css
