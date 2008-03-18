@@ -1,0 +1,18 @@
+I was reading Steele and Sussman's The Art of the Interpreter the other
+day and just for the heck of it I decided to try to convert the example
+metacircular interpreters described there to Arc.  It turns out to be
+simple and enlightening to write an interpreter of Arc in Arc itself.
+
+The four source files here are as follows:
+
+ o mk1.arc - a very simple interpreter which has no free variables but
+   defined functions.
+ o mk2.arc - an interpreter which provides dynamic binding of free
+   variables.
+ o mk3.arc - an interpreter which provides static/lexical binding of
+   free variables.  This is a pure functional implementation
+ o mk4.arc - the mk3 interpreter with support for side effects using
+   the set special form
+
+The interpreters here essentially follow the exposition in the Art of
+the Interpreter.
