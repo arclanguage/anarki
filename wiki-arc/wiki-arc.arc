@@ -143,13 +143,12 @@
               (is (s j) #\newline)
                 (if allwhite
                     (break nil)
-                    (= l j
-                       allwhite t))
+                    (= allwhite t))
               (nonwhite (s j))
-                (= allwhite nil))
+                (= l j
+                   allwhite nil))
             (++ j))
-          ; didn't find a terminating empty line
-          (if (>= j end) (= l end))
+          (++ l)
           (scanner
             'car (scanner-string s i l)
             'cdr (scan-paras s l end)))))
