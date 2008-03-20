@@ -331,8 +331,8 @@
           (seq-str "[["))
         (= close-br
           (seq-str "]]"))
-        (= p-nonwhite
-          (pred nonwhite:car anything))
+        (= p-alphadig
+          (pred alphadig:car anything))
         (= italics
           (seq-str "''"))
         (= bold
@@ -351,14 +351,14 @@
                ; currently does not do backtracking on 'many
                (sem on-plain-wiki-link (many (anything-but #\| close-br)))
                close-br
-               (sem on-wiki-link-completed (many p-nonwhite))))
+               (sem on-wiki-link-completed (many p-alphadig))))
         (= joined-wiki-link
           (seq open-br
                (sem on-article-wiki-link (many (anything-but #\|)))
                #\|
                (sem on-text-wiki-link (many (anything-but close-br)))
                close-br
-               (sem on-wiki-link-completed (many p-nonwhite))))
+               (sem on-wiki-link-completed (many p-alphadig))))
         (= formatting
           (alt
             plain-wiki-link
