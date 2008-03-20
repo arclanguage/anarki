@@ -3,6 +3,13 @@
 	margin-left: 15%;
 }
 
+.warning {
+	border: solid 1px black;
+	margin: 0.5em;
+	font-size: 90%;
+	background-color: #fff0c0;
+}
+
 .topinfo {
 	float: right
 }
@@ -41,3 +48,20 @@ a:hover {
 	color: red
 }
 
+h1 {
+	border-bottom: solid 1px black;
+	font-family: sans-serif;
+}
+
+h2 {
+	border-bottom: solid 1px black;
+	font-family: sans-serif;
+}
+
+h3 {
+	font-family: sans-serif;
+}
+
+h4 {
+	font-family: sans-serif;
+}

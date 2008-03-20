@@ -354,7 +354,7 @@
                      ('(span.edit
                          id (if (is action 'edit) 'selected))
                        (tag-if (is action 'edit) b
-                         (link-to p "edit" 'edit)))
+                         (link-to p "edit" 'edit rv)))
                      ('(span.history
                          id (if (is action 'hist) 'selected))
                        (tag-if (is action 'hist) b
@@ -362,11 +362,14 @@
                    ('.sidebar ('(a href "?title=Main_Page") (pr "Main Page")))))
                link-to
                ; creates a link to the specified article
-               (fn (p text (o action))
+               (fn (p text (o action) (o rv))
                  (withs (rp (urlencode:space->_ p)
                          href (+ "?title=" rp
                                  (if action
                                      (+ "&action=" (urlencode:string action))
+                                     "")
+                                 (if rv
+                                     (+ "&rv=" (string rv))
                                      "")))
                    (w/html-tags
                      (if (some rp (keys data))
@@ -389,14 +392,13 @@
                           (let ct (get-rv data meta p rv)
                             (when (and rv (isnt rv (head-rv meta.p)))
                                ('.warning
-                                 ('p
-                                   (pr "This is an old revision of this page")
-                                   #|
-                                   (pr ", as edited by ")
-                                   ('b (pr (editor-rv meta p rv)))
-                                   (pr " on ")
-                                   ('b (pr (date (time-rv meta p rv))))
-                                   (pr ".")|#)))
+                                 (pr "This is an old revision of this page")
+                                 #|
+                                 (pr ", as edited by ")
+                                 ('b (pr (editor-rv meta p rv)))
+                                 (pr " on ")
+                                 ('b (pr (date (time-rv meta p rv))))
+                                 (pr ".")|#))
                             (arform [edit-target req!ip _]
                               ; should have id/class?
                               ('(textarea name 'ct rows 25 cols 80)
@@ -477,14 +479,13 @@
                            (do
                              (when (and rv (isnt rv (head-rv meta.p)))
                                ('.warning
-                                 ('p
-                                   (pr "This is an old revision of this page")
-                                   #|
-                                   (pr ", as edited by ")
-                                   ('b (pr (editor-rv meta p rv)))
-                                   (pr " on ")
-                                   ('b (pr (date (time-rv meta p rv))))
-                                   (pr ".")|#)))
+                                 (pr "This is an old revision of this page")
+                                 #|
+                                 (pr ", as edited by ")
+                                 ('b (pr (editor-rv meta p rv)))
+                                 (pr " on ")
+                                 ('b (pr (date (time-rv meta p rv))))
+                                 (pr ".")|#))
                              ('h1 (pr (_->space p)))
                              (display-content ct))))))))
             ; body
