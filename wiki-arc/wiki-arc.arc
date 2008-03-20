@@ -293,7 +293,8 @@
             on-article-wiki-link on-text-wiki-link
             ; parsers
             open-br close-br p-nonwhite italics bold
-            italicized-text bolded-text
+            nowiki nowiki-e
+            nowiki-text italicized-text bolded-text
             plain-wiki-link joined-wiki-link formatting) nil
         ; extensions to treeparse
         (= enclose-sem
@@ -337,6 +338,10 @@
           (seq-str "''"))
         (= bold
           (seq-str "'''"))
+        (= nowiki
+          (seq-str "<nowiki>"))
+        (= nowiki-e
+          (seq-str "</nowiki>"))
         (= italicized-text
           (seq italics
                (enclose-sem in-italics (many (seq (cant-see italics) (delay-parser formatting))))
@@ -345,6 +350,10 @@
           (seq bold
                (enclose-sem in-bold (many (seq (cant-see bold) (delay-parser formatting))))
                bold))
+        (= nowiki-text
+          (seq nowiki
+               (sem [map pr-esc _] (many (anything-but nowiki-e)))
+               nowiki-e))
         (= plain-wiki-link
           (seq open-br
                ; should really be (many anything), however parsecomb.arc
@@ -365,6 +374,7 @@
             joined-wiki-link
             bolded-text
             italicized-text
+            nowiki-text
             (sem pr-esc:car anything)))
         (carry-out (parse (many formatting) p))))
     ; use our own urlencode -
