@@ -485,6 +485,7 @@
                                    (pr " on ")
                                    ('b (pr (date (time-rv meta p rv))))
                                    (pr ".")|#)))
+                             ('h1 (pr (_->space p)))
                              (display-content ct))))))))
             ; body
             (if (or (no title) (is title "")) (= title "Main Page"))
