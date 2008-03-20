@@ -33,7 +33,9 @@
                    href (flink (fn args
                                  (w/infile s css
                                    (whilet c (readc s) (pr c)))))))))
-     ('body ,@body)))
+     ('body ,@body
+            ('hr)
+            ('.footnote (pr "Powered by Arkani, a wiki in Anarki.")))))
 
 ; wiki-arc module
 (= Arkani
