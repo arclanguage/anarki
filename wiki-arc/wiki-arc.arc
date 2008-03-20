@@ -32,7 +32,10 @@
         _->space space->_ isdigit
         scan-words scan-logs scan-paras
         serialize
-        new-log head-rv get-rv save-page urlencode) nil
+        new-log head-rv get-rv save-page
+        urlencode
+        header-p header-display
+        enformat) nil
     ; protect against arc-wiki 'def bashing the
     ; global docstrings tables
     (= help* (table) sig (table) source-file* (table))
@@ -212,6 +215,55 @@
                                 diff)
                        old-ht))
       (= data.title ct)))
+    ; determines if the given paragraph scanner
+    ; is a header.
+    (def header-p (p)
+      (when (is (car p) #\=)
+        (with (sp (cdr p)
+               nums 1
+               nume 0
+               prespace nil)
+          ; determine the number of ='s at the start
+          (while (is (car sp) #\=)
+            (zap cdr sp)
+            (++ nums))
+          ; make sure it's a space char that
+          ; stopped us, and that there's a
+          ; nonwhitespace char after it
+          (when (and (is #\space (car sp)) (nonwhite (cadr sp)))
+            ; check that we have a similar sequence at
+            ; the end
+            ((afn (sp)
+               (if
+                 (is (car sp) #\=)
+                   (do (if prespace (++ nume))
+                       (self (cdr sp)))
+                 (is (car sp) #\newline)
+                   nil
+                 (is (car sp) #\space)
+                   (do (= prespace t)
+                       (self (cdr sp)))
+                 (no sp)
+                   (is nums nume)
+                   (do (= nume 0
+                          prespace nil)
+                       (self (cdr sp)))))
+             (cdr sp))))))
+    ; display a header
+    (def header-display (p)
+      (with (num 0
+             sp p)
+        ; count the number of ='s
+        (while (is (car sp) #\=)
+          (zap cdr sp)
+          (++ num))
+        (zap cdr sp)
+        (pr "<h" num ">")
+        (enformat (cut sp 0 (- (+ 1 num))))
+        (pr "</h" num ">")))
+    ; format a single paragraph
+    (def enformat (p)
+      (each c p (pr c)))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
@@ -379,10 +431,12 @@
                ; ~!TODO: Change this to handle formatting
                display-content
                (fn (ct)
-                 (w/html-tags
-                   (each p (scan-paras ct)
-                     ('p
-                       (each c p (pr c))))))
+                 (each p (scan-paras ct)
+                   (if
+                     (header-p p)
+                       (header-display p)
+                     ; else
+                       (tag p (enformat p)))))
                display
                (fn ()
                  (*wiki-page (+ (_->space p) " - " name) css
