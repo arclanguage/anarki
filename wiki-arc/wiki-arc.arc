@@ -11,6 +11,9 @@
 (require "lib/file-table.arc")
 (require "lib/scanner.arc")
 
+(attribute a class opstring)
+(attribute a name opstring)
+
 ; macro for easily destructuring web arguments
 (mac *wiki-args (vars args . body)
   `(with
@@ -29,7 +32,7 @@
 (= Arkani
   (let (help* sig source-file*
         wiki add-wiki wikis
-        _->space space->_ isdigit
+        _->space space->_ isdigit pr-esc
         scan-words scan-logs scan-paras
         serialize
         new-log head-rv get-rv save-page
@@ -51,6 +54,14 @@
     ; determine if char is digit
     (def isdigit (c)
       (in c #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
+    ; protect html characters
+    (def pr-esc (c)
+      (case c
+        #\< (pr "&lt;")
+        #\> (pr "&gt;")
+        #\& (pr "&amp;")
+        #\" (pr "&quot;")
+            (pr c)))
     ; creates a scanner for words
     (def scan-words (s (o start 0) (o end (len s)))
       " Creates a scanner which traverses the words
@@ -262,8 +273,9 @@
         (enformat (cut sp 0 (- (+ 1 num))))
         (pr "</h" num ">")))
     ; format a single paragraph
+    ; ~!TODO: Change this to handle formatting
     (def enformat (p)
-      (each c p (pr c)))
+      (each c p (pr-esc c)))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
@@ -293,6 +305,7 @@
           ; end up calling one another.
           (let (p
                 talk-page-p talk-page article-page
+                link-to
                 add-ons cant-edit edit edit-target
                 hist display empty-page display-content) nil
             (=
@@ -324,26 +337,29 @@
                        ()))
                    ('.topbar
                      ; perhaps remove the 'a if already on that page?
-                     ('span ('(a href (+ "?title=" (urlencode (article-page))))
-                              (if (~talk-page-p) (pr "<b>"))
-                              (pr "article")
-                              (if (~talk-page-p) (pr "</b>"))))
-                     ('span ('(a href (+ "?title=" (urlencode (talk-page))))
-                              (if (talk-page-p) (pr "<b>"))
-                              (pr "discussion")
-                              (if (talk-page-p) (pr "</b>"))))
-                     ('span ('(a href (+ "?title=" (urlencode p)
-                                         "&action=edit"
-                                         (if rv (+ "&rv=" (string rv)) "")))
-                              (if (is action 'edit) (pr "<b>"))
-                              (pr "edit")
-                              (if (is action 'edit) (pr "</b>"))))
-                     ('span ('(a href (+ "?title=" (urlencode p)
-                                         "&action=hist"))
-                              (if (is action 'hist) (pr "<b>"))
-                              (pr "history")
-                              (if (is action 'hist) (pr "</b>")))))
+                     ('span (tag-if (~talk-page-p) b
+                              (link-to (article-page) "article")))
+                     ('span (tag-if (talk-page-p) b
+                              (link-to (talk-page) "discussion")))
+                     ('span (tag-if (is action 'edit) b
+                              (link-to p "edit" 'edit)))
+                     ('span (tag-if (is action 'hist) b
+                              (link-to p "history" 'hist))))
                    ('.sidebar ('(a href "?title=Main_Page") (pr "Main Page")))))
+               link-to
+               ; creates a link to the specified article
+               (fn (p text (o action))
+                 (withs (rp (urlencode:space->_ p)
+                         href (+ "?title=" rp
+                                 (if action
+                                     (+ "&action=" (urlencode:string action))
+                                     "")))
+                   (w/html-tags
+                     (if (some rp (keys data))
+                       ('(a href href)
+                         (pr text))
+                       ('(a.deadlink href href)
+                         (pr text))))))
                ; returns nil if editing allowed,
                ; a string detailing the reason why not otherwise
                cant-edit
@@ -428,7 +444,6 @@
                               ('i (pr (eschtml p)))
                               (pr " article")))
                           (pr ".")))))
-               ; ~!TODO: Change this to handle formatting
                display-content
                (fn (ct)
                  (each p (scan-paras ct)
