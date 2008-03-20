@@ -425,7 +425,7 @@
                  (pr "</code></pre>"))
                (iflet newi (parabreak s i (if (is i 0) 1 0))
                       (do (unless (is i 0) (pr "<p>"))
-                          (= i (- newi 1)))
+                          (= i (- newi 2)))
                       (and (is (s i) #\*)
                            (or ital 
                                (atend i s) 

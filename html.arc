@@ -160,7 +160,12 @@
   `(do ,(start-tag spec)
        ,@body
        ,(end-tag spec)))
-     
+
+(mac empty-elem-tag spec
+  `(do (pr "<" ',(car spec))
+       ,@(tag-options (car spec) (pair (cdr spec)))
+       (pr " />")))
+
 (mac tag-if (test spec . body)
   `(if ,test
        (tag ,spec ,@body)
