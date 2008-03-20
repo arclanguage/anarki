@@ -286,12 +286,14 @@
     ; ~!TODO: Change this to handle formatting
     (def enformat (p link-to)
       (let (; extensions to treeparse
-            enclose-sem
+            enclose-sem seq-str
             ; actions
             on-plain-wiki-link in-italics in-bold
+            article
+            on-article-wiki-link on-text-wiki-link
             ; parsers
             open-br close-br italics bold italicized-text bolded-text
-            plain-wiki-link formatting) nil
+            plain-wiki-link joined-wiki-link formatting) nil
         ; extensions to treeparse
         (= enclose-sem
            (fn (f p)
@@ -303,10 +305,21 @@
                       (return (enc 0) (enc 1)
                               (list
                                 (fn () (f enc))))))))
+        (= seq-str
+           (fn (s)
+             (zap scanner-string s)
+             (fn (remaining)
+               (seq-r s remaining nil nil))))
         ; actions
         (= on-plain-wiki-link
            [let s (string _)
-               (link-to s s)])
+             (link-to s s)])
+        (= on-article-wiki-link
+           [let s (string _)
+             (= article s)])
+        (= on-text-wiki-link
+           [let s (string _)
+             (link-to article s)])
         (w/html-tags
           (= in-italics
                ['i (carry-out _)])
@@ -314,26 +327,39 @@
                ['b (carry-out _)]))
         ; parsers
         (= open-br
-          (seq #\[ #\[))
+          (seq-str "[["))
         (= close-br
-          (seq #\] #\]))
+          (seq-str "]]"))
         (= italics
-          (seq #\' #\' #\'))
+          (seq-str "''"))
         (= bold
-          (seq #\' #\'))
+          (seq-str "'''"))
         (= italicized-text
-          (seq italics (enclose-sem in-italics (many (seq (cant-see italics) (delay-parser formatting)))) italics))
+          (seq italics
+               (enclose-sem in-italics (many (seq (cant-see italics) (delay-parser formatting))))
+               italics))
         (= bolded-text
-          (seq bold (enclose-sem in-bold (many (seq (cant-see bold) (delay-parser formatting)))) bold))
+          (seq bold
+               (enclose-sem in-bold (many (seq (cant-see bold) (delay-parser formatting))))
+               bold))
         (= plain-wiki-link
           ; should really be (many anything), however parsecomb.arc
           ; currently does not do backtracking on 'many
-          (seq open-br (sem on-plain-wiki-link (many (anything-but #\]))) close-br))
+          (seq open-br
+               (sem on-plain-wiki-link (many (anything-but #\| #\])))
+               close-br))
+        (= joined-wiki-link
+          (seq open-br
+               (sem on-article-wiki-link (many (anything-but #\|)))
+               #\|
+               (sem on-text-wiki-link (many (anything-but #\])))
+               close-br))
         (= formatting
           (alt
             plain-wiki-link
-            italicized-text
+            joined-wiki-link
             bolded-text
+            italicized-text
             (sem pr-esc:car anything)))
         (carry-out (parse (many formatting) p))))
     ; use our own urlencode -
