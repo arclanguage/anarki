@@ -438,7 +438,8 @@
                    ; maybe float: right
                    ('.topinfo
                      (aif (get-user req)
-                       ('span.username (pr-esc it))
+                       ('span.username
+                         (link-to (+ "User:" it) it))
                        ('span (pr-esc "not logged in"))))
                    ('.topbar
                      ; perhaps remove the 'a if already on that page?
@@ -458,7 +459,12 @@
                          id (if (is action 'hist) 'selected))
                        (tag-if (is action 'hist) b
                          (link-to p "history" 'hist))))
-                   ('.sidebar (link-to "Main Page" "Main Page"))))
+                   ('.sidebar
+                     ('div
+                       (link-to "Main Page" "Main Page"))
+                     ('div
+                       (w/rlink (+ (string op) "?title=" (random-elt:keys data))
+                         (pr "Random Article"))))))
                link-to
                ; creates a link to the specified article
                (fn (l-p text (o l-action) (o l-rv))
