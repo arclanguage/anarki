@@ -25,7 +25,12 @@
 ; should add some sort of css foo here in the future
 (mac *wiki-page (title css . body)
   `(w/html
-     ('head ('title (pr ,title)))
+     ('head
+       ('title (pr ,title))
+       (if (and css (isnt "" css))
+           ('(link rel "stylesheet"
+                   type "text/css"
+                   href css))))
      ('body ,@body)))
 
 ; wiki-arc module
