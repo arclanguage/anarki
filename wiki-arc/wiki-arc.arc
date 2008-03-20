@@ -343,9 +343,9 @@
                (enclose-sem in-bold (many (seq (cant-see bold) (delay-parser formatting))))
                bold))
         (= plain-wiki-link
-          ; should really be (many anything), however parsecomb.arc
-          ; currently does not do backtracking on 'many
           (seq open-br
+               ; should really be (many anything), however parsecomb.arc
+               ; currently does not do backtracking on 'many
                (sem on-plain-wiki-link (many (anything-but #\| close-br)))
                close-br))
         (= joined-wiki-link
