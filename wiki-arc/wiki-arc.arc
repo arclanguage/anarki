@@ -63,12 +63,14 @@
       (in c #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
     ; protect html characters
     (def pr-esc (c)
-      (case c
-        #\< (pr "&lt;")
-        #\> (pr "&gt;")
-        #\& (pr "&amp;")
-        #\" (pr "&quot;")
-            (pr c)))
+      (if (isa c 'char)
+          (case c
+            #\< (pr "&lt;")
+            #\> (pr "&gt;")
+            #\& (pr "&amp;")
+            #\" (pr "&quot;")
+                (pr c))
+         (each rc c (pr-esc rc))))
     ; capitalizes the first character of the input string
     (def capitalize (s)
       (string (upcase (s 0)) (cut s 1)))
@@ -352,7 +354,7 @@
                bold))
         (= nowiki-text
           (seq nowiki
-               (sem [map pr-esc _] (many (anything-but nowiki-e)))
+               (sem pr-esc (many (anything-but nowiki-e)))
                nowiki-e))
         (= plain-wiki-link
           (seq open-br
@@ -375,7 +377,7 @@
             bolded-text
             italicized-text
             nowiki-text
-            (sem pr-esc:car anything)))
+            (sem pr-esc anything)))
         (carry-out (parse (many formatting) p))))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
@@ -434,8 +436,8 @@
                    ; maybe float: right
                    ('.topinfo
                      (aif (get-user req)
-                       ('span.username (pr it))
-                       ('span (pr "not logged in"))))
+                       ('span.username (pr-esc it))
+                       ('span (pr-esc "not logged in"))))
                    ('.topbar
                      ; perhaps remove the 'a if already on that page?
                      ('(span.article
@@ -470,13 +472,13 @@
                    (w/html-tags
                      (if
                        (and (is p l-p) (is action l-action) (is l-rv rv))
-                         ('b (each c text (pr-esc c)))
+                         ('b (pr-esc text))
                        (some rp (keys data))
                          ('(a href href)
-                           (each c text (pr-esc c)))
+                           (pr-esc text))
                        ; else
                          ('(a.deadlink href href)
-                           (each c text (pr-esc c)))))))
+                           (pr-esc text))))))
                ; returns nil if editing allowed,
                ; a string detailing the reason why not otherwise
                cant-edit
@@ -488,23 +490,23 @@
                    ('.main
                      (aif (cant-edit)
                           (do
-                            ('p (pr it)))
+                            ('p (pr-esc it)))
                           (let ct (get-rv data meta p rv)
                             ('h1
-                              (pr "Editing " (_->space p)))
+                              (pr-esc:+ "Editing " (_->space p)))
                             (when (and rv (isnt rv (head-rv meta.p)))
                                ('.warning
-                                 (pr "This is an old revision of this page")
+                                 (pr-esc "This is an old revision of this page")
                                  #|
-                                 (pr ", as edited by ")
-                                 ('b (pr (editor-rv meta p rv)))
-                                 (pr " on ")
-                                 ('b (pr (date (time-rv meta p rv))))
-                                 (pr ".")|#))
+                                 (pr-esc ", as edited by ")
+                                 ('b (pr-esc (editor-rv meta p rv)))
+                                 (pr-esc " on ")
+                                 ('b (pr-esc (date (time-rv meta p rv))))
+                                 (pr-esc ".")|#))
                             (arform [edit-target req!ip _]
                               ; should have id/class?
                               ('(textarea name 'ct rows 25 cols 80)
-                                (when ct (pr ct)))
+                                (when ct (pr-esc ct)))
                               ('div ('p
                                       (pr "Edit summary")
                                       ('span.small
@@ -530,7 +532,7 @@
                    (add-ons)
                    ('.main
                      ('h1
-                       (pr "Revision history of " (_->space p)))
+                       (pr-esc:+ "Revision history of " (_->space p)))
                      (if meta.p
                          ('ul
                            (let ht (scan-logs meta.p)
@@ -538,13 +540,13 @@
                                ('li
                                  ('(a href (+ "?title=" (urlencode p)
                                               "&rv=" (string l!rv)))
-                                   (pr (date l!tm)))
+                                   (pr-esc (date l!tm)))
                                  (pr " ")
                                  ('span
-                                   (pr l!editby))
+                                   (pr-esc l!editby))
                                  (when (and l!log (isnt l!log ""))
                                    (pr " ")
-                                   ('i (pr "(" l!log ")")))))))
+                                   ('i (pr-esc:+ "(" l!log ")")))))))
                          ('p
                            (pr
                             "There is no revision history for this page."))))))
@@ -555,13 +557,13 @@
                  (w/html-tags
                    ('p
                      ('b
-                       (pr name
+                       (pr-esc:+ name
                            " does not have an article with this exact name. ")))
                    ('ul
                      ('li
                        ('(a href (+ "?title=" (urlencode p) "&action=edit"))
                           ('b (pr "Start the ")
-                              ('i (pr (eschtml (_->space p))))
+                              ('i (pr-esc (_->space p)))
                               (pr " article")))
                           (pr ".")))))
                display-content
@@ -583,14 +585,14 @@
                            (do
                              (when (and rv (isnt rv (head-rv meta.p)))
                                ('.warning
-                                 (pr "This is an old revision of this page")
+                                 (pr-esc "This is an old revision of this page")
                                  #|
-                                 (pr ", as edited by ")
-                                 ('b (pr (editor-rv meta p rv)))
-                                 (pr " on ")
-                                 ('b (pr (date (time-rv meta p rv))))
-                                 (pr ".")|#))
-                             ('h1 (pr (_->space p)))
+                                 (pr-esc ", as edited by ")
+                                 ('b (pr-esc (editor-rv meta p rv)))
+                                 (pr-esc " on ")
+                                 ('b (pr-esc (date (time-rv meta p rv))))
+                                 (pr-esc ".")|#))
+                             ('h1 (pr-esc (_->space p)))
                              (display-content ct))))))))
             ; body
             (if (or (no title) (is title "")) (= title "Main Page"))
