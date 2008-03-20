@@ -413,24 +413,29 @@
                          id (if (is action 'hist) 'selected))
                        (tag-if (is action 'hist) b
                          (link-to p "history" 'hist))))
-                   ('.sidebar ('(a href "?title=Main_Page") (pr "Main Page")))))
+                   ('.sidebar (link-to "Main Page" "Main Page"))))
                link-to
                ; creates a link to the specified article
-               (fn (p text (o action) (o rv))
-                 (withs (rp (urlencode:space->_:capitalize p)
+               (fn (l-p text (o l-action) (o l-rv))
+                 (zap space->_:capitalize l-p)
+                 (withs (rp (urlencode l-p)
                          href (+ "?title=" rp
-                                 (if action
-                                     (+ "&action=" (urlencode:string action))
+                                 (if l-action
+                                     (+ "&action=" (urlencode:string l-action))
                                      "")
-                                 (if rv
-                                     (+ "&rv=" (string rv))
+                                 (if l-rv
+                                     (+ "&rv=" (string l-rv))
                                      "")))
                    (w/html-tags
-                     (if (some rp (keys data))
-                       ('(a href href)
-                         (pr text))
-                       ('(a.deadlink href href)
-                         (pr text))))))
+                     (if
+                       (and (is p l-p) (is action l-action) (is l-rv rv))
+                         ('b (pr text))
+                       (some rp (keys data))
+                         ('(a href href)
+                           (pr text))
+                       ; else
+                         ('(a.deadlink href href)
+                           (pr text))))))
                ; returns nil if editing allowed,
                ; a string detailing the reason why not otherwise
                cant-edit
