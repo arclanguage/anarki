@@ -470,13 +470,13 @@
                    (w/html-tags
                      (if
                        (and (is p l-p) (is action l-action) (is l-rv rv))
-                         ('b (pr text))
+                         ('b (each c text (pr-esc c)))
                        (some rp (keys data))
                          ('(a href href)
-                           (pr text))
+                           (each c text (pr-esc c)))
                        ; else
                          ('(a.deadlink href href)
-                           (pr text))))))
+                           (each c text (pr-esc c)))))))
                ; returns nil if editing allowed,
                ; a string detailing the reason why not otherwise
                cant-edit
