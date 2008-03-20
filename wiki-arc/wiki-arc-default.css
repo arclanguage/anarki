@@ -34,6 +34,7 @@
 	position: absolute;
 	left: 2px;
 	top: 2px;
+	width: 15%
 }
 
 a {
@@ -65,3 +66,9 @@ h3 {
 h4 {
 	font-family: sans-serif;
 }
+
+.small {
+	padding-left: 0.5em;
+	font-size: 80%;
+}
+
