@@ -22,15 +22,16 @@
      ,@body))
 
 ; macro for displaying a page
-; should add some sort of css foo here in the future
 (mac *wiki-page (title css . body)
   `(w/html
      ('head
        ('title (pr ,title))
-       (if (and css (isnt "" css))
+       (if (and css (isnt "" css) (file-exists css))
            ('(link rel "stylesheet"
                    type "text/css"
-                   href css))))
+                   href (flink (fn args
+                                 (w/infile s css
+                                   (whilet c (readc s) (pr c)))))))))
      ('body ,@body)))
 
 ; wiki-arc module
@@ -342,14 +343,22 @@
                        ()))
                    ('.topbar
                      ; perhaps remove the 'a if already on that page?
-                     ('span (tag-if (~talk-page-p) b
-                              (link-to (article-page) "article")))
-                     ('span (tag-if (talk-page-p) b
-                              (link-to (talk-page) "discussion")))
-                     ('span (tag-if (is action 'edit) b
-                              (link-to p "edit" 'edit)))
-                     ('span (tag-if (is action 'hist) b
-                              (link-to p "history" 'hist))))
+                     ('(span.article
+                         id (if (~talk-page-p) 'selected))
+                       (tag-if (~talk-page-p) b
+                         (link-to (article-page) "article")))
+                     ('(span.discussion
+                         id (if (talk-page-p) 'selected))
+                       (tag-if (talk-page-p) b
+                         (link-to (talk-page) "discussion")))
+                     ('(span.edit
+                         id (if (is action 'edit) 'selected))
+                       (tag-if (is action 'edit) b
+                         (link-to p "edit" 'edit)))
+                     ('(span.history
+                         id (if (is action 'hist) 'selected))
+                       (tag-if (is action 'hist) b
+                         (link-to p "history" 'hist))))
                    ('.sidebar ('(a href "?title=Main_Page") (pr "Main Page")))))
                link-to
                ; creates a link to the specified article
@@ -519,6 +528,6 @@
 (*wiki-def wikitest "Wiki Test"
            (file-table "arc/wiki-test")
            (file-table "arc/wiki-test-meta")
-           "")
+           "wiki-arc/wiki-arc-default.css")
 
 

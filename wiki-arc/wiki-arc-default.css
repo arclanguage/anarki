@@ -1,0 +1,63 @@
+
+.main{
+	margin-left: 15%;
+	/*border-top: solid 1px black;*/
+}
+
+.topinfo{
+	float: right
+}
+
+.topbar{
+	border-bottom: solid 1px black;
+	margin-left: 15%;
+}
+
+.topbar span  {
+	border-left: solid 1px black;
+	border-right: solid 1px black;
+	border-top: solid 1px black;
+}
+
+.topbar #selected {
+	border-bottom: solid 1px white;
+}
+
+.topbar .article {
+	position: relative;
+	left: 1em;
+}
+
+.topbar .discussion {
+	position: relative;
+	left: 2em;
+}
+
+.topbar .edit {
+	position: relative;
+	left: 4em;
+}
+
+.topbar .history {
+	position: relative;
+	left: 5em;
+}
+
+.sidebar {
+	position: absolute;
+	left: 2px;
+	top: 2px;
+}
+
+a {
+	text-decoration: none
+}
+
+a:hover{
+	text-decoration: underline
+}
+
+.deadlink{
+	color: red
+}
+
