@@ -10,6 +10,7 @@
 (require "wiki-arc/diff.arc")
 (require "lib/file-table.arc")
 (require "lib/scanner.arc")
+(require "lib/treeparse.arc")
 
 (attribute a class opstring)
 (attribute a name opstring)
@@ -267,7 +268,7 @@
                        (self (cdr sp)))))
              (cdr sp))))))
     ; display a header
-    (def header-display (p)
+    (def header-display (p link-to)
       (with (num 0
              sp p)
         ; count the number of ='s
@@ -276,12 +277,61 @@
           (++ num))
         (zap cdr sp)
         (pr "<h" num ">")
-        (enformat (cut sp 0 (- (+ 1 num))))
+        (enformat (cut sp 0 (- (+ 1 num))) link-to)
         (pr "</h" num ">")))
     ; format a single paragraph
     ; ~!TODO: Change this to handle formatting
-    (def enformat (p)
-      (each c p (pr-esc c)))
+    (def enformat (p link-to)
+      (let (; extensions to treeparse
+            enclose-sem
+            ; actions
+            on-plain-wiki-link in-italics in-bold
+            ; parsers
+            open-br close-br italics bold italicized-text bolded-text
+            plain-wiki-link formatting) nil
+        ; extensions to treeparse
+        (= enclose-sem
+           (fn (f p)
+             " Adds semantics like 'sem, but encloses the semantics
+               defined by inner parsers "
+             (fn (r)
+               (iflet enc (parse p r)
+                      (return (enc 0) (enc 1)
+                              (list
+                                (fn () (f enc))))))))
+        ; actions
+        (= on-plain-wiki-link
+           [let s (string _)
+               (link-to s s)])
+        (w/html-tags
+          (= in-italics
+               ['i (carry-out _)])
+          (= in-bold
+               ['b (carry-out _)]))
+        ; parsers
+        (= open-br
+          (seq #\[ #\[))
+        (= close-br
+          (seq #\] #\]))
+        (= italics
+          (seq #\' #\' #\'))
+        (= bold
+          (seq #\' #\'))
+        (= italicized-text
+          (seq italics (enclose-sem in-italics (many (seq (cant-see italics) (delay-parser formatting)))) italics))
+        (= bolded-text
+          (seq bold (enclose-sem in-bold (many (seq (cant-see bold) (delay-parser formatting)))) bold))
+        (= plain-wiki-link
+          ; should really be (many anything), however parsecomb.arc
+          ; currently does not do backtracking on 'many
+          (seq open-br (sem on-plain-wiki-link (many (anything-but #\]))) close-br))
+        (= formatting
+          (alt
+            plain-wiki-link
+            italicized-text
+            bolded-text
+            (sem pr-esc:car anything)))
+        (carry-out (parse (many formatting) p))))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
@@ -340,7 +390,7 @@
                    ('.topinfo
                      (aif (get-user req)
                        ('span.username (pr it))
-                       ()))
+                       ('span (pr "not logged in"))))
                    ('.topbar
                      ; perhaps remove the 'a if already on that page?
                      ('(span.article
@@ -390,6 +440,8 @@
                           (do
                             ('p (pr it)))
                           (let ct (get-rv data meta p rv)
+                            ('h1
+                              (pr "Editing " (_->space p)))
                             (when (and rv (isnt rv (head-rv meta.p)))
                                ('.warning
                                  (pr "This is an old revision of this page")
@@ -427,6 +479,8 @@
                                 (_->space p) " - " name) css
                    (add-ons)
                    ('.main
+                     ('h1
+                       (pr "Revision history of " (_->space p)))
                      (if meta.p
                          ('ul
                            (let ht (scan-logs meta.p)
@@ -465,9 +519,9 @@
                  (each p (scan-paras ct)
                    (if
                      (header-p p)
-                       (header-display p)
+                       (header-display p link-to)
                      ; else
-                       (tag p (enformat p)))))
+                       (tag p (enformat p link-to)))))
                display
                (fn ()
                  (*wiki-page (+ (_->space p) " - " name) css
