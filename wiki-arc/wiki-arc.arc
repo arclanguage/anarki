@@ -39,7 +39,7 @@
 (= Arkani
   (let (help* sig source-file*
         wiki add-wiki wikis
-        _->space space->_ isdigit pr-esc
+        _->space space->_ isdigit pr-esc capitalize
         scan-words scan-logs scan-paras
         serialize
         new-log head-rv get-rv save-page
@@ -69,6 +69,9 @@
         #\& (pr "&amp;")
         #\" (pr "&quot;")
             (pr c)))
+    ; capitalizes the first character of the input string
+    (def capitalize (s)
+      (string (upcase (s 0)) (cut s 1)))
     ; creates a scanner for words
     (def scan-words (s (o start 0) (o end (len s)))
       " Creates a scanner which traverses the words
@@ -293,7 +296,8 @@
         (= enclose-sem
            (fn (f p)
              " Adds semantics like 'sem, but encloses the semantics
-               defined by inner parsers "
+               defined by inner parsers instead of just adding to
+               them. "
              (fn (r)
                (iflet enc (parse p r)
                       (return (enc 0) (enc 1)
@@ -413,7 +417,7 @@
                link-to
                ; creates a link to the specified article
                (fn (p text (o action) (o rv))
-                 (withs (rp (urlencode:space->_ p)
+                 (withs (rp (urlencode:space->_:capitalize p)
                          href (+ "?title=" rp
                                  (if action
                                      (+ "&action=" (urlencode:string action))
@@ -544,7 +548,7 @@
                              (display-content ct))))))))
             ; body
             (if (or (no title) (is title "")) (= title "Main Page"))
-            (zap space->_ title)
+            (zap space->_:capitalize title)
             (= p title)
             (if action (zap sym action))
             (= rv (errsafe (coerce rv 'int)))
