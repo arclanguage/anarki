@@ -2381,6 +2381,7 @@
 (def helpsearch (str)
   " Prints all symbols whose documentation matches or partly matches `str'. "
   (prall (helpsearch-core str) "Related symbols:\n" "\n")
+  (prn)
   nil)
 
 (def helpsearch-core (str)
