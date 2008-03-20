@@ -289,10 +289,11 @@
             enclose-sem seq-str
             ; actions
             on-plain-wiki-link in-italics in-bold
-            article
+            article text
             on-article-wiki-link on-text-wiki-link
             ; parsers
-            open-br close-br italics bold italicized-text bolded-text
+            open-br close-br p-nonwhite italics bold
+            italicized-text bolded-text
             plain-wiki-link joined-wiki-link formatting) nil
         ; extensions to treeparse
         (= enclose-sem
@@ -313,13 +314,13 @@
         ; actions
         (= on-plain-wiki-link
            [let s (string _)
-             (link-to s s)])
+             (= article s text s)])
         (= on-article-wiki-link
-           [let s (string _)
-             (= article s)])
+           [= article (string _)])
         (= on-text-wiki-link
-           [let s (string _)
-             (link-to article s)])
+           [= text (string _)])
+        (= on-wiki-link-completed
+           [link-to article (string text _)])
         (w/html-tags
           (= in-italics
                ['i (carry-out _)])
@@ -330,6 +331,8 @@
           (seq-str "[["))
         (= close-br
           (seq-str "]]"))
+        (= p-nonwhite
+          (pred nonwhite:car anything))
         (= italics
           (seq-str "''"))
         (= bold
@@ -347,13 +350,15 @@
                ; should really be (many anything), however parsecomb.arc
                ; currently does not do backtracking on 'many
                (sem on-plain-wiki-link (many (anything-but #\| close-br)))
-               close-br))
+               close-br
+               (sem on-wiki-link-completed (many p-nonwhite))))
         (= joined-wiki-link
           (seq open-br
                (sem on-article-wiki-link (many (anything-but #\|)))
                #\|
                (sem on-text-wiki-link (many (anything-but close-br)))
-               close-br))
+               close-br
+               (sem on-wiki-link-completed (many p-nonwhite))))
         (= formatting
           (alt
             plain-wiki-link
