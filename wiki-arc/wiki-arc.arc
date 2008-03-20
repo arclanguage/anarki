@@ -346,13 +346,13 @@
           ; should really be (many anything), however parsecomb.arc
           ; currently does not do backtracking on 'many
           (seq open-br
-               (sem on-plain-wiki-link (many (anything-but #\| #\])))
+               (sem on-plain-wiki-link (many (anything-but #\| close-br)))
                close-br))
         (= joined-wiki-link
           (seq open-br
                (sem on-article-wiki-link (many (anything-but #\|)))
                #\|
-               (sem on-text-wiki-link (many (anything-but #\])))
+               (sem on-text-wiki-link (many (anything-but close-br)))
                close-br))
         (= formatting
           (alt
@@ -546,7 +546,7 @@
                      ('li
                        ('(a href (+ "?title=" (urlencode p) "&action=edit"))
                           ('b (pr "Start the ")
-                              ('i (pr (eschtml p)))
+                              ('i (pr (eschtml (_->space p))))
                               (pr " article")))
                           (pr ".")))))
                display-content
