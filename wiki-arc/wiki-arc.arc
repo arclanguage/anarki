@@ -8,7 +8,7 @@
 (require "lib/settable-fn.arc")
 (require "lib/file-table.arc")
 (require "lib/scanner.arc")
-(require "lib/treeparse.arc")
+(require "lib/m_treeparse.arc")
 
 (require "wiki-arc/wikiconf.arc")
 (require "wiki-arc/diff.arc")
@@ -26,18 +26,21 @@
 
 ; macro for displaying a page
 (mac *wiki-page (title css . body)
-  `(w/html
-     ('head
-       ('title (pr ,title))
-       (if (and css (isnt "" css) (file-exists css))
-           ('(link rel "stylesheet"
-                   type "text/css"
-                   href (flink (fn args
-                                 (w/infile s css
-                                   (whilet c (readc s) (pr c)))))))))
-     ('body ,@body
-            ('hr)
-            ('.footnote (pr "Powered by Arkani, a wiki in Anarki.")))))
+  (w/uniq t1
+    `(w/html
+       (let ,t1 (msec)
+         ('head
+           ('title (pr ,title))
+           (if (and css (isnt "" css) (file-exists css))
+               ('(link rel "stylesheet"
+                       type "text/css"
+                       href (flink (fn args
+                                     (w/infile s css
+                                       (whilet c (readc s) (pr c)))))))))
+         ('body ,@body
+                ('hr)
+                ('.rendertime (pr "(" (- (msec) ,t1) " msec)"))
+                ('.footnote (pr "Powered by Arkani, a wiki in Anarki.")))))))
 
 ; wiki-arc module
 (= Arkani
@@ -49,7 +52,7 @@
         new-log head-rv get-rv save-page
         urlencode
         header-p header-display
-        enformat) nil
+        enformat-base) nil
     ; protect against arc-wiki 'def bashing the
     ; global docstrings tables
     (= help* (table) sig (table) source-file* (table))
@@ -277,7 +280,7 @@
                        (self (cdr sp)))))
              (cdr sp))))))
     ; display a header
-    (def header-display (p link-to)
+    (def header-display (enformat p)
       (with (num 0
              sp p)
         ; count the number of ='s
@@ -286,11 +289,11 @@
           (++ num))
         (zap cdr sp)
         (pr "<h" num ">")
-        (enformat (cut sp 0 (- (+ 1 num))) link-to)
+        (enformat (cut sp 0 (- (+ 1 num))))
         (pr "</h" num ">")))
     ; format a single paragraph
     ; ~!TODO: Change this to handle formatting
-    (def enformat (p link-to)
+    (def enformat-base (link-to)
       (let (; extensions to treeparse
             enclose-sem seq-str
             ; actions
@@ -389,7 +392,8 @@
             ampersand-coded-text
             nowiki-text
             (sem pr-esc anything)))
-        (carry-out (parse (many formatting) p))))
+        (fn (p)
+          (carry-out (parse (many formatting) p)))))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
@@ -419,7 +423,7 @@
           ; end up calling one another.
           (let (p
                 talk-page-p talk-page article-page
-                link-to
+                link-to this-page
                 add-ons cant-edit edit edit-target
                 hist display empty-page display-content) nil
             (=
@@ -441,15 +445,31 @@
                  (if (talk-page-p)
                      (cut p 5)
                      p))
+               ; recomposes the address for this page
+               this-page
+               (+ (string op)
+                  (tostring:prall
+                    (map
+                      [+ (car _) "=" (cadr _)]
+                      args) "?" "&"))
+               ; topbar and side bar
                add-ons
                (fn ()
                  (w/html-tags
                    ; maybe float: right
                    ('.topinfo
                      (aif (get-user req)
+                       (do
+                         ('span.username
+                           (link-to (+ "User:" it) it))
+                         ('span.logout
+                           (w/rlink (do (logout-user it) this-page)
+                             (pr "logout"))))
                        ('span.username
-                         (link-to (+ "User:" it) it))
-                       ('span (pr-esc "not logged in"))))
+                         (w/link (login-page 'both (+ "Log into " name)
+                                   (list nilfn
+                                     this-page))
+                           (pr "login")))))
                    ('.topbar
                      ; perhaps remove the 'a if already on that page?
                      ('(span.article
@@ -586,12 +606,13 @@
                           (pr ".")))))
                display-content
                (fn (ct)
-                 (each p (scan-paras ct)
-                   (if
-                     (header-p p)
-                       (header-display p link-to)
-                     ; else
-                       (tag p (enformat p link-to)))))
+                 (let enformat (enformat-base link-to)
+                   (each p (scan-paras ct)
+                     (if
+                       (header-p p)
+                         (header-display enformat p)
+                       ; else
+                         (tag p (enformat p))))))
                display
                (fn ()
                  (*wiki-page (+ (_->space p) " - " name) css
