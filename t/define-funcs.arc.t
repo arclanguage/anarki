@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 31)
+(plan 34)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -141,4 +141,12 @@
       (test-is (cadr result) 40 "Testing function that accepts an (fn) - 2")
       ; TEST
       (test-is (len result) 2 "Testing function that accepts an (fn) - 3"))
+
+(with (result (map-first-two (let a 5 (fn (x) (* x (++ a)))) (list 1 2 50)))
+      ; TEST
+      (test-is (car result) 6 "Testing closure as callback - 1")
+      ; TEST
+      (test-is (cadr result) 14 "Testing closure as callback - 2")
+      ; TEST
+      (test-is (len result) 2 "Testing closure as callback - 3"))
 
