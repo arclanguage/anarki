@@ -6,11 +6,13 @@
 
 (require "whtml.arc")
 (require "lib/settable-fn.arc")
-(require "wiki-arc/wikiconf.arc")
-(require "wiki-arc/diff.arc")
 (require "lib/file-table.arc")
 (require "lib/scanner.arc")
 (require "lib/treeparse.arc")
+
+(require "wiki-arc/wikiconf.arc")
+(require "wiki-arc/diff.arc")
+(require "wiki-arc/ampersands.arc")
 
 (attribute a class opstring)
 (attribute a name opstring)
@@ -297,7 +299,8 @@
             on-article-wiki-link on-text-wiki-link
             ; parsers
             open-br close-br p-nonwhite italics bold
-            nowiki nowiki-e
+            nowiki nowiki-e ampersand-codes
+            ampersand-coded-text
             nowiki-text italicized-text bolded-text
             plain-wiki-link joined-wiki-link formatting) nil
         ; extensions to treeparse
@@ -346,6 +349,11 @@
           (seq-str "<nowiki>"))
         (= nowiki-e
           (seq-str "</nowiki>"))
+        (= ampersand-codes
+          (apply alt
+            (map seq-str *wiki-ampersand-codes)))
+        (= ampersand-coded-text
+          (sem [map pr _] (seq #\& ampersand-codes #\;)))
         (= italicized-text
           (seq italics
                (enclose-sem in-italics (many (seq (cant-see italics) (delay-parser formatting))))
@@ -360,7 +368,7 @@
                nowiki-e))
         (= plain-wiki-link
           (seq open-br
-               ; should really be (many anything), however parsecomb.arc
+               ; should really be (many anything), however treeparse.arc
                ; currently does not do backtracking on 'many
                (sem on-plain-wiki-link (many (anything-but #\| close-br)))
                close-br
@@ -378,6 +386,7 @@
             joined-wiki-link
             bolded-text
             italicized-text
+            ampersand-coded-text
             nowiki-text
             (sem pr-esc anything)))
         (carry-out (parse (many formatting) p))))
