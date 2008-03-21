@@ -21,7 +21,7 @@
         "pound" "curren" "sup1" "sup2" "sup3"
         "alpha" "beta" "gamma" "delta" "epsilon" "zeta" 
         "eta" "theta" "iota" "kappa" "lambda" "mu" "nu" 
-        "xi" "omicron" "pi" "rho" "sigma" "sigmaf"
+        "xi" "omicron" "pi" "rho" "sigmaf" "sigma"
         "tau" "upsilon" "phi" "chi" "psi" "omega"
         "Gamma" "Delta" "Theta" "Lambda" "Xi" "Pi" 
         "Sigma" "Phi" "Psi" "Omega"
