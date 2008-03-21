@@ -31,3 +31,8 @@
 (xdef 'cfinalize register-finalizer)
 (xdef 'gc collect-garbage)
 
+;; needed to convert from arc's lists (nil terminated) and proper scheme lists
+(define (to-prop l)
+  (if (eq?  l 'nil) '() (cons (car l) (to-prop (cdr l)))))
+(define (l->cvec l type) (list->cvector (to-prop l) type))
+(xdef 'l->cvec l->cvec)

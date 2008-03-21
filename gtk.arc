@@ -5,6 +5,58 @@
 
 (require "ffi.arc")
 
+;; GTypes
+
+(w/ffi "libgdk-x11-2.0"
+  (cdef gdk-pixbuf-get-type "gdk_pixbuf_get_type" culong ())
+  (cdef gdk-pixbuf-new-from-file "gdk_pixbuf_new_from_file" 
+        cptr (cstring cptr)))
+
+(= gtype* (table))
+(def get-g-type (n) (* n 4))
+(mac defgtype (name id) `(= (gtype* ,name) (get-g-type ,id))) 
+
+(defgtype 'int 6)
+(defgtype 'string 16)
+(defgtype 'pointer 17)
+(defgtype 'pixbuf 0)
+
+;; Handling of GValues, very low level and very unsafe, but it seems to work
+(w/inline 
+  "void* inc_pt(void *pt, unsigned int offset) 
+   {
+     return (void*)(((unsigned int)pt)+offset);
+   }"
+  (cdef inc-pt "inc_pt" cptr (cptr cint)))
+
+(def mkgval (val ctype gtype)
+  "Builds a GValue from a C type.
+   ctype is the C type, gtype is a key in gtype*"
+  (let pt (cmalloc (+ (csizeof culong) (csizeof cptr)))
+    (cpset pt culong (gtype* gtype))
+    (cpset (inc-pt pt (csizeof culong)) ctype val)
+    pt))
+
+(def make-gvalue (val)
+  "automatically builds a GValue from an Arc type.
+   only int and string are supported at the moment"
+  (with (ctype nil gtype nil)
+    (case (type val)
+      int (= ctype cint gtype gtype*!int)
+      string (= ctype cstring gtype gtype*!string))
+    (if (no ctype) (err "Invalid type passed to make-gvalue"))
+    (let pt (cmalloc (+ (csizeof culong) (csizeof ctype)))
+      (cpset pt culong gtype)
+      (cpset (inc-pt pt (csizeof culong)) ctype val)
+      pt)))
+
+(def get-gvalue (pt type)
+  (cpref (inc-pt pt (csizeof culong)) type))
+
+;; TreeIter
+(def make-tree-iter ()
+  (cmalloc (+ (csizeof cint) (* 3 (csizeof cptr)))))
+
 ;; needed to get a NULL C pointer
 (w/inline 
   "void* get_null_pt() { return 0; }" 
@@ -35,10 +87,10 @@
 (defenum window-type 'toplevel 'popup)
 (defenum window-pos 'node 'center 'mouse 'center-always 'center-on-parent)
 
-(w/ffi "libgtk-x11-2.0.so"
+(w/ffi "libgtk-x11-2.0"
 
   ;; initialization & misc
-  (gtkdef init cvoid (cint cptr))
+  (gtkdef (init-aux "init") cvoid (cint cptr))
   (gtkdef main cvoid ())
   (gtkdef main_quit cvoid ())
 
@@ -180,7 +232,27 @@
 
   ;; hbox
   (gtkdef hbox_new cptr (cint cint))
+
+  ;; list store
+  (gtkdef (list_store_newv_aux "list_store_newv") cptr (cint cvec))
+  (gtkdef (list_store_set_gval "list_store_set_value") 
+          cvoid (cptr cptr cint cptr))
+  (gtkdef list_store_insert cvoid (cptr cptr cint))
+  (gtkdef list_store_append cvoid (cptr cptr))
+  (gtkdef list_store_remove cint (cptr cptr))
+  (gtkdef list_store_clear cvoid (cptr))
+
+  ;; icon view
+  (gtkdef icon_view_new cptr ())
+  (gtkdef icon_view_new_with_model cptr (cptr))
+  (gtkdef icon_view_set_model cvoid (cptr cptr))
+  (gtkdef icon_view_set_text_column cvoid (cptr cint))
+  (gtkdef icon_view_set_pixbuf_column cvoid (cptr cint))
 )
+
+(def gtk-init ()
+  (gtk-init-aux 0 (get-null-pt))
+  (= gtype*!pixbuf (gdk-pixbuf-get-type)))
 
 (mac last-pts (f types . args)
   "calls function with arguments args and extra parameters in the end 
@@ -199,12 +271,22 @@
 
 (def gtk-widget-path (w)
   (last-pts gtk-widget-path-aux (cint cstring cstring) w)) ; seg. faults
+
 (def gtk-widget-get-pointer (w) 
   (last-pts gtk-widget-get-pointer-aux (cint cint) w))
+
 (def gtk-translate-coordinates (w1 w2 x y) 
   (last-pts gtk-widget-translate-coordinates (cint cint) w1 w2 x y))
+
 (def gtk-image-get-pixmap (img) 
   (last-pts gtk-image-get-pixmap-aux (cptr cptr) img))
+
+(def gtk-list-store-new types
+  (gtk-list-store-newv-aux (len types) 
+                           (l->cvec (map gtype* types) cint)))
+
+(def gtk-list-store-set-value (lstore iter col value)
+  (gtk-list-store-set-gval lstore iter col (make-gvalue value)))
 
 ;; simple signal handling
 (w/ffi "libgobject-2.0"
@@ -222,7 +304,7 @@
 
 (mac in-gtk body
   `(do 
-     (gtk-init 0 (get-null-pt))
+     (gtk-init)
      ,@body
      (gtk-main)))
 
@@ -233,7 +315,8 @@
      (gtk-window-set-position ,name (window-pos 'center))
      (w/sig ,name "destroy"
        (gtk-main-quit))
-     ,@body))
+     ,@body
+     (gtk-widget-show-all ,name)))
 
 (def gtk-hello-world ()
   (in-gtk
@@ -242,8 +325,7 @@
         (gtk-container-add w btn)
         (w/sig btn "clicked"
           (gtk-widget-show-all 
-            (gtk-message-dialog-new w 0 0 0 "Hello, World!")))
-      (gtk-widget-show-all w)))))
+            (gtk-message-dialog-new w 0 0 0 "Hello, World!")))))))
 
 ;(gtk-hello-world)
 
@@ -259,8 +341,7 @@
           (prn (gtk-widget-path btn))) ; sometimes segfaults
         (gtk-box-pack-start v l 1 1 0)
         (gtk-box-pack-start v btn 0 1 0)
-        (gtk-container-add w v)
-        (gtk-widget-show-all w)))))
+        (gtk-container-add w v)))))
 
 ;(test)
 
@@ -278,7 +359,25 @@
           (gtk-container-add hb-tog tog))
         (gtk-container-add vb hb-bt)
         (gtk-container-add vb hb-tog)
-        (gtk-container-add w vb)
-        (gtk-widget-show-all w)))))
+        (gtk-container-add w vb)))))
 
 ;(test-btns)
+
+;; there must be an image named "test-image.svg" inside the directory for
+;; the test to work 
+(def test-iconview ()
+  (in-gtk
+    (w/win w "IconView test"
+      (let model (gtk-list-store-new 'string 'pixbuf)
+        (with (iter (make-tree-iter)
+               iview (gtk-icon-view-new-with-model model))
+          (gtk-icon-view-set-text-column iview 0)
+          (gtk-icon-view-set-pixbuf-column iview 1)
+          (gtk-list-store-append model iter)
+          (gtk-list-store-set-value model iter 0 "Text under image")
+          (let pix (gdk-pixbuf-new-from-file 
+                     "test-image.svg" (get-null-pt))
+            (gtk-list-store-set-gval model iter 1 (mkgval pix cptr 'pixbuf)))
+          (gtk-container-add w iview))))))
+
+;(test-iconview)
