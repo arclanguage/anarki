@@ -462,10 +462,10 @@
                        (do
                          ('span.username
                            (link-to (+ "User:" it) it))
-                         ('span.logout
+                         ('span.loginout
                            (w/rlink (do (logout-user it) this-page)
                              (pr "logout"))))
-                       ('span.username
+                       ('span.loginout
                          (w/link (login-page 'both (+ "Log into " name)
                                    (list nilfn
                                      this-page))

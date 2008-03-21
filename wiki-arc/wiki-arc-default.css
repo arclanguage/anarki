@@ -72,6 +72,10 @@ h4 {
 	font-size: 80%;
 }
 
+.loginout {
+	margin-left: 0.5em;
+}
+
 .rendertime {
 	float: right;
 	font-size: 65%;
