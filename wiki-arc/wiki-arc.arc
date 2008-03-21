@@ -463,8 +463,9 @@
                      ('div
                        (link-to "Main Page" "Main Page"))
                      ('div
-                       (w/rlink (+ (string op) "?title=" (random-elt:keys data))
-                         (pr "Random Article"))))))
+                       (let articles-only [rem [some #\: (urldecode _)] _]
+                         (w/rlink (+ (string op) "?title=" (random-elt:articles-only:keys data))
+                           (pr "Random Article")))))))
                link-to
                ; creates a link to the specified article
                (fn (l-p text (o l-action) (o l-rv))
