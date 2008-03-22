@@ -36,3 +36,4 @@
   (if (eq?  l 'nil) '() (cons (car l) (to-prop (cdr l)))))
 (define (l->cvec l type) (list->cvector (to-prop l) type))
 (xdef 'l->cvec l->cvec)
+(xdef 'acptr cpointer?)

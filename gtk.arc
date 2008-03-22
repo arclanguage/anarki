@@ -13,13 +13,27 @@
         cptr (cstring cptr)))
 
 (= gtype* (table))
+(= gtype->ctype* (table))
+(= gtype-list* nil)
+(= arc-type-list* nil)
+(= type-map* (table))
 (def get-g-type (n) (* n 4))
-(mac defgtype (name id) `(= (gtype* ,name) (get-g-type ,id))) 
+(mac defgtype (name id arc-type ctype)
+  "defines a GValue type"
+  `(do
+     (= (gtype* ,name) (get-g-type ,id))
+     (= (gtype->ctype* ,name) ,ctype)
+     (push ,name gtype-list*)
+     (= (type-map* ,arc-type) ,ctype)
+     (push ,arc-type arc-type-list*)))
 
-(defgtype 'int 6)
-(defgtype 'string 16)
-(defgtype 'pointer 17)
-(defgtype 'pixbuf 0)
+(defgtype 'char 3 'char cbyte)
+(defgtype 'int 6 'int cint)
+(defgtype 'string 16 'string cstring)
+(defgtype 'pointer 17 'nil cptr)
+(defgtype 'pixbuf 0 'nil cptr)
+;; object _must_ be added after pixbuf
+(defgtype 'object 20 'nil cptr)
 
 ;; Handling of GValues, very low level and very unsafe, but it seems to work
 (w/inline 
@@ -27,7 +41,12 @@
    {
      return (void*)(((unsigned int)pt)+offset);
    }"
-  (cdef inc-pt "inc_pt" cptr (cptr cint)))
+  (cdef inc-pt "inc_pt" cptr (cptr cuint)))
+
+(def mkempty-gval ()
+  (let pt (cmalloc (* 4 (csizeof culong)))
+    (cpset pt culong 0)
+    pt))
 
 (def mkgval (val ctype gtype)
   "Builds a GValue from a C type.
@@ -38,20 +57,30 @@
     pt))
 
 (def make-gvalue (val)
-  "automatically builds a GValue from an Arc type.
-   only int and string are supported at the moment"
+  "automatically builds a GValue from val"
   (with (ctype nil gtype nil)
-    (case (type val)
-      int (= ctype cint gtype gtype*!int)
-      string (= ctype cstring gtype gtype*!string))
+    (if (acptr val)
+      (do
+        (= ctype cptr)
+        (each gt gtype-list*
+          (if (is (g-type-check-instance-is-a val (gtype* gt)) 1)
+            (= gtype (gtype* gt)))))
+      (each tp arc-type-list*
+        (if (is (type val) tp)
+          (= ctype (type-map* (type val)) gtype (gtype* (type val))))))
     (if (no ctype) (err "Invalid type passed to make-gvalue"))
-    (let pt (cmalloc (+ (csizeof culong) (csizeof ctype)))
+    (let pt (mkempty-gval)
       (cpset pt culong gtype)
       (cpset (inc-pt pt (csizeof culong)) ctype val)
       pt)))
 
-(def get-gvalue (pt type)
-  (cpref (inc-pt pt (csizeof culong)) type))
+(def get-gvalue (pt)
+  "gets contents of a gvalue, automatically discover the type"
+  (let ctype cptr ; default
+    (each gt gtype-list*
+      (if (is (g-type-check-value-holds pt (gtype* gt)) 1) 
+        (= ctype (gtype->ctype* gt))))
+    (cpref (inc-pt pt (csizeof culong)) ctype)))
 
 ;; TreeIter
 (def make-tree-iter ()
@@ -68,11 +97,29 @@
       (if (is (str i) #\_) (= (str i) #\-)))
     (sym str)))
 
+(def need-aux (in-args)
+  (some [or (acons _) (is _ 'gvalue)] in-args))
+
+(def get-n-syms (n)
+  (if (is n 0) nil (cons (uniq) (get-n-syms (- n 1)))))
+
+(def build-aux (arc-name aux-name args)
+  (let arg-names (get-n-syms (len args))
+    `(def ,arc-name ,arg-names
+       (,aux-name ,@(map (fn (x y) (if (is x 'gvalue) `(make-gvalue ,y) y))
+                         args arg-names)))))
+
 (mac gtkdef (name . rest)
   "imports a gtk function"
   (with (cname (string "gtk_" (if (acons name) (cadr name) name))
          arc-name (gtkname->arc-name (if (acons name) (car name) name)))
-    `(cdef ,arc-name ,cname ,@rest)))
+    (if (need-aux (cadr rest))
+      (let aux-name (sym (string arc-name "-aux"))
+        `(do
+           (cdef ,aux-name ,cname ,(car rest) 
+                 ,(tree-subst 'gvalue 'cptr (cadr rest)))
+           ,(build-aux arc-name aux-name (cadr rest))))
+      `(cdef ,arc-name ,cname ,@rest))))
 
 (mac defenum (name . args)
   "defines an enumeration type"
@@ -86,6 +133,7 @@
 (defenum widget-state 'normal 'active 'prelight 'selected 'insensitive)
 (defenum window-type 'toplevel 'popup)
 (defenum window-pos 'node 'center 'mouse 'center-always 'center-on-parent)
+(defenum policy-type 'always 'automatic 'never)
 
 (w/ffi "libgtk-x11-2.0"
 
@@ -235,12 +283,18 @@
 
   ;; list store
   (gtkdef (list_store_newv_aux "list_store_newv") cptr (cint cvec))
-  (gtkdef (list_store_set_gval "list_store_set_value") 
-          cvoid (cptr cptr cint cptr))
+  (gtkdef list_store_set_value cvoid (cptr cptr cint gvalue))
   (gtkdef list_store_insert cvoid (cptr cptr cint))
   (gtkdef list_store_append cvoid (cptr cptr))
   (gtkdef list_store_remove cint (cptr cptr))
   (gtkdef list_store_clear cvoid (cptr))
+
+  ;; tree model
+
+  (gtkdef (tree_model_get_iter_aux "tree_model_get_iter")
+          cvoid (cptr cptr cptr))
+  (gtkdef (tree_model_get_value_aux "tree_model_get_value")
+          cvoid (cptr cptr cint cptr))
 
   ;; icon view
   (gtkdef icon_view_new cptr ())
@@ -248,6 +302,11 @@
   (gtkdef icon_view_set_model cvoid (cptr cptr))
   (gtkdef icon_view_set_text_column cvoid (cptr cint))
   (gtkdef icon_view_set_pixbuf_column cvoid (cptr cint))
+
+  ;; scrolled window
+  (gtkdef scrolled_window_new cptr (cptr cptr))
+  (gtkdef scrolled_window_set_policy cvoid (cptr cuint cuint))
+  (gtkdef scrolled_window_add_with_viewport cvoid (cptr cptr))
 )
 
 (def gtk-init ()
@@ -285,20 +344,57 @@
   (gtk-list-store-newv-aux (len types) 
                            (l->cvec (map gtype* types) cint)))
 
-(def gtk-list-store-set-value (lstore iter col value)
-  (gtk-list-store-set-gval lstore iter col (make-gvalue value)))
+(def gtk-tree-model-get-iter (m path)
+  (let it (make-tree-iter)
+    (gtk-tree-model-get-iter-aux m it path)
+    it))
+
+(def gtk-tree-model-get-value (m it col)
+  (let gv (mkempty-gval)
+    (gtk-tree-model-get-value-aux m it col gv)
+    (let res (get-gvalue gv)
+      (gvalue-unset gv)
+      res)))
 
 ;; simple signal handling
 (w/ffi "libgobject-2.0"
-  (cdef g-signal-connect "g_signal_connect_data" culong 
-        (cptr cstring (cfn (list) cint) cint cint cint)))
+  (cdef g-type-check-instance-is-a "g_type_check_instance_is_a" 
+        cint (cptr culong))
+  (cdef g-type-is-a "g_type_is_a" cint (culong culong))
+  (cdef g-type-check-value-holds "g_type_check_value_holds"
+        cint (cptr culong))
+  (cdef gvalue-unset "g_value_unset" cvoid (cptr))
+  (cdef gvalue-reset "g_value_reset" cptr (cptr))
+  (cdef g-signal-connect-0 "g_signal_connect_data" culong 
+        (cptr cstring (cfn (list) cint) cptr cptr cuint))
+  (cdef g-signal-connect-2 "g_signal_connect_data" culong 
+        (cptr cstring (cfn (list cptr cptr) cint) cptr cptr cuint))
+  (cdef g-signal-connect-3 "g_signal_connect_data" culong 
+        (cptr cstring (cfn (list cptr cptr cptr) cint) cptr cptr cuint)))
 
-(def connect (widget signal fun)
-  (g-signal-connect widget signal (fn () (fun) 1) 0 0 0))
+(def connect-0 (widget signal fun)
+  (g-signal-connect-0 widget signal (fn () (fun) 1) 
+                      (get-null-pt) (get-null-pt) 0))
+
+(def connect-2 (widget signal fun)
+  (g-signal-connect-2 widget signal (fn (x y) (fun x y) 1) 
+                      (get-null-pt) (get-null-pt) 0))
+
+(def connect-3 (widget signal fun)
+  (g-signal-connect-3 widget signal (fn (x y z) (fun x y z) 1) 
+                      (get-null-pt) (get-null-pt) 0))
 
 (mac w/sig (widget signal . body)
   "execute body when signal is triggered on widget"
-  `(connect ,widget ,signal (fn () ,@body)))
+  `(connect-0 ,widget ,signal (fn () ,@body)))
+
+(mac w/sig2 (widget signal name1 name2 . body)
+  "execute body when signal is triggered on widget"
+  `(connect-2 ,widget ,signal (fn (,name1 ,name2) ,@body)))
+
+(mac w/sig3 (widget signal name1 name2 name3 . body)
+  "execute body when signal is triggered on widget"
+  `(connect-3 ,widget ,signal (fn (,name1 ,name2 ,name3) ,@body)))
 
 ;; tests
 
@@ -311,9 +407,9 @@
 (mac w/win (name title . body)
   `(let ,name (gtk-window-new (window-type 'toplevel))
      (gtk-window-set-title ,name ,title)
-     (gtk-window-set-default-size ,name 300 200)
+     (gtk-window-set-default-size ,name 400 250)
      (gtk-window-set-position ,name (window-pos 'center))
-     (w/sig ,name "destroy"
+     (w/sig2 ,name "destroy" w user
        (gtk-main-quit))
      ,@body
      (gtk-widget-show-all ,name)))
@@ -377,7 +473,7 @@
           (gtk-list-store-set-value model iter 0 "Text under image")
           (let pix (gdk-pixbuf-new-from-file 
                      "test-image.svg" (get-null-pt))
-            (gtk-list-store-set-gval model iter 1 (mkgval pix cptr 'pixbuf)))
+            (gtk-list-store-set-value model iter 1 pix))
           (gtk-container-add w iview))))))
 
 ;(test-iconview)
