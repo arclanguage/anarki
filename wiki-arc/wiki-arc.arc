@@ -591,6 +591,12 @@
                          (withs (rp (urlencode p)
                                  ht (cut (scan-logs meta.p)
                                         start (+ start size))
+                                 hist-link-to
+                                 (fn (start size)
+                                   (+ "?title=" rp
+                                      "&action=hist"
+                                      "&start=" (string start)
+                                      "&size=" (string size)))
                                  navigation
                                  (fn ()
                                    ('.small
@@ -598,24 +604,36 @@
                                        (tostring
                                          (tag-if (> start 0)
                                                  (a href
-                                                    (+ "?title=" rp
-                                                       "&action=hist"
-                                                       "&start="
-                                                       (string:coerce-into
-                                                         (- start size) 0)
-                                                       "&size=" string.size))
+                                                    (hist-link-to
+                                                      (coerce-into
+                                                        (- start size) 0)
+                                                      size))
                                            (pr "newer"))))
                                      (pr " ")
                                      (in-paren
                                        (tostring
                                          (tag-if (>= (len ht) size)
                                                  (a href
-                                                    (+ "?title=" rp
-                                                       "&action=hist"
-                                                       "&start="
-                                                       (string:+ start size)
-                                                       "&size=" string.size))
-                                           (pr "older")))))))
+                                                    (hist-link-to
+                                                      (+ start size)
+                                                      size))
+                                           (pr "older"))))
+                                     (pr " ")
+                                     (in-paren
+                                       (tostring
+                                         (tag-if (isnt size 50)
+                                                 (a href
+                                                    (hist-link-to
+                                                      start 50))
+                                           (pr "50"))))
+                                     (pr " ")
+                                     (in-paren
+                                       (tostring
+                                         (tag-if (isnt size 100)
+                                                 (a href
+                                                    (hist-link-to
+                                                      start 100))
+                                           (pr "100")))))))
                            (navigation)
                            ('ul
                              (each l ht
