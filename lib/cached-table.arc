@@ -26,7 +26,6 @@
            ; cleanup function
            cleanup nil
            (cachetime) (arguments args 'cachetime 7200))
-      (prn cachetime)
       (= cleanup
          (fn ()
            (let tm (seconds)
@@ -41,7 +40,8 @@
                (= (mt s) (seconds))
                (cleanup))
              (= (ct s) v))
-        'keys (fn () (keys ct))
+        'keys (fn ()
+                  (atomic (cleanup)) (keys ct))
         (annotate 'table
           (fn (s)
             (atomic
