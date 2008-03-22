@@ -78,3 +78,33 @@
 (def lpar () (pr "("))
 (def rpar () (pr ")"))
 
+(= oneline-sexp* 30)
+
+;A pretty printer optimized for just prettifying sexpressions- Useful for prettying your sexp data before saving it to a file or showing it to a user. It has one config variable, oneline-sexp, which determines how long a line should be before it is split. This is not a "hard" limit- The program won't break strings or other non-list structures to meet this limit. Also, this limit does not count the indentation, so deeply nested sexps don't start becoming anorexically skinny to meet an artificial line break... The goal here is to make the data easier to grok, not meet a hard column width.
+
+(def ppr-sexp (sexp)
+  (prn)
+  (map [prn (string:n-of car._ #\space) cdr._]
+       ((afn (sexp)
+	  (withs (tw tostring:write
+		     x tw.sexp)
+	    (if (or (<= len.x oneline-sexp*) atom.sexp dotted.sexp) (list:cons 0 x)
+		(with (y (map self sexp)
+                         psh (fn (n lst)
+                               (map [cons (+ n car._) cdr._] lst))
+                         endit [let l (last _)
+				 (= cdr.l (string cdr.l #\)))
+                                 _])
+		  (if (acons:car sexp) (let q (psh 1 (apply join (cdr:car y) cdr.y))
+					 (cons (cons 0 (string #\( 
+							       (cdr:caar y) 
+							       (unless q 
+								       #\))))
+					       (when q 
+						 (endit q))))
+		      (is 1 (len sexp)) (list (cons 0 (string #\( (tw car.sexp) #\))))
+		      (and (is 2 (len sexp)) (is 1 (len cadr.y))) (list (cons 0 (string #\( (tw car.sexp) #\space (tw cadr.sexp) #\))))
+		      (let b (string #\( (tw car.sexp) #\space)
+			(cons (cons 0 (string b (cdr:car:car:cdr y)))
+			      (endit:psh len.b (apply join (cdr:cadr y) cddr.y)))))))))
+	sexp)))
