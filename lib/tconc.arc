@@ -36,13 +36,13 @@
     ;if hd
     (if (car var)
         (do
-          ;= hd        new
-          (= (car var) new)
+          ;= (cdr tl)        new
+          (= (cdr (cdr var)) new)
           ;= tl        new
           (= (cdr var) new))
         (do
-          ;= (cdr tl)        new
-          (= (cdr (cdr var)) new)
+          ;= hd        new
+          (= (car var) new)
           ;= tl        new
           (= (cdr var) new))))
   ; might be unnecessary, but scheme should
