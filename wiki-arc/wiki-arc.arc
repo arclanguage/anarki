@@ -8,7 +8,7 @@
 (require "lib/settable-fn.arc")
 (require "lib/file-table.arc")
 (require "lib/scanner.arc")
-(require "lib/m_treeparse.arc")
+(require "lib/treeparse.arc")
 
 (require "wiki-arc/wikiconf.arc")
 (require "wiki-arc/diff.arc")
@@ -47,6 +47,8 @@
   (let (help* sig source-file*
         wiki add-wiki wikis
         _->space space->_ isdigit pr-esc capitalize
+        coerce-into
+        in-paren
         scan-words scan-logs scan-paras
         serialize
         new-log head-rv get-rv save-page
@@ -81,6 +83,16 @@
     ; capitalizes the first character of the input string
     (def capitalize (s)
       (string (upcase (s 0)) (cut s 1)))
+    ; coerce into an integer within the range
+    (def coerce-into (n (o l) (o h))
+      (let n (coerce n 'int)
+        (if l (zap max n l))
+        (if h (zap min n h))
+        n))
+    ; prints in parentheses; separated because
+    ; editors might get confused with the parens
+    (def in-paren (s)
+      (pr "(" s ")"))
     ; creates a scanner for words
     (def scan-words (s (o start 0) (o end (len s)))
       " Creates a scanner which traverses the words
@@ -418,7 +430,7 @@
       (with (data data:urlencode
              meta meta:urlencode)
         ; TODO: put these inside *wiki-args form
-        (*wiki-args (action title rv) args
+        (*wiki-args (action title rv start size) args
           ; letrec form, because the subfunctions might
           ; end up calling one another.
           (let (p
@@ -493,7 +505,9 @@
                        (link-to "Main Page" "Main Page"))
                      ('div
                        (let articles-only [rem [some #\: (urldecode _)] _]
-                         (w/rlink (+ (string op) "?title=" (random-elt:articles-only:keys data))
+                         (w/rlink (+ (string op)
+                                     "?title="
+                                     (random-elt:articles-only:keys data))
                            (pr "Random Article")))))))
                link-to
                ; creates a link to the specified article
@@ -565,6 +579,8 @@
                ; show history
                hist
                (fn ()
+                 (or= start 0)
+                 (or= size 50)
                  (*wiki-page (+ "Revision history of "
                                 (_->space p) " - " name) css
                    (add-ons)
@@ -572,11 +588,39 @@
                      ('h1
                        (pr-esc:+ "Revision history of " (_->space p)))
                      (if meta.p
-                         ('ul
-                           (let ht (scan-logs meta.p)
+                         (withs (rp (urlencode p)
+                                 ht (cut (scan-logs meta.p)
+                                        start (+ start size))
+                                 navigation
+                                 (fn ()
+                                   ('.small
+                                     (in-paren
+                                       (tostring
+                                         (tag-if (> start 0)
+                                                 (a href
+                                                    (+ "?title=" rp
+                                                       "&action=hist"
+                                                       "&start="
+                                                       (string:coerce-into
+                                                         (- start size) 0)
+                                                       "&size=" string.size))
+                                           (pr "newer"))))
+                                     (pr " ")
+                                     (in-paren
+                                       (tostring
+                                         (tag-if (>= (len ht) size)
+                                                 (a href
+                                                    (+ "?title=" rp
+                                                       "&action=hist"
+                                                       "&start="
+                                                       (string:+ start size)
+                                                       "&size=" string.size))
+                                           (pr "older")))))))
+                           (navigation)
+                           ('ul
                              (each l ht
                                ('li
-                                 ('(a href (+ "?title=" (urlencode p)
+                                 ('(a href (+ "?title=" rp
                                               "&rv=" (string l!rv)))
                                    (pr-esc (date l!tm)))
                                  (pr " ")
@@ -584,7 +628,8 @@
                                    (pr-esc l!editby))
                                  (when (and l!log (isnt l!log ""))
                                    (pr " ")
-                                   ('i (pr-esc:+ "(" l!log ")")))))))
+                                   ('i (pr-esc:+ "(" l!log ")"))))))
+                           (navigation))
                          ('p
                            (pr
                             "There is no revision history for this page."))))))
@@ -638,8 +683,9 @@
             (zap space->_:capitalize title)
             (= p title)
             (if action (zap sym action))
-            (= rv (errsafe (coerce rv 'int)))
-            (if (and rv (< rv 1)) (wipe rv))
+            (if start (zap coerce-into start 0))
+            (if size (zap coerce-into size 1))
+            (if rv (zap coerce-into rv 1))
             (case action
               edit   (edit)
               hist   (hist)
