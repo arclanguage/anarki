@@ -80,7 +80,18 @@
 
 (= oneline-sexp* 30)
 
-;A pretty printer optimized for just prettifying sexpressions- Useful for prettying your sexp data before saving it to a file or showing it to a user. It has one config variable, oneline-sexp, which determines how long a line should be before it is split. This is not a "hard" limit- The program won't break strings or other non-list structures to meet this limit. Also, this limit does not count the indentation, so deeply nested sexps don't start becoming anorexically skinny to meet an artificial line break... The goal here is to make the data easier to grok, not meet a hard column width.
+; A pretty printer optimized for just prettifying sexpressions-
+; Useful for prettying your sexp data before saving it to a file
+; or showing it to a user.
+;
+; It has one config variable, oneline-sexp, which determines
+; how long a line should be before it is split.  This is not a
+; "hard" limit - the program won't break strings or other
+; non-list structures to meet this limit.  Also, this limit
+; does not count the indentation, so deeply nested sexps don't
+; start becoming anorexically skinny to meet an artificial
+; line break...  The goal here is to make the data easier to
+; grok, not meet a hard column width.
 
 (def ppr-sexp (sexp)
   (prn)
