@@ -7,6 +7,7 @@
 (require "whtml.arc")
 (require "lib/settable-fn.arc")
 (require "lib/file-table.arc")
+(require "lib/cached-table.arc")
 (require "lib/scanner.arc")
 (require "lib/treeparse.arc")
 
@@ -424,7 +425,7 @@
                 (each p code (writec p)))
               (writec c)))))
     ; generate wiki content
-    (def wiki (op name data meta css   args req)
+    (def wiki (op name data meta css scratch   args req)
       " Creates the output of the wiki system. "
       ; filter keys via urlencode
       (with (data data:urlencode
@@ -669,13 +670,19 @@
                           (pr ".")))))
                display-content
                (fn (ct)
-                 (let enformat (enformat-base link-to)
-                   (each p (scan-paras ct)
-                     (if
-                       (header-p p)
-                         (header-display enformat p)
-                       ; else
-                         (tag p (enformat p))))))
+                 (with (enformat (enformat-base link-to)
+                        formatted scratch!formatted
+                        k (list p (or rv (head-rv meta.p))))
+                   (pr
+                     (or (formatted k)
+                         (= (formatted k)
+                           (tostring
+                             (each p (scan-paras ct)
+                               (if
+                                 (header-p p)
+                                   (header-display enformat p)
+                                 ; else
+                                   (tag p (enformat p))))))))))
                display
                (fn ()
                  (*wiki-page (+ (_->space p) " - " name) css
@@ -723,14 +730,16 @@
             wikis (tablist wikis)))))))
 
 (mac *wiki-def (op name data meta css)
-  (w/uniq (d-v m-v n-v c-v req)
+  (w/uniq (d-v m-v n-v c-v s-v req)
     `(with (,d-v ,data
             ,m-v ,meta
             ,n-v ,name
-            ,c-v ,css)
+            ,c-v ,css
+            ,s-v (table))
+       (= (,s-v 'formatted) (cached-table))
        (Arkani!add-wiki ',op ',name ',data ',meta ',css)
        (defop ,op ,req
-         (Arkani!wiki ',op ,n-v ,d-v ,m-v ,c-v  (,req 'args) ,req)))))
+         (Arkani!wiki ',op ,n-v ,d-v ,m-v ,c-v ,s-v  (,req 'args) ,req)))))
 
 (ensure-dir "arc/")
 (if (file-exists "arc/wiki-arc.conf") (load "arc/wiki-arc.conf"))
