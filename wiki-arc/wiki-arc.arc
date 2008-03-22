@@ -1,4 +1,4 @@
-; Arkani
+; Arki
 ; by AmkG
 ; A wiki, in Arc.  The goal is to have a similar
 ; feature set to mediawiki (discussion pages, history,
@@ -43,10 +43,10 @@
                 ('.footnote
                   ('.right (pr "(" (- (msec) ,t1) " msec)"))
                   ('.left (pr ""))
-                  ('.center (pr "Powered by Arkani, a wiki in Anarki."))))))))
+                  ('.center (pr "Powered by Arki, a wiki in Anarki."))))))))
 
 ; wiki-arc module
-(= Arkani
+(= Arki
   (let (help* sig source-file*
         wiki add-wiki wikis
         _->space space->_ isdigit pr-esc capitalize
@@ -739,9 +739,9 @@
             ,c-v ,css
             ,s-v (table))
        (= (,s-v 'formatted) (cached-table))
-       (Arkani!add-wiki ',op ',name ',data ',meta ',css)
+       (Arki!add-wiki ',op ',name ',data ',meta ',css)
        (defop ,op ,req
-         (Arkani!wiki ',op ,n-v ,d-v ,m-v ,c-v ,s-v  (,req 'args) ,req)))))
+         (Arki!wiki ',op ,n-v ,d-v ,m-v ,c-v ,s-v  (,req 'args) ,req)))))
 
 (ensure-dir "arc/")
 (if (file-exists "arc/wiki-arc.conf") (load "arc/wiki-arc.conf"))
