@@ -40,8 +40,10 @@
                                        (whilet c (readc s) (pr c)))))))))
          ('body ,@body
                 ('hr)
-                ('.rendertime (pr "(" (- (msec) ,t1) " msec)"))
-                ('.footnote (pr "Powered by Arkani, a wiki in Anarki.")))))))
+                ('.footnote
+                  ('.right (pr "(" (- (msec) ,t1) " msec)"))
+                  ('.left (pr ""))
+                  ('.center (pr "Powered by Arkani, a wiki in Anarki."))))))))
 
 ; wiki-arc module
 (= Arkani

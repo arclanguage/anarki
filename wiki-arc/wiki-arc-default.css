@@ -76,15 +76,23 @@ h4 {
 	margin-left: 0.5em;
 }
 
-.rendertime {
-	float: right;
-	font-size: 65%;
-	font-style: italic;
-}
 
 .footnote {
 	color: #3f3f3f;
 	font-size: 75%;
+}
+
+.footnote .right {
+	float: right;
+	font-style: italic;
+}
+
+.footnote .left {
+	float: left;
+}
+
+.footnote .center {
 	text-align: center;
 }
+
 
