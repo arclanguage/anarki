@@ -22,6 +22,8 @@
 ;
 ; Examples in "lib/treeparse-examples.arc"
 
+(require "lib/tconc.arc")
+
 (mac delay-parser (p)
   "Delay evaluation of a parser, in case it is not yet defined."
   (let remaining (uniq)
@@ -50,7 +52,8 @@ executed on success."
 
 (def parse-list (parsers li)
   (when (and li (alist li) (alist (car li)))
-    (iflet (parsed remaining actions) (seq-r parsers (car li) nil nil)
+    (iflet (parsed remaining actions) (seq-r2 parsers (car li)
+                                              (tconc-new) (tconc-new))
            (unless remaining (return (list parsed)
                                      (cdr li) actions)))))
 
@@ -63,18 +66,26 @@ call this directly, `parse' should wrap up literals for you."
 
 (def seq parsers
   "Applies parsers in sequential order."
+  (seq-l parsers))
+
+(def seq-l (parsers)
+  "Applies the list of parsers in sequential order"
   (fn (remaining)
-    (seq-r parsers remaining nil nil)))
+    (seq-r parsers remaining (tconc-new) (tconc-new))))
 
 (def seq-r (parsers li acc act-acc)
-  (if (no parsers) (return acc li act-acc)
+  (if (no parsers) (return (car acc) li (car act-acc))
       (iflet (parsed remaining actions) (parse (car parsers) li)
              (seq-r (cdr parsers) remaining 
-                    (join acc parsed)
-                    (join act-acc actions)))))
+                    (lconc acc (copy parsed))
+                    (lconc act-acc (copy actions))))))
 
 (def alt parsers
   "Alternatives, like Parsec's <|>."
+  (alt-l parsers))
+
+(def alt-l (parsers)
+  "A list of alternatives, like Parsec's <|>."
   (fn (remaining) (alt-r parsers remaining)))
 
 (def alt-r (parsers remaining)
@@ -111,14 +122,14 @@ call this directly, `parse' should wrap up literals for you."
 
 (def many (parser)
   "Parser is repeated zero or more times."
-  (fn (remaining) (many-r parser remaining nil nil)))
+  (fn (remaining) (many-r parser remaining (tconc-new) (tconc-new))))
 
 (def many-r (parser li acc act-acc)
   (iflet (parsed remaining actions) (parse parser li)
          (many-r parser remaining
-                 (join acc parsed) 
-                 (join act-acc actions))
-         (return acc li act-acc)))
+                 (lconc acc (copy parsed))
+                 (lconc act-acc (copy actions)))
+         (return (car acc) li (car act-acc))))
 
 (def many1 (parser)
   "Parser is repeated one or more times."

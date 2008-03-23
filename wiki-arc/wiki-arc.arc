@@ -334,9 +334,7 @@
                                 (fn () (f enc))))))))
         (= seq-str
            (fn (s)
-             (zap scanner-string s)
-             (fn (remaining)
-               (seq-r s remaining nil nil))))
+             (seq-l (scanner-string s))))
         ; actions
         (= on-plain-wiki-link
            [let s (string _)
@@ -738,7 +736,7 @@
             ,n-v ,name
             ,c-v ,css
             ,s-v (table))
-       (= (,s-v 'formatted) (cached-table))
+       (= (,s-v 'formatted) (cached-table 'cachetime 0))
        (Arki!add-wiki ',op ',name ',data ',meta ',css)
        (defop ,op ,req
          (Arki!wiki ',op ,n-v ,d-v ,m-v ,c-v ,s-v  (,req 'args) ,req)))))
