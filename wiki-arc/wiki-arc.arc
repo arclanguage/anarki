@@ -370,7 +370,7 @@
           (apply alt
             (map seq-str *wiki-ampersand-codes)))
         (= ampersand-coded-text
-          (filt [list (string _)] (seq #\& ampersand-codes #\;)))
+          (seq #\& ampersand-codes #\;))
         (= italicized-text
           (seq italics
                (filt in-italics (many (seq (cant-see italics) (delay-parser formatting))))
