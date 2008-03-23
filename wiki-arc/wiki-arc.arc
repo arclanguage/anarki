@@ -495,12 +495,14 @@
                            (w/rlink (do (logout-user it) this-page)
                              (pr "logout"))))
                        ('span.loginout
-                         (w/link (login-page 'both (+ "Log into " name)
-                                   (list nilfn
-                                     this-page))
+                         (w/link (*wiki-page "Login" css
+                                   (add-ons)
+                                   ('.main
+                                     (login-page 'both (+ "Log into " name)
+                                       (list nilfn
+                                         this-page))))
                            (pr "login")))))
                    ('.topbar
-                     ; perhaps remove the 'a if already on that page?
                      ('(span.article
                          id (if (~talk-page-p) 'selected))
                        (tag-if (~talk-page-p) b
@@ -531,7 +533,7 @@
                (fn (l-p text (o l-action) (o l-rv))
                  (zap space->_:capitalize l-p)
                  (withs (rp (urlencode l-p)
-                         href (+ "?title=" rp
+                         href (+ (string op) "?title=" rp
                                  (if l-action
                                      (+ "&action=" (urlencode:string l-action))
                                      "")
