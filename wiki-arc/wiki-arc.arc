@@ -49,7 +49,8 @@
 (= Arki
   (let (help* sig source-file*
         wiki add-wiki wikis
-        _->space space->_ isdigit pr-esc capitalize
+        _->space space->_ isdigit
+        pr-esc escape capitalize
         coerce-into
         in-paren
         scan-words scan-logs scan-paras
@@ -76,13 +77,15 @@
     ; protect html characters
     (def pr-esc (c)
       (if (isa c 'char)
-          (case c
-            #\< (pr "&lt;")
-            #\> (pr "&gt;")
-            #\& (pr "&amp;")
-            #\" (pr "&quot;")
-                (pr c))
-         (each rc c (pr-esc rc))))
+          (pr (escape c))
+          (each rc c (pr-esc rc))))
+    (def escape (c)
+      (case c
+        #\< "&lt;"
+        #\> "&gt;"
+        #\& "&amp;"
+        #\" "&quot;"
+            c))
     ; capitalizes the first character of the input string
     (def capitalize (s)
       (string (upcase (s 0)) (cut s 1)))
@@ -312,15 +315,17 @@
       (let (; extensions to treeparse
             enclose-sem seq-str
             ; actions
-            on-plain-wiki-link in-italics in-bold
-            article text
-            on-article-wiki-link on-text-wiki-link
+            in-italics in-bold
+            in-plain-wiki-link
+            in-joined-wiki-link
             ; parsers
             open-br close-br p-nonwhite italics bold
             nowiki nowiki-e ampersand-codes
             ampersand-coded-text
             nowiki-text italicized-text bolded-text
-            plain-wiki-link joined-wiki-link formatting) nil
+            plain-wiki-link joined-wiki-link formatting
+            ; output
+            print-out) nil
         ; extensions to treeparse
         (= enclose-sem
            (fn (f p)
@@ -336,66 +341,64 @@
            (fn (s)
              (seq-l (scanner-string s))))
         ; actions
-        (= on-plain-wiki-link
-           [let s (string _)
-             (= article s text s)])
-        (= on-article-wiki-link
-           [= article (string _)])
-        (= on-text-wiki-link
-           [= text (string _)])
-        (= on-wiki-link-completed
-           [link-to article (string text _)])
-        (w/html-tags
-          (= in-italics
-               ['i (carry-out _)])
-          (= in-bold
-               ['b (carry-out _)]))
+        (= in-plain-wiki-link
+           (fn ((article addtext))
+             (tostring:link-to (string article) (string article addtext))))
+        (= in-joined-wiki-link
+           (fn ((article text addtext))
+             (tostring:link-to (string article) (string text addtext))))
+        (= in-italics
+           [list "<i>" _ "</i>"])
+        (= in-bold
+           [list "<b>" _ "</b>"])
         ; parsers
         (= open-br
-          (seq-str "[["))
+          (filt nilfn (seq-str "[[")))
         (= close-br
-          (seq-str "]]"))
+          (filt nilfn (seq-str "]]")))
         (= p-alphadig
           (pred alphadig:car anything))
         (= italics
-          (seq-str "''"))
+          (filt nilfn (seq-str "''")))
         (= bold
-          (seq-str "'''"))
+          (filt nilfn (seq-str "'''")))
         (= nowiki
-          (seq-str "<nowiki>"))
+          (filt nilfn (seq-str "<nowiki>")))
         (= nowiki-e
-          (seq-str "</nowiki>"))
+          (filt nilfn (seq-str "</nowiki>")))
         (= ampersand-codes
           (apply alt
             (map seq-str *wiki-ampersand-codes)))
         (= ampersand-coded-text
-          (sem [map pr _] (seq #\& ampersand-codes #\;)))
+          (filt [list (string _)] (seq #\& ampersand-codes #\;)))
         (= italicized-text
           (seq italics
-               (enclose-sem in-italics (many (seq (cant-see italics) (delay-parser formatting))))
+               (filt in-italics (many (seq (cant-see italics) (delay-parser formatting))))
                italics))
         (= bolded-text
           (seq bold
-               (enclose-sem in-bold (many (seq (cant-see bold) (delay-parser formatting))))
+               (filt in-bold (many (seq (cant-see bold) (delay-parser formatting))))
                bold))
         (= nowiki-text
           (seq nowiki
-               (sem pr-esc (many (anything-but nowiki-e)))
+               (filt [map escape _] (many (anything-but nowiki-e)))
                nowiki-e))
         (= plain-wiki-link
-          (seq open-br
-               ; should really be (many anything), however treeparse.arc
-               ; currently does not do backtracking on 'many
-               (sem on-plain-wiki-link (many (anything-but #\| close-br)))
-               close-br
-               (sem on-wiki-link-completed (many p-alphadig))))
+          (filt list:in-plain-wiki-link
+            (seq open-br
+                 ; should really be (many anything), however treeparse.arc
+                 ; currently does not do backtracking on 'many
+                 (filt [list _] (many (anything-but #\| close-br)))
+                 close-br
+                 (filt [list _] (many p-alphadig)))))
         (= joined-wiki-link
-          (seq open-br
-               (sem on-article-wiki-link (many (anything-but #\|)))
-               #\|
-               (sem on-text-wiki-link (many (anything-but close-br)))
-               close-br
-               (sem on-wiki-link-completed (many p-alphadig))))
+          (filt list:in-joined-wiki-link
+            (seq open-br
+                 (filt [list _] (many (anything-but #\|)))
+                 (filt nilfn #\|)
+                 (filt [list _] (many (anything-but close-br)))
+                 close-br
+                 (filt [list _] (many p-alphadig)))))
         (= formatting
           (alt
             plain-wiki-link
@@ -404,9 +407,14 @@
             italicized-text
             ampersand-coded-text
             nowiki-text
-            (sem pr-esc anything)))
+            (filt [map escape _] anything)))
+        (= print-out
+          (fn (s)
+            (if (alist s)
+                (each c s (print-out c))
+                (pr s))))
         (fn (p)
-          (carry-out (parse (many formatting) p)))))
+          (print-out (car (parse (many formatting) p))))))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
