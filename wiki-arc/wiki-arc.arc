@@ -360,17 +360,16 @@
     ; ~!TODO: Change this to handle formatting
     (def enformat-base (link-to)
       (let (; extensions to treeparse
-            enclose-sem seq-str
+            seq-str
             ; actions
             in-italics in-bold
-            in-plain-wiki-link
-            in-joined-wiki-link
+            in-wiki-link
             ; parsers
             open-br close-br p-nonwhite italics bold
             nowiki nowiki-e ampersand-codes
             ampersand-coded-text
             nowiki-text italicized-text bolded-text
-            plain-wiki-link joined-wiki-link formatting
+            wiki-link formatting
             many-format
             ; output
             print-out) nil
@@ -389,12 +388,12 @@
            (fn (s)
              (seq-l (scanner-string s))))
         ; actions
-        (= in-plain-wiki-link
-           (fn ((article addtext))
-             (tostring:link-to (string article) (string article addtext))))
-        (= in-joined-wiki-link
-           (fn ((article text addtext))
-             (tostring:link-to (string article) (string text addtext))))
+        (= in-wiki-link
+           (fn ((article text . addtext))
+             (tostring:link-to (string article)
+                               (if addtext
+                                   (string text (car addtext))
+                                   (string article text)))))
         (= in-italics
            [list "<i>" _ "</i>"])
         (= in-bold
@@ -431,26 +430,18 @@
           (seq nowiki
                (filt [map escape _] (many (anything-but nowiki-e)))
                nowiki-e))
-        (*wiki-pp plain-wiki-link
-          (filt list:in-plain-wiki-link
+        (*wiki-pp wiki-link
+          (filt list:in-wiki-link
             (seq open-br
-                 ; should really be (many anything), however treeparse.arc
-                 ; currently does not do backtracking on 'many
                  (filt [list _] (many (anything-but #\| close-br)))
-                 close-br
-                 (filt [list _] (many p-alphadig)))))
-        (*wiki-pp joined-wiki-link
-          (filt list:in-joined-wiki-link
-            (seq open-br
-                 (filt [list _] (many (anything-but #\|)))
-                 (filt nilfn #\|)
-                 (filt [list _] (many (anything-but close-br)))
+                 (maybe:seq
+                   (filt nilfn #\|)
+                   (filt [list _] (many (anything-but close-br))))
                  close-br
                  (filt [list _] (many p-alphadig)))))
         (*wiki-pp formatting
           (alt
-            plain-wiki-link
-            joined-wiki-link
+            wiki-link
             bolded-text
             italicized-text
             ampersand-coded-text
