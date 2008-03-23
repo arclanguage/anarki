@@ -744,7 +744,7 @@
             ,n-v ,name
             ,c-v ,css
             ,s-v (table))
-       (= (,s-v 'formatted) (cached-table 'cachetime 0))
+       (= (,s-v 'formatted) (cached-table))
        (Arki!add-wiki ',op ',name ',data ',meta ',css)
        (defop ,op ,req
          (Arki!wiki ',op ,n-v ,d-v ,m-v ,c-v ,s-v  (,req 'args) ,req)))))
