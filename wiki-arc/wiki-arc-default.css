@@ -67,6 +67,12 @@ h4 {
 	font-family: sans-serif;
 }
 
+pre {
+	padding: 1em;
+	border: 1px dashed blue;
+	background: #f8f8ff;
+}
+
 .small {
 	padding-left: 0.5em;
 	font-size: 80%;

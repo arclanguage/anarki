@@ -58,6 +58,7 @@
         new-log head-rv get-rv save-page
         urlencode
         header-p header-display
+        code-block-p code-block-display
         enformat-base) nil
     ; protect against arc-wiki 'def bashing the
     ; global docstrings tables
@@ -309,6 +310,14 @@
         (pr "<h" num ">")
         (enformat (cut sp 0 (- (+ 1 num))))
         (pr "</h" num ">")))
+    ; determines if the given paragraph scanner is
+    ; a code block
+    (def code-block-p (p)
+      (and (is (car p) #\space) (is (cadr p) #\space)))
+    ; display a code block
+    (def code-block-display (enformat p)
+      (tag pre
+        (enformat p)))
     ; format a single paragraph
     ; ~!TODO: Change this to handle formatting
     (def enformat-base (link-to)
@@ -477,7 +486,6 @@
                add-ons
                (fn ()
                  (w/html-tags
-                   ; maybe float: right
                    ('.topinfo
                      (aif (get-user req)
                        (do
@@ -689,6 +697,8 @@
                                (if
                                  (header-p p)
                                    (header-display enformat p)
+                                 (code-block-p p)
+                                   (code-block-display enformat p)
                                  ; else
                                    (tag p (enformat p))))))))))
                display
