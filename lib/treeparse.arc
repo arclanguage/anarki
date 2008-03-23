@@ -122,14 +122,14 @@ call this directly, `parse' should wrap up literals for you."
 
 (def many (parser)
   "Parser is repeated zero or more times."
-  (fn (remaining) (many-r parser remaining (tconc-new) (tconc-new))))
+  (fn (remaining) (many-r parser remaining (tconc-new) nil)))
 
 (def many-r (parser li acc act-acc)
   (iflet (parsed remaining actions) (parse parser li)
          (many-r parser remaining
                  (lconc acc (copy parsed))
-                 (lconc act-acc (copy actions)))
-         (return (car acc) li (car act-acc))))
+                 (if actions (join act-acc actions) act-acc))
+         (return (car acc) li act-acc)))
 
 (def many1 (parser)
   "Parser is repeated one or more times."
