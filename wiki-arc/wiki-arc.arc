@@ -45,6 +45,44 @@
                   ('.left (pr ""))
                   ('.center (pr "Powered by Arki, a wiki in Anarki."))))))))
 
+(= *wiki-profiling-on nil)
+; macro for profiling parser
+(mac *wiki-pp (parser fun)
+  (if *wiki-profiling-on
+      (w/uniq (tm args fnv)
+        `(let ,fnv ,fun
+           (= ,parser
+             (*wiki-profun ',parser ,fun))))
+      `(= ,parser ,fun)))
+(def *wiki-profun (name fun)
+  (fn args
+    (= *wiki-profile-running.name
+       (+ 1
+          (or *wiki-profile-running.name 0)))
+    (let tm (msec)
+      (do1 (apply fun args)
+           (when (and (is 1 *wiki-profile-running.name) (isnt tm (msec)))
+             (= *wiki-profile-table.name
+                (+ (or *wiki-profile-table.name 0)
+                   (- (msec) tm))))
+           (= *wiki-profile-running.name
+              (let v (- *wiki-profile-running.name 1)
+                (when (isnt v 0) v)))))))
+(mac *wiki-enprofile (name)
+  `(= ,name (*wiki-profun ',name ,name)))
+(def *wiki-profile-reset ()
+  (= *wiki-profile-table (table)))
+(def *wiki-profile-print ()
+  (ontable k v *wiki-profile-table
+    (prn k ": " v)) t)
+(*wiki-profile-reset)
+(= *wiki-profile-running (table))
+
+(when *wiki-profiling-on
+  (*wiki-enprofile alt-r)
+  (*wiki-enprofile seq-r)
+  (*wiki-enprofile many-r))
+
 ; wiki-arc module
 (= Arki
   (let (help* sig source-file*
@@ -333,6 +371,7 @@
             ampersand-coded-text
             nowiki-text italicized-text bolded-text
             plain-wiki-link joined-wiki-link formatting
+            many-format
             ; output
             print-out) nil
         ; extensions to treeparse
@@ -361,38 +400,38 @@
         (= in-bold
            [list "<b>" _ "</b>"])
         ; parsers
-        (= open-br
+        (*wiki-pp open-br
           (filt nilfn (seq-str "[[")))
-        (= close-br
+        (*wiki-pp close-br
           (filt nilfn (seq-str "]]")))
-        (= p-alphadig
+        (*wiki-pp p-alphadig
           (pred alphadig:car anything))
-        (= italics
+        (*wiki-pp italics
           (filt nilfn (seq-str "''")))
-        (= bold
+        (*wiki-pp bold
           (filt nilfn (seq-str "'''")))
-        (= nowiki
+        (*wiki-pp nowiki
           (filt nilfn (seq-str "<nowiki>")))
-        (= nowiki-e
+        (*wiki-pp nowiki-e
           (filt nilfn (seq-str "</nowiki>")))
-        (= ampersand-codes
+        (*wiki-pp ampersand-codes
           (apply alt
             (map seq-str *wiki-ampersand-codes)))
-        (= ampersand-coded-text
+        (*wiki-pp ampersand-coded-text
           (seq #\& ampersand-codes #\;))
-        (= italicized-text
+        (*wiki-pp italicized-text
           (seq italics
                (filt in-italics (many (seq (cant-see italics) (delay-parser formatting))))
                italics))
-        (= bolded-text
+        (*wiki-pp bolded-text
           (seq bold
                (filt in-bold (many (seq (cant-see bold) (delay-parser formatting))))
                bold))
-        (= nowiki-text
+        (*wiki-pp nowiki-text
           (seq nowiki
                (filt [map escape _] (many (anything-but nowiki-e)))
                nowiki-e))
-        (= plain-wiki-link
+        (*wiki-pp plain-wiki-link
           (filt list:in-plain-wiki-link
             (seq open-br
                  ; should really be (many anything), however treeparse.arc
@@ -400,7 +439,7 @@
                  (filt [list _] (many (anything-but #\| close-br)))
                  close-br
                  (filt [list _] (many p-alphadig)))))
-        (= joined-wiki-link
+        (*wiki-pp joined-wiki-link
           (filt list:in-joined-wiki-link
             (seq open-br
                  (filt [list _] (many (anything-but #\|)))
@@ -408,7 +447,7 @@
                  (filt [list _] (many (anything-but close-br)))
                  close-br
                  (filt [list _] (many p-alphadig)))))
-        (= formatting
+        (*wiki-pp formatting
           (alt
             plain-wiki-link
             joined-wiki-link
@@ -417,13 +456,15 @@
             ampersand-coded-text
             nowiki-text
             (filt [map escape _] anything)))
+        (*wiki-pp many-format
+          (many formatting))
         (= print-out
           (fn (s)
             (if (alist s)
                 (each c s (print-out c))
                 (pr s))))
         (fn (p)
-          (print-out (car (parse (many formatting) p))))))
+          (print-out (car (parse many-format p))))))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
