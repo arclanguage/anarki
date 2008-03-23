@@ -71,14 +71,15 @@ call this directly, `parse' should wrap up literals for you."
 (def seq-l (parsers)
   "Applies the list of parsers in sequential order"
   (fn (remaining)
-    (seq-r parsers remaining (tconc-new) (tconc-new))))
+    (seq-r parsers remaining (tconc-new) nil)))
 
 (def seq-r (parsers li acc act-acc)
-  (if (no parsers) (return (car acc) li (car act-acc))
+  (if (no parsers) (return (car acc) li act-acc)
       (iflet (parsed remaining actions) (parse (car parsers) li)
              (seq-r (cdr parsers) remaining 
                     (lconc acc (copy parsed))
-                    (lconc act-acc (copy actions))))))
+                    (if actions (join act-acc actions)
+                                act-acc)))))
 
 (def alt parsers
   "Alternatives, like Parsec's <|>."
