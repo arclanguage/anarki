@@ -90,9 +90,11 @@ call this directly, `parse' should wrap up literals for you."
   (fn (remaining) (alt-r parsers remaining)))
 
 (def alt-r (parsers remaining)
-  (if (no parsers) nil
-      (or (parse (car parsers) remaining)
-          (alt-r (cdr parsers) remaining))))
+  (if (no parsers)
+      nil
+      (aif (parse (car parsers) remaining)
+           it
+           (alt-r (cdr parsers) remaining))))
 
 (def nothing (remaining)
   "A parser that consumes nothing."
