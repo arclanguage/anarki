@@ -13,7 +13,10 @@
 ; Limitations compared to monadic treeparse.arc:
 ; 1.  Does not support 'sem.  I would say that about 30% of
 ; the speed difference occurs here ^^
-; 2.  
+; 2.  You can't call parsers directly - you *must* use
+; 'parse to parse
+; 3.  Some weird edge cases you probably shouldn't do -
+; such as (seq) without any arguments - will act differently
 
 (mac delay-parser (p)
   (w/uniq (remaining pass fail)
@@ -54,8 +57,7 @@
 (def seq-r ()
   (let (acc acctl) nil
     (afn (parsers remaining pass fail)
-      (withs (parser (car parsers)
-              parsers (cdr parsers))
+      (let parser (car parsers)
         (zap litify parser)
         (parser remaining
           (fn (parsed parsedtl remaining)
@@ -64,9 +66,10 @@
                     (= (cdr acctl) parsed)
                     (= acctl parsedtl))
                 (= acc parsed acctl parsedtl))
-            (if parsers
-                (self parsers remaining pass fail)
-                (pass acc acctl remaining)))
+            (let parsers (cdr parsers)
+              (if parsers
+                  (self parsers remaining pass fail)
+                  (pass acc acctl remaining))))
           fail)))))
 
 (def many (parser)
