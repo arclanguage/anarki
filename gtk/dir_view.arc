@@ -24,7 +24,8 @@
               model (gtk-list-store-new 'string 'pixbuf)
               iview (gtk-icon-view-new-with-model model)
               scroll (gtk-scrolled-window-new (get-null-pt) (get-null-pt)))
-        (w/sig3 iview "item_activated" iv path user
+        (w/sig2 iview "item_activated" iv path
+          (gc)
           (withs (it (gtk-tree-model-get-iter model path)
                   newdir (string d "/" (gtk-tree-model-get-value model it 0)))
             (when (dir-exists newdir)
