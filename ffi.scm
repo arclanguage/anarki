@@ -37,3 +37,7 @@
 (define (l->cvec l type) (list->cvector (to-prop l) type))
 (xdef 'l->cvec l->cvec)
 (xdef 'acptr cpointer?)
+
+(require #%foreign)
+(xdef 'ffi-callback ffi-callback)
+(xdef 'cfptr _fpointer)

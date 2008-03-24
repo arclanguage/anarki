@@ -66,6 +66,7 @@
           ((eq? head 'quote) (list 'quote (ac-niltree (cadr s))))
           ((eq? head 'quasiquote) (ac-qq (cadr s) env))
           ((eq? head 'if) (ac-if (cdr s) env))
+			 ((eq? head 'compile) (ac-compile (cdr s)))
           ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
           ((eq? head 'set) (ac-set (cdr s) env))
           ((eq? head 'lset) (ac-lset (cdr s) env))
@@ -82,6 +83,133 @@
       (number? x)
       (procedure? x) ; to allow (eval `(,+ 3 4))
       (eq? x '())))
+
+;;; Compilation issues
+
+
+(define *defs* (make-hash-table))
+
+(define *ret-types* (make-hash-table))
+
+(define (ac-compile instrs)
+	(let*
+		((name (ac-global-name (car instrs)))
+		 (def (hash-table-get *defs* name))
+		 (typs (cdr instrs)))
+		(if (symbol? (xcar typs))
+			(begin
+				(hash-table-put! *ret-types* name (car typs))
+				(set! typs (cdr typs))))
+		(let ((htyps (make-immutable-hash-table (map (lambda (x) (cons (car x) (cadr x))) typs))))
+			(display "<< ") (print def) (newline)
+			(namespace-set-variable-value! name (eval (gen-ad-hoc htyps def)))
+			(display ">> ") (print (gen-ad-hoc htyps def)) (newline)
+			''t)))
+
+(define sp-fns (make-hash-table))
+
+(define (all-num-int parms typ-parms)
+	(if (null? parms)
+		#t
+		(if (memq (bound-type (car parms) typ-parms) '(int num))
+			(all-num-int (cdr parms) typ-parms)
+			#f)))
+
+(hash-table-put! sp-fns '__+ (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(cond
+		((null? parms)
+			0)
+		((all-num-int parms typ-parms)
+			(ar-tag 'num `(+ ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))
+		(#t
+			`(ar-apply __+ (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))))))
+
+(hash-table-put! sp-fns '__- (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(- ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __- (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__* (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(* ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __* (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__/ (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(/ ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __/ (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__< (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(< ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __< (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__> (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(> ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __> (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__<= (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(<= ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __<= (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__>= (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(>= ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __>= (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__is (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(= ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms)))
+		`(ar-apply __is (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(hash-table-put! sp-fns '__isnt (lambda (parms typ-parms) ; Returns form annotated by type of result (if known)
+	(if (all-num-int parms typ-parms)
+		(ar-tag 'num `(not (= ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))
+		`(ar-apply __isnt (list ,@(map (lambda (x) (car (ar-rep (gen-ad-hoc typ-parms (list x))))) parms))))))
+
+(define (bound-type x typ-parms)
+	(cond
+		((and (eq? (ar-type x) 'sym) (hash-table-get typ-parms x #f))
+			(hash-table-get typ-parms x))
+		((and (list? x) (>= (length x) 2))
+			(let ((it (hash-table-get sp-fns (cadr x) #f)))
+				(cond
+					(it (ar-type (it (cddr x) typ-parms)))
+					((hash-table-get *ret-types* (cadr x) #f) (hash-table-get *ret-types* (cadr x)))
+					(#t (ar-type x)))))
+		(#t
+			(ar-type x))))
+
+(define (is-funcall sym)
+	(if (eq? sym 'ar-apply) ; Args are a list
+		caddr
+		(if (memq sym '(ar-funcall0 ar-funcall1 ar-funcall2 ar-funcall3 ar-funcall4))
+			cddr
+			#f)))
+
+(define (gen-ad-hoc typ-parms forms)
+	(let ((res '()))
+		(for-each (lambda (form)
+			(if (pair? form)
+				(let*
+					((head (car form))
+					 (args-fn (is-funcall head))
+					 (it (and args-fn (hash-table-get sp-fns (cadr form) #f))))
+					(if it
+						(set! res (cons (ar-rep (it (args-fn form) typ-parms)) res))
+						(set! res (cons (gen-ad-hoc typ-parms form) res))))
+				(set! res (cons form res))))
+			forms)
+		(reverse res)))
+
+(define (gen-fn parms typ-parms form)
+	(display `(lambda ,parms (list ,(gen-ad-hoc typ-parms form))))
+	`(lambda ,parms (list ,(gen-ad-hoc typ-parms form))))
+
+;;; End of compilation issues
+
 
 (define (ssyntax? x)
   (and (symbol? x)
@@ -229,6 +357,7 @@
                  ,(ac (cadr args) env)
                  ,(ac-if (cddr args) env)))))
 
+
 ; translate fn directly into a lambda if it has ordinary
 ; parameters, otherwise use a rest parameter and parse it.
 (define (ac-fn args body env)
@@ -337,8 +466,10 @@
                (cond ((eqv? a 'nil) (err "Can't rebind nil"))
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a ,name))
-                     (#t `(namespace-set-variable-value! ',(ac-global-name a) 
-                                                         ,name)))
+                     (#t
+								`(begin
+									(namespace-set-variable-value! ',(ac-global-name a) ,name)
+									(hash-table-put! *defs* ',(ac-global-name a) ',b))))
                name))
       (err "First arg to set must be a symbol" a)))
       

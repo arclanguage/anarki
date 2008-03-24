@@ -1,13 +1,20 @@
 ;;; Interface towards gtk+ using ffi.arc
+
 ;;; This is a direct translation of the gtk API
-;;; Tested on Debian GNU/Linux with gtk+-2.6.4, should also work with other
-;;; versions.
+;;; Tested on Debian GNU/Linux with gtk+-2.6.4, and on Slackware with 
+;;; gtk+-2.8.18, with mzscheme 352, 360, 372 and current (2008-03-24) Arc
+;;; Anarki version.
 
 (require "ffi.arc")
+
+(w/ffi "gtk/glue"
+  (cdef get-tree-iter-size "get_tree_iter_size" culong ())
+  (cdef get-gvalue-size "get_gvalue_size" culong ()))
 
 ;; GTypes
 
 (w/ffi "libgdk-x11-2.0"
+  (cdef gdk-init "gdk_init" cvoid (cptr cptr))
   (cdef gdk-pixbuf-get-type "gdk_pixbuf_get_type" culong ())
   (cdef gdk-pixbuf-new-from-file "gdk_pixbuf_new_from_file" 
         cptr (cstring cptr)))
@@ -39,19 +46,19 @@
 (w/inline 
   "void* inc_pt(void *pt, unsigned int offset) 
    {
-     return (void*)(((unsigned int)pt)+offset);
+     return (void*)(((unsigned long)pt)+offset);
    }"
   (cdef inc-pt "inc_pt" cptr (cptr cuint)))
 
 (def mkempty-gval ()
-  (let pt (cmalloc (* 4 (csizeof culong)))
+  (let pt (cmalloc (get-gvalue-size))
     (cpset pt culong 0)
     pt))
 
 (def mkgval (val ctype gtype)
   "Builds a GValue from a C type.
    ctype is the C type, gtype is a key in gtype*"
-  (let pt (cmalloc (+ (csizeof culong) (csizeof cptr)))
+  (let pt (mkempty-gval)
     (cpset pt culong (gtype* gtype))
     (cpset (inc-pt pt (csizeof culong)) ctype val)
     pt))
@@ -84,11 +91,11 @@
 
 ;; TreeIter
 (def make-tree-iter ()
-  (cmalloc (+ (csizeof cint) (* 3 (csizeof cptr)))))
+  (cmalloc (get-tree-iter-size)))
 
 ;; needed to get a NULL C pointer
 (w/inline 
-  "void* get_null_pt() { return 0; }" 
+  "void* get_null_pt() { return (void*)0; }" 
   (cdef get-null-pt "get_null_pt" cptr ()))
 
 (def gtkname->arc-name (s)
@@ -295,6 +302,7 @@
           cvoid (cptr cptr cptr))
   (gtkdef (tree_model_get_value_aux "tree_model_get_value")
           cvoid (cptr cptr cint cptr))
+  (gtkdef tree_iter_copy cptr (cptr))
 
   ;; icon view
   (gtkdef icon_view_new cptr ())
@@ -365,36 +373,62 @@
         cint (cptr culong))
   (cdef gvalue-unset "g_value_unset" cvoid (cptr))
   (cdef gvalue-reset "g_value_reset" cptr (cptr))
-  (cdef g-signal-connect-0 "g_signal_connect_data" culong 
-        (cptr cstring (cfn (list) cint) cptr cptr cuint))
-  (cdef g-signal-connect-2 "g_signal_connect_data" culong 
-        (cptr cstring (cfn (list cptr cptr) cint) cptr cptr cuint))
-  (cdef g-signal-connect-3 "g_signal_connect_data" culong 
-        (cptr cstring (cfn (list cptr cptr cptr) cint) cptr cptr cuint)))
+  (cdef g-signal-connect "g_signal_connect_object" culong 
+        (cptr cstring cfptr cptr cuint)))
+
+;; this list will hold all defined callbacks
+;; without this, they would be garbage collected, because Scheme's runtime
+;; doesn't know if the foreign runtime references or not the callbacks
+;; this way, I'm sure that they'll never be garbage collected
+(= callbacks* nil)
 
 (def connect-0 (widget signal fun)
-  (g-signal-connect-0 widget signal (fn () (fun) 1) 
-                      (get-null-pt) (get-null-pt) 0))
+  (let cb (ffi-callback fun (list) cint)
+    (push cb callbacks*)
+    (g-signal-connect widget signal cb (get-null-pt) 0)))
+
+(def connect-1 (widget signal fun)
+  (let cb (ffi-callback fun (list cptr) cint)
+    (push cb callbacks*)
+    (g-signal-connect widget signal cb (get-null-pt) 0)))
 
 (def connect-2 (widget signal fun)
-  (g-signal-connect-2 widget signal (fn (x y) (fun x y) 1) 
-                      (get-null-pt) (get-null-pt) 0))
+  (let cb (ffi-callback fun (list cptr cptr) cint)
+    (push cb callbacks*)
+    (g-signal-connect widget signal cb (get-null-pt) 0)))
 
 (def connect-3 (widget signal fun)
-  (g-signal-connect-3 widget signal (fn (x y z) (fun x y z) 1) 
-                      (get-null-pt) (get-null-pt) 0))
+  (let cb (ffi-callback fun (list cptr cptr cptr) cint)
+    (push cb callbacks*)
+    (g-signal-connect widget signal cb (get-null-pt) 0)))
 
 (mac w/sig (widget signal . body)
   "execute body when signal is triggered on widget"
-  `(connect-0 ,widget ,signal (fn () ,@body)))
+  (w/uniq f
+  `(do
+     (def ,f () ,@body 1)
+     (connect-0 ,widget ,signal ,f))))
+
+(mac w/sig1 (widget signal name1 . body)
+  "execute body when signal is triggered on widget"
+  (w/uniq f
+  `(do
+     (def ,f (,name1) ,@body 1)
+     (connect-1 ,widget ,signal ,f))))
 
 (mac w/sig2 (widget signal name1 name2 . body)
   "execute body when signal is triggered on widget"
-  `(connect-2 ,widget ,signal (fn (,name1 ,name2) ,@body)))
+  (w/uniq f
+    `(do
+       (def ,f (,name1 ,name2) ,@body 1)
+       (connect-2 ,widget ,signal ,f))))
 
 (mac w/sig3 (widget signal name1 name2 name3 . body)
   "execute body when signal is triggered on widget"
-  `(connect-3 ,widget ,signal (fn (,name1 ,name2 ,name3) ,@body)))
+  (w/uniq f
+  `(do
+     (def ,f (,name1 ,name2 ,name3) ,@body 1)
+     (connect-3 ,widget ,signal ,f))))
 
 ;; tests
 
@@ -419,7 +453,7 @@
     (w/win w "Hello, World!"
       (let btn (gtk-button-new-with-label "Hello, World!")
         (gtk-container-add w btn)
-        (w/sig btn "clicked"
+        (w/sig2 btn "clicked" b user
           (gtk-widget-show-all 
             (gtk-message-dialog-new w 0 0 0 "Hello, World!")))))))
 
@@ -434,7 +468,7 @@
         (w/sig btn "clicked"
           (let pos (gtk-widget-get-pointer w)
             (gtk-label-set-text l (string "(" (car pos) " " (cadr pos) ")")))
-          (prn (gtk-widget-path btn))) ; sometimes segfaults
+          (prn (gtk-widget-path btn)))
         (gtk-box-pack-start v l 1 1 0)
         (gtk-box-pack-start v btn 0 1 0)
         (gtk-container-add w v)))))
@@ -450,6 +484,9 @@
              btns (map gtk-button-new-with-label:string '(1 2 3 4 5 6))
              toggles (map gtk-toggle-button-new-with-label:string '(1 2 3 4))) 
         (each btn btns
+          (w/sig2 btn "clicked" bt data
+            (prn (gtk-widget-path bt))
+            (gtk-container-remove hb-bt bt))
           (gtk-container-add hb-bt btn))
         (each tog toggles
           (gtk-container-add hb-tog tog))
@@ -467,13 +504,18 @@
       (let model (gtk-list-store-new 'string 'pixbuf)
         (with (iter (make-tree-iter)
                iview (gtk-icon-view-new-with-model model))
+          (w/sig2 iview "item_activated" v path (gc)
+            (let it (gtk-tree-model-get-iter model path)       
+              (prn (gtk-tree-model-get-value model it 0))
+              (gtk-list-store-remove model it)))
           (gtk-icon-view-set-text-column iview 0)
           (gtk-icon-view-set-pixbuf-column iview 1)
-          (gtk-list-store-append model iter)
-          (gtk-list-store-set-value model iter 0 "Text under image")
-          (let pix (gdk-pixbuf-new-from-file 
-                     "test-image.svg" (get-null-pt))
-            (gtk-list-store-set-value model iter 1 pix))
+          (for i 0 10
+            (gtk-list-store-append model iter)
+            (gtk-list-store-set-value model iter 0 "Text under image")
+            (let pix (gdk-pixbuf-new-from-file 
+                       "test-image.svg" (get-null-pt))
+              (gtk-list-store-set-value model iter 1 pix)))
           (gtk-container-add w iview))))))
 
 ;(test-iconview)
