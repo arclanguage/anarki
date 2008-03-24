@@ -357,7 +357,6 @@
       (tag pre
         (enformat p)))
     ; format a single paragraph
-    ; ~!TODO: Change this to handle formatting
     (def enformat-base (link-to)
       (let (; extensions to treeparse
             seq-str
@@ -441,6 +440,11 @@
                  (filt [list _] (many p-alphadig)))))
         (*wiki-pp formatting
           (alt
+            (pred [let c (car _)
+                    (or (alphadig c)
+                        (whitec c)
+                        (in c #\, #\.))]
+                  anything)
             wiki-link
             bolded-text
             italicized-text
