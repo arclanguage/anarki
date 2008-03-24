@@ -9,7 +9,7 @@
 (require "lib/file-table.arc")
 (require "lib/cached-table.arc")
 (require "lib/scanner.arc")
-(require "lib/treeparse.arc")
+(require "lib/cps_treeparse.arc")
 
 (require "wiki-arc/wikiconf.arc")
 (require "wiki-arc/diff.arc")
@@ -425,7 +425,7 @@
             italicized-text
             ampersand-coded-text
             nowiki-text
-            (filt [map escape _] anything)))
+            (filt [cons (escape:car _) nil] anything)))
         (*wiki-pp many-format
           (many formatting))
         (= print-out
