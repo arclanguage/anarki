@@ -47,41 +47,18 @@
 
 (= *wiki-profiling-on nil)
 ; macro for profiling parser
+(when *wiki-profiling-on
+  (require "lib/profiler.arc")
+  (profiler-reset))
 (mac *wiki-pp (parser fun)
   (if *wiki-profiling-on
-      (w/uniq (tm args fnv)
-        `(let ,fnv ,fun
-           (= ,parser
-             (*wiki-profun ',parser ,fun))))
+      `(do
+         (= ,parser ,fun)
+         (profile-function ,parser))
       `(= ,parser ,fun)))
-(def *wiki-profun (name fun)
-  (fn args
-    (= *wiki-profile-running.name
-       (+ 1
-          (or *wiki-profile-running.name 0)))
-    (let tm (msec)
-      (do1 (apply fun args)
-           (when (and (is 1 *wiki-profile-running.name) (isnt tm (msec)))
-             (= *wiki-profile-table.name
-                (+ (or *wiki-profile-table.name 0)
-                   (- (msec) tm))))
-           (= *wiki-profile-running.name
-              (let v (- *wiki-profile-running.name 1)
-                (when (isnt v 0) v)))))))
-(mac *wiki-enprofile (name)
-  `(= ,name (*wiki-profun ',name ,name)))
-(def *wiki-profile-reset ()
-  (= *wiki-profile-table (table)))
-(def *wiki-profile-print ()
-  (ontable k v *wiki-profile-table
-    (prn k ": " v)) t)
-(*wiki-profile-reset)
-(= *wiki-profile-running (table))
 
 (when *wiki-profiling-on
-  (*wiki-enprofile alt-r)
-  (*wiki-enprofile seq-r)
-  (*wiki-enprofile many-r))
+  (profile seq-r alt-r many-r))
 
 ; wiki-arc module
 (= Arki
