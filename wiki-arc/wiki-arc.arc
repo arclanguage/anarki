@@ -364,8 +364,9 @@
             in-italics in-bold
             in-wiki-link
             ; parsers
-            open-br close-br p-nonwhite italics bold
+            open-br close-br p-alphadig italics bold
             nowiki nowiki-e ampersand-codes
+            elided-white
             ampersand-coded-text
             nowiki-text italicized-text bolded-text
             wiki-link formatting
@@ -373,16 +374,6 @@
             ; output
             print-out) nil
         ; extensions to treeparse
-        (= enclose-sem
-           (fn (f p)
-             " Adds semantics like 'sem, but encloses the semantics
-               defined by inner parsers instead of just adding to
-               them. "
-             (fn (r)
-               (iflet enc (parse p r)
-                      (return (enc 0) (enc 1)
-                              (list
-                                (fn () (f enc))))))))
         (= seq-str
            (fn (s)
              (seq-l (scanner-string s))))
@@ -415,27 +406,34 @@
         (*wiki-pp ampersand-codes
           (apply alt
             (map seq-str *wiki-ampersand-codes)))
+        (*wiki-pp elided-white
+          (filt [list #\space] (many1 (pred whitec:car anything))))
         (*wiki-pp ampersand-coded-text
           (seq #\& ampersand-codes #\;))
         (*wiki-pp italicized-text
           (seq italics
-               (filt in-italics (many (seq (cant-see italics) (delay-parser formatting))))
+               (filt in-italics
+                     (many:seq (cant-see italics) (delay-parser formatting)))
                italics))
         (*wiki-pp bolded-text
           (seq bold
-               (filt in-bold (many (seq (cant-see bold) (delay-parser formatting))))
+               (filt in-bold
+                     (many:seq (cant-see bold) (delay-parser formatting)))
                bold))
         (*wiki-pp nowiki-text
           (seq nowiki
-               (filt [map escape _] (many (anything-but nowiki-e)))
+               (filt [map escape _] (many:anything-but nowiki-e))
                nowiki-e))
         (*wiki-pp wiki-link
           (filt list:in-wiki-link
             (seq open-br
-                 (filt [list _] (many (anything-but #\| close-br)))
+                 ; article name: elide whitespaces.
+                 (filt [list _]
+                       (many:seq (cant-see:alt #\| close-br)
+                                 (alt elided-white anything)))
                  (maybe:seq
                    (filt nilfn #\|)
-                   (filt [list _] (many (anything-but close-br))))
+                   (filt [list _] (many:anything-but close-br)))
                  close-br
                  (filt [list _] (many p-alphadig)))))
         (*wiki-pp formatting
@@ -459,7 +457,7 @@
                 (each c s (print-out c))
                 (pr s))))
         (fn (p)
-          (print-out (car (parse many-format p))))))
+          (print-out:car:parse many-format p))))
     ; use our own urlencode -
     ; arc-wiki version may suddenly change in the future, breaking
     ; existing filebases
