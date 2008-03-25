@@ -77,7 +77,7 @@ call this directly, `parse' should wrap up literals for you."
   (if (no parsers) (return (car acc) li act-acc)
       (iflet (parsed remaining actions) (parse (car parsers) li)
              (seq-r (cdr parsers) remaining 
-                    (lconc acc (copy parsed))
+                    (lconc acc parsed)
                     (if actions (join act-acc actions)
                                 act-acc)))))
 
@@ -130,7 +130,7 @@ call this directly, `parse' should wrap up literals for you."
 (def many-r (parser li acc act-acc)
   (iflet (parsed remaining actions) (parse parser li)
          (many-r parser remaining
-                 (lconc acc (copy parsed))
+                 (lconc acc parsed)
                  (if actions (join act-acc actions) act-acc))
          (return (car acc) li act-acc)))
 
@@ -155,7 +155,8 @@ passes `test'."
     (iflet (parsed remaining actions) (parse parser remaining)
            (return parsed remaining
                    (join actions
-                         (list (fn () (fun parsed))))))))
+                         (let parsed (copy parsed)
+                           (list (fn () (fun parsed)))))))))
 
 (def filt (fun parser)
   "Attach filter to a parser."
