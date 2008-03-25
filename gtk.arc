@@ -110,14 +110,70 @@
 (def get-n-syms (n)
   (if (is n 0) nil (cons (uniq) (get-n-syms (- n 1)))))
 
-(def build-aux (arc-name aux-name args)
+(def build-aux (arc-name aux-name ret-type args)
   (let arg-names (get-n-syms (len args))
     `(def ,arc-name ,arg-names
        (,aux-name ,@(map (fn (x y) (if (is x 'gvalue) `(make-gvalue ,y) y))
                          args arg-names)))))
 
+
+;; TODO: handle GtkTreeIter
+(def build-aux-w/o (arc-name aux-name ret-type args)
+  ;; auxiliary lists
+  (with (aux-args nil real-args nil out-args nil out-args-t nil)
+    (each el args
+      (if (acons el)
+        (let tp (car el)
+          (push tp out-args-t)
+          (w/uniq name
+            (push name out-args)
+            (push name aux-args)))
+        (w/uniq name
+          (push name real-args)
+          (push name aux-args))))
+     (= aux-args (rev aux-args)) 
+     (= real-args (rev real-args))
+     (= out-args (rev out-args))
+     (= out-args-t (rev out-args-t))
+     
+     `(def ,arc-name ,real-args
+       (with ,(mappend (fn (x y) 
+                         (if (is y 'gvalue) 
+                           `(,x (mkempty-gval))
+                           `(,x (cmalloc (csizeof ,y)))))
+                       out-args out-args-t)
+         (let res (,aux-name ,@aux-args)
+           ,(let to-pass (map (fn (x y) 
+                                (if (is y 'gvalue) 
+                                  `(get-gvalue ,x)
+                                  `(cpref ,x ,y)))
+                              out-args out-args-t)
+              (if (is ret-type 'cvoid)
+                (if (is (len to-pass) 1) 
+                  (car to-pass)
+                  `(list ,@to-pass))
+                `(list res ,@to-pass))))))))
+
+(mac gtkdef-w/o (name . rest)
+  "imports a gtk function. If an argument type is within parenthesis,
+   a pointer to it will be automatically created and its value returned
+   in a list. If the value to return is just one, it is returned directly,
+   without putting it into a list.
+   Example: (gtkdef-w/o widget_get_pointer cvoid (cptr (cint) (cint)))
+   creates a function gtk-widget-get-pointer wich takes a cptr and returns
+   a list of two integers"
+  (with (cname (string "gtk_" (if (acons name) (cadr name) name))
+         arc-name (gtkname->arc-name (if (acons name) (car name) name)))
+    (if (need-aux (cadr rest))
+      (let aux-name (sym (string arc-name "-aux"))
+        `(do
+           (cdef ,aux-name ,cname ,(car rest)
+                ,(map [if (is _ 'gvalue) 'cptr (acons _) 'cptr _] (cadr rest)))
+           ,(build-aux-w/o arc-name aux-name (car rest) (cadr rest))))
+      `(cdef ,arc-name ,cname ,@rest))))
+
 (mac gtkdef (name . rest)
-  "imports a gtk function"
+  "imports a gtk function, handles automatically input gvalues (type gvalue)"
   (with (cname (string "gtk_" (if (acons name) (cadr name) name))
          arc-name (gtkname->arc-name (if (acons name) (car name) name)))
     (if (need-aux (cadr rest))
@@ -125,8 +181,11 @@
         `(do
            (cdef ,aux-name ,cname ,(car rest) 
                  ,(tree-subst 'gvalue 'cptr (cadr rest)))
-           ,(build-aux arc-name aux-name (cadr rest))))
+           ,(build-aux arc-name aux-name (car rest) (cadr rest))))
       `(cdef ,arc-name ,cname ,@rest))))
+
+;; TODO: merge gtkdef and gtkdef-w/o
+;; TODO: add possibilty to specify default values to arguments
 
 (mac defenum (name . args)
   "defines an enumeration type"
@@ -141,6 +200,7 @@
 (defenum window-type 'toplevel 'popup)
 (defenum window-pos 'node 'center 'mouse 'center-always 'center-on-parent)
 (defenum policy-type 'always 'automatic 'never)
+(defenum menu-direction 'parent 'child 'next 'prev)
 
 (w/ffi "libgtk-x11-2.0"
 
@@ -177,15 +237,16 @@
   (gtkdef widget_set_events cvoid (cptr cint))
   (gtkdef widget_add_events cvoid (cptr cint))
   (gtkdef widget_get_events cint (cptr))
-  (gtkdef (widget_get_pointer_aux "widget_get_pointer") cvoid (cptr cptr cptr))
+  (gtkdef-w/o widget_get_pointer cvoid (cptr (cint) (cint)))
   (gtkdef widget_is_ancestor cint (cptr cptr))
-  (gtkdef widget_translate_coordinates cint (cptr cptr cint cint cptr cptr))
+  (gtkdef-w/o widget_translate_coordinates cint 
+              (cptr cptr cint cint (cint) (cint)))
   (gtkdef widget_hide_on_delete cint (cptr))
   (gtkdef widget_set_style cvoid (cptr cptr))
   (gtkdef widget_ensure_style cvoid (cptr))
   (gtkdef widget_get_style cptr (cptr))
   (gtkdef widget_get_parent cptr (cptr))
-  (gtkdef (widget_path_aux "widget_path") cvoid (cptr cptr cptr cptr))  
+  (gtkdef-w/o widget_path cvoid (cptr (cint) (cstring) (cstring))) 
 
   ;; label
   (gtkdef label_new cptr (cstring))
@@ -203,7 +264,7 @@
 
   ;; image
   (gtkdef image_get_pixbuf cptr (cptr))
-  (gtkdef (image_get_pixmap_aux "image_get_pixmap") cvoid (cptr cptr cptr))
+  (gtkdef-w/o image_get_pixmap cvoid (cptr (cptr) (cptr)))
   (gtkdef image_new_from_file cptr (cstring))
   (gtkdef image_set_from_file cvoid (cptr cstring))
   (gtkdef image_new cptr ())
@@ -255,18 +316,6 @@
   (gtkdef option_menu_set_history cvoid (cptr cuint))
   (gtkdef option_menu_get_history cuint (cptr))
 
-  ;; item
-  (gtkdef item_select cvoid (cptr))
-  (gtkdef item_deselect cvoid (cptr))
-  (gtkdef item_toggle cvoid (cptr))
-
-  ;; menu item
-  (gtkdef menu_item_new cptr ())
-  (gtkdef menu_item_new_with_label cptr (cstring))
-  (gtkdef menu_item_set_submenu cvoid (cptr cptr))
-  (gtkdef menu_item_remove_submenu cvoid (cptr))
-  (gtkdef menu_item_get_submenu cptr (cptr))
- 
   ;; window
   (gtkdef window_new cptr (cint))
   (gtkdef window_set_title cvoid (cptr cstring))
@@ -300,8 +349,7 @@
 
   (gtkdef (tree_model_get_iter_aux "tree_model_get_iter")
           cvoid (cptr cptr cptr))
-  (gtkdef (tree_model_get_value_aux "tree_model_get_value")
-          cvoid (cptr cptr cint cptr))
+  (gtkdef-w/o tree_model_get_value cvoid (cptr cptr cint (gvalue))) 
   (gtkdef tree_iter_copy cptr (cptr))
 
   ;; icon view
@@ -315,38 +363,42 @@
   (gtkdef scrolled_window_new cptr (cptr cptr))
   (gtkdef scrolled_window_set_policy cvoid (cptr cuint cuint))
   (gtkdef scrolled_window_add_with_viewport cvoid (cptr cptr))
+
+  ;; item
+  (gtkdef item_select cvoid (cptr))
+  (gtkdef item_deselect cvoid (cptr))
+  (gtkdef item_toggle cvoid (cptr))
+
+  ;; menu item
+  (gtkdef menu_item_new cptr ())
+  (gtkdef menu_item_new_with_label cptr (cstring))
+  (gtkdef menu_item_set_submenu cvoid (cptr cptr))
+  (gtkdef menu_item_remove_submenu cvoid (cptr))
+  (gtkdef menu_item_get_submenu cptr (cptr))
+
+  ;; menu shell
+  (gtkdef menu_shell_append cvoid (cptr cptr))
+  (gtkdef menu_shell_prepend cvoid (cptr cptr))
+  (gtkdef menu_shell_insert cvoid (cptr cptr cint))
+  (gtkdef menu_shell_deactivate cvoid (cptr))
+
+  ;; menu bar
+  (gtkdef menu_bar_new cptr ())
+
+  ;; menu
+  (gtkdef menu_new cptr ())
+  (gtkdef menu_popup cvoid (cptr cptr cptr cfptr cptr cuint cuint))
+  (gtkdef menu_set_title cvoid (cptr cstring))
+  (gtkdef menu_get_tearoff_state cint (cptr))
+  (gtkdef menu_get_title cstring (cptr))
+  (gtkdef menu_popdown cvoid (cptr))
+  (gtkdef menu_set_tearoff_state cvoid (cptr cint))
+  
 )
 
 (def gtk-init ()
   (gtk-init-aux 0 (get-null-pt))
   (= gtype*!pixbuf (gdk-pixbuf-get-type)))
-
-(mac last-pts (f types . args)
-  "calls function with arguments args and extra parameters in the end 
-   as pointers to the types in types, and returns the contents of the
-   memory referenced by the pointers in a list"
-  (w/uniq res
-    (let pts (map [list (uniq) _] types)
-      `(with ,(join
-               (mappend
-                 (fn (x) `(,(car x) (cmalloc (csizeof ,(cadr x)))))
-                  pts)
-               `(,res nil))
-         (,f ,@args ,@(map car pts))
-         (= ,res (list ,@(map (fn (x) `(cpref ,(car x) ,(cadr x))) pts)))
-         ,res))))
-
-(def gtk-widget-path (w)
-  (last-pts gtk-widget-path-aux (cint cstring cstring) w)) ; seg. faults
-
-(def gtk-widget-get-pointer (w) 
-  (last-pts gtk-widget-get-pointer-aux (cint cint) w))
-
-(def gtk-translate-coordinates (w1 w2 x y) 
-  (last-pts gtk-widget-translate-coordinates (cint cint) w1 w2 x y))
-
-(def gtk-image-get-pixmap (img) 
-  (last-pts gtk-image-get-pixmap-aux (cptr cptr) img))
 
 (def gtk-list-store-new types
   (gtk-list-store-newv-aux (len types) 
@@ -356,13 +408,6 @@
   (let it (make-tree-iter)
     (gtk-tree-model-get-iter-aux m it path)
     it))
-
-(def gtk-tree-model-get-value (m it col)
-  (let gv (mkempty-gval)
-    (gtk-tree-model-get-value-aux m it col gv)
-    (let res (get-gvalue gv)
-      (gvalue-unset gv)
-      res)))
 
 ;; simple signal handling
 (w/ffi "libgobject-2.0"
@@ -438,6 +483,11 @@
      ,@body
      (gtk-main)))
 
+(mac defgtkmain (name args . body)
+  `(def ,name ,args
+     (in-gtk
+       ,@body)))
+
 (mac w/win (name title . body)
   `(let ,name (gtk-window-new (window-type 'toplevel))
      (gtk-window-set-title ,name ,title)
@@ -448,74 +498,116 @@
      ,@body
      (gtk-widget-show-all ,name)))
 
-(def gtk-hello-world ()
-  (in-gtk
-    (w/win w "Hello, World!"
-      (let btn (gtk-button-new-with-label "Hello, World!")
-        (gtk-container-add w btn)
-        (w/sig2 btn "clicked" b user
-          (gtk-widget-show-all 
-            (gtk-message-dialog-new w 0 0 0 "Hello, World!")))))))
+(defgtkmain gtk-hello-world ()
+  (w/win w "Hello, World!"
+    (let btn (gtk-button-new-with-label "Hello, World!")
+      (gtk-container-add w btn)
+      (w/sig2 btn "clicked" b user
+        (gtk-widget-show-all 
+          (gtk-message-dialog-new w 0 0 0 "Hello, World!"))))))
 
 ;(gtk-hello-world)
 
-(def test ()
-  (in-gtk
-    (w/win w "Test"
-      (with (v (gtk-vbox-new 0 0)
-             l (gtk-label-new "")
-             btn (gtk-button-new-with-label "Print pointer position"))
-        (w/sig btn "clicked"
-          (let pos (gtk-widget-get-pointer w)
-            (gtk-label-set-text l (string "(" (car pos) " " (cadr pos) ")")))
-          (prn (gtk-widget-path btn)))
-        (gtk-box-pack-start v l 1 1 0)
-        (gtk-box-pack-start v btn 0 1 0)
-        (gtk-container-add w v)))))
+(defgtkmain test ()
+  (w/win w "Test"
+    (with (v (gtk-vbox-new 0 0)
+           l (gtk-label-new "")
+           btn (gtk-button-new-with-label "Print pointer position"))
+      (w/sig btn "clicked"
+        (let pos (gtk-widget-get-pointer w)
+          (gtk-label-set-text l (string "(" (car pos) " " (cadr pos) ")")))
+        (prn (gtk-widget-path btn)))
+      (gtk-box-pack-start v l 1 1 0)
+      (gtk-box-pack-start v btn 0 1 0)
+      (gtk-container-add w v))))
 
 ;(test)
 
-(def test-btns ()
-  (in-gtk
-    (w/win w "Buttons test"
-      (with (hb-bt (gtk-hbox-new 0 0)
-             hb-tog (gtk-hbox-new 0 0)
-             vb (gtk-vbox-new 0 0)
-             btns (map gtk-button-new-with-label:string '(1 2 3 4 5 6))
-             toggles (map gtk-toggle-button-new-with-label:string '(1 2 3 4))) 
-        (each btn btns
-          (w/sig2 btn "clicked" bt data
-            (prn (gtk-widget-path bt))
-            (gtk-container-remove hb-bt bt))
-          (gtk-container-add hb-bt btn))
-        (each tog toggles
-          (gtk-container-add hb-tog tog))
-        (gtk-container-add vb hb-bt)
-        (gtk-container-add vb hb-tog)
-        (gtk-container-add w vb)))))
+(defgtkmain test-btns ()
+  (w/win w "Buttons test"
+    (with (hb-bt (gtk-hbox-new 0 0)
+           hb-tog (gtk-hbox-new 0 0)
+           vb (gtk-vbox-new 0 0)
+           btns (map gtk-button-new-with-label:string '(1 2 3 4 5 6))
+           toggles (map gtk-toggle-button-new-with-label:string '(1 2 3 4))) 
+      (each btn btns
+        (w/sig2 btn "clicked" bt data
+          (prn (gtk-widget-path bt))
+          (gtk-container-remove hb-bt bt))
+        (gtk-container-add hb-bt btn))
+      (each tog toggles
+        (gtk-container-add hb-tog tog))
+      (gtk-container-add vb hb-bt)
+      (gtk-container-add vb hb-tog)
+      (gtk-container-add w vb))))
 
 ;(test-btns)
 
 ;; there must be an image named "test-image.svg" inside the directory for
 ;; the test to work 
-(def test-iconview ()
-  (in-gtk
-    (w/win w "IconView test"
-      (let model (gtk-list-store-new 'string 'pixbuf)
-        (with (iter (make-tree-iter)
-               iview (gtk-icon-view-new-with-model model))
-          (w/sig2 iview "item_activated" v path (gc)
-            (let it (gtk-tree-model-get-iter model path)       
-              (prn (gtk-tree-model-get-value model it 0))
-              (gtk-list-store-remove model it)))
-          (gtk-icon-view-set-text-column iview 0)
-          (gtk-icon-view-set-pixbuf-column iview 1)
-          (for i 0 10
-            (gtk-list-store-append model iter)
-            (gtk-list-store-set-value model iter 0 "Text under image")
-            (let pix (gdk-pixbuf-new-from-file 
-                       "test-image.svg" (get-null-pt))
-              (gtk-list-store-set-value model iter 1 pix)))
-          (gtk-container-add w iview))))))
+(defgtkmain test-iconview ()
+  (w/win w "IconView test"
+    (let model (gtk-list-store-new 'string 'pixbuf)
+      (with (iter (make-tree-iter)
+             iview (gtk-icon-view-new-with-model model))
+        (w/sig2 iview "item_activated" v path (gc)
+          (let it (gtk-tree-model-get-iter model path)       
+            (prn (gtk-tree-model-get-value model it 0))
+            (gtk-list-store-remove model it)))
+        (gtk-icon-view-set-text-column iview 0)
+        (gtk-icon-view-set-pixbuf-column iview 1)
+        (for i 0 10
+          (gtk-list-store-append model iter)
+          (gtk-list-store-set-value model iter 0 "Text under image")
+          (let pix (gdk-pixbuf-new-from-file 
+                     "test-image.svg" (get-null-pt))
+            (gtk-list-store-set-value model iter 1 pix)))
+        (gtk-container-add w iview)))))
 
 ;(test-iconview)
+
+(def showmsg (parent msg)
+  (gtk-widget-show-all
+    (gtk-message-dialog-new parent 0 0 0 msg)))
+
+;; easily defines a menu
+;; use:
+;; (gtk-defmenu menu-label 
+;;   [(item-label item-name signal-body) | submenu]*)
+(mac gtk-defmenu (label . args)
+  "defines a gtk menu"
+  (w/uniq (main smain)
+    `(with (,main (gtk-menu-item-new-with-label ,label)
+            ,smain (gtk-menu-new))
+       (gtk-menu-item-set-submenu ,main ,smain)
+       ,@(map [if (and (acons _) (is (type (car _)) 'string))
+                `(let ,(cadr _) (gtk-menu-item-new-with-label ,(car _))
+                   (gtk-menu-shell-append ,smain ,(cadr _))
+                   (w/sig ,(cadr _) "activate" ,@(cddr _)))
+                `(gtk-menu-shell-append ,smain ,_)]
+            args)
+       ,main)))
+
+(defgtkmain test-menu ()
+  (w/win w "Test menu"
+    (withs (vb (gtk-vbox-new 0 0)
+            bar (gtk-menu-bar-new))
+      (gtk-box-pack-start vb bar 0 1 0)
+      (gtk-menu-shell-append 
+        bar
+        (gtk-defmenu "File"
+          ("Quit" quit
+            (gtk-main-quit))))
+      (gtk-menu-shell-append 
+        bar
+        (gtk-defmenu "Sub 2"
+          ("Item 1" it2-1
+            (showmsg w "Item 2-1"))
+          ("Item 2" it2-2
+            (showmsg w "Item 2-2"))
+          (gtk-defmenu "Sub 2.1" 
+            ("Item 2.1" it2-1-1
+              (showmsg w "Item2.1-1")))))
+      (gtk-container-add w vb))))
+
+;(test-menu)
