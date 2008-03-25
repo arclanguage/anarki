@@ -415,11 +415,12 @@
                  (filt [list _] (many p-alphadig)))))
         (*wiki-pp formatting
           (alt
-            (pred [let c (car _)
-                    (or (alphadig c)
-                        (whitec c)
-                        (in c #\, #\.))]
-                  anything)
+            (many1
+              (pred [let c (car _)
+                      (or (alphadig c)
+                          (whitec c)
+                          (in c #\, #\.))]
+                    anything))
             wiki-link
             bolded-text
             italicized-text
