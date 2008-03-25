@@ -47,6 +47,15 @@
 (def litify (a)
   (if (isa a 'fn) a (lit a)))
 
+(def nil-lit (a)
+  (fn (remaining pass fail)
+    (if (and (acons remaining) (iso a (car remaining)))
+        (pass nil nil (cdr remaining))
+        (fail))))
+
+(def nil-litify (a)
+  (if (isa a 'fn) a (nil-lit a)))
+
 (def seq parsers
   (seq-l parsers))
 
@@ -72,6 +81,21 @@
                   (pass acc acctl remaining))))
           fail)))))
 
+(def nil-seq parsers
+  (nil-seq-l parsers))
+
+(def nil-seq-l (parsers)
+  (let parser (car parsers)
+    (zap nil-litify parser)
+    (fn (remaining pass fail)
+      (parser remaining
+        (fn (_ __ remaining)
+          (let parsers (cdr parsers)
+            (if parsers
+                ((nil-seq-l parsers) remaining pass fail))
+                (pass nil nil remaining)))
+        fail))))
+
 (def many (parser)
   (zap litify parser)
   (fn (remaining pass _)
@@ -96,6 +120,25 @@
 
 (def many2 (parser)
   (seq parser (many1 parser)))
+
+(def nil-many (parser)
+  (nil-litify parser)
+  (fn (remaining pass _)
+    ((nil-many-r parser) remaining pass)))
+
+(def nil-many-r (parser)
+  (afn (remaining pass)
+    (parser remaining
+      (fn (_ __ remaining)
+        (self remaining pass))
+      (fn ()
+        (pass nil nil remaining)))))
+
+(def nil-many1 (parser)
+  (nil-seq parser (nil-many parser)))
+
+(def nil-many2 (parser)
+  (nil-seq parser (nil-many1 parser)))
 
 (def alt parsers
   (alt-l parsers))
@@ -178,6 +221,4 @@
             (pass parsed parsedtl remaining)
             (fail)))
       fail)))
-
-
 

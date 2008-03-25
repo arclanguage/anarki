@@ -336,7 +336,7 @@
     ; format a single paragraph
     (def enformat-base (link-to)
       (let (; extensions to treeparse
-            seq-str
+            seq-str nil-seq-str
             ; actions
             in-italics in-bold
             in-wiki-link
@@ -354,6 +354,9 @@
         (= seq-str
            (fn (s)
              (seq-l (scanner-string s))))
+        (= nil-seq-str
+           (fn (s)
+             (nil-seq-l (scanner-string s))))
         ; actions
         (= in-wiki-link
            (fn ((article text . addtext))
@@ -367,24 +370,24 @@
            [list "<b>" _ "</b>"])
         ; parsers
         (*wiki-pp open-br
-          (filt nilfn (seq-str "[[")))
+          (nil-seq-str "[["))
         (*wiki-pp close-br
-          (filt nilfn (seq-str "]]")))
+          (nil-seq-str "]]"))
         (*wiki-pp p-alphadig
           (pred alphadig:car anything))
         (*wiki-pp italics
-          (filt nilfn (seq-str "''")))
+          (nil-seq-str "''"))
         (*wiki-pp bold
-          (filt nilfn (seq-str "'''")))
+          (nil-seq-str "'''"))
         (*wiki-pp nowiki
-          (filt nilfn (seq-str "<nowiki>")))
+          (nil-seq-str "<nowiki>"))
         (*wiki-pp nowiki-e
-          (filt nilfn (seq-str "</nowiki>")))
+          (nil-seq-str "</nowiki>"))
         (*wiki-pp ampersand-codes
           (apply alt
             (map seq-str *wiki-ampersand-codes)))
         (*wiki-pp elided-white
-          (filt [list #\space] (many1 (pred whitec:car anything))))
+          (filt [list #\space] (nil-many1 (pred whitec:car anything))))
         (*wiki-pp ampersand-coded-text
           (seq #\& ampersand-codes #\;))
         (*wiki-pp italicized-text
@@ -409,7 +412,7 @@
                        (many:seq (cant-see:alt #\| close-br)
                                  (alt elided-white anything)))
                  (maybe:seq
-                   (filt nilfn #\|)
+                   (nil-lit #\|)
                    (filt [list _] (many:anything-but close-br)))
                  close-br
                  (filt [list _] (many p-alphadig)))))

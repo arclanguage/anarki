@@ -64,6 +64,13 @@ call this directly, `parse' should wrap up literals for you."
     (when (and (acons remaining) (iso a (car remaining)))
       (return (list (car remaining)) (cdr remaining)))))
 
+(def nil-lit (a)
+  "Creates a parser that matches a literal; however, it discards
+the matched literal, returning the same value as 'nothing."
+  (fn (remaining)
+   (when (and (acons remaining) (iso a (car remaining)))
+      (return nil (cdr remaining)))))
+
 (def seq parsers
   "Applies parsers in sequential order."
   (seq-l parsers))
@@ -80,6 +87,22 @@ call this directly, `parse' should wrap up literals for you."
                     (lconc acc parsed)
                     (if actions (join act-acc actions)
                                 act-acc)))))
+
+(def nil-seq parsers
+  "Applies parsers in sequential order; the results of the parsers
+are ignored."
+  (nil-seq-l parsers))
+
+(def nil-seq-l (parsers)
+  "Applies the list of  parsers in sequential order; the results of
+the parsers are ignored."
+  (fn (remaining)
+    (nil-seq-r parsers remaining)))
+
+(def nil-seq-r (parsers li)
+  (if (no parsers) (return nil li)
+      (iflet (_ remaining __) (parse (car parsers) li)
+             (nil-seq-r (cdr parsers) remaining))))
 
 (def alt parsers
   "Alternatives, like Parsec's <|>."
@@ -141,6 +164,24 @@ call this directly, `parse' should wrap up literals for you."
 (def many2 (parser)
   "Parser is repeated two or more times."
   (seq parser (many1 parser)))
+
+(def nil-many (parser)
+  "Parser is repeated zero or more times; their return value is
+ignored."
+  (fn (remaining) (nil-many-r parser remaining)))
+
+(def nil-many-r (parser li)
+  (iflet (parsed remaining actions) (parse parser li)
+         (nil-many-r parser remaining)
+         (return nil li)))
+
+(def nil-many1 (parser)
+  "Parser is repeated one or more times."
+  (nil-seq parser (nil-many parser)))
+
+(def nil-many2 (parser)
+  "Parser is repeated two or more times."
+  (nil-seq parser (nil-many1 parser)))
 
 (def pred (test parser)
   "Create a parser that succeeds if `parser' succeeds and its output
