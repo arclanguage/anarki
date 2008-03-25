@@ -139,6 +139,22 @@
         (new-pass fun pass)
         fail))))
 
+(let new-pass
+     (fn (fun pass)
+       (fn (parsed parsedtl remaining)
+         ((afn (p)
+            (when p
+              (zap fun (car p))
+              (self (cdr p))))
+          parsed)
+         (pass parsed parsedtl remaining)))
+  (def filt-map (fun parser)
+    (zap litify parser)
+    (fn (remaining pass fail)
+      (parser remaining
+        (new-pass fun pass)
+        fail))))
+
 (def cant-see (parser)
   (zap litify parser)
   (fn (remaining pass fail)

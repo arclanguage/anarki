@@ -169,6 +169,19 @@ passes `test'."
   (filtcar foo p) == (filt foo:car p)."
   (filt fun:car parser))
 
+(def filt-map (fun parser)
+  "Like filt, but applies the function to each element of the
+   parsed result."
+  (fn (remaining)
+    (iflet (parsed remaining actions) (parse parser remaining)
+           (do
+             ((afn (p)
+                (when p
+                  (zap fun (car p))
+                  (self (cdr p))))
+              parsed)
+             (return parsed remaining actions)))))
+
 (def carry-out (result)
   "Execute the semantics of a parser result."
   (each f (result 2) (f)))

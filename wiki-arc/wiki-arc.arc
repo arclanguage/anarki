@@ -399,7 +399,7 @@
                bold))
         (*wiki-pp nowiki-text
           (seq nowiki
-               (filt [map escape _] (many:anything-but nowiki-e))
+               (filt-map escape (many:anything-but nowiki-e))
                nowiki-e))
         (*wiki-pp wiki-link
           (filt list:in-wiki-link
@@ -426,7 +426,7 @@
             italicized-text
             ampersand-coded-text
             nowiki-text
-            (filt [cons (escape:car _) nil] anything)))
+            (filt-map escape anything)))
         (*wiki-pp many-format
           (many formatting))
         (= print-out
