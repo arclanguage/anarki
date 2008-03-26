@@ -36,14 +36,14 @@
     (= enhelp
        (fn ((symbol orig))
          (iflet (typ str) (help* symbol)
-              (list "<a style='text-decoration: none; color: "
+              (list "<span style='text-decoration: none; color: "
                     (case typ
                       fn "#007f7f"
                       mac 'brown
                           'blue)
                     "' title=\""
                     (tostring:pr-escaped str)
-                    "\" href=\"help?sym=" symbol "\">" orig "</a>")
+                    "\">" orig "</span>")
               orig)))
     (= symbol-format
       [map enhelp (car:parse sym-syntax _)]))
