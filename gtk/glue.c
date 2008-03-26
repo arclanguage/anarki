@@ -13,3 +13,7 @@ unsigned long get_gvalue_size()
   return sizeof(GValue);
 }
 
+unsigned long get_text_iter_size()
+{
+  return sizeof(GtkTextIter);
+}
