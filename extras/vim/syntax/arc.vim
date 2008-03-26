@@ -74,7 +74,7 @@ syn keyword arclispSyntax quote quasiquote unquote unquote-splicing
 syn keyword arclispSyntax define-syntax let-syntax letrec-syntax syntax-rules
 syn keyword arclispSyntax each for 
 
-syn keyword arclispFunc not boolean? is cons car cdr set-car!
+syn keyword arclispFunc no not boolean? is iso cons car cdr set-car!
 syn keyword arclispFunc set-cdr! caar cadr cdar cddr caaar caadr cadar caddr
 syn keyword arclispFunc cdaar cdadr cddar cdddr caaaar caaadr caadar caaddr
 syn keyword arclispFunc cadaar cadadr caddar cadddr cdaaar cdaadr cdadar cdaddr

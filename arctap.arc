@@ -38,7 +38,16 @@
                      (do (diag (tostring (prn "  Failed test '" msg "'")))
                          (diag (+ "         got: " (swrite got)))
                          (diag (+ "    expected: " (swrite expected)))))
-                 verdict)))
+                 verdict))
+      (def test-iso (got expected (o msg))
+           (with (verdict (ok (iso got expected) msg))
+                 (if (not verdict)
+                     (do (diag (tostring (prn "  Failed test '" msg "'")))
+                         (diag (+ "         got: " (swrite got)))
+                         (diag (+ "    expected: " (swrite expected)))))
+                 verdict))
+      (def is-deeply (got expected (o msg))
+           (test-iso got expected msg)))
 
 ;;; A workaround to get a "not" operator present. Couldn't find anything
 ;;; else. -- Shlomi Fish
