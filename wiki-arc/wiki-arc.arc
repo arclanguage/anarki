@@ -10,6 +10,7 @@
 (require "lib/cached-table.arc")
 (require "lib/scanner.arc")
 (require "lib/cps_treeparse.arc")
+(require "lib/arcformat.arc")
 
 (require "wiki-arc/wikiconf.arc")
 (require "wiki-arc/diff.arc")
@@ -342,9 +343,9 @@
             in-wiki-link
             ; parsers
             open-br close-br p-alphadig italics bold
-            nowiki nowiki-e ampersand-codes
-            elided-white
-            ampersand-coded-text
+            nowiki nowiki-e arc-tag arc-tag-e
+            ampersand-codes elided-white
+            arc-code ampersand-coded-text
             nowiki-text italicized-text bolded-text
             wiki-link formatting
             many-format
@@ -383,11 +384,20 @@
           (nil-seq-str "<nowiki>"))
         (*wiki-pp nowiki-e
           (nil-seq-str "</nowiki>"))
+        (*wiki-pp arc-tag
+          (nil-seq-str "<arc>"))
+        (*wiki-pp arc-tag-e
+          (nil-seq-str "</arc>"))
         (*wiki-pp ampersand-codes
           (apply alt
             (map seq-str *wiki-ampersand-codes)))
         (*wiki-pp elided-white
           (filt [list #\space] (nil-many1 (pred whitec:car anything))))
+        (*wiki-pp arc-code
+          (seq arc-tag
+               (filt [list (tostring (arc-format-l _))]
+                 (many (anything-but arc-tag-e)))
+               arc-tag-e))
         (*wiki-pp ampersand-coded-text
           (seq #\& ampersand-codes #\;))
         (*wiki-pp italicized-text
@@ -429,6 +439,7 @@
             italicized-text
             ampersand-coded-text
             nowiki-text
+            arc-code
             (filt-map escape anything)))
         (*wiki-pp many-format
           (many formatting))
