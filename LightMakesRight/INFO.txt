@@ -1,0 +1,43 @@
+Light Makes Right v0.1
+
+This is a simple ray tracer written in Arc.
+
+Running it:
+
+Install the version of Arc available on github by executing the following command:
+
+git clone git://github.com/nex3/arc.git
+
+Startup Arc.  Enter the following commands at the Arc prompt:
+
+arc> (load "YourArcPath/LightMakesRight/lmr.arc")
+...output...
+arc> (render "YourArcPath/LightMakesRight/demo.lmr")
+
+Wait a while for the render to complete.  You will see numbers printing out in increasing order as scanlines are rendered.  When it is done, you will find a file 'demo.bmp' in your root Arc directory (not in the LightMakesRight directory!)  This name is derived from the 'name' entry in demo.lmr.
+
+Light Makes Right (lmr) offers the following features:
+
+* Phong model lighting
+* Multiple point lights
+* 4x Super-sampling
+* Choice of any shape you wish, as long as it is a sphere or a plane
+* Shadows, reflections, refraction
+* Procedurally generated checkerboard texture
+
+The following things should be fixed or added:
+
+* Speed.
+* Camera needs to be able to 'look at' any point in the scene.
+* Camera nees to allow for differing FOV (field of view).
+* Support for different primitives.
+* Importing objects using a standard format.
+
+Share and enjoy!  If you improve it, let me know.
+
+-Ajay Kapal (akapal@fonefu.com)
+
+
+History:
+
+V 0.1 - Initial port to the GitHub Arc repository. - March 25 2008.
