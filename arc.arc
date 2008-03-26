@@ -71,7 +71,7 @@
 
 ;documentation for def itself
 (sref help*
-  '(fn
+  '(mac
   " Defines a function with the given `name', `parms', and `body'.
     See also [[fn]] [[mac]] ")
   'def)
@@ -141,7 +141,7 @@
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
 (sref help*
-  '(fn
+  '(mac
   " Defines a macro, a special function which transforms code.
     See also [[def]] ")
   'mac)
