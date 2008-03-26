@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 34)
+(plan 36)
 
 (def func1 (a b) 
      (+ a (* 2 b)))
@@ -149,4 +149,10 @@
       (test-is (cadr result) 14 "Testing closure as callback - 2")
       ; TEST
       (test-is (len result) 2 "Testing closure as callback - 3"))
+
+(with (myfunc (fn mylist (+ 20 (len mylist))))
+      ; TEST
+      (test-is (myfunc 5 6 7) 23 "Testing (fn mylist) - 1")
+      ; TEST
+      (test-is (myfunc 10 20 30 40 50) 25 "Testing (fn mylist) - 2"))
 
