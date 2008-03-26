@@ -132,7 +132,7 @@
   (= p-sym
      (filt symbol-format
        (alt (seq #\| (many (anything-but #\|)) #\|)
-            (many1 (seq (cant-see:alt lparen rparen) p-nonwhite)))))
+            (many1 (seq (cant-see:alt lparen rparen #\|) p-nonwhite)))))
   (= block-comment
      (filt commentize
        ; can be cut
@@ -152,13 +152,14 @@
        charconst
        block-comment
        line-comment
-       p-sym
        ; errors - unpaired/unterminated stuff
        (filt redden lparen)
        (filt redden rparen)
        (filt redden d-quote)
        (filt redden start-block-comment)
        (filt redden end-block-comment)
+       ; anything else has got to be a symbol
+       p-sym
        anything))
   (= many-arc-code
      (many arc-code))
