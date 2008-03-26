@@ -11,11 +11,10 @@
     (if (dir-exists name) dir-pix file-pix)))
 
 (def populate (m d)
-  (let iter (make-tree-iter)
-    (each name (cons ".." (dir d))
-      (gtk-list-store-append m iter)
-      (gtk-list-store-set-value m iter 0 name)
-      (gtk-list-store-set-value m iter 1 (get-pixbuf (string d "/" name))))))
+  (each name (cons ".." (dir d))
+    (let it (gtk-list-store-append m)
+      (gtk-list-store-set-value m it 0 name)
+      (gtk-list-store-set-value m it 1 (get-pixbuf (string d "/" name))))))
 
 (defgtkmain run-view ()
   (w/win main "View directory"
