@@ -150,8 +150,9 @@
        p-string
        p-num
        charconst
-       p-sym
        block-comment
+       line-comment
+       p-sym
        ; errors - unpaired/unterminated stuff
        (filt redden lparen)
        (filt redden rparen)
