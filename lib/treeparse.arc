@@ -53,7 +53,7 @@ executed on success."
 (def parse-list (parsers li)
   (when (and li (alist li) (alist (car li)))
     (iflet (parsed remaining actions) (seq-r parsers (car li)
-                                              (tconc-new) (tconc-new))
+                                              (tconc-new) nil)
            (unless remaining (return (list parsed)
                                      (cdr li) actions)))))
 
