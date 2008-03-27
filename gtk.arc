@@ -362,6 +362,18 @@
   (gtkdef menu_item_remove_submenu cvoid (cptr))
   (gtkdef menu_item_get_submenu cptr (cptr))
 
+  ;; check menu item
+  (gtkdef check_menu_item_new cptr ())
+  (gtkdef check_menu_item_new_with_label cptr (cstring))
+  (gtkdef check_menu_item_new_with_mnemonic cptr (cstring))
+  (gtkdef check_menu_item_get_active cint (cptr))
+  (gtkdef check_menu_item_set_active cvoid (cptr cint))
+  (gtkdef check_menu_item_set_show_toggle cvoid (cptr cint))
+  (gtkdef check_menu_item_get_inconsistent cint (cptr))
+  (gtkdef check_menu_item_set_inconsistent cvoid (cptr cint))
+  (gtkdef check_menu_item_set_draw_as_radio cvoid (cptr cint))
+  (gtkdef check_menu_item_get_draw_as_radio cint (cptr))
+
   ;; menu shell
   (gtkdef menu_shell_append cvoid (cptr cptr))
   (gtkdef menu_shell_prepend cvoid (cptr cptr))
@@ -424,6 +436,16 @@
   (gtkdef text_buffer_get_iter_at_offset cvoid (cptr (text-iter) cint))
   (gtkdef text_buffer_get_start_iter cvoid (cptr (text-iter)))
   (gtkdef text_buffer_get_end_iter cvoid (cptr (text-iter)))
+
+  ;; tree view
+  (gtkdef tree_view_new cptr ())
+;  (gtkdef tree_view_get_level_indentation cint (cptr))
+;  (gtkdef tree_view_get_show_expanders cint (cptr))
+;  (gtkdef tree_view_set_level_indentation cvoid (cptr cint))
+;  (gtkdef tree_view_set_show_expanders cvoid (cptr cint))
+  (gtkdef tree_view_new_with_model cptr (cptr))
+  (gtkdef tree_view_get_model cptr (cptr))
+  (gtkdef tree_view_set_model cvoid (cptr cptr))
 
 )
 
@@ -690,3 +712,14 @@
       (gtk-container-add w vb))))
 
 ;(test-menu)
+
+(defgtkmain test-treeview ()
+  (w/win w "Test TreeView"
+    (withs (model (gtk-list-store-new 'string)
+            view (gtk-tree-view-new-with-model model)
+            data (map string '(One Two Three Four Five Six)))
+      (each s data
+        (gtk-list-store-set-value model (gtk-list-store-append model) 0 s))
+      (gtk-container-add w view))))
+
+;(test-treeview)
