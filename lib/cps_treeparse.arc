@@ -126,7 +126,7 @@
   (seq parser (many1 parser)))
 
 (def nil-many (parser)
-  (nil-litify parser)
+  (zap nil-litify parser)
   (fn (remaining pass _)
     ((nil-many-r parser) remaining pass)))
 
