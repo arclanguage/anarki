@@ -56,6 +56,10 @@
 (def nil-litify (a)
   (if (isa a 'fn) a (nil-lit a)))
 
+(def at-end (remaining pass fail)
+  (if remaining (fail)
+      (pass nil nil nil)))
+
 (def seq parsers
   (seq-l parsers))
 
