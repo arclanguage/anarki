@@ -7,7 +7,12 @@
 
 (load "arctap.arc")
 
-(plan 1)
+(plan 2)
 
 ; TEST
 (test-iso (map [+ 5 _] '(10 20 100)) '(15 25 105) "Simple Map")
+
+; TEST
+(test-iso (+ (list "Hello" 5 6) (list 100 200) (list "Lambda"))
+          (list "Hello" 5 6 100 200 "Lambda")
+          "List Contactenation")
