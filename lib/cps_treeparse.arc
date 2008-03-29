@@ -56,6 +56,10 @@
 (def nil-litify (a)
   (if (isa a 'fn) a (nil-lit a)))
 
+(def at-end (remaining pass fail)
+  (if remaining (fail)
+      (pass nil nil nil)))
+
 (def seq parsers
   (seq-l parsers))
 
@@ -122,7 +126,7 @@
   (seq parser (many1 parser)))
 
 (def nil-many (parser)
-  (nil-litify parser)
+  (zap nil-litify parser)
   (fn (remaining pass _)
     ((nil-many-r parser) remaining pass)))
 
