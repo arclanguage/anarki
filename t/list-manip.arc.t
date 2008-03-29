@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 2)
+(plan 8)
 
 ; TEST
 (test-iso (map [+ 5 _] '(10 20 100)) '(15 25 105) "Simple Map")
@@ -16,3 +16,21 @@
 (test-iso (+ (list "Hello" 5 6) (list 100 200) (list "Lambda"))
           (list "Hello" 5 6 100 200 "Lambda")
           "List Contactenation")
+
+; Testing element lookup.
+(with (l (list 1 "Twenty Four" 'fox "Handclap" 90))
+      ; TEST
+      (test-is (l 0) 1 "nth 0")
+      ; TEST
+      (test-is (l 1) "Twenty Four" "nth 1")
+      ; TEST
+      (test-is (l 2) 'fox "nth 2")
+      ; TEST
+      (test-is (l 3) "Handclap" "nth 3")
+      ; TEST
+      (test-is (l 4) 90 "nth 4")
+      ; TEST
+      (test-is ((list 10 20 30) 1) 20 "Testing dynamic nth"))
+
+      
+
