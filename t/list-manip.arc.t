@@ -7,7 +7,7 @@
 
 (load "arctap.arc")
 
-(plan 8)
+(plan 9)
 
 ; TEST
 (test-iso (map [+ 5 _] '(10 20 100)) '(15 25 105) "Simple Map")
@@ -32,5 +32,9 @@
       ; TEST
       (test-is ((list 10 20 30) 1) 20 "Testing dynamic nth"))
 
+(with (l (list 1 20 303 444 5.5))
+      (= (cadr l) "Two")
+      ; TEST
+      (test-iso l (list 1 "Two" 303 444 5.5)
+                "Testing (= (cadr..."))
       
-
