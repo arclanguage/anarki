@@ -84,6 +84,7 @@
 
 (attribute *          class          opstring)
 (attribute *          id             opstring)
+(attribute *          style          opstring)
 (attribute a          href           opstring)
 (attribute a          rel            opstring)
 (attribute a          onclick        opstring)
@@ -182,7 +183,7 @@
   (if (no options)
       '()
       (let ((opt val) . rest) options
-        (let meth (if (is opt 'style) opstring (opmeth spec opt))
+        (let meth (opmeth spec opt)
           (if meth
               (if val
                   (cons (meth opt val)
