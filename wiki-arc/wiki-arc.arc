@@ -16,7 +16,6 @@
 (require "wiki-arc/diff.arc")
 (require "wiki-arc/ampersands.arc")
 
-(attribute a class opstring)
 (attribute a name opstring)
 
 ; macro for easily destructuring web arguments

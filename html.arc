@@ -30,7 +30,10 @@
 ; hack: intern key pair till have implicit tables of tables
 
 (mac opmeth (tag opt)
-  `(opmeths* (sym (+ (string ,tag) "."  (string ,opt)))))
+  (w/uniq o-v
+    `(let ,o-v (string ,opt)
+       (or (opmeths* (sym (+ (string ,tag) "."  ,o-v)))
+           (opmeths* (sym (+ "*."  ,o-v)))))))
 
 (mac attribute (tag opt f)
 ; `(= (opmeth ',tag ',opt) ,f)
@@ -79,10 +82,10 @@
                 #\&  "&#38;"
                 c))))
 
+(attribute *          class          opstring)
+(attribute *          id             opstring)
 (attribute a          href           opstring)
 (attribute a          rel            opstring)
-(attribute a          class          opstring)
-(attribute a          id             opsym)
 (attribute a          onclick        opstring)
 (attribute body       alink          opcolor)
 (attribute body       bgcolor        opcolor)
@@ -93,9 +96,7 @@
 (attribute body       topmargin      opnum)
 (attribute body       vlink          opcolor)
 (attribute div        align          opsym)
-(attribute div        class          opstring)
 (attribute div        dir            opsym)
-(attribute div        id             opsym)
 (attribute div        lang           opstring)
 (attribute div        onclick        opstring)
 (attribute div        style          opstring)
@@ -106,7 +107,6 @@
 (attribute font       size           opnum)
 (attribute form       action         opstring)
 (attribute form       method         opsym)
-(attribute html       id             opsym)
 (attribute html       lang           opstring)
 (attribute html       xml:lang       opstring)
 (attribute html       xmlns          opstring)
@@ -145,12 +145,9 @@
 (attribute td         colspan        opnum)
 (attribute td         width          opnum)
 (attribute td         valign         opsym)
-(attribute td         class          opstring)
 (attribute tr         bgcolor        opcolor)
 (attribute hr         color          opcolor)
-(attribute span       class          opstring)
 (attribute span       align          opstring)
-(attribute span       id             opsym)
 (attribute rss        version        opstring)
 
 
