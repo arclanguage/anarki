@@ -23,6 +23,15 @@
     `(fn (,remaining ,pass ,fail)
        (,p ,remaining ,pass ,fail))))
 
+(mac assign-parser (var p)
+  (w/uniq (li pass fail parsed parsedtl remaining)
+    `(fn (,li ,pass ,fail)
+       (,p ,li
+           (fn (,parsed ,parsedtl ,remaining)
+               (= ,var (copy ,parsed))
+               (,pass ,parsed ,parsedtl ,remaining))
+           ,fail))))
+
 (def parse (parser remaining)
   (if
     (isa parser 'fn)

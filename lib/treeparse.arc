@@ -30,6 +30,17 @@
     `(fn (,remaining)
        (parse ,p ,remaining))))
 
+(mac assign-parser (var p)
+  "Create a parser which assigns the parsed value to the specified variable.
+The variable is in the same scope as the assign-parser definition."
+  (w/uniq (remaining retval)
+    `(fn (,remaining)
+       (let ,retval (parse ,p ,remaining)
+         ; have to copy: combinators are destructive
+         ; on the parsed values
+         (when ,retval (= ,var (copy:car ,retval)))
+         ,retval))))
+
 (def return (val remaining (o actions nil))
   "Signal a successful parse."
   (list val remaining actions))
