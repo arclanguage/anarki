@@ -201,7 +201,13 @@ Connection: close"))
        textmime*))
 
 (def file-exists-in-root (file)
-  (and (~empty file) (file-exists (string rootdir* file))))
+  (and (~empty file)
+       ; search for a ".." and break out if so
+       (no
+         (breakable:forlen i file
+           (when (and (> i 0) (is (file i) #\.) (is (file (- i 1)) #\.))
+             (break t))))
+       (file-exists (string rootdir* file))))
 
 (def respond (str op args cooks ip (o type))
   (w/stdout str
