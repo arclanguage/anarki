@@ -202,12 +202,9 @@ Connection: close"))
 
 (def file-exists-in-root (file)
   (and (~empty file)
-       ; search for a ".." and break out if so
-       (no
-         (breakable:forlen i file
-           (when (and (> i 0) (is (file i) #\.) (is (file (- i 1)) #\.))
-             (break t))))
-       (file-exists (string rootdir* file))))
+       (prefix (qualified-path rootdir*)
+               (qualified-path (file-join rootdir* file)))
+       (file-exists (file-join rootdir* file))))
 
 (def respond (str op args cooks ip (o type))
   (w/stdout str
