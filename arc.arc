@@ -38,7 +38,7 @@
           (fn args `((fn () ,@args)))))
 ;documentation for do itself
 (sref help*
-  '(fn
+  '(mac
   " Evaluates each expression in sequence and returns the result of the
     last expression.
     See also [[do1]] [[after]] ")
@@ -593,8 +593,8 @@
 (def map (f . seqs)
   " Applies the elements of the sequences to the given function.
     Returns a sequence containing the results of the function.
-    See also [[each]] [[map1]] [[mappend]] [[andmap]] [[ormap]]
-    [[reduce]] "
+    See also [[each]] [[mapeach]] [[map1]] [[mappend]] [[andmap]]
+    [[ormap]] [[reduce]] "
   (if (some [isa _ 'string] seqs) 
        (withs (n   (apply min (map len seqs))
                new (newstring n))
@@ -825,7 +825,7 @@
 (mac each (var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
     with each element assigned to `var'.
-    See also [[forlen]] [[on]] [[map]] [[ontable]] "
+    See also [[forlen]] [[on]] [[map]] [[mapeach]] [[ontable]] "
   (w/uniq (gseq g)
     `(let ,gseq ,expr
        (if (alist ,gseq)
@@ -839,6 +839,13 @@
                       ,gseq)
             (for ,g 0 (- (len ,gseq) 1)
               (let ,var (,gseq ,g) ,@body))))))
+
+(mac mapeach (var expr . body)
+  " Performs `body' for each element of the list returned by `expr',
+    with each element assigned to `var'; the result of the last expression
+    in `body' is stored in a returned list of values.
+    See also [[each]] [[map]] "
+  `(map1 (fn (,var) ,@body) ,expr))
 
 ; (nthcdr x y) = (cut y x).
 
