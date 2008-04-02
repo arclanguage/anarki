@@ -204,7 +204,8 @@
 ; Rtm prefers to overload + to do this
 
 (def join args
-  " Joins all list arguments together. "
+  " Joins all list arguments together.
+    See also [[cons]] [[+]] "
   (if (no args)
       nil
       (let a (car args) 
@@ -245,7 +246,8 @@
     `(fn ,g (no (apply ,f ,g)))))
 
 (def rev (xs) 
-  " Reverses a sequence. "
+  " Reverses a copy of the list `xs'
+    See also [[copy]] "
   ((afn (xs acc)
      (if (no xs)
          acc
@@ -647,7 +649,7 @@
 
 (def caris (x val) 
   " Determines if (car x) is `val'.
-    See also [[is]] [[car]] "
+    See also [[is]] [[car]] [[carif]] "
   (and (acons x) (is (car x) val)))
 
 (def warn (msg . args)
@@ -858,7 +860,7 @@
       > (cut \"abcde\" 1, -1)
       \"bcd\"
 
-    See also [[firstn]] [[nthcdr]] "
+    See also [[firstn]] [[nthcdr]] [[split]] "
   (with (end (if (< end 0) (+ (len seq) end) end)
          start (if (< start 0) (+ (len seq) start) start))
     (if (isa seq 'string)
@@ -1419,12 +1421,23 @@
 (def most (f seq) 
   " Selects the element of `seq' with the highest [f _].
     `f' is a score function for elements of `seq'.
-    See also [[best]] "
+    See also [[best]] [[least]] "
   (unless (no seq)
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
         (let score (f elt)
           (if (> score topscore) (= wins elt topscore score))))
+      wins)))
+
+(def least (f seq)
+  " Selects the element of `seq' with the lowest [f _].
+    `f' is a score function for elements of `seq'.
+    See also [[most]] "
+  (unless (no seq)
+    (withs (wins (car seq) topscore (f wins))
+      (each elt (cdr seq)
+        (let score (f elt)
+          (if (< score topscore) (= wins elt topscore score))))
       wins)))
 
 ; Insert so that list remains sorted.  Don't really want to expose
@@ -1550,7 +1563,8 @@
          (treewise f base (cdr tree)))))
 
 (def carif (x)
-  " Returns the first element of a list if the argument is a list. "
+  " Returns the first element of a list if the argument is a list.
+    See also [[car]] [[caris]] "
   (if (atom x) x (car x)))
 
 ; Could prob be generalized beyond printing.
@@ -1589,12 +1603,14 @@
     (ontree f (cdr tree))))
 
 (def fill-table (table data)
-  " Fills `table' with key-value pairs in the `data' list. "
+  " Fills `table' with key-value pairs in the `data' list.
+    See also [[table]] "
   (each (k v) (pair data) (= (table k) v))
   table)
 
 (mac obj args
-  " Creates an object with the specified entries. "
+  " Creates an object with the specified entries.
+    See also [[inst]] [[table]] "
   (w/uniq g
     `(let ,g (table)
        ,@(map (fn ((k v)) `(= (,g ',k) ,v))
@@ -1602,52 +1618,62 @@
        ,g)))
 
 (def keys (h) 
-  " Returns a list of keys in the table or object `h'. "
+  " Returns a list of keys in the table or object `h'.
+    See also [[vals]] [[table]] "
   (accum a (ontable k v h (a k))))
 
 (def vals (h) 
-  " Returns a list of values in the table or object `h'. "
+  " Returns a list of values in the table or object `h'.
+    See also [[keys]] [[table]] "
   (accum a (ontable k v h (a v))))
 
 ; These two should really be done by coerce.  Wrap coerce?
 
 (def tablist (h)
-  " Transforms a table or object `h' into an association list. "
+  " Transforms a table or object `h' into an association list.
+    See also [[listtab]] [[alref]] [[assoc]] "
   (accum a (maptable (fn args (a args)) h)))
 
 (def listtab (al)
-  " Transforms an association list into a table or object. "
+  " Transforms an association list into a table or object.
+    See also [[tablist]] [[alref]] [[assoc]] "
   (let h (table)
     (map (fn ((k v)) (= (h k) v))
          al)
     h))
 
 (def load-table (file (o eof))
-  " Loads an association list from `file' into a table or object. "
+  " Loads an association list from `file' into a table or object.
+    See also [[load-tables]] [[read-table]] [[save-table]] [[listtab]] "
   (w/infile i file (read-table i eof)))
 
 (def read-table ((o i (stdin)) (o eof))
-  " Loads an association list from the stream `i' into a table or object. "
+  " Loads an association list from the stream `i' into a table or object.
+    See also [[load-tables]] [[load-table]] [[write-table]] [[listtab]] "
   (let e (read i eof)
     (if (alist e) (listtab e) e)))
 
 (def load-tables (file)
   " Loads several association lists from `file' into a list of tables or
-    objects. "
+    objects.
+    See also [[load-table]] [[read-table]] "
   (w/infile i file
     (w/uniq eof
       (drain (read-table i eof) eof))))
 
 (def save-table (h file)
-  " Writes a table or object `h' to `file'. "
+  " Writes a table or object `h' to `file'.
+    See also [[write-table]] [[load-table]] [[tablist]] "
   (w/outfile o file (write-table h o)))
 
 (def write-table (h (o o (stdout)))
-  " Writes a table or object `h' to the stream `o'. "
+  " Writes a table or object `h' to the stream `o'.
+    See also [[save-table]] [[read-table]] [[tablist]] "
   (write (tablist h) o))
 
 (def copy (x . args)
-  " Creates a copy of an existing argument `x'. "
+  " Creates a copy of an existing argument `x'.
+    See also [[rev]] "
   (let x2 (case (type x)
             sym    x
             cons   (apply (fn args args) x)
@@ -1665,11 +1691,13 @@
     x2))
 
 (def abs (n)
-  " Returns the absolute value of a number. "
+  " Returns the absolute value of a number.
+    See also [[signop]] "
   (if (< n 0) (- n) n))
 
 (def signop (n)
-  " Returns the sign of a number as the symbol `+' or `-'. "
+  " Returns the sign of a number as the function `+' or `-'.
+    See also [[abs]] "
   (if (< n 0) - +))
 
 ; The problem with returning a list instead of multiple values is that
@@ -1677,7 +1705,8 @@
 ; you only want the first.  Not a big problem.
 
 (def round (n)
-  " Rounds off a fractional value to the nearest whole number. "
+  " Rounds off a fractional value to the nearest whole number.
+    See also [[roundup]] [[to-nearest]] "
   (withs (base (trunc n) rem (abs (- n base)))
     (if (> rem 1/2) ((if (> n 0) + -) base 1)
         (< rem 1/2) base
@@ -1686,14 +1715,16 @@
 
 (def roundup (n)
   " Rounds off a fractional value to the nearest absolute highest
-    whole number. "
+    whole number.
+    See also [[round]] [[to-nearest]] "
   (withs (base (trunc n) rem (abs (- n base)))
     (if (>= rem 1/2) 
         ((if (> n 0) + -) base 1)
         base)))
 
 (def to-nearest (n quantum)
-  " Rounds off `n' to the nearest multiple of `quantum'. "
+  " Rounds off `n' to the nearest multiple of `quantum'.
+    See also [[round]] [[roundup]] "
   (* (roundup (/ n quantum)) quantum))
 
 (def avg (ns) " Averages all numbers in `ns'. " (/ (apply + ns) (len ns)))
@@ -1768,12 +1799,15 @@
               x)))))
 
 (def bestn (n f seq)
-  " Returns a list of the best `n' elements of seq according to `f'. "
+  " Returns a list of the best `n' elements of seq according to
+    the comparison function `f'.
+    See also [[best]] "
   (firstn n (sort f seq)))
 
 (def split (seq pos)
   " Splits `seq' at offset `pos', returning a two-element list of the
-    split. "
+    split.
+    See also [[cut]] "
   (withs (mid (nthcdr (- pos 1) seq) 
           s2  (cdr mid))
     (wipe (cdr mid))
@@ -2323,6 +2357,8 @@
 (def len> (x n) (> (len x) n))
 
 (mac thread body 
+  " Launches the expressions in `body' in a new thread, returning the
+    thread ID for that thread. "
   `(new-thread (fn () ,@body)))
 
 (mac trav (x . fs)
@@ -2354,11 +2390,12 @@
   `(= (hooks* ',name) (fn ,@rest)))
   
 (mac varif (name (o default))
-  "Returns the value of the variable `name' if it exists, or `default' otherwise."
+  "Returns the value of the variable `name' if it exists, or `default'
+   otherwise."
   `(if (bound ',name) ,name ,default))
 
 (mac redef (name parms . body)
-  " Redefine a function.  The old function definitiaion may be used within
+  " Redefine a function.  The old function definition may be used within
     `body' as the name `old'. "
   `(do (tostring
         (let old (varif ,name nilfn)
@@ -2367,7 +2404,8 @@
 
 (redef table args
   " Creates a table initializing table entries from passed
-    key-value pairs. "
+    key-value pairs.
+    See also [[obj]] [[inst]] "
   (let tb (old)
     (fill-table tb args)
     tb))
