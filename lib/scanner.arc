@@ -150,6 +150,22 @@ car and prefix ++ being cdr.
                     (helper (nthcdr start seq) (- end start))))
               (old seq start end))))))
 
+; Create a lazy version of map
+(defm map1 (f (t xs scanner))
+  (scanner
+    'car (f:car xs)
+    'cdr (map1 f (cdr xs))))
+
+; Create a lazy version of rem
+; 'keep uses 'rem, so this automatically works on keep
+(defm rem (test (t seq scanner))
+  (zap testify test)
+  (while (and seq (test:car seq))
+    (zap cdr seq))
+  (when seq
+    (scanner 'car (car seq)
+             'cdr (rem test (cdr seq)))))
+
 (def scanner-string (s (o start 0) (o end (len s)))
   " Creates a scanner for a string `s'.  You may also
     specify optional `start' and `end' locations using
