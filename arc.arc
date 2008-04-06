@@ -90,6 +90,7 @@
 
 (def acons (x)
   " Determines if `x' is a `cons' cell or list.
+    Unlike 'alist, this function will return nil if given an empty list
     See also [[atom]] [[alist]] [[dotted]] [[isa]] [[cons]] [[list]] "
   (is (type x) 'cons))
 
@@ -278,8 +279,8 @@
             (if ,g ,g (or ,@(cdr args)))))))
 
 (def alist (x)
-  " Is this a (non-empty) list?
-    Return true if argument consists of cons pairs.
+  " Return true if argument is a possibly empty list
+    Unlike 'acons, this function returns t when given an empty list
     See also [[atom]] [[acons]] [[dotted]] [[isa]] [[cons]] [[list]] "
   (or (no x) (is (type x) 'cons)))
 
