@@ -1316,4 +1316,10 @@
        (let-values ([(in out) (tcp-connect host port)]) (list in out))))
 (xdef 'flush-socket (lambda (s) (flush-output s)))
 
+(xdef 'pipe (lambda ()
+              (call-with-values make-pipe
+                (lambda (x y)
+                  (cons x (cons y 'nil))))))
+(xdef 'pipe-len pipe-content-length)
+
 )
