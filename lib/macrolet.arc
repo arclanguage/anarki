@@ -32,7 +32,7 @@
    `(do ,@(map scanner body))))
 
 (def *macrolet-test1 ()
-  (macrolet
+  (macwith
      (
        (myassign x y) `(= ,x ,y))
      (let z 1
