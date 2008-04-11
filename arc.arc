@@ -767,8 +767,8 @@
                               `(fn (,h) (sref ,g ,h ,@argsyms)))))))))))
 
 (def metafn (x)
-  (or (ssyntax x)
-      (and (acons x) (in (car x) 'compose 'complement))))
+  (set x (ssyntax x))
+  (and (acons x) (in (car x) 'compose 'complement)))
 
 (def expand-metafn-call (f args)
   (if (is (car f) 'compose)
