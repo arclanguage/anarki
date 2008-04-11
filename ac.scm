@@ -817,6 +817,7 @@
         ((regexp? x)        're)
         ((thread? x)        'thread)
         ((thread-cell? x)   'thread-local)
+        ((semaphore? x)     'sema)
         (#t                 (err "Type: unknown type" x))))
 (xdef 'type ar-type)
 
@@ -1331,5 +1332,15 @@
 (xdef 'thread-local-set (lambda (c v)
                           (thread-cell-set! c v)
                           v))
+
+(xdef 'sema (lambda () (make-semaphore)))
+(xdef 'sema-wait (wrapnil semaphore-wait))
+(xdef 'sema-post (wrapnil semaphore-post))
+(xdef 'sync sync)
+(xdef 'synct (lambda (timeout . events)
+               (if (eqv? timeout 'nil)
+                   (apply sync events)
+                   (let ((rv (apply sync/timeout timeout events)))
+                     (if rv rv 'nil)))))
 
 )
