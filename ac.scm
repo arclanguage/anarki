@@ -816,6 +816,7 @@
         ((exn? x)           'exception)
         ((regexp? x)        're)
         ((thread? x)        'thread)
+        ((thread-cell? x)   'thread-local)
         (#t                 (err "Type: unknown type" x))))
 (xdef 'type ar-type)
 
@@ -1321,5 +1322,14 @@
                 (lambda (x y)
                   (cons x (cons y 'nil))))))
 (xdef 'pipe-len pipe-content-length)
+
+(xdef 'thread-local (lambda ()
+      (make-thread-cell 'nil #t)))
+; incompatible with current sref and ref, since they both
+; expect an argument.
+(xdef 'thread-local-ref thread-cell-ref)
+(xdef 'thread-local-set (lambda (c v)
+                          (thread-cell-set! c v)
+                          v))
 
 )

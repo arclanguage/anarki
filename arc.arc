@@ -30,6 +30,14 @@
 (sref call* ref 'string)
 (sref call* ref 'table)
 (sref call* ref 'vec)
+(sref call* thread-local-ref 'thread-local)
+((fn (old)
+  (set sref
+    (fn (c v . i)
+      (if (is (type c) 'thread-local)
+          (thread-local-set c v)
+          (apply old c v i)))))
+ sref)
 
 (set current-load-file* "arc.arc")
 (set source-file* (table))
