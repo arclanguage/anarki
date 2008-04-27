@@ -7,10 +7,34 @@
         ssyntax-strings*
         ',(map car pairs))))
 
+(def-all-ss
+  ; earlier listed stuff has lower precedence
+  #\:  (compose ...)
+  ; prefix
+  ~    (complement R)
+  ; standalone
+  ~    no
+  #\.  (...)
+  !    (L 'r))
+
 (def a-ssyntax (s)
   (and (isa s 'sym)
        (let ss (string s)
-         (some [posmatch _ ss] ssyntax-strings*))))
+         ; posmatch doesn't exactly work when
+         ; both parameters are precisely equal:
+         ; (posmatch "~" "~") is nil
+         (some (fn (pat)
+                 (breakable:for i 0 (- (len ss) (len pat))
+                   (when (is (ss i) (pat 0))
+                     ((afn (i j)
+                        (if
+                          (is j (len pat))
+                            (break t)
+                          (is (ss i) (pat j))
+                            (self (+ i 1) (+ j 1))
+                            nil))
+                      i 0))))
+               ssyntax-strings*))))
 
 (let (has split-string expander postfix prefix expand) nil
   ; determines if the expression e ever
@@ -67,7 +91,6 @@
   ; performs expansion for prefix
   (= prefix
      (fn (s ssyn e next)
-       (prn "prefix " ssyn)
        (if (is ssyn (cut s 0 (min (len ssyn) (len s))))
            (let sub (cut s (len ssyn))
              (if (empty sub)
@@ -128,14 +151,6 @@
         (expand (string s) ssyntaxes*)
         s)))
 
-(def-all-ss
-  ; earlier listed stuff has lower precedence
-  #\:  (compose ...)
-  ; prefix
-  ~    (complement R)
-  ; standalone
-  ~    no
-  #\.  (...)
-  !    (L 'r))
-
+(= ssyntax a-ssyntax
+   ssexpand a-ssexpand)
 
