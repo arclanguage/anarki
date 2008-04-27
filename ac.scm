@@ -210,8 +210,12 @@
 
 ;;; End of compilation issues
 
-
 (define (ssyntax? x)
+  (if (eqv? ((eval '__ssyntax) x) 'nil)
+      #f
+      #t))
+
+(define (default-ssyntax? x)
   (and (symbol? x)
        (not (or (eqv? x '+) (eqv? x '++)))
        (let ((name (symbol->string x)))
@@ -230,6 +234,9 @@
       val)))
 
 (define (expand-ssyntax sym)
+  (ac-denil ((eval '__ssexpand) sym)))
+
+(define (default-expand-ssyntax sym)
   ((cond ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
          ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
          (#t (error "Unknown ssyntax" sym)))
@@ -1286,10 +1293,10 @@
 
 ;(xdef 'flushout (lambda () (flush-output) 't))
 
-(xdef 'ssyntax (lambda (x) (tnil (ssyntax? x))))
+(xdef 'ssyntax (lambda (x) (tnil (default-ssyntax? x))))
 
 (xdef 'ssexpand (lambda (x)
-                  (if (symbol? x) (expand-ssyntax x) x)))
+                  (if (symbol? x) (default-expand-ssyntax x) x)))
 
 (xdef 'which-os system-type)
 
