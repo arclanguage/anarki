@@ -67,7 +67,8 @@
   ; performs expansion for prefix
   (= prefix
      (fn (s ssyn e next)
-       (if (is ssyn (cut s 0 (len ssyn)))
+       (prn "prefix " ssyn)
+       (if (is ssyn (cut s 0 (min (len ssyn) (len s))))
            (let sub (cut s (len ssyn))
              (if (empty sub)
                (next s)
