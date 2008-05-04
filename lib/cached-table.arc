@@ -47,6 +47,7 @@
             (atomic
               (cleanup)
               (aif (ct s)
-                   (do (= (mt s) (seconds))
-                       it)))))))))
+                   (atomic
+                     (= (mt s) (seconds))
+                     it)))))))))
 
