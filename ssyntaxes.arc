@@ -1,37 +1,12 @@
 
 (mac def-all-ss rest
-  (let pairs (map (fn ((s e)) `(,(string s) ,e))
-                  (pair rest))
-    `(= ssyntaxes*
-        ',pairs
-        ssyntax-strings*
-        ',(let tb (table)
-            (each (s . ignored) pairs
-              (push s (tb (s 0))))
-            tb))))
+  (let pairs (pair rest (fn (s e) `(,(string s) ,e)))
+    `(do (a-ssyntax-clear)
+         (a-ssyntax-top ',pairs))))
 
-(def-all-ss
-  ; earlier listed stuff has lower precedence
-  //   (orf ...)
-  &&   (andf ...)
-  #\:  (compose ...)
-  ; prefix
-  ~    (complement R)
-  ; standalone
-  ~    no
-  #\.  (...)
-  !    (L 'r)
-  ?    [isa _ 'L])
-
-(def a-ssyntax (s)
-  (and (isa s 'sym)
-       (let ss (string s)
-         (breakable:forlen i ss
-           (awhen (ssyntax-strings* (ss i))
-             (when (some [headmatch _ ss i] it)
-               (break t)))))))
-
-(let (has split-string expander postfix prefix expand) nil
+(let (has split-string expander postfix prefix expand
+      expansion-type
+      ssyntaxes pre-ss post-ss in-ss exact-ss) nil
   ; determines if the expression e ever
   ; has the symbol v
   (= has
@@ -92,6 +67,23 @@
                (next s)
                ((expander e) "" (next sub))))
            (next s))))
+  ; determine type of expansion
+  (= expansion-type
+     (fn (e)
+       (if
+         (has 'l e)
+           (if (or (has 'R e) (has 'r e))
+               'rightassoc
+               'postfix)
+         (has 'L e)
+           (if (or (has 'R e) (has 'r e))
+               'leftassoc
+               'postfix)
+         (or (has 'R e) (has 'r e))
+           'prefix
+         (has '... e)
+           'variadic
+           'none)))
   (= expand
      (fn (s ssyntaxes)
        (if (no ssyntaxes)
@@ -99,32 +91,22 @@
            (withs (((ssyn e) . rest) ssyntaxes
                    next [expand _ rest])
              ; determine the type of expansion first
-             (if
-               (has 'l e)
-                 (if
-                   ; right-associative
-                   (or (has 'R e) (has 'r e))
-                     (let split (map next (split-string ssyn s))
-                       (if (> (len split) 1)
-                           (rreduce (expander e next) split)
-                           (next s)))
-                     ; postfix
-                     (postfix s ssyn e next))
-               (has 'L e)
-                 (if
-                   ; left associative
-                   (or (has 'R e) (has 'r e))
-                     (let split (map next (split-string ssyn s))
-                       (if (> (len split) 1)
-                           (reduce (expander e) split)
-                           (next s)))
-                     ; postfix
-                     (postfix s ssyn e next))
-               (or (has 'r e) (has 'R e))
-                 ; prefix
+             (case (expansion-type e)
+               rightassoc
+                 (let split (map next (split-string ssyn s))
+                   (if (> (len split) 1)
+                       (rreduce (expander e next) split)
+                       (next s)))
+               leftassoc
+                 (let split (map next (split-string ssyn s))
+                   (if (> (len split) 1)
+                       (reduce (expander e) split)
+                       (next s)))
+               postfix
+                 (postfix s ssyn e next)
+               prefix
                  (prefix s ssyn e next)
-               (has '... e)
-                 ; variadic
+               variadic
                  (let split (map next (split-string ssyn s))
                    (if (> (len split) 1)
                        ((afn (e)
@@ -136,15 +118,91 @@
                               e))
                         e)
                        (next s)))
-               ; no fixity: expand only if
-               ; ssyntax is exact
-               (is ssyn s)
-                 e
-                 (next s))))))
+               none
+                 (if (is ssyn s)
+                     e
+                     (next s)))))))
+  (=
+     ; key: initial character of ssyntax
+     ; value: set of ssyntaxes starting with
+     ;   that character
+     pre-ss (table)
+     ; key: number of characters in ssyntax
+     ; value: table
+     ;   key: first character of ssyntax
+     ;   value: set of ssyntaxes of the correct
+     ;     length starting with that character
+     post-ss (table)
+     ; key: initial character of ssyntax
+     ; value: set of ssyntaxes starting with
+     ;   that character
+     in-ss (table)
+     ; key: string of ssyntax
+     ; value: t
+     exact-ss (table))
+  (def a-ssyntax-clear ()
+    (ontable k v pre-ss   (= pre-ss.k nil))
+    (ontable k v post-ss  (= post-ss.k nil))
+    (ontable k v in-ss    (= in-ss.k nil))
+    (ontable k v exact-ss (= exact-ss.k nil)))
+  (def a-ssyntax-top (pairs)
+    (zap [join pairs _] ssyntaxes)
+    (let to-in
+         (fn (s)
+           (push s (in-ss s.0)))
+      (each (s e) pairs
+        (case (expansion-type e)
+          variadic   (to-in s)
+          leftassoc  (to-in s)
+          rightassoc (to-in s)
+          none       (= exact-ss.s t)
+          postfix
+            (withs (l  (len s)
+                    tb (or post-ss.l (= post-ss.l (table))))
+              (push s (tb s.0)))
+          prefix
+            (push s (pre-ss s.0)))))
+    t)
+  (def a-ssyntax (s)
+    (and (isa s 'sym)
+         (withs (s (string s)
+                 ls (len s))
+           (or (exact-ss s)
+               (awhen (pre-ss s.0)
+                 (aand (mem [headmatch _ s] it)
+                       (> ls (len:car it))))
+               ; scan through
+               (when (> ls 1)
+                 ; start at 1
+                 ((afn (i l)
+                    (when (> l 0)
+                      (if
+                        (aif
+                          (in-ss s.i)
+                            (some [headmatch _ s i] it)
+                          (aand (post-ss l)
+                                (it s.i))
+                            (some [headmatch _ s i] it))
+                          t
+                          (self (+ i 1) (- l 1)))))
+                  1 (- ls 1)))))))
   (def a-ssexpand (s)
     (if (isa s 'sym)
-        (expand (string s) ssyntaxes*)
+        (expand (string s) ssyntaxes)
         s)))
+
+(def-all-ss
+  ; earlier listed stuff has lower precedence
+  //   (orf ...)
+  &&   (andf ...)
+  #\:  (compose ...)
+  ; prefix
+  ~    (complement R)
+  ; standalone
+  ~    no
+  #\.  (...)
+  !    (L 'r)
+  ?    [isa _ 'L])
 
 (= ssyntax a-ssyntax
    ssexpand a-ssexpand)
