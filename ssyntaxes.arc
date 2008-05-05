@@ -179,7 +179,8 @@
                       (if
                         (aif
                           (in-ss s.i)
-                            (some [headmatch _ s i] it)
+                            (some [and (> l (len _))
+                                       (headmatch _ s i)] it)
                           (aand (post-ss l)
                                 (it s.i))
                             (some [headmatch _ s i] it))
