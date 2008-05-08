@@ -28,7 +28,7 @@
        (let ss (string s)
          (breakable:forlen i ss
            (awhen (ssyntax-strings* (ss i))
-             (when (some [headmatch _ ss i] it)
+             (when (some [begins ss _ i] it)
                (break t)))))))
 
 (let (has split-string expander postfix prefix expand) nil
