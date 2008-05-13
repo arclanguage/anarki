@@ -8,8 +8,6 @@
 ;"\u0085"
 
 (def tokens (s (o sep whitec))
-  " Splits a string `s' using the given separator `sep',
-    returning a list of substrings. "
   (let test (testify sep)
     (let rec (afn (cs toks tok)
                (if (no cs)         (consif tok toks)
@@ -27,8 +25,6 @@
 ; Fixed for utf8 by pc.
 
 (def urldecode (s)
- " Decodes a application/x-www-form-urlencoded string `s'.
-   See also [[urlencode]] "
  (tostring
   (forlen i s
     (caselet c (s i)
@@ -42,8 +38,7 @@
 
 (def urlencode (s)
   " Encodes the string `s' using application/x-www-form-urlencoded
-    encodation.
-    See also [[urldecode]] "
+    encodation. "
   (tostring
    (forlen i s
      (let c (s i)
@@ -56,12 +51,6 @@
            (writec c))))))
 
 (mac litmatch (pat string (o start 0))
-  " Determines if the subsequence of `string' starting on
-    the index `start' matches the sequence `pat' exactly.
-    `pat' is not evaluated, but must be a literal sequence.
-    Generally the intent is that `pat' must be a literal
-    string and `string' is a string.
-    See also [[headmatch]] [[endmatch]] "
   (w/uniq (gstring gstart)
     `(with (,gstring ,string ,gstart ,start)
        (unless (> (+ ,gstart ,(len pat)) (len ,gstring))
@@ -79,12 +68,6 @@
 ;                    pat)
 
 (mac endmatch (pat string)
-  " Determines if the end of the sequence `string'
-    exactly matches the literal `pat'.
-    `pat' must be a sequence.  Generally the intent is
-    that `pat' must be a literal string and `string' is
-    a string.
-    See also [[headmatch]] [[litmatch]] "
   (w/uniq (gstring glen)
     `(withs (,gstring ,string ,glen (len ,gstring))
        (unless (> ,(len pat) (len ,gstring))
@@ -96,28 +79,15 @@
                   (rev acc)))))))
 
 (def posmatch (pat seq (o start 0))
-  " Determines the location of the first subsequence
-    of `seq', from the index `start', that matches
-    the sequence `pat'; or, determines the location
-    of the first element of `seq', from the index
-    `start', that passes the test function `pat'.
-    See also [[headmatch]] "
   (catch
     (if (isa pat 'fn)
         (for i start (- (len seq) 1)
              (when (pat (seq i)) (throw i)))
-        (for i start (- (len seq) (len pat) 1)
+        (for i start (- (len seq) (len pat))
              (when (headmatch pat seq i) (throw i))))
     nil))
 
 (def headmatch (pat seq (o start 0))
-  " Determines if the subsequence of `seq' starting at
-    the index `start' matches the sequence `pat'.
-    You must ensure that the subsequence of `seq'
-    starting at the index `start' is longer than the
-    sequence `pat'.
-    See also [[litmatch]] [[endmatch]] [[posmatch]]
-      [[begins]] "
   (let p (len pat) 
     ((afn (i) 
        (or (is i p) 
@@ -126,9 +96,6 @@
      0)))
 
 (def begins (seq pat (o start 0))
-  " Determines if the subsequence of `seq' starting at
-    the index `start' matches the sequence `pat'.
-    See also [[headmatch]] "
   (unless (len> pat (- (len seq) start))
     (headmatch pat seq start)))
 
