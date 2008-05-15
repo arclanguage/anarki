@@ -1,4 +1,4 @@
-(load "http-get/http-utils.arc")
+(require "lib/http-get/http-utils.arc")
 
 ; response handling 
 
