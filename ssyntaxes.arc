@@ -4,6 +4,9 @@
     `(do (a-ssyntax-clear)
          (a-ssyntax-top ',pairs))))
 
+(mac add-ssyntax-top body
+  `(a-ssyntax-top ',(pair body [list (string _1) _2])))
+
 (let (has split-string expander postfix prefix expand
       expansion-type
       ssyntaxes pre-ss post-ss in-ss exact-ss) nil
@@ -194,6 +197,7 @@
 
 (def-all-ss
   ; earlier listed stuff has lower precedence
+  ".." (range ...)
   //   (orf ...)
   &&   (andf ...)
   #\:  (compose ...)
