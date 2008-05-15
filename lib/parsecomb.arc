@@ -164,7 +164,7 @@
 
 ; is there a better way to eval an arg to a macro? yikes.
 (mac mapdelay (lst)
-  `(map [eval:apply delay (list _)] ',lst))
+  `(map [eval:apply (rep delay) (list _)] ',lst))
 
 (def mkparser (x)
   (if (isa x 'string) `(token ,x) x))

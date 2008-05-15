@@ -144,6 +144,7 @@
      ; value: t
      exact-ss (table))
   (def a-ssyntax-clear ()
+    (= ssyntaxes nil)
     (ontable k v pre-ss   (= pre-ss.k nil))
     (ontable k v post-ss  (= post-ss.k nil))
     (ontable k v in-ss    (= in-ss.k nil))
