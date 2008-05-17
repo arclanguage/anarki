@@ -4,6 +4,6 @@
 
 (def help-to-wiki (out-name)
   (w/outfile o out-name
-    (disp "|_Name | Description |\n" o)
+    (disp "|_. Name |_. Description |\n" o)
     (maptable (fn (k v) (disp-all o "| " k " | " (helpstr k) " |\n")) help*)
     'done))

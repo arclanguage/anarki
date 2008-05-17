@@ -32,12 +32,12 @@
 
 (def read-response (stream)
   "read response and call function to handle it"
-  (withs (resp (readline stream) ; read response
+  (withs (resp (trim (readline stream) 'both [pos _ *ret*]) ; read response
 	  code (if resp (cadr (tokens resp)))) ; get code
     (when (no resp)
       (err "Cannot read response"))
     (if code
-	(dispatch-on-code code stream (trim resp 'both [find _ *ret*]))
+	(dispatch-on-code code stream resp)
 	(err (string "Malformed response: " resp)))))
 
 ; requests sending
@@ -60,7 +60,7 @@
                (map close in-out)))))
 
 (mac defreq (name type . headers)
-  "cretes a function that execs a particular request on a url"
+  "creates a function that execs a particular request on a url"
   `(def ,name (u)
     (exec-request (mk-request ,type u ,@headers) (url-host u) (url-port u))))
 
@@ -70,9 +70,39 @@
 
 ; save page on disk
 
-(def save-page (u out-name (o overwrite))
+(def save-page (u out-name (o overwrite t))
   "save a page, if file already exists and overwrite is nil, then the page is 
    not downloaded"
   (if (or overwrite (no (file-exists out-name)))
     (w/outfile o out-name
       (disp (cadr (get-request (str->url u))) o))))
+
+(def exec-multi-request (reqs host (o port *http-port*))
+  "send requests and read answers with a unique connection"
+  (let (s-in s-out) (connect-socket host port)
+    (protect (fn ()
+               (each r reqs (disp r s-out)) ; send requests
+               (flush-socket s-out)
+               (map [read-response s-in] reqs))
+             (fn ()
+               (close s-in)
+               (close s-out)))))
+
+(def maplist (f l)
+  (if l (cons (f l) (maplist f (cdr l)))))
+
+(mac defmultireq (name type)
+  "creates a function that execs multiple requests on a url"
+  `(def ,name (urls)
+    (if urls
+      (with (host (url-host (car urls)) port (url-port (car urls)))
+	(exec-multi-request
+	  (maplist [if (~iso (url-host (car _)) host) 
+                         (err "Multiple requests on different hosts")
+                       (cdr _)
+		         (mk-request ,type (car _)) ; not last
+		       (mk-request ,type (car _) '("Connection" "close"))]
+	           urls)
+	  host port)))))
+
+(defmultireq multi-get-request "GET")

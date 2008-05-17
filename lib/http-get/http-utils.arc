@@ -88,8 +88,7 @@
 
 (def read-chunk (s size)
   "read a chunck of length size"
-  (let chunk (w/ostring o 
-               (for i 0 size (aif (readb s) (writeb it o))))
+  (let chunk (w/ostring o (echo-upto s o size))
     (readline s) ; go to new line
     chunk))
 
@@ -103,12 +102,20 @@
 	 footer (read-header s)) ; footer and header have the same structure
     (list body footer)))
 
+(def echo-upto (s-in s-out n)
+  "echoes n bytes from stream s-in to stream s-out, or until s-in is
+   finished"
+  (unless (<= n 0)
+    (awhen (readb s-in)
+      (writeb it s-out)
+      (echo-upto s-in s-out (- n 1)))))
+
 ; normal data
 (def read-body (s header)
   (let length (header "CONTENT-LENGTH")
     (w/ostring str
       (if length
-        (for i 0 (read (instring length)) (aif (readb s) (writeb it str)))
+        (echo-upto s str (readstring1 length))
         (let c (readb s)
           (while c (writeb c str) (= c (readb s))))))))
 
