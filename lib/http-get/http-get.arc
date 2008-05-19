@@ -8,9 +8,9 @@
 
 (def-on-code read-resource (s r) ("200")
   (withs (head (read-header s)
-	  filter (if (iso (head "CONTENT-TYPE") "text/html")
-		     (fn (x) (rem #\Return x))
-		     idfn))
+          filter (if (iso (head "CONTENT-TYPE") "text/html")
+                     (fn (x) (rem #\Return x))
+                     idfn))
     (if (iso (head "TRANSFER-ENCODING") "chunked")
       (withs (r (read-all-chunks s)
               body (car r)
@@ -21,10 +21,10 @@
 (def-on-code follow-link (s r) ("301" "302" "303" "307")
   "follows the link in the header Location:..."
   (withs (head (car (read-resource s r))
-	  link (head "LOCATION" head))
+          link (head "LOCATION" head))
     (if link
-	(get-request (str->url link))
-	(err "Cannot follow without location"))))
+        (get-request (str->url link))
+        (err "Cannot follow without location"))))
 
 (def-on-code anerror (s r) ("400" "404" "500")
   (read-resource s r) ; skip header and message body
@@ -33,12 +33,12 @@
 (def read-response (stream)
   "read response and call function to handle it"
   (withs (resp (trim (readline stream) 'both [pos _ *ret*]) ; read response
-	  code (if resp (cadr (tokens resp)))) ; get code
+          code (if resp (cadr (tokens resp)))) ; get code
     (when (no resp)
       (err "Cannot read response"))
     (if code
-	(dispatch-on-code code stream resp)
-	(err (string "Malformed response: " resp)))))
+        (dispatch-on-code code stream resp)
+        (err (string "Malformed response: " resp)))))
 
 ; requests sending
 
@@ -46,7 +46,7 @@
   "builds an http request"
   (w/ostring s
     (disp (string (upcase type) " " (url-page u) " HTTP/1.1" *ter* 
-	           "Host: " (url-host u) ":" (url-port u) *ter*) s)
+                   "Host: " (url-host u) ":" (url-port u) *ter*) s)
     (disp (apply mk-header header) s)))
 
 (def exec-request (request host (o port *http-port*))
@@ -96,13 +96,13 @@
   `(def ,name (urls)
     (if urls
       (with (host (url-host (car urls)) port (url-port (car urls)))
-	(exec-multi-request
-	  (maplist [if (~iso (url-host (car _)) host) 
+        (exec-multi-request
+          (maplist [if (~iso (url-host (car _)) host) 
                          (err "Multiple requests on different hosts")
                        (cdr _)
-		         (mk-request ,type (car _)) ; not last
-		       (mk-request ,type (car _) '("Connection" "close"))]
-	           urls)
-	  host port)))))
+                         (mk-request ,type (car _)) ; not last
+                       (mk-request ,type (car _) '("Connection" "close"))]
+                   urls)
+          host port)))))
 
 (defmultireq multi-get-request "GET")

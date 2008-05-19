@@ -47,16 +47,16 @@
 
 (def read-header (stream)
   "read the header and returns an hash table representing it"
-  (with (header (table)	oldname nil)
+  (with (header (table) oldname nil)
     (each-line line stream ter-line
       (if (and oldname (mem (line 0) '(#\Space #\Tab))) ; continuation?
         (= (header oldname) ; append to preceding value 
-	   (string (header oldname) 
+           (string (header oldname) 
                    (trim line 'both [pos _ " \t\r\n"])))
-	(let div (pos #\: line) ; new field
-	  (if (no div) (err "Malformed header"))
-	    (= oldname (upcase (cut line 0 div)))
-	    (= (header oldname)
+        (let div (pos #\: line) ; new field
+          (if (no div) (err "Malformed header"))
+            (= oldname (upcase (cut line 0 div)))
+            (= (header oldname)
                (trim (cut line (+ 1 div)) 'both [pos _ " \t\r"])))))
     header))
 
@@ -69,7 +69,7 @@
   (w/ostring s
     (each h header
       (with (name (car h) value (cadr h))
-	(disp (string name ": " value *ter*) s)))
+        (disp (string name ": " value *ter*) s)))
     (disp *ter* s)))
 
 ; body
@@ -81,8 +81,8 @@
     (on-err (fn (x) 0)
             (fn ()
               (let n (read (instring (string "#x" it)))
-	        (if (no (exact n))
-	          (err "Cannot read chunk size")
+                (if (no (exact n))
+                  (err "Cannot read chunk size")
                   n))))
     (err "Cannot read chunk size line")))
 
@@ -99,7 +99,7 @@
                    (while (> size 0)
                      (disp (read-chunk s size) chunks)
                      (= size (read-chunk-size s)))))
-	 footer (read-header s)) ; footer and header have the same structure
+         footer (read-header s)) ; footer and header have the same structure
     (list body footer)))
 
 (def echo-upto (s-in s-out n)
@@ -130,14 +130,14 @@
 (def str->url (str)
   "if the protocol is missing the whole string is considered to be the page"
   (withs (pr-end (findsubseq "://" str)
-	  host-end (if pr-end (or (pos #\/ str (+ 3 pr-end))
-		 		  (len str)) 0)
-	  port (if (> host-end 0) 
-		   (or (pos #\: (cut str 0 host-end) (+ 3 pr-end))
-		       host-end) 0))
+          host-end (if pr-end (or (pos #\/ str (+ 3 pr-end))
+                                  (len str)) 0)
+          port (if (> host-end 0) 
+                   (or (pos #\: (cut str 0 host-end) (+ 3 pr-end))
+                       host-end) 0))
     (list (if pr-end (cut str 0 pr-end))
           (if (> host-end 0) (cut str (+ 3 pr-end) port))
-	  (if (< host-end (len str)) (cut str host-end (len str)) "/")
+          (if (< host-end (len str)) (cut str host-end (len str)) "/")
           (if (and (no (is port 0)) (no (is port host-end)))
             (read (instring (cut str (1+ port) host-end)))
-	    *http-port*))))
+            *http-port*))))
