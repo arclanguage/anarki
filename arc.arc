@@ -210,6 +210,18 @@
       `(let ,(car parms) ,(cadr parms) 
          (withs ,(cddr parms) ,@body))))
 
+(mac given body
+  (with (args (cut body 0 -1)
+         expr (last body))
+    `(with ,args
+       ,expr)))
+
+(mac givens body
+  (with (args (cut body 0 -1)
+         expr (last body))
+    `(withs ,args
+       ,expr)))
+
 ; Rtm prefers to overload + to do this
 
 (def join args
