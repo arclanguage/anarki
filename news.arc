@@ -201,9 +201,9 @@
 
 (def realscore (i) (- i!score i!sockvotes))
 
-(def item-age (i) (hours-since i!time))
+(def item-age (i) (minutes-since i!time))
 
-(def user-age (u) (hours-since (uvar u created)))
+(def user-age (u) (minutes-since (uvar u created)))
 
 ; Only looks at the 1000 most recent stories, which might one day be a 
 ; problem if there is massive spam. 
