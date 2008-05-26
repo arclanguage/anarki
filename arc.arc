@@ -222,7 +222,7 @@
 (mac givens body
   " Sequentially assigns the given (unparenthesized) local variables in the
     one-statement body.
-    See also [[let]] [[with]] [[given]]"
+    See also [[let]] [[withs]] [[given]]"
   (with (args (cut body 0 -1)
          expr (last body))
     `(withs ,args
