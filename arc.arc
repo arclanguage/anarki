@@ -211,12 +211,18 @@
          (withs ,(cddr parms) ,@body))))
 
 (mac given body
+  " Simultaneously assigns the given (unparenthesized) local variables in the
+    one-statement body.
+    See also [[let]] [[with]] [[givens]]"
   (with (args (cut body 0 -1)
          expr (last body))
     `(with ,args
        ,expr)))
 
 (mac givens body
+  " Sequentially assigns the given (unparenthesized) local variables in the
+    one-statement body.
+    See also [[let]] [[with]] [[given]]"
   (with (args (cut body 0 -1)
          expr (last body))
     `(withs ,args
