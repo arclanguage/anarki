@@ -1,0 +1,6 @@
+arc-gl.scm allows OpenGL to be accessed from Arc when run in DrScheme.
+arch.arc and gears.arc are two example programs.
+
+For more details, see http://arcfn.com/2008/05/using-opengl-with-arc.html
+
+Ken Shirriff
