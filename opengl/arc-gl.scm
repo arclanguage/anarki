@@ -42,7 +42,7 @@
 
 ; List of functions to export from Scheme to Arc
 (map (lambda (s) (xdef s (eval s)))
-     '(gl-shade-model gl-normal gl-begin gl-end gl-vertex gl-clear-color gl-clear gl-push-matrix gl-pop-matrix gl-rotate gl-translate gl-call-list gl-flush gl-light-v gl-enable gl-new-list gl-gen-lists gl-material-v gl-viewport gl-matrix-mode gl-load-identity gl-frustum gl-light-v gl-enable gl-end-list gl-scale sin cos))
+     '(gl-shade-model gl-normal gl-begin gl-end gl-vertex gl-clear-color gl-clear gl-push-matrix gl-pop-matrix gl-rotate gl-translate gl-call-list gl-flush gl-light-v gl-enable gl-new-list gl-gen-lists gl-material-v gl-viewport gl-matrix-mode gl-load-identity gl-frustum gl-light-v gl-enable gl-end-list gl-scale gl-color gl-line-width gl-point-size gl-disable sin cos))
 
 ; Arc doesn't provide access to vector, so make gl-float-vector take individual arguments
 ; instead of a vector
