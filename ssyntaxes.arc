@@ -36,7 +36,7 @@
            ; infix notations only
            (for i 1 (- (len what) len-at 1)
              (when (and (is at!0 what.i)
-                        (all [is at._ (what (+ i _))] (range 1 (- len-at 1))))
+                        (all [is at._ (what (+ i _))] (if (isnt len-at 0) (range 1 (- len-at 1)))))
                  (collect (cut what j i))
                  (= j (+ i len-at))))
            (collect (cut what j)))
