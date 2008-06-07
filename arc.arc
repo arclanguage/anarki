@@ -191,7 +191,7 @@
 (mac with (parms . body)
   " Assigns a set of local variables for the given `body'.
     Assignment is simultaneous.
-    See also [[withs]] [[let]] [[fn]] [[do]] "
+    See also [[withs]] [[given]] [[let]] [[fn]] [[do]] "
   `((fn ,(map1 car (pair parms))
      ,@body)
     ,@(map1 cadr (pair parms))))
@@ -204,7 +204,7 @@
 (mac withs (parms . body)
   " Assigns local variables for the given `body'.
     The assignments are made in the given order.
-    See also [[with]] [[let]] [[fn]] [[do]] "
+    See also [[with]] [[givens]] [[let]] [[fn]] [[do]] "
   (if (no parms) 
       `(do ,@body)
       `(let ,(car parms) ,(cadr parms) 
@@ -2347,10 +2347,14 @@
 
 (def range (start end (o step 1))
   "Return a range of numbers from `start' to `end', by `step'."
-  (if (> (abs start) (abs end)) nil
-      (is start end) (list end)
-      (cons start
-            (range ((signop (- end start)) start step) end step))))
+  (given realstep (if (< start end) (abs step) (-:abs step))
+         stopcond (if (< start end) > <)
+         acc      (cons start nil)
+    ((afn (acc tl n)
+       (if (stopcond n end)
+           acc
+           (self acc (= (cdr tl) (cons n nil)) (+ n realstep))))
+     acc acc (+ start realstep))))
 
 (def mismatch (s1 s2)
   " Returns the first index where `s1' and `s2' do not match. "
