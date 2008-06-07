@@ -2347,14 +2347,14 @@
 
 (def range (start end (o step 1))
   "Return a range of numbers from `start' to `end', by `step'."
-  (given realstep (if (< start end) (abs step) (-:abs step))
-         stopcond (if (< start end) > <)
+  (given stopcond (if (> step 0) > <)
          acc      (cons start nil)
-    ((afn (acc tl n)
-       (if (stopcond n end)
-           acc
-           (self acc (= (cdr tl) (cons n nil)) (+ n realstep))))
-     acc acc (+ start realstep))))
+    (unless (stopcond start end)
+      ((afn (acc tl n)
+         (if (stopcond n end)
+             acc
+             (self acc (= (cdr tl) (cons n nil)) (+ n step))))
+       acc acc (+ start step)))))
 
 (def mismatch (s1 s2)
   " Returns the first index where `s1' and `s2' do not match. "
