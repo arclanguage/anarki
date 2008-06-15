@@ -1,21 +1,15 @@
 #!/bin/bash
- 
-arc_dir=$0
 
-if [ -L "$0" ]; then
-  arc_dir=$(readlink "$0")
-fi
+arc_dir=$(dirname $(readlink --canonicalize "$0"))
 
-arc_dir=$(dirname "$arc_dir")
-
-if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" -a -z "${EMACS}" ]; then
-  rl="rlwrap -C arc"
-fi
-
-if [ "$1" = "--no-rl" ]; then
-  argv="${@:2}"
+if [ "$1" == "--no-rl" ]; then
+    shift
 else
-  argv="$@"
+    # If there's a program named "rlwrap", and it would actually be
+    # useful, then use it.
+    if [ "$(type -p rlwrap)" -a -z "${EMACS}" ]; then
+        rl="rlwrap -C arc"
+    fi
 fi
 
-$rl mzscheme --no-init-file --mute-banner --load-cd  "$arc_dir/as.scm" -- $argv
+$rl mzscheme --no-init-file --mute-banner --load-cd  "$arc_dir/as.scm" -- "$@"
