@@ -23,10 +23,7 @@
          ; is using 'disp correct?
          (disp s p))))
 
-  ; as far as I know, not imported anywhere in base arc
-  ; TODO: change this once we figure out what the delete-file
-  ; primitive is in Arc.
-  (= file-remove ($ delete-file))
+  (= file-remove rmfile)
 
   (def file-table-valid-key (f)
     " Determines if `f' is valid for use as a key in
