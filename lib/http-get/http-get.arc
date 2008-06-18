@@ -21,7 +21,7 @@
 (def-on-code follow-link (s r) ("301" "302" "303" "307")
   "follows the link in the header Location:..."
   (withs (head (car (read-resource s r))
-          link (head "LOCATION" head))
+          link (head "LOCATION"))
     (if link
         (get-request (str->url link))
         (err "Cannot follow without location"))))
