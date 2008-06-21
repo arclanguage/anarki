@@ -5,6 +5,40 @@
   "Returns true if n is an integer; i.e. has no decimal part."
   (is (trunc n) n)) ; return true if the number is the same as itself without the decimal part
 
+(def floor (x)
+  "Returns the largest integer less than or equal to x."
+  (if (int x)
+      x
+    (< x 0)
+      (- (trunc x) 1)
+      (trunc x)))
+
+(def ciel (x)
+  "Returns the smallest integer greater than or equal to x."
+  (if (int x)
+      x
+    (< x 0)
+      (trunc x)
+      (+ (trunc x) (if (int x) 0 1))))
+
+(defmemo fac (n)
+  "Returns n! = n * (n - 1) * (n - 2) * ... * 3 * 2 * 1."
+  (if (<= n 0)
+      1
+      (* n (fac (- n 1)))))
+
+(def sin (x)
+  "Returns the sine of x in radians."
+  ($ (sin ,x)))
+
+(def cos (x)
+  "Returns the cosine of x in radians."
+  ($ (cos ,x)))
+
+(def tan (x)
+  "Returns the tangent of x in radians."
+  ($ (tan ,x)))
+
 ;;Greatest Common Denominator
 (def gcd l
   "returns the greatest common denominator, or divisor, of a list of numbers. Numbers should be integers,
