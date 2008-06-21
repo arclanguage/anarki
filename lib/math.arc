@@ -13,7 +13,7 @@
       (- (trunc x) 1)
       (trunc x)))
 
-(def ciel (x)
+(def ceil (x)
   "Returns the smallest integer greater than or equal to x."
   (if (int x)
       x
@@ -38,6 +38,18 @@
 (def tan (x)
   "Returns the tangent of x in radians."
   ($ (tan ,x)))
+
+(def asin (x)
+  "Returns the arcsine of x in radians."
+  ($ (asin ,x)))
+
+(def acos (x)
+  "Returns the arccosine of x in radians."
+  ($ (acos ,x)))
+
+(def atan (x)
+  "Returns the arctangent of x in radians."
+  ($ (atan ,x)))
 
 ;;Greatest Common Denominator
 (def gcd l
