@@ -13,6 +13,10 @@
      ,@body))
 
 
+(let is-macosx (is "Darwin" (trim (tostring:system "uname") 'end))
+  (= gcc-shared-opts* (if is-macosx "-dynamic -bundle" "--shared")
+     gcc-shared-exten* (if is-macosx ".dylib" ".so")))
+
 (mac w/inline (code . body) ; catches ffi
   (w/uniq (u filename f)
     `(withs
@@ -20,7 +24,7 @@
                     ,filename (string ,u ".c"))
        (w/outfile ,f ,filename
                   (w/stdout ,f (prn ,code)))
-       (prn:tostring:system:string "gcc -O3 -Wall --pedantic --ansi --shared -o " ,u ".so " ,u ".c")
+       (prn:tostring:system:string "gcc -O3 -Wall --pedantic --ansi " gcc-shared-opts* " -o " ,u gcc-shared-exten* " " ,u ".c")
        ;(system:string "rm -f " ,u ".c")
 
        (let ffi (ffi-lib:string ,u)
