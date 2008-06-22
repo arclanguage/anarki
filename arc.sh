@@ -1,6 +1,12 @@
 #!/bin/bash
 
-arc_dir=$(dirname $(readlink --canonicalize "$0"))
+if [ `uname` = 'Darwin' ] ; then
+    this_script=$(readlink "$0")
+    this_script=${this_script:="$0"}
+    arc_dir=$(dirname "$this_script")
+else
+    arc_dir=$(dirname $(readlink --canonicalize "$0"))
+fi
 
 if [ "$1" == "--no-rl" ]; then
     shift
