@@ -210,11 +210,16 @@
       `(let ,(car parms) ,(cadr parms) 
          (withs ,(cddr parms) ,@body))))
 
+(def butlast (seq)
+  " Returns every element of `seq' but the last one.
+    See also [[last]] [[cut]] "
+  (cut seq 0 -1))
+
 (mac given body
   " Simultaneously assigns the given (unparenthesized) local variables in the
     one-statement body.
     See also [[let]] [[with]] [[givens]]"
-  (with (args (cut body 0 -1)
+  (with (args (butlast body)
          expr (last body))
     `(with ,args
        ,expr)))
@@ -223,7 +228,7 @@
   " Sequentially assigns the given (unparenthesized) local variables in the
     one-statement body.
     See also [[let]] [[withs]] [[given]]"
-  (with (args (cut body 0 -1)
+  (with (args (butlast body)
          expr (last body))
     `(withs ,args
        ,expr)))
@@ -899,6 +904,11 @@
             (= (s2 i) (seq (+ start i))))
           s2)
         (firstn (- end start) (nthcdr start seq)))))
+
+(def at (lst n)
+  " Get the `n'th item of lst, *including* negative indicies.
+    See also [[cut]] "
+  (lst (mod n (len lst))))
 
 (def prefix (pre str)
   " Determines if `pre' is the same as the first part of `str'. "
@@ -2045,6 +2055,11 @@
   " Determines if `x' exists before `y' in `seq'. "
   (with (xp (pos x seq i) yp (pos y seq i))
     (and xp (or (no yp) (< xp yp)))))
+
+(def par (f . args)
+  " Partially apply `f' to `args'; i.e., return a function which, when called,
+    calls `f' with `args' and the arguments to the new function. "
+  (fn newargs (apply f (join args newargs))))
 
 (def orf fns
   " Creates a function which returns true on its argument if any of the
