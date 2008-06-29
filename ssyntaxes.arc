@@ -7,6 +7,9 @@
 (mac add-ssyntax-top body
   `(a-ssyntax-top ',(pair body [list (string _1) _2])))
 
+(mac add-ssyntax-bottom body
+  `(a-ssyntax-bottom ',(pair body [list (string _1) _2])))
+
 (let (has split-string expander postfix prefix expand
       expansion-type
       ssyntaxes pre-ss post-ss in-ss exact-ss) nil
@@ -149,8 +152,8 @@
     (ontable k v post-ss  (= post-ss.k nil))
     (ontable k v in-ss    (= in-ss.k nil))
     (ontable k v exact-ss (= exact-ss.k nil)))
-  (def a-ssyntax-top (pairs)
-    (zap [join pairs _] ssyntaxes)
+  (def a-ssyntax-add (pairs on-top)
+    (zap (if on-top [join pairs _] [join _ pairs]) ssyntaxes)
     (let to-in
          (fn (s)
            (push s (in-ss s.0)))
@@ -167,6 +170,8 @@
           prefix
             (push s (pre-ss s.0)))))
     t)
+  (def a-ssyntax-top    (pairs) (a-ssyntax-add pairs t))
+  (def a-ssyntax-bottom (pairs) (a-ssyntax-add pairs nil))
   (def a-ssyntax (s)
     (and (isa s 'sym)
          (withs (s (string s)
