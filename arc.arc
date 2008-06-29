@@ -439,7 +439,7 @@
   " Applies `pred' to elements of `seq' until an element fails.
     See also [[and]] [[andf]] [[map]] "
   (or
-    seq
+    (no seq)
     (and
       (pred (car seq))
       (andmap pred (cdr seq)))))
