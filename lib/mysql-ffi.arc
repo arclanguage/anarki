@@ -28,7 +28,7 @@
 ;   arc> (mysql-close conn)
 ;   #<void>
 ;
-: NOTE: mysql-insert treats strings whose first character is a backquote
+; NOTE: mysql-insert treats strings whose first character is a backquote
 ; specially. After stripping off the backquote, those strings are not
 ; modified when turned into SQL (for example, they are not surrounded by
 ; single quotes). In the example above, "`now()" is quoted so that it is
@@ -52,7 +52,7 @@
 ; TODO
 ;   - cache the return from mysql-null-ptr
 ;   - cache the returns from mysql-nth-field-type for the results in a row
-;   - more convenience functions: mysql-insert, mysql-create-table
+;   - more convenience functions, like mysql-create-table
 ;   - possibly a more lisp-like query language; not sure what that would look
 ;   like
 
