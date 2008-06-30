@@ -30,18 +30,19 @@
 ;   just    value
 ;   nothing nil
 ;           (ero "Unrecognized type!"))
+;
+; (vtype )
 
 (require "ssyntaxes.arc")
 
 (def always (x)
-  " Returns a function which always returns `x'.
-    See also [[returning]] "
+  " Returns a function which always returns `x'. "
   (fn __ x))
 
 (def difference (set1 set2 (o fis is))
   " Computes `set' \\ `set2', where `set1' and `set2' are lists being treated
     like sets.  Equality is determined by `fis'.
-    See also [[union]] [[intersection]] "
+    See also [[union]] "
   (mappend [if (find (par fis _) set2) nil (list _)] set1))
 
 (def flat1 (xs)
@@ -61,10 +62,19 @@
 
 (unless (bound 'tagged-unions*)     (= tagged-unions*     (table)))
 (unless (bound 'tunion-no-variant*) (= tunion-no-variant* (uniq)))
+(unless (bound 'tunion-same-name*)  (= tunion-same-name*  (uniq)))
+
+; Internal
+(def tu-variant (tu)
+  ((rep tu) 'type))
+
+(def tu-slots (tu)
+  ((rep tu) 'slots))
 
 ; Allows us to define tagged unions.  Hooray!
 (mac tunion (name . types)
-  " Defines a tagged union. "
+  " Defines a tagged union.
+    See also [[vtype]] [[tcase]]  "
   (= tagged-unions*.name (table))
   (with (names nil values nil
          type-testify   '(fn (_) (if (isa _ 'fn) _ (fn (x) (isa x _))))
@@ -90,57 +100,55 @@
     (apply list 'do
       ; Referencing
       `(defcall ,name (self slot)
-         ((rep:rep self) slot))
+         ((tu-slots self) slot))
       (join
         ; Iterates over every variant/slots pair.
-        (map
-          [do
-            (aif (cadr _)
-              (each part it
-                (push (cadr part) (tagged-unions*.name (car _)))
-                (push `(= ((rep:rep self) ',(cadr part)) value)
-                      sref-internals)
-                (push `(and (isa (rep self) ',(car _))
-                            (is key ',(cadr part))
-                            ((,type-testify ,(car part)) value))
-                      sref-internals))
-              (push tunion-no-variant* (tagged-unions*.name (car _))))
-            (list 'do
-              ; Defines a constructor (called "variant") to create a new object
-              ; of (sub)type variant.  If the types do not match what is given
-              ; (where any object other than a function denotes [isa _
-              ; given-type], and a function is assumed to be a predicate), then
-              ; the constructor returns nil.  Otherwise, the function returns an
-              ; object such that (isa obj 'name) is true, as is
-              ; (isa (rep obj) 'variant).  It happens that right now
-              ; (isa (rep:rep obj) 'table), and the slots are just keys in the
-              ; hash table, but I reserve the right to change that.
-              (list 'def (car _) (rev:$cadr (cadr _))
-                      `(if (and ,@(map [list (list type-testify (car _)) (cadr _)] (cadr _)))
-                         (annotate ',name (annotate ',(car _)
-                           (listtab
-                             ; Constructs a list of the form
-                             ; (('slot-name slot-name)), without function
-                             ; application.
-                             (list ,@(map [list 'list `(quote ,(cadr _)) (cadr _)] (cadr _))))))
-                         nil))
-              ; Make name-variant and variant both legal names for the constructor.
-              (list '= (coerce (string name "-" (car _)) 'sym) (car _))
-              ; Stringification, of the form name/variant : slot1 = value1,
-              ; slot2 = value2
-              `(redef coerce (x typ . args)
-                 (if (and (isa x ',name) (isa (rep x) ',(car _)) (is typ 'string))
-                   (let substrs '()
-                     (maptable
-                       (fn (k v)
-                         (zap
-                           [cons (tostr k " = " v) _]
-                           substrs))
-                       (rep:rep x))
-                     (string "#" ',name "/" ',(car _) "{" (sjoin ", " substrs) "}"))
-                   (apply old x typ args))))]
-          ; Zips the names and values.
-          ($list names values))
+        (mapeach (variant slots) ($list names values)
+          (if slots
+            (each part slots
+              (push (cadr part) (tagged-unions*.name variant))
+              (push `(= ((tu-slots self) ',(cadr part)) value)
+                    sref-internals)
+              (push `(and (is (tu-variant self) ',variant)
+                          (is key ',(cadr part))
+                          ((,type-testify ,(car part)) value))
+                    sref-internals))
+            (push tunion-no-variant* (tagged-unions*.name variant)))
+          (list 'do
+            ; Defines a constructor (called "variant") to create a new object
+            ; of (sub)type variant.  If the types do not match what is given
+            ; (where any object other than a function denotes [isa _
+            ; given-type], and a function is assumed to be a predicate), then
+            ; the constructor returns nil.  Otherwise, the function returns an
+            ; object such that (isa obj 'name) is true, as is
+            ; (is ((rep obj) 'type) 'variant).  It happens that right now
+            ; (isa ((rep obj) 'properties) 'table), and the slots are just keys
+            ; in the hash table, but I reserve the right to change that.
+            `(def ,variant ,(rev:$cadr slots)
+               (if (and ,@(map [list (list type-testify (car _)) (cadr _)] slots))
+                 (annotate ',name (obj
+                   type  ',variant
+                   slots (listtab
+                           ; Constructs a list of the form
+                           ; (('slot-name slot-name)), without function
+                           ; application.
+                           (list ,@(map [list 'list `(quote ,(cadr _)) (cadr _)] slots)))))
+                 nil))
+            ; Make name-variant and variant both legal names for the constructor.
+            (list '= (coerce (string name "-" variant) 'sym) variant)
+            ; Stringification, of the form name/variant : slot1 = value1,
+            ; slot2 = value2
+            `(redef coerce (x typ . args)
+               (if (and (isa x ',name) (is (tu-variant x) ',variant) (is typ 'string))
+                 (let substrs '()
+                   (maptable
+                     (fn (k v)
+                       (zap
+                         [cons (tostr k " = " v) _]
+                         substrs))
+                     (tu-slots x))
+                   (string "#" ',name "/" ',variant "{" (sjoin ", " substrs) "}"))
+                 (apply old x typ args)))))
         ; Setting the contents (in a list so that it can be `join'ed)
         (list
           `(redef sref (self value key)
@@ -151,7 +159,8 @@
                (old self value key))))))))
 
 (mac tcase (var . condblocks)
-  " Checks the possible variants of a tagged union. "
+  " Checks the possible variants of a tagged union.
+    See also [[tunion]] [[vcase]] "
   (if (and condblocks (sym?:car condblocks))
     `(tcase ,var
             ,condblocks
@@ -174,9 +183,8 @@
                              gvariants ($car conds)
                              extras    (difference gvariants variants)
                              missings  (if subelse nil (difference variants gvariants)))
-                       (mapeach (xs msg)
-                                (list (list extras   "not part of")
-                                      (list missings "missing for"))
+                       (each (xs msg) (list (list extras   "not part of")
+                                            (list missings "missing for"))
                                 
                          (if xs
                            (let n (len xs)
@@ -186,20 +194,33 @@
                                    " " (if (is n 1) "is" "are") " " msg
                                    " the tagged union " ttype
                                    "."))))
-                       (w/uniq (repn)
-                         `((isa ,varn ',ttype)
-                            (let ,repn (rep ,varn)
-                              (if
-                                ,@(flat1:map
-                                    (fn ((typ body))
-                                      `((isa ,repn ',typ)
-                                         (with (,@(flat1:map
-                                                     [list _ `(,varn ',_)]
-                                                     (rem tunion-no-variant*
-                                                          it.typ)))
-                                            ,body)))
-                                    conds)
-                                ,@velsel)))))
+                       `((isa ,varn ',ttype)
+                          (if
+                            ,@(flat1:map
+                                (fn ((typ body))
+                                  `((is (tu-variant ,varn) ',typ)
+                                     (with (,@(flat1:map
+                                                 [list _ `(,varn ',_)]
+                                                 (rem tunion-no-variant*
+                                                      it.typ)))
+                                        ,body)))
+                                conds)
+                            ,@velsel)))
                      (err 'tcase
                           (string "The type " ttype " is not a tagged union."))))))
            ,@elsel)))))
+
+(mac vtype (type . arguments)
+  " Creates a \"tagged union\" with one variant, which is effectively a
+    simple structure.
+    See also [[tunion]] [[vcase]] "
+  `(tunion ,type ,type ,@(map [if (sym? _) `(,_ object) _] arguments)))
+
+(mac vcase (var . body)
+  " Analagous to `tcase' for solitary variants.
+    See also [[vtype]] [[tcase]] "
+  `(tcase ,var
+     ,@(flat1:map [if (is (len _) 2)
+                    `((,(car _) ,(car _) ,@(cdr _)))
+                    (cons 'else _)]
+                  (pair body))))
