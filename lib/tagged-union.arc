@@ -34,7 +34,7 @@
 ; (vtype triple a b c)
 ; (= tr (triple 'alpha 'beta 'gamma))
 ;
-; (vtype vec3d  (x num?) (y num?) (z num?))
+; (vtype vec3d  (x int?//num?) (y int?//num?) (z int?//num?))
 ; (= v3 (vec3d 1 2 3))
 ;
 ; (vcase tr
