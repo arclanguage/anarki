@@ -31,7 +31,16 @@
 ;   nothing nil
 ;           (ero "Unrecognized type!"))
 ;
-; (vtype )
+; (vtype triple a b c)
+; (= tr (triple 'alpha 'beta 'gamma))
+;
+; (vtype vec3d  (x num?) (y num?) (z num?))
+; (= v3 (vec3d 1 2 3))
+;
+; (vcase tr
+;   triple (list a b c)
+;   vec3d  (sqrt (map [* _ _] (list x y z)))
+;          'error)
 
 (require "ssyntaxes.arc")
 
