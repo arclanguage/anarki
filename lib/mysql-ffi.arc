@@ -19,7 +19,7 @@
 ;   #<cpointer>
 ;   arc> (mysql-execute conn "create table test (col1 varchar(255), col2 int, col3 int, col4 datetime);")
 ;   t
-;   arc> (mysql-execute conn "insert into test values ('col1_string', 2, null, now())")
+;   arc> (mysql-insert conn "test" '("col1_string" 2 nil now())")
 ;   t
 ;   arc> (mysql-select conn "select * from test" prall)
 ;   col1_string, 2, nil, 2008-06-27 07:29:33#<void>
@@ -132,6 +132,34 @@ int nth_field_type(MYSQL_FIELD* fields, int i) { return fields[i].type; }")
             (ero "Error running query " sql)
             nil)
         t)))
+
+(def mysql-insert (conn table values)
+  "Inserts VALUES into TABLE. Strings that start with a backquote
+   are inserted literally, normal strings are escaped and quoted,
+   symbols become strings, numbers stay as-is, and nil becomes NULL."
+  (mysql-execute conn (string "insert into " table " values (" (tostring:prall (map [mysql-arc-to-sql _] values) "" ", ") ")")))
+
+(def mysql-arc-to-sql (val)
+  "Converts VAL into a value suitable for SQL. Strings that start with a
+   backquote are inserted literally, normal strings are escaped and quoted,
+   symbols become strings, numbers stay as-is, and nil becomes NULL."
+  (let t (type val)
+    (if (no val)
+	  "NULL"
+	(or (is t 'string) (is t 'sym))
+	  (mysql-quote (coerce val 'string))
+	(or (is t 'int) (is t 'num))
+	  (string val))))
+
+(def mysql-quote (s)
+  "Returns string S as a value suitable for using in SQL. Strings
+   that start with a backquote are inserted literally, nil is
+   returned as the string \"NULL\", and everything else is escaped."
+  (if (no s)
+        "NULL"
+      (or (empty s) (is "`" (cut s 0 1)))
+        (cut s 1)
+      (string "'" (subst "''" "'" s) "'")))
 
 (def mysql-select (conn sql (o f idfn))
   "Executes SQL and calls FN for every returned row."
