@@ -19,7 +19,7 @@
 ;   #<cpointer>
 ;   arc> (mysql-execute conn "create table test (col1 varchar(255), col2 int, col3 int, col4 datetime);")
 ;   t
-;   arc> (mysql-insert conn "test" '("col1_string" 2 nil now())")
+;   arc> (mysql-insert conn "test" '("col1_string" 2 nil "`now())")
 ;   t
 ;   arc> (mysql-select conn "select * from test" prall)
 ;   col1_string, 2, nil, 2008-06-27 07:29:33#<void>
@@ -27,6 +27,13 @@
 ;   t
 ;   arc> (mysql-close conn)
 ;   #<void>
+;
+: NOTE: mysql-insert treats strings whose first character is a backquote
+; specially. After stripping off the backquote, those strings are not
+; modified when turned into SQL (for example, they are not surrounded by
+; single quotes). In the example above, "`now()" is quoted so that it is
+; not turned into a SQL string but instead is passed to the SQL as "now()"
+; (without the double quotes).
 ;
 ; NOTE: The "#<void> at the end of the select output is the return value of
 ; mysql-select.
