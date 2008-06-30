@@ -39,7 +39,7 @@
 ;
 ; (vcase tr
 ;   triple (list a b c)
-;   vec3d  (sqrt (map [* _ _] (list x y z)))
+;   vec3d  (sqrt:apply + (map [* _ _] (list x y z)))
 ;          'error)
 
 (require "ssyntaxes.arc")
