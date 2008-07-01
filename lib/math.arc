@@ -22,10 +22,11 @@
       (+ (trunc x) (if (int x) 0 1))))
 
 (defmemo fac (n)
-  "Returns n! = n * (n - 1) * (n - 2) * ... * 3 * 2 * 1."
-  (if (<= n 0)
-      1
-      (* n (fac (- n 1)))))
+  ((afn (n a)
+     (if (> n 1)
+         (self (- n 1) (* a n))
+         a))
+   n 1))
 
 (def sin (x)
   "Returns the sine of x in radians."
