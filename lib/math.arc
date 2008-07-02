@@ -22,6 +22,7 @@
       (+ (trunc x) (if (int x) 0 1))))
 
 (defmemo fac (n)
+  "Returns n! = n * (n - 1) * (n - 2) * ... * 3 * 2 * 1."
   ((afn (n a)
      (if (> n 1)
          (self (- n 1) (* a n))
