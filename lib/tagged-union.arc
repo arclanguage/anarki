@@ -109,7 +109,12 @@
     (apply list 'do
       ; Referencing
       `(defcall ,name (self slot)
-         ((tu-slots self) slot))
+         (if (mem slot ((tagged-unions* ',name) (tu-variant self)))
+           ((tu-slots self) slot)
+           (err 'ref
+                (string "Objects of type " ',name " do not have a slot "
+                         "named `" slot "', so the `" slot "' slot of "
+                         (annotate ',name self) " could not be read."))))
       (join
         ; Iterates over every variant/slots pair.
         (mapeach (variant slots) ($list names values)
@@ -128,8 +133,8 @@
             ; of (sub)type variant.  If the types do not match what is given
             ; (where any object other than a function denotes [isa _
             ; given-type], and a function is assumed to be a predicate), then
-            ; the constructor returns nil.  Otherwise, the function returns an
-            ; object such that (isa obj 'name) is true, as is
+            ; the constructor errors.  Otherwise, the function returns an object
+            ; such that (isa obj 'name) is true, as is
             ; (is ((rep obj) 'type) 'variant).  It happens that right now
             ; (isa ((rep obj) 'properties) 'table), and the slots are just keys
             ; in the hash table, but I reserve the right to change that.
@@ -142,7 +147,10 @@
                            ; (('slot-name slot-name)), without function
                            ; application.
                            (list ,@(map [list 'list `(quote ,(cadr _)) (cadr _)] slots)))))
-                 nil))
+                 (err ',variant
+                      (string "Violated the invariants for the slot values "
+                              "when constructing an object.  The arguments were "
+                              (tostring:write:list ,@(rev:$cadr slots)) "."))))
             ; Make name-variant and variant both legal names for the constructor.
             (list '= (coerce (string name "-" variant) 'sym) variant)
             ; Stringification, of the form name/variant : slot1 = value1,
@@ -164,7 +172,17 @@
              (if (isa self ',name)
                (if
                  ,@sref-internals
-                 nil)
+                 
+                 (mem key (keys:tu-slots self))
+                   (err 'sref
+                        (string "Violated the invariant for the `" key "' slot of "
+                                "the " ',name " object, " self " by trying to "
+                                "set it to " value "."))
+                 ; else
+                   (err 'sref
+                        (string "Objects of type " ',name " do not have a slot "
+                                "named `" key "', so the `" key "' slot of "
+                                self " could not be set to " value ".")))
                (old self value key))))))))
 
 (mac tcase (var . condblocks)
