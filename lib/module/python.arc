@@ -1,5 +1,5 @@
-;; lib/module/python.arc: A small module system with Python-like semantics,
-;; built by interfacing with mzscheme's "namespaces".
+;; lib/module/python.arc: A small module system with Python-like semantics.
+;; Implemented using mzscheme's "namespaces".
 
 ;; Written by Michael Arntzenius. Licensed under the WTFPL v2:
 
@@ -18,26 +18,25 @@
 ;;  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 ;; --------------------
-;; The main point of entry is via the "use" macro. Examples:
+;; The main point of entry is via the 'use macro. Examples:
 
 ;; (use test)
 ;;
-;; This requires the module "test.arc" (see 'module-require), and binds it to 'test.
+;; This requires the module "test.arc" (see 'module-require), and binds it to
+;; 'test. Calling a module on an expression evaluates it in the namespace. So
+;; (test!somefun) calls the function 'somefun defined in "test.arc".
 ;;
-;; Calling a module on an expression evaluates it in the namespace. So
-;; (test!somefun) calls the function 'somefun defined in "test.arc". However,
-;; you cannot use macros that "test.arc" defines.
-;;
-;; This limitation exists because ac.scm translates Arc into Scheme, and it must
-;; know at translation time whether an expression is to be treated as a macro.
-;; Unless it can show that it is a macro, it assumes it's not. Currently, it
-;; only handles globally-bound symbols. I see no way to have ac.scm handle the
-;; general case (that any expression could evaluate to a macro) without making
-;; it a full-fledged interpreter, rather than a translator.
+;; However, you cannot use macros that "test.arc" defines. This is because
+;; ac.scm translates Arc into Scheme, and it must know at translation time
+;; whether an expression is to be treated as a macro. Unless it can show that it
+;; is a macro, it assumes it's not. Currently, it only handles globally-bound
+;; symbols. I see no way to have ac.scm handle the general case (that any
+;; expression could evaluate to a macro) without making it a full-fledged
+;; interpreter, rather than a translator.
 
-;; (use (as long-module/name alias))
+;; (use (as long/and/nested/module/name alias))
 ;;
-;; Requires the module "long-module/name.arc" and binds it to 'alias.
+;; Requires the module "long/and/nested/module/name.arc" and binds it to 'alias.
 
 ;; (use (all test))
 ;;
@@ -48,36 +47,27 @@
 ;;
 ;; Requires the module "test.arc", then imports 'sym1 and 'sym2 from it.
 
+;; 'use can also handle multiple clauses:
+;;
 ;; (use (as lib/foo foo)
 ;;      (from lib/foo mymac mymac2)
 ;;      (all lib/bar))
 ;;
-;; Requires the modules "lib/foo.arc" and "lib/bar.arc". The former is bound to
+;; This requires the modules "lib/foo.arc" and "lib/bar.arc". The former is bound to
 ;; 'foo, and 'mymac and 'mymac2 are imported from it. All symbols in the latter
-;; are also imported. (In other words, use can handle multiple clauses.)
+;; are also imported.
 ;; --------------------
 
-;; Interface with namespaces in mzscheme
-($
-  (begin
-    (xdef 'make-namespace
-      (lambda ()
-        (let ((ns (make-namespace 'initial)))
-          (namespace-attach-module (current-namespace) "ac.scm" ns)
-          (eval '(require "ac.scm") ns)
-          ns)))
-
-    (xdef 'eval-in
-      (lambda (ns expr)
-        (eval (ac (ac-denil expr) (list)) ns)))
-    
-    ;; Annotate uses 'type on its 'rep argument. Namespaces don't have an arc
-    ;; type. Hence to annotate namespaces, we need this.
-    (xdef 'annotate-force
-      (lambda (type rep) (vector 'tagged type rep)))))
+;; Modules are a thin layer over namespaces in mzscheme.
+(def module-make-namespace ()
+  ($ 
+    (let ((ns (make-namespace 'initial)))
+      (namespace-attach-module (current-namespace) "ac.scm" ns)
+      (eval '(require "ac.scm") ns)
+      ns)))
 
 (def module-make ((o ns))
-  (annotate-force 'module (or ns (make-namespace))))
+  ($ (vector 'tagged 'module ',(or ns (module-make-namespace)))))
 
 (def module-syms (m)
   (map1
@@ -87,7 +77,7 @@
 
 ;; Modules are evaluator functions
 (defcall module (self expr)
-  (eval-in self expr))
+  ($ (eval (ac (ac-denil ',expr) (list)) ,self)))
 
 ;; Loading files into modules
 (def module-load-in (mod file (o hook))
@@ -107,15 +97,11 @@
   (= module-table*.file mod))
 
 ;; The "tl" (toplevel) module
-(= module-tl* (module-make ($ (current-namespace))))
+(= module-tl*
+   ($ (vector 'tagged 'module (current-namespace))))
 
 ;; Creating modules
 (def module-init (mod)
-  ;; Attach & require the "ac.scm" module (module in the mzscheme sense)
-  ($ (begin
-       (namespace-attach-module (current-namespace) "ac.scm" ,(rep mod))
-       (eval '(require "ac.scm") ,(rep mod))))
-  
   ;; Transfer all symbols from the toplevel environment
   (module-transfer-syms
     module-tl* mod (map1 [list _ _] (module-syms module-tl*))))
@@ -133,7 +119,7 @@
 
 (def module-reload (mod file)
   (let m (module-load file)
-    (seval `(vector-set! ,mod 2 ,(rep m)))
+    (vec-set mod 2 (rep m))
     mod))
   
 (def module-spec->file (spec)
@@ -151,21 +137,14 @@
 ;; Importing symbols from modules.
 (def module-transfer-syms (src dest sym-pairs)
   (each (src-name dest-name) sym-pairs
-
-    (if (is 0 (len (string src-name)))
-        (prn src-name dest-name))
-    
     (($ namespace-set-variable-value!)
      (sym:string "__" dest-name)
-     
-     (seval
-       `(namespace-variable-value
-          ',(sym:string "__" src-name)
-          #t
-          (not #t)
-          ',(rep src)))
-     ;; (($ namespace-variable-value)
-     ;;  (sym:string "__" src-name) #t #f (rep src))
+     ($
+       (namespace-variable-value
+         ',(sym:string "__" src-name)
+         #t
+         (not #t)
+         ',(rep src)))
      #f
      (rep dest))))
 
