@@ -186,9 +186,8 @@ car and prefix ++ being cdr.
     See also [[scanner-string]] [[make-scanner]] "
   (let a (readc s)
     (if a
-        (let (d d-valid) nil
-          (scanner 'car a
-                   'cdr (scanner-input s autoclose)))
+        (scanner 'car a
+                 'cdr (scanner-input s autoclose))
         (if autoclose
             (do (close s) nil)))))
 
