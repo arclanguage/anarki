@@ -518,7 +518,9 @@
 ; returns #f or the macro function
 
 (define (ac-macro? fn)
-  (if (symbol? fn)
+  (let ((fn (if (pair? fn) (ac-macex fn) fn)))
+    (cond
+     ((symbol? fn)
       (let ((v (namespace-variable-value (ac-global-name fn) 
                                          #t 
                                          (lambda () #f))))
@@ -526,8 +528,12 @@
                  (ar-tagged? v)
                  (eq? (ar-type v) 'mac))
             (ar-rep v)
-            #f))
-      #f))
+            #f)))
+     ((and fn
+           (ar-tagged? fn)
+           (eq? (ar-type fn) 'mac))
+      (ar-rep fn))
+     (#t #f))))
 
 ; macroexpand the outer call of a form as much as possible
 
