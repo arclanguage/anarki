@@ -835,15 +835,7 @@
 
 (xdef 'rep ar-rep)
 
-; currently rather a joke: returns interned symbols
-
-(define ar-gensym-count 0)
-
-(define (ar-gensym)
-  (set! ar-gensym-count (+ ar-gensym-count 1))
-  (string->symbol (string-append "gs" (number->string ar-gensym-count))))
-
-(xdef 'uniq ar-gensym)
+(xdef 'uniq gensym)
 
 (xdef 'ccc call-with-current-continuation)
 
