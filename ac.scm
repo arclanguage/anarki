@@ -388,7 +388,7 @@
 ; but it's OK for parts of a list you're destructuring to
 ; be missing.
 (define (ac-complex-fn args body env)
-  (let* ((ra (ar-gensym))
+  (let* ((ra (gensym))
          (z (ac-complex-args args env ra #t)))
     `(lambda ,ra
        (let* ,z
