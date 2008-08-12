@@ -320,7 +320,9 @@
 
 
 (define (ac-global-name s)
-  (string->symbol (string-append "__" (symbol->string s))))
+  (if (equal? s (string->symbol (symbol->string s)))
+      (string->symbol (string-append "__" (symbol->string s)))
+      s))
 
 (define (ac-var-ref s env)
   (if (lex? s env)
