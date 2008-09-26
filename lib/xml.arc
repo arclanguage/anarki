@@ -1,5 +1,7 @@
 ; Simple XML parser
 ; all functions read from standard input
+; ignores DTD, processing instructions, prologs
+; namespaces and entities are left untouched
 
 ; Example:
 ; - Reading the first XML element from a string:
@@ -39,6 +41,15 @@
         (unless c (err "input finished during parsing!"))
         (writec c)))))
 
+(def x-skip-special-tag ((o level 1))
+  "skip a special tag until the ending #\\>. A special tag may contain 
+   paired #\\< #\\>"
+  (unless (is level 0)
+    (let c (readc (stdin))
+      (if (is c #\<) (x-skip-special-tag (+ level 1))
+          (is c #\>) (x-skip-special-tag (- level 1))
+          (x-skip-special-tag level)))))
+
 (def x-get-string ()
   "read a string"
   (let c (x-skip-sep)
@@ -77,9 +88,13 @@
   "is this name a terminator?"
   (is (name 0) #\/))
 
+(def x-prolog (name)
+  "is this a prolog?"
+  (is (name 0) #\?))
+
 (def x-processing (name)
   "is this the name of a processing instruction?"
-  (is (name 0) #\?))
+  (is (name 0) #\!))
 
 (def x-terminal-of (name elem)
   "is elem the terminator of name?"
@@ -100,8 +115,13 @@
   (let c (x-skip-sep)
     (unless (is c #\<) (prn c) (err "cannot read element!"))
     (let name (x-get-name)
-      (if (or (x-processing name) (x-terminal name))
-        (do (x-get-upto '(#\>)) (x-mk-elem name))
+      (if 
+        (or (x-processing name) (x-prolog name))
+          ; skip special tag and try to read another element
+          (do (x-skip-special-tag) (x-get-elem)) 
+        (x-terminal name)
+          ; throw away any contents and build the closing element
+          (do (x-get-upto '(#\>)) (x-mk-elem name))
         (withs (stop nil
                 attrs (accum acc
                         ((afn ()
