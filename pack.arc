@@ -92,3 +92,11 @@
         (each f files
           (system:string "cp " (car f) " " out "/" (cdr f))))))
   'done)
+
+; integration with require
+; based on an idea by AmkG
+(let old require
+  ; doesn't work correctly if pack.arc is loaded more than once...
+  (def require (what)
+    "require that automatically uses use-pack when argument is a symbol"
+    (if (is (type what) 'sym) (use-pack what) (old what))))
