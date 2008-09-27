@@ -4,7 +4,7 @@
 
 ; Example:
 ; to pack the http-get library:
-; >  (pack-lib 'http-get "lib/http-get/http-utils.arc" "lib/http-get/http-get.arc")
+; >  (pack-lib 'http-get nil "lib/http-get/http-utils.arc" "lib/http-get/http-get.arc")
 ; then to load the library:
 ; > (use-pack 'http-get)
 ; it will work if the directory http-get.pack is within the search path
@@ -12,8 +12,12 @@
 ; to add a new directory, for example "./lib", use
 ; > (pack-add-path "./lib")
 ; the last path added has the highest priority
+; it is possible to create a package that depends on other packages:
+; > (pack-lib 'mylib '(http-get xml) "myfile.arc")
+; this will build a package named mylib that loads the packages 'http-get
+; and 'xml before loading itself
+; Warning: when forcing package realoading, dependencies aren't forced
 
-; TODO: add support for dependencies
 ; TODO: currently uses unix specific commands cp and mkdir
 ;       should make it work also under other OSes
 
@@ -53,7 +57,7 @@
 
 (def int->str (n digits)
   "transforms a number into a string with at least given digits
-   n must fist in digits and must be positive"
+   n must fit in digits and must be positive"
   (when (< n 0) (err "n must be positive!"))
   (let missing (- digits (quotient n 10))
     (when (< missing 0) (err "n doesn't fit!"))
@@ -61,16 +65,30 @@
       (for i 1 missing (pr "0"))
       (pr n))))
 
-(def pack-lib (name . file-lst)
+(def pack-build-deps (deps out-dir)
+  "create a file in out-dir named 0 that loads specified dependencies"
+  (w/stdout (outfile:string out-dir "/0")
+    (each dep deps 
+      (prn `(use-pack ',dep)))))
+
+(def pack-lib (name deps . file-lst)
   "create a library named name made of files in file-lst
    files will be loaded in the given order
+   deps is a list of packages needed
    !! doesn't work for more than 1000 files"
   (let out (string name ".pack")
     (if (is (len file-lst) 1)
-      (system:string "cp " (car file-lst) " " out)
-      (withs (num 0
+      (do
+        (when (file-exists out)
+          (prn "Warning: output file already exists!"))
+        (system:string "cp " (car file-lst) " " out))
+      (withs (num 1 ; 0 is reserved for dependencies loading
               files (map [cons _ (int->str (++ num) 10)] file-lst))
-        (unless (dir-exists out)
+        (if (dir-exists out)
+          (prn "Warning: package directory already exists!")
           (system:string "mkdir " out))
+        (when deps
+          (pack-build-deps deps out))
         (each f files
-          (system:string "cp " (car f) " " out "/" (cdr f)))))))
+          (system:string "cp " (car f) " " out "/" (cdr f))))))
+  'done)
