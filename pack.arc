@@ -77,7 +77,7 @@
    deps is a list of packages needed
    !! doesn't work for more than 1000 files"
   (let out (string name ".pack")
-    (if (is (len file-lst) 1)
+    (if (and (no deps) (is (len file-lst) 1))
       (do
         (when (file-exists out)
           (prn "Warning: output file already exists!"))
