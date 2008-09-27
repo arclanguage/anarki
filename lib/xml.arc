@@ -71,6 +71,22 @@
         (= first nil)
         (writec (readc (stdin)))))))
 
+(def x-get-cdata ()
+  "read a cdata section"
+  (let in (stdin)
+    (tostring
+      ((afn ()
+         (let s (x-upto '(#\]))
+           (pr s)
+           (with (c0 (readc in)
+                  c1 (readc in)
+                  c2 (readc in))
+             (if (no (and c0 c1 c2)) (err "CDATA section not closed!")
+                 (no (is (string c0 c1 c2) "]]>"))
+                   (do
+                     (pr c0 c1 c2)
+                     (self))))))))))
+
 ; element accessor functions
 (def x-name (elem)
   "name of an xml element"
@@ -96,6 +112,11 @@
   "is this the name of a processing instruction?"
   (is (name 0) #\!))
 
+(def x-cdata (name)
+  "CDATA section?
+   must be checked before x-processing"
+  (is name "![CDATA["))
+
 (def x-terminal-of (name elem)
   "is elem the terminator of name?"
   (is (string #\/ name) (x-name elem)))
@@ -116,6 +137,7 @@
     (unless (is c #\<) (prn c) (err "cannot read element!"))
     (let name (x-get-name)
       (if 
+        (x-cdata name) (x-mk-elem "cdata" nil (x-get-cdata))
         (or (x-processing name) (x-prolog name))
           ; skip special tag and try to read another element
           (do (x-skip-special-tag) (x-get-elem)) 
@@ -136,7 +158,7 @@
                                    (acc (x-get-attr))
                                    (self))))))))
           (if stop
-             (x-mk-elem name attrs nil)
+             (x-mk-elem name (rev attrs) nil)
              (let body (accum acc
                          (readc (stdin)) ; throw away #\>
                          ((afn ()
