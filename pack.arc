@@ -1,7 +1,9 @@
-; package handling, lets you create and load libraries in a simple manner
-; a package is a single file or a directory containing the files of 
-; the library. files from the library's directory are loaded in name order
-
+; package handling, lets you create and load libraries in a simple manner.
+; a package is simply a directory. 
+; files in the src sub-directory are loaded in name order.
+; if your library needs some files that don't have to be loaded, you can put 
+; them anywhere in the package directory except the src sub-directory
+ 
 ; Example:
 ; to pack the http-get library:
 ; >  (pack-lib 'http-get nil "lib/http-get/http-utils.arc" "lib/http-get/http-get.arc")
@@ -16,10 +18,7 @@
 ; > (pack-lib 'mylib '(http-get xml) "myfile.arc")
 ; this will build a package named mylib that loads the packages 'http-get
 ; and 'xml before loading itself
-; Warning: when forcing package realoading, dependencies aren't forced
-
-; TODO: currently uses unix specific commands cp and mkdir
-;       should make it work also under other OSes
+; Warning: when forcing package reloading, dependencies aren't forced
 
 ; hold names of packages already loaded
 (= pack-loaded* (table))
@@ -35,24 +34,17 @@
   "load a package if it hasn't been already loaded"
   (when (or force (no (pack-loaded* name)))
     (if (some [let path (string _ "/" name ".pack")
-                 (if
-                   (dir-exists path) ; directory ?
-                     (pack-load-dir path)
-                   (file-exists path)
-                     (pack-load-file path))]
+                 (when (dir-exists path)
+                   (pack-load-dir path))]
               pack-search-path*)
        (do (= (pack-loaded* name) t) 'done)
        (err:string "Couldn't find library " name))))
 
 (def pack-load-dir (path)
   "load a library in a directory"
-  (let files (map [string path "/" _] (sort < (dir path)))
+  (let files (map [string path "/src/" _] (sort < (dir:string path "/src")))
+    ; if one file doesn't exist load will raise an error
     (each _ files (load _)))
-  t)
-
-(def pack-load-file (path)
-  "load a single file library"
-  (load path)
   t)
 
 (def int->str (n digits)
@@ -67,30 +59,30 @@
 
 (def pack-build-deps (deps out-dir)
   "create a file in out-dir named 0 that loads specified dependencies"
-  (w/stdout (outfile:string out-dir "/0")
+  (w/stdout (outfile:string out-dir "/src/0")
     (each dep deps 
       (prn `(use-pack ',dep)))))
 
+; TODO: add option to overwrite target directory?
 (def pack-lib (name deps . file-lst)
   "create a library named name made of files in file-lst
    files will be loaded in the given order
-   deps is a list of packages needed
+   deps is a list of needed packages
    !! doesn't work for more than 1000 files"
   (let out (string name ".pack")
-    (if (and (no deps) (is (len file-lst) 1))
-      (do
-        (when (file-exists out)
-          (prn "Warning: output file already exists!"))
-        (system:string "cp " (car file-lst) " " out))
-      (withs (num 1 ; 0 is reserved for dependencies loading
-              files (map [cons _ (int->str (++ num) 10)] file-lst))
-        (if (dir-exists out)
-          (prn "Warning: package directory already exists!")
-          (system:string "mkdir " out))
-        (when deps
-          (pack-build-deps deps out))
-        (each f files
-          (system:string "cp " (car f) " " out "/" (cdr f))))))
+    (withs (num 1 ; 0 is reserved for dependencies loading
+            files (map [cons _ (int->str (++ num) 10)] file-lst))
+      (if (dir-exists out)
+        (do
+          (prn "!! Warning: package directory already exists!")
+          (prn "!! Package may be broken"))
+        (do
+          (make-directory out) ; package directory
+          (make-directory:string out "/src"))) ; dir of source files
+      (when deps
+        (pack-build-deps deps out))
+      (each f files
+        (cp (car f) (string out "/src/" (cdr f))))))
   'done)
 
 ; integration with require
