@@ -20,6 +20,9 @@
 ; and 'xml before loading itself
 ; Warning: when forcing package reloading, dependencies aren't forced
 
+; 'use-pack and 'pack-lib are to be used only for usage and delivery,
+; not for library development
+
 ; hold names of packages already loaded
 (= pack-loaded* (table))
 
@@ -92,3 +95,33 @@
   (def require (what)
     "require that automatically uses use-pack when argument is a symbol"
     (if (is (type what) 'sym) (use-pack what) (old what))))
+
+; library development management
+
+(= projects* (table)) ; table of active projects
+
+(deftem project
+  sources nil)
+
+(def proj-sources (proj)
+  "return list of all the source files of the project
+   the list is ordered in load order"
+  proj!sources)
+
+(def proj-source-name (s)
+  (car s))
+
+(def proj-source-date (s)
+  "date of the last time the file was loaded"
+  (cdr s))
+
+(def proj-source-real-date (s)
+  "date the source was modified"
+  (mtime:proj-source-name s))
+
+(def proj-mod-sources (proj)
+  "return list of source files in project modified since the last time
+   they were loaded"
+  (keep [let d (proj-source-date _)
+          (or (no d) (< d (proj-source-real-date _)))]
+        (proj-sources proj)))
