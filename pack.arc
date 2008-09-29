@@ -1,3 +1,7 @@
+; Author: Stefano Dissegna
+
+; License: Do whatever you like with this
+
 ; package handling, lets you create and load libraries in a simple manner.
 ; a package is simply a directory. 
 ; files in the src sub-directory are loaded in name order.
@@ -22,6 +26,26 @@
 
 ; 'use-pack and 'pack-lib are to be used only for usage and delivery,
 ; not for library development
+; to develop a library you first need to build the right directory structure 
+; for it. To do this, you just need to use the funtion 'proj-mk-stub:
+; > (proj-mk-stub 'my-lib)
+; this will create a directory named "my-lib". Within this directory you will 
+; find a file named "proj.arc". You need to modify this file adding a list 
+; of dependencies and the files that make up your library. Now you can load
+; the project definition:
+; > (load "my-lib/proj.arc")
+; To load the source files, use:
+; > (proj-load)
+; Now if you modify some files, to reload them you just need to use 'proj-load
+; and only modified files will be loaded.
+; To deliver your library, just use:
+; > (proj-deliver-package)
+; this will create a library as a directory named "my-lib.pack".
+; Remeber that if you modify proj.arc, you'll need to reload it manually.
+; You should also pay attention to macros: if you modify a macro, you should
+; reload every file that uses it, not just the modified files. 
+; To reload every file, use:
+; > (proj-load t)
 
 ; hold names of packages already loaded
 (= pack-loaded* (table))
@@ -36,6 +60,7 @@
 (def use-pack (name (o force))
   "load a package if it hasn't been already loaded"
   (when (or force (no (pack-loaded* name)))
+    (prn:string "Loading " name)
     (if (some [let path (string _ "/" name ".pack")
                  (when (dir-exists path)
                    (pack-load-dir path))]
@@ -47,7 +72,9 @@
   "load a library in a directory"
   (let files (map [string path "/src/" _] (sort < (dir:string path "/src")))
     ; if one file doesn't exist load will raise an error
-    (each _ files (load _)))
+    (each _ files
+      (prn:string "Loading " _) 
+      (load _)))
   t)
 
 (def int->str (n digits)
@@ -100,8 +127,12 @@
 
 (= projects* (table)) ; table of active projects
 
+(= current-proj* nil) ; current project
+
 (deftem project
-  sources nil)
+  name nil
+  sources nil
+  deps nil)
 
 (def proj-sources (proj)
   "return list of all the source files of the project
@@ -115,6 +146,10 @@
   "date of the last time the file was loaded"
   (cdr s))
 
+(def proj-source-new-date (s)
+  "set date of the file to that of the filesystem"
+  (= (cdr s) (proj-source-real-date s)))
+
 (def proj-source-real-date (s)
   "date the source was modified"
   (mtime:proj-source-name s))
@@ -125,3 +160,44 @@
   (keep [let d (proj-source-date _)
           (or (no d) (< d (proj-source-real-date _)))]
         (proj-sources proj)))
+
+(def proj-load ((o force nil) (o proj current-project*))
+  "take a project name, require dependencies and load outdated sources"
+  (let proj (projects* proj)
+    (each d proj!deps (require d))
+    (each f ((if force proj-sources proj-mod-sources) proj)
+      (prn:string "Loading " (proj-source-name f))
+      (load (proj-source-name f))
+      (proj-source-new-date f))))
+
+(def proj-deliver-package ((o proj current-project*))
+  "build a library out of given project name"
+  (let proj (projects* proj)
+    (apply pack-lib proj!name proj!deps (map proj-source-name 
+                                             (proj-sources proj)))))
+
+(mac defproject (name deps . ordered-files)
+  "define a project named name that requires the dependencies in deps
+   and that is made of the given files
+   make the project the current one
+   TODO: !! for the moment path must be relative to arc.sh directory !!"
+  (w/uniq sname
+    `(let ,sname ',name
+       (= (projects* ,sname) (inst 'project 'name ,sname 
+                                            'deps ',deps
+                                            'sources (map [cons _ nil] 
+                                                          ',ordered-files)))
+       (= current-project* ,sname))))
+
+(def proj-mk-stub (name (o parent "."))
+  "make a stub for a project"
+  (let d (string parent '/ name)
+    (when (dir-exists d)
+      (err "Directory already exists!"))
+    (make-directory d)
+    (w/stdout (outfile:string d '/ "proj.arc")
+      (prn "(defproject " name " () ; put here list of dependencies")
+      (prn "  ; put here your files")
+      (prn "  )")
+      (prn ""))
+    'done))
