@@ -10,7 +10,7 @@
  
 ; Example:
 ; to pack the http-get library:
-; >  (pack-lib 'http-get nil "lib/http-get/http-utils.arc" "lib/http-get/http-get.arc")
+; >  (pack-lib 'http-get "" nil "lib/http-get/http-utils.arc" "lib/http-get/http-get.arc")
 ; then to load the library:
 ; > (use-pack 'http-get)
 ; it will work if the directory http-get.pack is within the search path
@@ -19,7 +19,7 @@
 ; > (pack-add-path "./lib")
 ; the last path added has the highest priority
 ; it is possible to create a package that depends on other packages:
-; > (pack-lib 'mylib '(http-get xml) "myfile.arc")
+; > (pack-lib 'mylib "" '(http-get xml) "myfile.arc")
 ; this will build a package named mylib that loads the packages 'http-get
 ; and 'xml before loading itself
 ; Warning: when forcing package reloading, dependencies aren't forced
@@ -94,7 +94,7 @@
       (prn `(use-pack ',dep)))))
 
 ; TODO: add option to overwrite target directory?
-(def pack-lib (name deps . file-lst)
+(def pack-lib (name description deps . file-lst)
   "create a library named name made of files in file-lst
    files will be loaded in the given order
    deps is a list of needed packages
@@ -109,6 +109,8 @@
         (do
           (make-directory out) ; package directory
           (make-directory:string out "/src"))) ; dir of source files
+      (w/stdout (outfile:string out "/desc")
+        (prn description))
       (when deps
         (pack-build-deps deps out))
       (each f files
@@ -119,7 +121,7 @@
 ; based on an idea by AmkG
 (let old require
   ; doesn't work correctly if pack.arc is loaded more than once...
-  (def require (what)
+  (def require2 (what)
     "require that automatically uses use-pack when argument is a symbol"
     (if (is (type what) 'sym) (use-pack what) (old what))))
 
@@ -131,6 +133,7 @@
 
 (deftem project
   name nil
+  desc ""
   sources nil
   deps nil)
 
@@ -173,10 +176,10 @@
 (def proj-deliver-package ((o proj current-project*))
   "build a library out of given project name"
   (let proj (projects* proj)
-    (apply pack-lib proj!name proj!deps (map proj-source-name 
-                                             (proj-sources proj)))))
+    (apply pack-lib proj!name proj!desc proj!deps (map proj-source-name 
+                                                       (proj-sources proj)))))
 
-(mac defproject (name deps . ordered-files)
+(mac defproject (name deps description . ordered-files)
   "define a project named name that requires the dependencies in deps
    and that is made of the given files
    make the project the current one
@@ -184,6 +187,7 @@
   (w/uniq sname
     `(let ,sname ',name
        (= (projects* ,sname) (inst 'project 'name ,sname 
+                                            'desc ,description
                                             'deps ',deps
                                             'sources (map [cons _ nil] 
                                                           ',ordered-files)))
@@ -197,6 +201,7 @@
     (make-directory d)
     (w/stdout (outfile:string d '/ "proj.arc")
       (prn "(defproject " name " () ; put here list of dependencies")
+      (prn "  \"project description\"")
       (prn "  ; put here your files")
       (prn "  )")
       (prn ""))
