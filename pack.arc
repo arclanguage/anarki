@@ -47,6 +47,10 @@
 ; To reload every file, use:
 ; > (proj-load t)
 
+; you can search through installed libraries using 'pack-query
+; E.g. to find all the libraries that have something to do with http:
+; > (pack-query ".*http.*")
+
 ; hold names of packages already loaded
 (= pack-loaded* (table))
 
@@ -110,7 +114,7 @@
           (make-directory out) ; package directory
           (make-directory:string out "/src"))) ; dir of source files
       (w/stdout (outfile:string out "/desc")
-        (prn description))
+        (write description))
       (when deps
         (pack-build-deps deps out))
       (each f files
@@ -121,7 +125,7 @@
 ; based on an idea by AmkG
 (let old require
   ; doesn't work correctly if pack.arc is loaded more than once...
-  (def require2 (what)
+  (def require (what)
     "require that automatically uses use-pack when argument is a symbol"
     (if (is (type what) 'sym) (use-pack what) (old what))))
 
@@ -206,3 +210,43 @@
       (prn "  )")
       (prn ""))
     'done))
+
+; local library db
+; create a cache in the home directory
+; the cache is just a file of strings
+; every string is the concatenation of project name and project description
+
+(= pack-cache-dir* "~/.arc")
+
+(def pack-ensure-cache-dir ()
+  (unless (dir-exists pack-cache-dir*) (make-directory pack-cache-dir*)))
+
+(def pack-build-cache ()
+  "build a cache of installed packages"
+  (pack-ensure-cache-dir)
+  (w/stdout (outfile:string pack-cache-dir* '/ "cache")
+    ; find all packages in the search path
+    ; a directory ending in ".pack" is considered a package
+    (each p pack-search-path*
+      (withs (match ".pack"
+              lm (len match)
+              packs (keep [and (> (len _) (len ".pack"))
+                               (is (cut _ (- (len _) lm)) match)]
+                          (dir p)))
+        (each pack packs
+          (write:string pack ":" #\newline
+                        (readfile1:string p '/ pack "/desc")))))))
+
+(def pack-ensure-cache ()
+  (unless (file-exists:string pack-cache-dir* '/ "cache")
+    (pack-build-cache)))
+
+(def pack-query (re)
+  "search regular expression re in package names and descriptions
+   incredibly slow for a large number of packages"
+  (pack-ensure-cache)
+  (let all (readfile (string pack-cache-dir* '/ "cache"))
+    (each result (keep [re-match re _] all)
+      (prn "Found: ")
+      (prn result)
+      (prn "---"))))
