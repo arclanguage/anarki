@@ -11,7 +11,15 @@
 (require "bitops.scm")
 (load "ffi.scm")
 
-(aload "arc.arc")
+; in future, need to resolve path properly to
+; installation path
+(if (and (file-exists? "arc.arc.scm") (< (file-or-directory-modify-seconds "arc.arc")
+                                         (file-or-directory-modify-seconds "arc.arc.scm")))
+    (load "arc.arc.scm")
+    (begin
+      (display "Compiling arc.arc...\n")
+      (flush-output (current-output-port))
+      (acompile "arc.arc")))
 (aload "libs.arc")
 
 (when (file-exists? "~/.arcshrc")

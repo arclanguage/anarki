@@ -320,7 +320,9 @@
 
 
 (define (ac-global-name s)
-  (string->symbol (string-append "__" (symbol->string s))))
+  (if (equal? s (string->symbol (symbol->string s)))
+      (string->symbol (string-append "__" (symbol->string s)))
+      s))
 
 (define (ac-var-ref s env)
   (if (lex? s env)
@@ -388,7 +390,7 @@
 ; but it's OK for parts of a list you're destructuring to
 ; be missing.
 (define (ac-complex-fn args body env)
-  (let* ((ra (ar-gensym))
+  (let* ((ra (gensym))
          (z (ac-complex-args args env ra #t)))
     `(lambda ,ra
        (let* ,z
@@ -841,15 +843,7 @@
 
 (xdef 'rep ar-rep)
 
-; currently rather a joke: returns interned symbols
-
-(define ar-gensym-count 0)
-
-(define (ar-gensym)
-  (set! ar-gensym-count (+ ar-gensym-count 1))
-  (string->symbol (string-append "gs" (number->string ar-gensym-count))))
-
-(xdef 'uniq ar-gensym)
+(xdef 'uniq gensym)
 
 (xdef 'ccc call-with-current-continuation)
 

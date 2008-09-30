@@ -102,8 +102,8 @@
   "void* get_null_pt() { return (void*)0; }" 
   (cdef get-null-pt "get_null_pt" cptr ()))
 
-(def gtkname->arc-name (s)
-  (let str (string "gtk_" s)
+(def gtkname->arc-name (s (o prefix "gtk_"))
+  (let str (string prefix s)
     (forlen i str
       (if (is (str i) #\_) (= (str i) #\-)))
     (sym str)))
@@ -172,6 +172,17 @@
            ,(build-aux arc-name aux-name (car rest) (cadr rest))))
       `(cdef ,arc-name ,cname ,@rest))))
 
+(mac gdef (name . rest)
+  (with (cname (string "g_" (if (acons name) (cadr name) name))
+         arc-name (gtkname->arc-name (if (acons name) (car name) name) "g_"))
+    (if (need-aux (cadr rest))
+      (let aux-name (sym (string arc-name "-aux"))
+        `(do
+           (cdef ,aux-name ,cname ,(car rest)
+                ,(map [if (is _ 'gvalue) 'cptr (acons _) 'cptr _] (cadr rest)))
+           ,(build-aux arc-name aux-name (car rest) (cadr rest))))
+      `(cdef ,arc-name ,cname ,@rest))))
+
 ;; TODO: add possibility to specify default values to arguments
 
 (mac defenum (name . args)
@@ -179,7 +190,13 @@
   (let counter -1
     `(do 
        (= ,name (table))
-       ,@(map (fn (arg) `(= (,name ,arg) ,(++ counter))) args))))
+       ,@(map (fn (arg)
+                (if (is 'quote (car arg))
+                  `(= (,name ,arg) ,(++ counter))
+                   (do 
+                     (= counter (cadr arg))
+                     `(= (,name ,(car arg)) ,counter))))
+              args))))
 
 (defenum justification 'left 'right 'center 'fill)
 (defenum resize-mode 'parent 'queue 'immediate)
@@ -189,6 +206,10 @@
 (defenum policy-type 'always 'automatic 'never)
 (defenum menu-direction 'parent 'child 'next 'prev)
 (defenum wrap-mode 'node 'char 'word 'word-char)
+(defenum pango-style 'normal 'oblique 'italic)
+(defenum pango-weight ('ultralight 200) ('light 300) ('normal 400)
+                      ('semibold 600) ('bold 700) ('ultrabold 800) 
+                      ('heavy 900))
 
 (w/ffi "libgtk-x11-2.0"
 
@@ -436,6 +457,19 @@
   (gtkdef text_buffer_get_iter_at_offset cvoid (cptr (text-iter) cint))
   (gtkdef text_buffer_get_start_iter cvoid (cptr (text-iter)))
   (gtkdef text_buffer_get_end_iter cvoid (cptr (text-iter)))
+  (gtkdef text_buffer_apply_tag cvoid (cptr cptr cptr cptr))
+  (gtkdef text_buffer_get_tag_table cptr (cptr))
+;  (gtkdef text_buffer_create_tag cptr (cptr cstring))
+
+  ;; Text Iter
+  (gtkdef text_iter_forward_chars cint (cptr cint))
+  (gtkdef text_iter_get_offset cint (cptr))
+
+  ;; TextTag
+  (gtkdef text_tag_new cptr (cstring))
+
+  ;; Text Tag Table
+  (gtkdef text_tag_table_add cvoid (cptr cptr))
 
   ;; tree view
   (gtkdef tree_view_new cptr ())
@@ -485,7 +519,12 @@
   (cdef gvalue-unset "g_value_unset" cvoid (cptr))
   (cdef gvalue-reset "g_value_reset" cptr (cptr))
   (cdef g-signal-connect "g_signal_connect_object" culong 
-        (cptr cstring cfptr cptr cuint)))
+        (cptr cstring cfptr cptr cuint))
+
+  ;; GObject
+  (gdef object_set_property cvoid (cptr cstring gvalue))
+  (gdef object_get_property cvoid (cptr cstring (gvalue)))
+)
 
 ;; this list will hold all defined callbacks
 ;; without this, they would be garbage collected, because Scheme's runtime
@@ -588,10 +627,12 @@
 ;; tests
 
 (mac in-gtk body
-  `(do 
-     (gtk-init)
-     ,@body
-     (gtk-main)))
+  `(protect (fn ()
+              (gtk-init)
+              ,@body
+              (gtk-main))
+            (fn ()
+              (gtk-main-quit))))
 
 (mac defgtkmain (name args . body)
   `(def ,name ,args

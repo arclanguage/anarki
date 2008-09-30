@@ -53,6 +53,14 @@
   "Returns the arctangent of x in radians."
   ($ (atan ,x)))
 
+(def log (x)
+  "Returns the natural log of x."
+  ($ (log ,x)))
+
+(def log10 (x)
+  "Returns the log base 10 of x."
+  (/ (log x) (log 10)))
+
 ;;Greatest Common Denominator
 (def gcd l
   "returns the greatest common denominator, or divisor, of a list of numbers. Numbers should be integers,
