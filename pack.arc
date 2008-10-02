@@ -95,7 +95,8 @@
   "create a file in out-dir named 0 that loads specified dependencies"
   (w/stdout (outfile:string out-dir "/src/0")
     (each dep deps 
-      (prn `(use-pack ',dep)))))
+      (write `(require ,(if (is (type dep) 'sym) `',dep dep)))
+      (prn))))
 
 ; TODO: add option to overwrite target directory?
 (def pack-lib (name description deps . file-lst)
