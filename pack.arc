@@ -81,11 +81,14 @@
       (load _)))
   t)
 
+(def log10+1 (n)
+  (+ 1 (coerce (/ (log n) (log 10)) 'int)))
+
 (def int->str (n digits)
   "transforms a number into a string with at least given digits
    n must fit in digits and must be positive"
   (when (< n 0) (err "n must be positive!"))
-  (let missing (- digits (quotient n 10))
+  (let missing (- digits (log10+1 n))
     (when (< missing 0) (err "n doesn't fit!"))
     (tostring
       (for i 1 missing (pr "0"))
