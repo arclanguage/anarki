@@ -22,21 +22,28 @@
 
 ;; (use test)
 ;;
-;; This requires the module "test.arc" (see 'module-require), and binds it to
-;; 'test. Calling a module on an expression evaluates it in the namespace. So
-;; (test!somefun) calls the function 'somefun defined in "test.arc".
+;; This requires the module "test.arc" (see 'require-module), binds it to
+;; 'test*, and binds its macro (see 'module->mac) to 'test. Calling a module on
+;; an expression evaluates it in that modules' namespace. Calling a module's
+;; macro on an expression does the same, except quoted. Moreover, by calling a
+;; module's macro, you can use macros defined in that module.
 ;;
-;; However, you cannot use macros that "test.arc" defines. This is because
-;; ac.scm translates Arc into Scheme, and it must know at translation time
-;; whether an expression is to be treated as a macro. Unless it can show that it
-;; is a macro, it assumes it's not. Currently, it only handles globally-bound
-;; symbols. I see no way to have ac.scm handle the general case (that any
-;; expression could evaluate to a macro) without making it a full-fledged
-;; interpreter, rather than a translator.
+;; For example, (test*!somefun) and (test.somefun) both call the function
+;; 'somefun defined in "test.arc" with no arguments, while (test.somemac) calls
+;; the macro 'somemac defined in "test.arc" with no arguments.
+;;
+;; Note that mixing macros and modules is tricky business. If I have a macro
+;; which expands to a call to some function defined in the same file, and I load
+;; the file as a module and use the macro, it will fail, because macroexpansion
+;; is entirely syntactic and will not capture the namespace in which the macro
+;; was defined. This points to the need for a module system better integrated
+;; with the language itself.
 
-;; (use (as long/and/nested/module/name alias))
+;; (use (as long/and/nested/module/name alias alias*))
 ;;
-;; Requires the module "long/and/nested/module/name.arc" and binds it to 'alias.
+;; The same as (use long/and/nested/module/name), except that the module is
+;; bound to 'alias*, and the module macro is bound to 'alias. 'alias* may be
+;; omitted, in which case it will be whatever 'alias is, with a star appended.
 
 ;; (use (all test))
 ;;
@@ -45,132 +52,132 @@
 
 ;; (use (from test sym1 sym2))
 ;;
-;; Requires the module "test.arc", then imports 'sym1 and 'sym2 from it.
+;; Requires the module "test.arc" and imports 'sym1 and 'sym2 from it.
 
 ;; 'use can also handle multiple clauses:
 ;;
 ;; (use (as lib/foo foo)
 ;;      (from lib/foo mymac mymac2)
 ;;      (all lib/bar))
-;;
-;; This requires the modules "lib/foo.arc" and "lib/bar.arc". The former is bound to
-;; 'foo, and 'mymac and 'mymac2 are imported from it. All symbols in the latter
-;; are also imported.
 ;; --------------------
 
+(require "lib/dynvars.arc")
+
+(dynvars load-files&)
+
 ;; Modules are a thin layer over namespaces in mzscheme.
-(def module-make-namespace ()
+(def make-namespace ()
   ($ 
     (let ((ns (make-namespace 'initial)))
       (namespace-attach-module (current-namespace) "ac.scm" ns)
       (eval '(require "ac.scm") ns)
       ns)))
 
-(def module-make ((o ns))
-  ($ (vector 'tagged 'module ',(or ns (module-make-namespace)))))
+(def namespace->module ((o ns (make-namespace)))
+  ($.vector 'tagged 'module ns))
 
 (def module-syms (m)
   (map1
     [sym:cut _ 2]
-    (keep [and (begins _ "__") (isnt "__nil" _)]
-         (map1 string (($ namespace-mapped-symbols) (rep m))))))
+    (keep [and (begins _ "__") (isnt _ "__nil")]
+         (map1 string ($.namespace-mapped-symbols rep.m)))))
 
 ;; Modules are evaluator functions
 (defcall module (self expr)
   ($ (eval (ac (ac-denil ',expr) (list)) ,self)))
 
 ;; Loading files into modules
-(def module-load-in (mod file (o hook))
-  (push current-load-file* load-file-stack*)
-  (= current-load-file* file)
+(def load-in-module (mod file (o hook))
   (or= hook idfn)
-  (after
+  (slet (load-files&) file
     (w/infile f file
-      (whilet e (read f)
-        (mod (hook e))))
-    (do (= current-load-file* (pop load-file-stack*)) nil)))
+      (map1 mod:hook (readall f)))))
 
 ;; Module table - maps keys (usually file paths) to modules
-(= module-table* (table))
+(when (or (~bound 'module-table*) no.module-table*)
+  (set module-table* (table)))
 
-(def module-register (file mod)
-  (= module-table*.file mod))
+(def register-module (file mod)
+  (set module-table*.file mod))
 
 ;; The "tl" (toplevel) module
-(= module-tl*
-   ($ (vector 'tagged 'module (current-namespace))))
+(set module-tl*
+  ($.vector 'tagged 'module ($.current-namespace)))
 
 ;; Creating modules
-(def module-init (mod)
+(def init-module (mod)
   ;; Transfer all symbols from the toplevel environment
-  (module-transfer-syms
-    module-tl* mod (map1 [list _ _] (module-syms module-tl*))))
+  (transfer-syms module-tl* mod
+    (map1 [list _ _] module-syms.module-tl*)))
 
-(def module ()
-  (let m (module-make)
-    (module-init m)
+(def make-module ()
+  (let m (namespace->module)
+    (init-module m)
     m))
 
 ;; Module loading, reloading, requiring
-(def module-load (file)
-  (let m (module)
-    (module-load-in m file)
+(def load-module (file)
+  (let m (make-module)
+    (load-in-module m file)
     m))
 
-(def module-reload (mod file)
-  (let m (module-load file)
+(def reload-module (mod file)
+  (let m (load-module file)
     (vec-set mod 2 (rep m))
     mod))
-  
+
 (def module-spec->file (spec)
   (if (isa spec 'sym) (string spec ".arc")
       (isa spec 'string) spec
       (err "Unrecognized module specification")))
 
-(def module-require (spec)
+(def require-module (spec)
   (let file (module-spec->file spec)
-    (or (module-table* file)
-        (let m (module-load file)
-          (module-register file m)
+    (or module-table*.file
+        (let m load-module.file
+          (register-module file m)
           m))))
 
 ;; Importing symbols from modules.
-(def module-transfer-syms (src dest sym-pairs)
+(def transfer-syms (src dest sym-pairs)
   (each (src-name dest-name) sym-pairs
     (($ namespace-set-variable-value!)
-     (sym:string "__" dest-name)
-     ($
-       (namespace-variable-value
-         ',(sym:string "__" src-name)
-         #t
-         (not #t)
-         ',(rep src)))
+      (sym:string "__" dest-name)
+      ($ (namespace-variable-value
+           ',(sym:string "__" src-name)
+           #t
+           (not #t)
+           ',(rep src)))
      #f
      (rep dest))))
 
-(def module-import-syms (src syms)
-  (module-transfer-syms
-    src (module-make ($ (current-namespace)))
+(def import-syms (src syms)
+  (transfer-syms
+    src (namespace->module ($ (current-namespace)))
     (map1 [list _ _] syms)))
 
-(def module-import-all (src)
-  (module-import-syms src (module-syms src)))
+(def import-all (src)
+  (import-syms src (module-syms src)))
+
+;; Macro wrappers for modules
+(def module->mac (mod)
+  (annotate 'mac [mod _]))
 
 ;; "use" macro
-(def module-xfrm-use-clause (head rest)
-  (case head
-    as (let (mod name)
-         `(safeset ,name (module-require ',mod)))
-    from (let (mod . syms) rest
-           `(module-import-syms (module-require ',mod) ',syms))
-    all (let (mod) rest
-           ` (module-import-all (module-require ',mod)))
-    (err "Unrecognized use-clause: " head)))
+(mac use-as (spec mac-name (o fun-name (sym:string mac-name "*")))
+  `(do
+     (safeset ,fun-name (require-module ',spec))
+     (safeset ,mac-name (module->mac ,fun-name))))
 
 (mac use body
   `(do
-     ,@(mapeach e body
-         (if
-           (isa e 'sym)
-             `(safeset ,e (module-require ',e))
-           (module-xfrm-use-clause (car e) (cdr e))))))
+     ,@(mapeach clause body
+         (if (isa clause 'sym) `(use-as ,clause ,clause)
+           (let (head . rest) clause
+             (case head
+               as `(use-as ,@rest)
+               from (let (mod . syms) rest
+                      `(import-syms (require-module ',mod) ',syms))
+               all (let (mod) rest
+                     `(import-all (require-module ',mod)))
+               (err "Unrecognized use-clause: " head)))))))
