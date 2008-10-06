@@ -2391,10 +2391,10 @@
 (mac n-of (n expr)
   " Repeats `expr' `n' times, then returns the results in a list.
     See also [[repeat]] "
-  (w/uniq ga
-    `(let ,ga nil     
-       (repeat ,n (push ,expr ,ga))
-       (rev ,ga))))
+  (w/uniq collect
+    `(w/collect-f
+        (fn (,collect)
+          (repeat ,n (,collect ,expr))))))
 
 (def rand-string (n)
   " Generates a random string of letters and numbers, starting with a letter. "
