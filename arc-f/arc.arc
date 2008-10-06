@@ -1875,6 +1875,7 @@
   (w/collect-on seq
     (if end
         (do (if (< end 0) (= end (+ (len seq) end -1)))
+            (= end (- end start))
             (each-skip-early-out start i seq
                 (if (<= end 0)
                     nil
