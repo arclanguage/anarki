@@ -2566,9 +2566,10 @@
 
 (def readline ((o str (stdin)))
   " Reads a string terminated by a newline from the stream `str'. "
-  (awhen (readc str)
+  (when (peekc str)
     (tostring 
-      (writec it)
+      ; can/should be improved by making this seamless check for
+      ; \r, \r\n, \n, or \n\r terminators
       (whiler c (readc str) #\newline
         (writec c)))))
 
