@@ -2058,9 +2058,10 @@
         #t
         (let ((scm (ac (context-ref-reuse! cxt x) '())))
           (pretty-print
-            (if (and (pair? x) (context-metacommand? (car x)))
-                (context-metacommand-compile cxt x)
-                scm)
+            (compile
+              (if (and (pair? x) (context-metacommand? (car x)))
+                  (context-metacommand-compile cxt x)
+                  scm))
             op)
           (eval scm (interaction-environment))
           (newline op)
