@@ -33,10 +33,10 @@
   ; a lazy expression simultaneously
   ; we can use semaphore locks of some
   ; sort, but it *might* get bashed by
-  ; <base>collect-on ; (depending on
-  ; whether we use ; dynamic-wind,
-  ; potentially, but I'll ; have to figure
-  ; out the continuation ; guards first)
+  ; <base>collect-on (depending on whether
+  ; we use dynamic-wind, potentially, but
+  ; I'll have to figure out the continuation
+  ; guards first)
   (let rv (cons nil nil)
     (= (car rv)
        (fn ()
