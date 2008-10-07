@@ -1150,9 +1150,9 @@
       (cons (f (car xs) (cadr xs))
             (pair (cddr xs) f))))
 
-(mac $ body
+(mac $ (x)
    " Allows access to the underlying Scheme. "
-   (list 'seval (cons 'quasiquote body)))
+   `(seval ',(unpkg x)))
 
 (def assoc (key al)
   " Finds a (key value) pair in an associated list.
