@@ -127,10 +127,10 @@
 (= textmime* "text/html; charset=utf-8")
 
 (def header ((o type textmime*) (o code 200))
-  (string "HTTP/1.0 " code " " (statuscodes* code) "
-" serverheader* "
-Content-Type: " type "
-Connection: close"))
+  (string "HTTP/1.0 " code " " (statuscodes* code) "\r\n"
+          serverheader* "\r\n"
+          "Content-Type: " type "\r\n"
+          "Connection: close"))
 
 (def err-header (code)
   (header textmime* code))
@@ -157,7 +157,7 @@ Connection: close"))
 (mac defop (name parm . body)
   (w/uniq gs
     `(defop-raw ,name (,gs ,parm) 
-       (w/stdout ,gs (prn) ,@body))))
+       (w/stdout ,gs (prn "\r") ,@body))))
 
 (mac defsop (name parm auth . body)
   (w/uniq (test auth-var)
@@ -213,20 +213,24 @@ Connection: close"))
             (if (redirector* op)
                 (do (prn rdheader*)
                     (prn "Location: " (it str req))
-                    (prn))
+                    (prn "\r"))
                 (do (prn (header))
-                    (if (is type 'head) (prn) (it str req)))))
+                    (if (is type 'head)
+                        (prn "\r")
+                        (it str req)))))
          (file-exists-in-root (string op))
           (if (is type 'head)
-            (do (prn (header (filemime it))) (prn))
+            (do (prn (header (filemime it)))
+                (prn "\r"))
             (respond-file str it))
          (if (is type 'head)
-           (do (prn (err-header 404)) (prn))
+           (do (prn (err-header 404))
+               (prn "\r"))
            (respond-err str 404 unknown-msg*)))))
 
 (def respond-file (str file (o code 200))
   (do (prn (header (filemime file) code))
-      (prn)
+      (prn "\r")
       (w/infile i file
         (whilet b (readb i)
           (writeb b str)))))
@@ -236,7 +240,7 @@ Connection: close"))
        (respond-file str it code)
        (w/stdout str
          (prn (err-header code)) 
-         (prn)
+         (prn "\r")
          (apply pr msg args))))
   
 (def parseheader (lines)
@@ -318,7 +322,7 @@ Connection: close"))
      it))
 
 ;(defop test-afnid req
-;  (tag (a href (url-for (afnid (fn (req) (prn) (pr "my fnid is " it)))))
+;  (tag (a href (url-for (afnid (fn (req) (prn "\r") (pr "my fnid is " it)))))
 ;    (pr "click here")))
 
 ; To be more sophisticated, instead of killing fnids, could first 
@@ -375,7 +379,7 @@ Connection: close"))
   (string fnurl* "?fnid=" fnid))
 
 (def flink (f)
-  (string fnurl* "?fnid=" (fnid (fn (req) (prn) (f req)))))
+  (string fnurl* "?fnid=" (fnid (fn (req) (prn "\r") (f req)))))
 
 (def rflink (f)
   (string rfnurl* "?fnid=" (fnid f)))
@@ -420,7 +424,7 @@ Connection: close"))
   (w/uniq ga
     `(tag (form method 'post action fnurl*)
        (fnid-field (fnid (fn (,ga)
-                           (prn)
+                           (prn "\r")
                            (,f ,ga))))
        ,@body)))
 
@@ -430,7 +434,7 @@ Connection: close"))
 (mac timed-aform (lasts f . body)
   (w/uniq (gl gf gi ga)
     `(withs (,gl ,lasts
-             ,gf (fn (,ga) (prn) (,f ,ga)))
+             ,gf (fn (,ga) (prn "\r") (,f ,ga)))
        (tag (form method 'post action fnurl*)
          (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
          ,@body))))
