@@ -955,14 +955,14 @@
 
 (mac each-skip-early-out (start var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
-    starting at start.  If the last expression in `body' returns nil,
+    starting at `start'.  If the last expression in `body' returns nil,
     ends iteration.
     See also [[each]] [[each-skip]] [[each-early-out]] "
   `(symeval!<base>each ,expr ,start (fn (,var) ,@body)))
 
 (mac each-skip (start var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
-    starting at start.
+    starting at `start'.
     See also [[each]] [[each-skip-early-out]] [[each-early-out]] "
   `(symeval!<base>each ,expr ,start (fn (,var) ,@body t)))
 
@@ -1210,9 +1210,12 @@
        ,expr)))
 
 ; Rtm prefers to overload + to do this
+; almkglor prefers to do this in 'join
 
 (def join args
   " Joins all scanner arguments together.
+    The type of the result is the type of the
+    first non-nil argument.
     See also [[cons]] [[+]] "
   (join-inner args))
 (def join-inner (args)
@@ -1251,7 +1254,7 @@
     See also [[uniq]] "
   (if (acons names)
       `(with ,(apply + nil (map1 (fn (n) (list n '(uniq)))
-                             names))
+                                 names))
          ,@body)
       `(let ,names (uniq) ,@body)))
 
@@ -1647,7 +1650,7 @@
     Returns a sequence containing the concatenation of the results
     of the function.
     See also [[map]] [[join]] "
-  (apply + nil (apply map f args)))
+  (join-inner (apply map f args)))
 
 (def firstn (n xs)
   " Returns the first `n' elements of the given sequence
@@ -2207,7 +2210,7 @@
 (def string args
   " Creates a string from its arguments
     See also [[sym]] "
-  (apply + "" (map [coerce _ 'string] args)))
+  (join-inner (map [coerce _ 'string] args)))
 
 (def flat (x (o stringstoo))
   " Flattens a nested list.
