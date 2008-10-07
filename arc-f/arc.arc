@@ -984,10 +984,9 @@
   " Returns the result of applying `cdr' repeatedly
     by `n' times on `xs'.
     See also [[cut]] [[firstn]] "
-  (nthcdr-internal n (scanner xs)))
+  (if n (nthcdr-internal n (scanner xs))))
 (def nthcdr-internal (n xs)
-  (if (no n)  xs
-      (> n 0) (nthcdr-internal (- n 1) (cdr xs))
+  (if (> n 0) (nthcdr-internal (- n 1) (cdr xs))
               xs))
 
 ; scanners
