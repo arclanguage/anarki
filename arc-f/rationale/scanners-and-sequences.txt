@@ -1,0 +1,447 @@
+
+Scanners and Sequences
+======================
+
+It would be really really nice if we could treat, say, lists and
+strings similarly, and in addition, to have a function applied on
+lists return a list, while a function applied on strings return a
+string.
+
+Further, it would be really really nice if the user can define his
+or her own type which would be treated similarly, and in addition,
+to have the builtin `arc.arc` functions work on that type as well.
+
+This requires us to use some way of creating general functions
+which operate on specific instantations (types) of an interface
+(<c++>abstract-base-class, <java>interface, <haskell>type-class).
+
+The classic object-oriented solution is to use **inheritance**.
+Many languages have explored this design space well and I won't
+describe it deeply here, since I did not include it in Arc-F.
+
+Another solution is **generic programming**.  In this case, we
+specify a "fill-in-the-blank" where the type would normally go,
+and just write the code with those types being "variables".
+This is exemplified by <c++>template and <haskell>type-class.
+
+Since I'm still rather impressed with generic programming (and
+bored with inheritance), I decided to integrate a form of
+generic programming into `arc.arc`'s sequence-manipulating
+functions.
+
+To this end, this means we standardize a set of functions which
+can be overloaded by a type.
+
+
+Redefining `car` and `cdr`
+--------------------------
+
+Arc-F, among other things, includes generic functions (it is
+planned that they *should* have full genericity, i.e. dispatch on
+the type of any argument, but this is not implemented yet).  This
+means that existing functions can be extended with specific
+methods for specific types.
+
+This includes the built-in `car` and `cdr` functions.
+
+Thus, we redefine `car` to mean "get the current item" and `cdr`
+to mean "get an object that contains the next item".
+
+A scanner is then any value which can be passed to `car` and
+`cdr` without throwing an error.  This is done by overloading the
+`car` and `cdr` functions for any type that happens to be a
+scanner.
+
+The "scanner" abstraction
+-------------------------
+
+A **scanner** is simply a logical extension of lists.  While
+`cons` cells can be validly used as lists, it is possible to also
+use *other* data structures for lists.  However, the term "list"
+in Lisplike languages already implicitly imply the use of `cons`
+cells; thus, we use the term "scanner" instead.
+
+A scanner simply needs to allow itself to be scanned for elements.
+
+At its simplest, a type is a scanner if it has the following
+minimum characteristics:
+
+1.  It has an overload for the `car` function.
+2.  It has an overload for the `cdr` function, which returns an
+    object whose type also presents the scanner interface.
+3.  It validly returns itself with the `scanner` function.
+    ("validly" means it won't throw an error; the default for
+    `scanner` is to throw, so it means you have an overload for
+    that type which just happens to be the identity function)
+4.  It validly returns the given scanner with the `unscan`
+    function.
+
+Now we also need to explain the `scanner` and `unscan` functions.
+These two functions are used to effectively "destructure" and
+"reconstruct" a type.  `scanner` destructures while `unscan`
+reconstructs.
+
+But before that, we also need to introduce the "sequence"
+abstraction, which is closely related to - but not the same as -
+scanners.
+
+Sequences
+---------
+
+A sequence is not necessarily a scanner, although all scanners
+are sequences.
+
+A type is a scanner if it has the following minimum
+characteristics:
+
+1.  It validly returns a scanner for the `scanner` function.
+2.  It validly returns a value for the `unscan` function,
+    preferably its own type.
+
+Notice the main difference here: sequences are *not* required to
+provide methods for `car` and `cdr`.  For instance, the built-in
+`string` type is not a scanner, because you can't use `car` and
+`cdr` on them.  However, `string` *can* be converted into a list
+of characters, and a list is indeed a scanner; further, it makes
+sense to convert a list of objects into a string (by effectively
+just doing `pr` on the elements).
+
+Thus, an Arc `string` can be validly a sequence simply by passing
+a string to `scanner` (which returns a list of characters) and by
+constructing a string from the `pr` of elements in a scanner.
+
+`scanner` and `unscan`
+----------------------
+
+The `scanner` function is a function designed for overloading.
+Basically this is our "blank" that needs to be filled in.
+Specifically, it determines if a type may validly be scanned, and
+if so returns a valid scanner representing the data in that type.
+If it can't be scanned, then it must throw an error.
+
+    (scanner "asdf")
+    => a valid scanner, probably the list (#\a #\s #\d #\f)
+    (scanner '(1 2 3 4))
+    => the list (1 2 3 4), which is already a scanner
+    (scanner 1)
+    => an error
+
+If a type is already a scanner, then obviously it should be okay
+to use `car` and `cdr` on it.  If so, it must be returned as-is
+by the overloaded `scanner` functions.
+
+Similarly, `unscan` is the function which reconstructs an object
+from a scanner.
+
+`unscan` accepts two parameters: a "template" object whose only
+role is to provide type information for the return value, and a
+scanner which provides the data for the return value.  Basically,
+you can think of this as taking the type of its first argument
+and putting it onto the data of the second argument.
+
+So, how do you use `scanner` and `unscan` in order to make a
+generic algorithm?  First, you construct an algorithm which can
+accept a list, but does not mutate it.  This means that your
+algorithm will, at some level, be using only `car` and `cdr` to
+interact with the given input.
+
+The output of your algorithm would then be a list, containing
+the data as passed through your algorithm.
+
+You can then wrap the algorithm with `scanner` and `unscan`:
+
+    (def my-generic-algorithm (seq)
+      (unscan seq
+        (my-algorithm (scanner seq))))
+
+Sequences versus Scanners
+-------------------------
+
+A sequence is any type which contains elements that can be
+considered linearly.  A scanner is an actual, concrete object
+which allows a sequence to be considered linearly using the `car`
+and `cdr` functions.
+
+Basically, the rationale for the `scanner` function is to accept
+any sequence and convert it into a form that can be scanned using
+`car` and `cdr`
+
+In the general case, `cons` cells are your most efficient scanner
+type, and you will generally want to convert your sequence type
+to a list of `cons` cells.
+
+How to overload `scanner` and `unscan` for your own types
+---------------------------------------------------------
+
+In general, you will probably be creating a sequence type.  To
+define a sequence type, you simply need to define an overload for
+`scanner` and `unscan`.
+
+Your sequence type will, most probably, not be a scanner.
+However, it can probably be sensibly converted to a list, which
+*is* a scanner.  The simplest (and usually most efficient)
+implementation for your `scanner` method would then be to create
+a list of elements.
+
+Now, consider the `scanner` method for strings in `arc.arc`:
+
+    (defm scanner ((t a string))
+      (coerce a 'cons))
+
+The `scanner` overload above simply coerces the string into a
+list of characters.  It follows the spec directly: it returns a
+valid scanner type, a list.
+
+> Note that you should not depend on (scanner "asdf") to return a
+> list.  It's quite valid for a different implementation of Arc-F
+> to return a non-list object; the only requirement is that it
+> supports `car` and `cdr`.
+
+`unscan` is more involved.  In particular, you have to remember
+that you can make very few assumptions about its inputs.
+
+`unscan` accepts two arguments, as mentioned above.  The first
+argument is used solely for dispatching; it should not be mutated
+or even accessed (the user of `unscan` may validly "spoof" a type
+using `annotate`).  The second argument is a scanner whose data
+is to be put in the sequence object that `unscan` will produce.
+
+Note that the only assumption you can have is about the second
+argument.  The first argument should be ignored; the second
+argument follows strictly the "scanner" interface.  You can use
+only `scanner`, `car` and `cdr` on the given scanner.  You can
+use it as either argument for `unscan`, although that probably
+won't make much sense since you **are** doing the unscanning.
+
+As an example, consider the `unscan` method for strings:
+
+    (defm unscan ((t a string) scan)
+      ((fn (port)
+         (each ch scan
+           (disp ch port))
+         (inside port))
+       (outstring)))
+
+Notice that we use `each` on the given scanner.  This is valid,
+because `each` expands to code which is equivalent to:
+
+    (each i s
+      (fun s))
+    =>
+    ((rfn gf (s)
+       (when s
+         (fun (car s))
+         (gf (cdr s))))
+     (scanner s))
+
+Note that this is what it is **equivalent to**, not necessarily
+what it **is**.  A later section will show how further overloads
+allow a more efficient `each` form.
+
+REMINDER: when overloading `unscan`, you should not assume
+anything about the type of the second argument **except that it
+can be used with `scanner`, `unscan`, `car`, and `cdr`**.  In
+particular, you should not expect it to be the same type as what
+your type returned with `scanner`.
+
+The overhead of `scanner` and `unscan`
+--------------------------------------
+
+Although `scanner` and `unscan` are enough to destructure every
+sequence type and reconstruct them, they suffer significant
+efficiency drawbacks.
+
+In particular, for simple implementations of `scanner`, you will
+probably construct a `cons` list.  Then for simple
+implementations of an algorithm, you will probably construct
+**another** `cons` list (you can't reuse the given list, because
+you can't be sure that it *is* a `cons` list - remember,
+`scanner` can return any valid scanner type).  Finally, you
+have to convert the list back to your original type in `unscan`.
+
+This means you will iterate over the original sequence to
+construct the scanner, then your algorithm will use the scanner
+to scan over the sequence (probably iteratively) and finally the
+reconstruction will itself have to scan over the return value of
+your aglorithm.
+
+If efficiency is not a concern, then you can quite validly just
+provide methods for `scanner` and `unscan` for your sequence and
+scanner type, and `car` and `cdr` methods for your scanner type.
+However, most of the time efficiency **is** indeed a concern.
+
+Fortunately, the `arc.arc` framework also includes "blanks" for
+the most common operations on sequences: creating a sequence by
+iteratively adding objects to the sequence, and iterating over a
+sequence starting at an index and continuing while some
+condition holds.
+
+`<base>collect-on` and `<base>each`
+-----------------------------------
+
+The first "blank" is `<base>collect-on`, which is used by the
+`w/collect-on` macro to select the appropriate method for
+constructing a sequence by providing the data to a function.
+
+By default, it simply uses:
+
+    (def <base>collect-on (seq bf)
+      (unscan seq
+        (w/collect (bf collect))))
+
+`w/collect` is an Arc-F macro which provides a `collect` function
+that collects its argument into a list; think of it as a sensible
+`accum`.
+
+Effectively, the default behaviour of this function is the least
+common denominator; it simply unscans a list generated by your
+body function.  For this reason, you can simply leave it as-is;
+you don't *have* to overload `<base>collect-on`.
+
+However, overloading this method can help greatly for most types.
+As a concrete example let us look at the overload for strings:
+
+    (defm <base>collect-on ((t seq string) bf)
+      (let port (outstring)
+        (bf (fn (e) (disp e port) e))
+        (inside port)))
+
+The `outstring` function creates an output port which constructs
+a string.  The `collect` function we provide then simply prints
+its argument into the string.  When the body function returns, it 
+extracts the string from that port using `inside`.
+
+The other "blank" is the more complicated `<base>each`.  As its
+name suggests, it is used to implement the `each` form.  However,
+it supports more than just iterating over the entire sequence; it
+supports iterating over just some portion of the sequence.
+
+Many algorithms don't really need to iterate over the entire
+sequence.  For example, the builtin `some` only needs to find
+*one* non-matching object in the sequence; after it finds that
+object, it can stop the iteration.
+
+Of course, if you're writing a `<base>each` method for your type,
+your implementation will have to consider this.
+
+`<base>each` accepts 3 parameters.  The first is the sequence
+itself.  You should overload `<base>each` based on the type of
+this first parameter.
+
+The second parameter is an integer parameter, "skip", the number
+of entries to skip before iteration begins.  For structures like
+lists, this won't have much effect, since we still need to
+iterate over the intermediate objects.  For structures like
+strings and vectors, however, the "skip" parameter helps the
+algorithm to start faster.
+
+The third parameter is a function or other callable object.  Most
+of the time, it'll be a function, although you really should only
+assume that you can call it with exactly one argument.  Note
+however that the return value of the call should be a non-`nil`
+value; if it is `nil`, you should stop the iteration.
+
+As a concrete example, consider the `<base>each` method for
+strings:
+
+
+    (let self nil
+      (set self
+           (fn (f s i l)
+             (if (< i l)
+                 (if (f s.i)
+                     (self f s (+ i 1) l)))))
+      (defm <base>each ((t seq string) skip bf)
+        (self bf seq skip (len seq))))
+
+Notice here how the `self` helper function checks the return
+value of the function.
+
+When overloading `<base>each`, remember to check the return
+value of the given body function.
+
+Using `<base>collect-on` and `<base>each` in your own algorithms
+----------------------------------------------------------------
+
+Using these functions directly is possible, but you probably will
+appreciate the included wrapper macros for them.
+
+As mentioned above, the `w/collect-on` macro provides a `collect`
+function within its body.  This `collect` function constructs a
+sequence by appending each argument to the call to the end of a
+new sequence, whose type is based on its argument.
+
+For example, you can create a sequence with a single element,
+whose type is based on a given type, using this function:
+
+    (def just1 (x)
+      (w/collect-on x
+        (collect 1)))
+
+**Anaphora warning: when using this macro you must either include
+`(using <arc>v3)`, or specifically import `<arc>collect` with
+`(import <arc>collect collect)`.**
+
+The other generic function, `<base>each`, has *four* wrapper
+macros.  You've probably already met one: `each`.  This iterates
+over the *entire* sequence.
+
+A variant of this macro is `each-early-out`.  This iterates over
+the sequence, starting from the first element, but if the last
+expression in the body returns nil, it will stop iterating.  As a
+concrete example, consider the implementation of `firstn-that`:
+
+    (def firstn-that (n f xs)
+      " Returns the first `n' elements of `xs' which pass `f'. "
+      (w/collect-on xs
+        (each-early-out i xs
+          (if
+            (<= n 0)
+              nil
+            (f i)
+              (do (collect i)
+                  --.n)
+              t))))
+
+In the example above, the function iterates over the sequence,
+but only while the number of objects still to be collected is not
+yet zero.
+
+The third wrapper macro is `each-skip`.  This macro requires an
+extra parameter, which specifies the number of items to skip at
+the start of the iteration.  For example, consider a function
+which copies the rest of a sequence:
+
+  (def copy-rest (xs)
+    (w/collect-on xs
+      (each-skip 1
+                 x xs
+        (collect x))))
+
+The final wrapper macro is `each-skip-early-out`, which simply
+combines the functionality of `each-skip` and `each-early-out`.
+
+Building an algorithm
+---------------------
+
+As an example for building an algorithm which works on sequences,
+let us consider how to implement an "intersection" function.  We
+treat the given sequences as two sets, assume their elements are
+unique, and determine which elements exist in both sets, as
+compared using a given comparing function.
+
+We can implement it using `w/collect-on`, `each`, and
+`each-early-out`:
+
+    (def intersect (f xs ys)
+      (w/collect-on xs
+        (each x xs
+          (each-early-out y ys
+            (if (f x y)
+                (do (collect x)
+                    nil)
+                t)))))
+
+
+
+
