@@ -609,7 +609,7 @@
 (docstring 'compose 'fn 'args
   " Connects several functions so that the
     result of the rightmost function is
-    given to the function to the right,
+    given to the function to the left,
     and so on.
       ((compose a b) x)  =>  (a (b x))
     See also [[>>]] [[complement]] ")
