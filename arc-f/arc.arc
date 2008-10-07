@@ -1375,6 +1375,19 @@
     See also [[is]] "
   (if (isa x 'fn) x (fn (_) (is _ x))))
 
+; NOTE: arguably, 'some and 'find use 'reclist and 'recstring only
+; because of the lack of nice type-based methods in classic Arc.
+; This should probably be implemented with:
+;   (def some (test seq)
+;     (with (rv nil
+;            f (testify test))
+;       (each-early-out i seq
+;         (if (f i)
+;             (do (assert rv)
+;                 nil)
+;             t))
+;       rv))
+; The above will probably be more efficient in Arc-F
 (def some (test seq)
   " Determines if at least one element of `seq' satisfies `test'.
     See also [[ormap]] [[all]] [[mem]] [[in]] [[pos]] "
