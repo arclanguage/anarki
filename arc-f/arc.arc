@@ -1248,7 +1248,7 @@
     See also [[copy]] "
   (let v nil
     (each x xs
-      (= v (cons x v)))
+      (set v (cons x v)))
     (unscan xs v)))
 
 (mac w/uniq (names . body)
@@ -2191,7 +2191,7 @@
        (while (no ,gdone)
          (let ,gres ,expr
            (if (is ,gres ,eof)
-               (= ,gdone t)
+               (set ,gdone t)
                (push ,gres ,gacc))))
        (rev ,gacc))))
 
