@@ -3301,6 +3301,7 @@
              (indented-line l)
                (do (= bldg-section (outstring))
                    (disp l bldg-section)
+                   (disp #\newline bldg-section)
                    (code))
                (docs))))
        code
@@ -3315,6 +3316,7 @@
                    (maybe-code))
              (indented-line l)
                (do (disp l bldg-section)
+                   (disp #\newline bldg-section)
                    (code))
                (docs)))))
     (= bldg (outstring))
