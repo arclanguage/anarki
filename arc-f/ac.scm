@@ -1610,6 +1610,7 @@
 
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
+(xdef 'log log)
 
 ; generic comparison
 
