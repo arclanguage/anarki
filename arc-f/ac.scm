@@ -381,7 +381,8 @@
                                               #t
                                               (lambda () #f))
                   (let ((f-path
-                         (load-resolve (string-append pak ".arc"))))
+                         (or (load-resolve (string-append pak ".arc"))
+                             (load-resolve (string-append pak ".larc")))))
                     (if f-path
                         (begin
                           (ar-funcall1 (eval '__<arc>require)
