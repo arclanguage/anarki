@@ -1957,24 +1957,26 @@
         (err "'load-resolve can't resolve file path for load spec: " file))))
 
 (define (load-resolve file)
-  (path->string
-    (path->complete-path
-      (cond
-        ((not (string? file))
-         (err "load-resolve expects a string"))
-        ((file-exists? file)
-         file)
-        ; absolute?, or can't find arc_dir?
-        ((or (absolute-path? file)
-             (complete-path? file)
-             (not arc-path))
-         #f)
-        ((file-exists? (build-path arc-path file))
-         (build-path arc-path file))
-        ((file-exists? (build-path arc-path "lib" file))
-         (build-path arc-path "lib" file))
-        (#t
-         #f)))))
+  (call/cc
+    (lambda (break)
+      (path->string
+        (path->complete-path
+          (cond
+            ((not (string? file))
+             (err "load-resolve expects a string"))
+            ((file-exists? file)
+             file)
+            ; absolute?, or can't find arc_dir?
+            ((or (absolute-path? file)
+                 (complete-path? file)
+                 (not arc-path))
+             (break #f))
+            ((file-exists? (build-path arc-path file))
+             (build-path arc-path file))
+            ((file-exists? (build-path arc-path "lib" file))
+             (build-path arc-path "lib" file))
+            (#t
+             (break #f))))))))
 
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
