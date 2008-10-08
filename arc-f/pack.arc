@@ -53,7 +53,7 @@
 
 (in-package pack)
 (using <arc>v3)
-(using <fs>v1)
+(using <files>v1)
 (interface loading add-path use)
 (interface project defproject proj-load deliver-library)
 (interface query build-cache query)
@@ -194,7 +194,7 @@
   "build a library out of given project name"
   (let proj (projects* proj)
     (prn proj)
-    (apply pack-lib (<arc>unpkg proj!name) proj!desc (map <fs>norm proj!deps)
+    (apply pack-lib (<arc>unpkg proj!name) proj!desc (map norm proj!deps)
                     (map source-name (sources proj)))))
 
 (mac defproject (name deps description . ordered-files)
@@ -256,7 +256,7 @@
     (build-cache)))
 
 ; straight from strings.arc
-(= re-match (fn (x y) (no (no ((<fs>$ () regexp-match) x y)))))
+(= re-match (fn (x y) (no (no ($.regexp-match x y)))))
 
 (def query (re)
   "search regular expression re in package names and descriptions
