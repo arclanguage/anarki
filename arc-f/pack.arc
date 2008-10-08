@@ -190,10 +190,12 @@
       (load (source-name f))
       (source-new-date f))))
 
+(def norm (x)
+  (if (isa x 'sym) (<arc>unpkg x) x))
+
 (def deliver-library ((o proj current-project*))
   "build a library out of given project name"
   (let proj (projects* proj)
-    (prn proj)
     (apply pack-lib (<arc>unpkg proj!name) proj!desc (map norm proj!deps)
                     (map source-name (sources proj)))))
 
@@ -256,7 +258,7 @@
     (build-cache)))
 
 ; straight from strings.arc
-(= re-match (fn (x y) (no (no ($.regexp-match x y)))))
+(= re-match (fn (x y) (no (no (<arc>$.regexp-match x y)))))
 
 (def query (re)
   "search regular expression re in package names and descriptions
