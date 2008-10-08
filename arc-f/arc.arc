@@ -2205,7 +2205,7 @@
   (w/uniq (gf ge)
     `(let ,ge ,endval
         ((rfn ,gf (,var)
-          (when (and ,var (no (is ,var ,ge)))
+          (when (and ,var (symeval!no (symeval!is ,var ,ge)))
             ,@body
             (,gf ,expr)))
          ,expr))))
@@ -3265,12 +3265,74 @@
     (push current-load-file* load-file-stack*)
     (= current-load-file* file)
     (after
-      (w/uniq eof
-        (w/infile f file
-          (whiler e (read f eof) eof
-            (eval (hook:cxt-ref-d context e)))))
+      (w/infile f file
+        (if (is (downcase (cut file -5)) ".larc")
+          (load-literate-arc f context hook)
+          (load-slurp f context hook)))
       (do (= current-load-file* (pop load-file-stack*))
           nil))))
+
+(def load-slurp (p context hook)
+  (with (e   nil
+         eof (uniq))
+    (while (isnt (= e (read p eof)) eof)
+      (eval (hook:cxt-ref-d context e)))))
+
+(def load-literate-arc (p context hook)
+  (let (docs maybe-code code
+        bldg bldg-section) nil
+    (= docs
+       (fn ()
+         (let l (readline p)
+           (if
+             (no l)
+               ()
+             (empty-line l)
+               (maybe-code)
+               (docs))))
+       maybe-code
+       (fn ()
+         (let l (readline p)
+           (if
+             (no l)
+               ()
+             (empty-line l)
+               (maybe-code)
+             (indented-line l)
+               (do (= bldg-section (outstring))
+                   (disp l bldg-section)
+                   (code))
+               (docs))))
+       code
+       (fn ()
+         (let l (readline p)
+           (if
+             (no l)
+               (do (disp (inside bldg-section) bldg)
+                   ())
+             (empty-line l)
+               (do (disp (inside bldg-section) bldg)
+                   (maybe-code))
+             (indented-line l)
+               (do (disp l bldg-section)
+                   (code))
+               (docs)))))
+    (= bldg (outstring))
+    (docs)
+    (w/instring p (inside bldg)
+      (load-slurp p context hook))))
+
+(def empty-line (l)
+  (all whitec l))
+(def indented-line (l)
+  (or (space-indented-line l)
+      (tab-indented-line l)))
+(def space-indented-line (l)
+  (and (>= (len l) 4)
+       (is #\space l.0 l.1 l.2 l.3)))
+(def tab-indented-line (l)
+  (and (>= (len l) 1)
+       (is #\tab l.0)))
 
 (= required-files* (table))
 (= (required-files* (load-resolve "arc.arc")) t)
