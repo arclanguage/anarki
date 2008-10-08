@@ -322,12 +322,16 @@
 ; in any of the above interfaces.  Users of this
 ; interface are warned that it could break their
 ; code at any random time.
-(interface <arc>v3-exp)
+(interface <arc>v3-exp
+  <arc>v3
+  bit-and bit-or bit-not bit-xor bit-shift)
 ; if you want to propose a new interface for <arc>v4,
 ; provide it first in the form <arc>v3-your-interface-exp
 ; :s/your-interface/whatever you want/
 ; i.e. with the -exp tag to denote its experimental
 ; status for 3F
+(interface <arc>v3-bitops-exp
+  bit-and bit-or bit-not bit-xor bit-shift)
 (interface <arc>v3-your-interface-exp)
 
 ; NOTE! THIS INTERFACE EXISTS ONLY FOR DOCUMENTATION PURPOSES
@@ -1150,9 +1154,9 @@
       (cons (f (car xs) (cadr xs))
             (pair (cddr xs) f))))
 
-(mac $ body
+(mac $ (x)
    " Allows access to the underlying Scheme. "
-   (list 'seval (cons 'quasiquote body)))
+   `(seval ',(unpkg x)))
 
 (def assoc (key al)
   " Finds a (key value) pair in an associated list.
@@ -2566,9 +2570,10 @@
 
 (def readline ((o str (stdin)))
   " Reads a string terminated by a newline from the stream `str'. "
-  (awhen (readc str)
+  (when (peekc str)
     (tostring 
-      (writec it)
+      ; can/should be improved by making this seamless check for
+      ; \r, \r\n, \n, or \n\r terminators
       (whiler c (readc str) #\newline
         (writec c)))))
 
