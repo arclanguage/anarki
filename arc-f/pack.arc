@@ -74,7 +74,7 @@
   (let name (unpkg name)
     (when (or force (no (loaded* name)))
       (prn:string "Loading " name)
-      (if (some [let path (string _ "/" name ".pack")
+      (if (some [let path (file-join _  (string name ".pack"))
                    (when (dir-exists path)
                      (load-dir path))]
                 search-path*)
@@ -83,7 +83,7 @@
 
 (def load-dir (path)
   "load a library in a directory"
-  (let files (map [string path "/src/" _] (sort < (dir:string path "/src")))
+  (let files (map [file-join path "src" _] (sort < (dir:file-join path "src")))
     ; if one file doesn't exist load will raise an error
     (each _ files
       (prn:string "Loading " _) 
@@ -105,7 +105,7 @@
 
 (def build-deps (deps out-dir)
   "create a file in out-dir named 0 that loads specified dependencies"
-  (w/stdout (outfile:string out-dir "/src/0")
+  (w/stdout (outfile:file-join out-dir "src" "0")
     (each dep deps 
       (write `(require ,(if (is (type dep) 'sym) `',dep dep)))
       (prn))))
@@ -125,13 +125,13 @@
           (prn "!! Package may be broken"))
         (do
           (mkdir out) ; package directory
-          (mkdir:string out "/src"))) ; dir of source files
-      (w/stdout (outfile:string out "/desc")
+          (mkdir:file-join out "src"))) ; dir of source files
+      (w/stdout (outfile:file-join out "desc")
         (write description))
       (when deps
         (build-deps deps out))
       (each f files
-        (cp (car f) (string out "/src/" (cdr f))))))
+        (cp (car f) (file-join out "src" (cdr f))))))
   'done)
 
 ; integration with require
@@ -257,10 +257,10 @@
                           (dir p)))
         (each pack packs
           (write:string pack ":" #\newline
-                        (readfile1:string p "/" pack "/desc")))))))
+                        (readfile1:file-join p pack "desc")))))))
 
 (def ensure-cache ()
-  (unless (file-exists:string cache-dir* "/cache")
+  (unless (file-exists:file-join cache-dir* "cache")
     (build-cache)))
 
 ; straight from strings.arc
@@ -273,8 +273,9 @@
   ; !! readfile in arc-f gives a strange error: 
   ; Error: "Can't get reference #3(tagged <arc>mac #<procedure>)"
   ; substituted with readall:infile
-  (let all (readfile (string cache-dir* "/cache"))
+  (let all (readfile (file-join cache-dir* "cache"))
     (each result (keep [re-match re _] all)
       (prn "Found: ")
       (prn result)
       (prn "---"))))
+
