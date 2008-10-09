@@ -381,7 +381,8 @@
                                               #t
                                               (lambda () #f))
                   (let ((f-path
-                         (load-resolve (string-append pak ".arc"))))
+                         (or (load-resolve (string-append pak ".arc"))
+                             (load-resolve (string-append pak ".larc")))))
                     (if f-path
 			(ar-funcall1 (eval '__<arc>require) f-path)
 			;; try to load it as a library
@@ -1957,9 +1958,6 @@
   (lambda (file)
     (or (load-resolve file)
         (err "'load-resolve can't resolve file path for load spec: " file))))
-
-(define e-path (lambda (p)
-		 (path->string (path->complete-path p))))
 
 (define (load-resolve file)
   (let ((e-path (lambda (p)
