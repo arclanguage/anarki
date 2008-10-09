@@ -53,6 +53,7 @@
 
 (in-package pack)
 (using <arc>v3)
+(using <arc>v3-packages)
 (using <files>v1)
 (interface loading add-path use)
 (interface project defproject proj-load deliver-library)
@@ -70,7 +71,7 @@
 
 (def use (name (o force))
   "load a package if it hasn't been already loaded"
-  (let name (<arc>unpkg name)
+  (let name (unpkg name)
     (when (or force (no (loaded* name)))
       (prn:string "Loading " name)
       (if (some [let path (string _ "/" name ".pack")
@@ -194,7 +195,7 @@
   "build a library out of given project name"
   (let proj (projects* proj)
     (prn proj)
-    (apply pack-lib (<arc>unpkg proj!name) proj!desc (map norm proj!deps)
+    (apply pack-lib (unpkg proj!name) proj!desc (map norm proj!deps)
                     (map source-name (sources proj)))))
 
 (mac defproject (name deps description . ordered-files)
@@ -213,12 +214,16 @@
 
 (def mk-stub (name (o parent "."))
   "make a stub for a project"
-  (let d (string parent "/" (<arc>unpkg name))
+  (let d (file-join parent (unpkg name))
     (when (dir-exists d)
       (err "Directory already exists!"))
     (mkdir d)
-    (w/stdout (outfile:string d "/proj.arc")
-      (prn "(<pack>defproject " (<arc>unpkg name) " () ; put here list of dependencies")
+    (w/stdout (outfile:file-join d "proj.arc")
+      (prn)
+      (prn "(in-package " (unpkg name) ")")
+      (prn "(using <pack>project)")
+      (prn)
+      (prn "(defproject " (unpkg name) " () ; put here list of dependencies")
       (prn "  \"project description\"")
       (prn "  ; put here your files")
       (prn "  )")
@@ -265,7 +270,7 @@
   ; !! readfile in arc-f gives a strange error: 
   ; Error: "Can't get reference #3(tagged <arc>mac #<procedure>)"
   ; substituted with readall:infile
-  (let all (readall:infile (string cache-dir* "/cache"))
+  (let all (readfile (string cache-dir* "/cache"))
     (each result (keep [re-match re _] all)
       (prn "Found: ")
       (prn result)
