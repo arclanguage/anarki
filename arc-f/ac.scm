@@ -384,12 +384,12 @@
                          (or (load-resolve (string-append pak ".arc"))
                              (load-resolve (string-append pak ".larc")))))
                     (if f-path
-			(ar-funcall1 (eval '__<arc>require) f-path)
-			;; try to load it as a library
-			(ar-funcall1 (eval '__<arc>require) 
-				     (canonicalize-symbol
-				      (string->symbol pak))))
-		    (set! int-list (interface-of-package pkg sym)))))
+                        (ar-funcall1 (eval '__<arc>require) f-path)
+                        ;; try to load it as a library
+                        (ar-funcall1 (eval '__<arc>require) 
+                                     (canonicalize-symbol
+                                      (string->symbol pak))))
+                    (set! int-list (interface-of-package pkg sym)))))
             ; check if package interface *still* doesn't exist
             (if (not int-list)
                 (error "Package interface does not exist: " ss))
@@ -1961,7 +1961,7 @@
 
 (define (load-resolve file)
   (let ((e-path (lambda (p)
-		  (path->string (path->complete-path p)))))
+                  (path->string (path->complete-path p)))))
     (cond
      ((not (string? file))
       (err "load-resolve expects a string"))
@@ -1970,7 +1970,7 @@
      ;; absolute?, or can't find arc_dir?
      ((or (absolute-path? file)
 	  (complete-path? file)
-	  (not arc-path))
+          (not arc-path))
       #f)
      ((file-exists? (build-path arc-path file))
       (e-path (build-path arc-path file)))
