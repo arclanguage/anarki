@@ -384,10 +384,12 @@
                          (or (load-resolve (string-append pak ".arc"))
                              (load-resolve (string-append pak ".larc")))))
                     (if f-path
-                        (begin
-                          (ar-funcall1 (eval '__<arc>require)
-                                       f-path)
-                          (set! int-list (interface-of-package pkg sym)))))))
+			(ar-funcall1 (eval '__<arc>require) f-path)
+			;; try to load it as a library
+			(ar-funcall1 (eval '__<arc>require) 
+				     (canonicalize-symbol
+				      (string->symbol pak))))
+		    (set! int-list (interface-of-package pkg sym)))))
             ; check if package interface *still* doesn't exist
             (if (not int-list)
                 (error "Package interface does not exist: " ss))
@@ -1958,26 +1960,24 @@
         (err "'load-resolve can't resolve file path for load spec: " file))))
 
 (define (load-resolve file)
-  (call/cc
-    (lambda (break)
-      (path->string
-        (path->complete-path
-          (cond
-            ((not (string? file))
-             (err "load-resolve expects a string"))
-            ((file-exists? file)
-             file)
-            ; absolute?, or can't find arc_dir?
-            ((or (absolute-path? file)
-                 (complete-path? file)
-                 (not arc-path))
-             (break #f))
-            ((file-exists? (build-path arc-path file))
-             (build-path arc-path file))
-            ((file-exists? (build-path arc-path "lib" file))
-             (build-path arc-path "lib" file))
-            (#t
-             (break #f))))))))
+  (let ((e-path (lambda (p)
+		  (path->string (path->complete-path p)))))
+    (cond
+     ((not (string? file))
+      (err "load-resolve expects a string"))
+     ((file-exists? file)
+      (e-path file))
+     ;; absolute?, or can't find arc_dir?
+     ((or (absolute-path? file)
+	  (complete-path? file)
+	  (not arc-path))
+      #f)
+     ((file-exists? (build-path arc-path file))
+      (e-path (build-path arc-path file)))
+     ((file-exists? (build-path arc-path "lib" file))
+      (e-path (build-path arc-path "lib" file)))
+     (#t
+      #f))))
 
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
@@ -2289,3 +2289,4 @@
 (xdef 'cxt-ref-d context-ref-reuse!)
 
 )
+

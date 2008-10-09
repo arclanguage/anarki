@@ -43,6 +43,11 @@
       (flush-output (current-output-port))
       (acompile arc.arc)))
 
+;; load the whole pack.arc for the moment
+;; in future we should load on startup only the part relative to
+;; library loading
+(aload (from-arc "pack.arc"))
+
 (define ~/.arcshrc
         (path->string (build-path (find-system-path 'home-dir) ".arcshrc")))
 (when (file-exists? ~/.arcshrc)
@@ -53,9 +58,7 @@
   ; If we have a command line argument that represents a file-name of
   ; a program.
   (begin
-    (call-with-input-file
-      (vector-ref argv 0)
-      aload1)
+    (aload (vector-ref argv 0))
     (exit))
   ; else
   (tl))
