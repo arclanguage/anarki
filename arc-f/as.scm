@@ -43,6 +43,11 @@
       (flush-output (current-output-port))
       (acompile arc.arc)))
 
+;; load the whole pack.arc for the moment
+;; in future we should load on startup only the part relative to
+;; library loading
+(aload (from-arc "pack.arc"))
+
 (define ~/.arcshrc
         (path->string (build-path (find-system-path 'home-dir) ".arcshrc")))
 (when (file-exists? ~/.arcshrc)

@@ -53,6 +53,7 @@
 
 (in-package pack)
 (using <arc>v3)
+(load (<arc>load-resolve "lib/files.arc"))
 (using <files>v1)
 (interface loading add-path use)
 (interface project defproject proj-load deliver-library)
@@ -135,12 +136,13 @@
 
 ; integration with require
 ; based on an idea by AmkG
-(let old require
+;(let old require
   ; doesn't work correctly if pack.arc is loaded more than once...
-  (def require (what)
+  (defm require ((t what sym))
     "require that automatically uses 'use when argument is a symbol
      !! should be handled  with (defm require ((t ..."
-    (if (is (type what) 'sym) (use what) (old what))))
+    (use what))
+;    (if (is (type what) 'sym) (use what) (old what))))
 
 ; library development management
 
