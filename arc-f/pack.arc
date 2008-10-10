@@ -70,19 +70,21 @@
   (push path search-path*))
 
 (def use (name (o force))
-  "load a package if it hasn't been already loaded"
+  "load a library or a project if it hasn't been already loaded"
   (let name (<arc>unpkg name)
     (when (or force (no (loaded* name)))
       (prn:string "Loading " name)
-      (if (some [let path (string _ "/" name ".pack")
-                   (when (dir-exists path)
-                     (load-dir path))]
-                search-path*)
+      (if (or (some [let path (string _ "/" name ".pack")
+                      (when (dir-exists path)
+                        (load-dir path))]
+                    search-path*)
+              (some [try-load-project _ name] search-path*))
          (do (= (loaded* name) t) 'done)
-         (err:string "Couldn't find library " name)))))
+         (err:string "Couldn't find library or project " name)))))
 
 (def load-dir (path)
   "load a library in a directory"
+  (prn "Loading as a library")
   (let files (map [string path "/src/" _] (sort < (dir:string path "/src")))
     ; if one file doesn't exist load will raise an error
     (each _ files
@@ -192,6 +194,15 @@
       (load (source-name f))
       (source-new-date f))))
 
+(def try-load-project (path name)
+  "if path/name/proj.arc exists then load it"
+  (let project-file (string path "/" name "/proj.arc")
+    (when (file-exists project-file)
+      (prn "Loading as a project")
+      (load project-file)
+      (proj-load nil name)
+      t)))
+
 (def norm (x)
   (if (isa x 'sym) (<arc>unpkg x) x))
 
@@ -207,7 +218,7 @@
    make the project the current one
    TODO: !! for the moment path must be relative to arc.sh directory !!"
   (w/uniq sname
-    `(let ,sname ',name
+    `(let ,sname (<arc>unpkg ',name)
        (= (projects* ,sname) (inst 'project 'name ,sname 
                                             'desc ,description
                                             'deps ',deps
