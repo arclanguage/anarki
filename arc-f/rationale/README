@@ -1,0 +1,14 @@
+
+This directory contains defenses for why "arc-f is the way it is".
+
+There are many paths to programming language design.  From the
+point of view of starting a new language, we can glimpse, a
+little, which path may, or may not, be promising.  But we can
+only glimpse; the truth may only be discovered, for certain, by
+actually entering the path.
+
+In many ways, some decisions end up being arbitrary.  The exact
+tradeoffs between competing possibilities may not be very clear,
+or may be small enough to potentially be in the noise.
+
+

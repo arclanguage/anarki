@@ -322,12 +322,16 @@
 ; in any of the above interfaces.  Users of this
 ; interface are warned that it could break their
 ; code at any random time.
-(interface <arc>v3-exp)
+(interface <arc>v3-exp
+  <arc>v3
+  bit-and bit-or bit-not bit-xor bit-shift)
 ; if you want to propose a new interface for <arc>v4,
 ; provide it first in the form <arc>v3-your-interface-exp
 ; :s/your-interface/whatever you want/
 ; i.e. with the -exp tag to denote its experimental
 ; status for 3F
+(interface <arc>v3-bitops-exp
+  bit-and bit-or bit-not bit-xor bit-shift)
 (interface <arc>v3-your-interface-exp)
 
 ; NOTE! THIS INTERFACE EXISTS ONLY FOR DOCUMENTATION PURPOSES
@@ -609,7 +613,7 @@
 (docstring 'compose 'fn 'args
   " Connects several functions so that the
     result of the rightmost function is
-    given to the function to the right,
+    given to the function to the left,
     and so on.
       ((compose a b) x)  =>  (a (b x))
     See also [[>>]] [[complement]] ")
@@ -955,14 +959,14 @@
 
 (mac each-skip-early-out (start var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
-    starting at start.  If the last expression in `body' returns nil,
+    starting at `start'.  If the last expression in `body' returns nil,
     ends iteration.
     See also [[each]] [[each-skip]] [[each-early-out]] "
   `(symeval!<base>each ,expr ,start (fn (,var) ,@body)))
 
 (mac each-skip (start var expr . body)
   " Performs `body' for each element of the sequence returned by `expr',
-    starting at start.
+    starting at `start'.
     See also [[each]] [[each-skip-early-out]] [[each-early-out]] "
   `(symeval!<base>each ,expr ,start (fn (,var) ,@body t)))
 
@@ -984,10 +988,9 @@
   " Returns the result of applying `cdr' repeatedly
     by `n' times on `xs'.
     See also [[cut]] [[firstn]] "
-  (nthcdr-internal n (scanner xs)))
+  (if n (nthcdr-internal n (scanner xs))))
 (def nthcdr-internal (n xs)
-  (if (no n)  xs
-      (> n 0) (nthcdr-internal (- n 1) (cdr xs))
+  (if (> n 0) (nthcdr-internal (- n 1) (cdr xs))
               xs))
 
 ; scanners
@@ -1151,9 +1154,9 @@
       (cons (f (car xs) (cadr xs))
             (pair (cddr xs) f))))
 
-(mac $ body
+(mac $ (x)
    " Allows access to the underlying Scheme. "
-   (list 'seval (cons 'quasiquote body)))
+   `(seval ',(unpkg x)))
 
 (def assoc (key al)
   " Finds a (key value) pair in an associated list.
@@ -1210,9 +1213,12 @@
        ,expr)))
 
 ; Rtm prefers to overload + to do this
+; almkglor prefers to do this in 'join
 
 (def join args
   " Joins all scanner arguments together.
+    The type of the result is the type of the
+    first non-nil argument.
     See also [[cons]] [[+]] "
   (join-inner args))
 (def join-inner (args)
@@ -1242,7 +1248,7 @@
     See also [[copy]] "
   (let v nil
     (each x xs
-      (= v (cons x v)))
+      (set v (cons x v)))
     (unscan xs v)))
 
 (mac w/uniq (names . body)
@@ -1251,7 +1257,7 @@
     See also [[uniq]] "
   (if (acons names)
       `(with ,(apply + nil (map1 (fn (n) (list n '(uniq)))
-                             names))
+                                 names))
          ,@body)
       `(let ,names (uniq) ,@body)))
 
@@ -1373,6 +1379,19 @@
     See also [[is]] "
   (if (isa x 'fn) x (fn (_) (is _ x))))
 
+; NOTE: arguably, 'some and 'find use 'reclist and 'recstring only
+; because of the lack of nice type-based methods in classic Arc.
+; This should probably be implemented with:
+;   (def some (test seq)
+;     (with (rv nil
+;            f (testify test))
+;       (each-early-out i seq
+;         (if (f i)
+;             (do (assert rv)
+;                 nil)
+;             t))
+;       rv))
+; The above will probably be more efficient in Arc-F
 (def some (test seq)
   " Determines if at least one element of `seq' satisfies `test'.
     See also [[ormap]] [[all]] [[mem]] [[in]] [[pos]] "
@@ -1647,7 +1666,7 @@
     Returns a sequence containing the concatenation of the results
     of the function.
     See also [[map]] [[join]] "
-  (apply + nil (apply map f args)))
+  (join-inner (apply map f args)))
 
 (def firstn (n xs)
   " Returns the first `n' elements of the given sequence
@@ -2172,7 +2191,7 @@
        (while (no ,gdone)
          (let ,gres ,expr
            (if (is ,gres ,eof)
-               (= ,gdone t)
+               (set ,gdone t)
                (push ,gres ,gacc))))
        (rev ,gacc))))
 
@@ -2186,7 +2205,7 @@
   (w/uniq (gf ge)
     `(let ,ge ,endval
         ((rfn ,gf (,var)
-          (when (and ,var (no (is ,var ,ge)))
+          (when (and ,var (symeval!no (symeval!is ,var ,ge)))
             ,@body
             (,gf ,expr)))
          ,expr))))
@@ -2207,7 +2226,7 @@
 (def string args
   " Creates a string from its arguments
     See also [[sym]] "
-  (apply + "" (map [coerce _ 'string] args)))
+  (join-inner (map [coerce _ 'string] args)))
 
 (def flat (x (o stringstoo))
   " Flattens a nested list.
@@ -2551,9 +2570,10 @@
 
 (def readline ((o str (stdin)))
   " Reads a string terminated by a newline from the stream `str'. "
-  (awhen (readc str)
+  (when (peekc str)
     (tostring 
-      (writec it)
+      ; can/should be improved by making this seamless check for
+      ; \r, \r\n, \n, or \n\r terminators
       (whiler c (readc str) #\newline
         (writec c)))))
 
@@ -3245,21 +3265,88 @@
     (push current-load-file* load-file-stack*)
     (= current-load-file* file)
     (after
-      (w/uniq eof
-        (w/infile f file
-          (whiler e (read f eof) eof
-            (eval (hook:cxt-ref-d context e)))))
+      (w/infile f file
+        (if (is (downcase (cut file -5)) ".larc")
+          (load-literate-arc f context hook)
+          (load-slurp f context hook)))
       (do (= current-load-file* (pop load-file-stack*))
           nil))))
+
+(def load-slurp (p context hook)
+  (with (e   nil
+         eof (uniq))
+    (while (isnt (= e (read p eof)) eof)
+      (eval (hook:cxt-ref-d context e)))))
+
+(def load-literate-arc (p context hook)
+  (let (docs maybe-code code
+        bldg bldg-section) nil
+    (= docs
+       (fn ()
+         (let l (readline p)
+           (if
+             (no l)
+               ()
+             (empty-line l)
+               (maybe-code)
+               (docs))))
+       maybe-code
+       (fn ()
+         (let l (readline p)
+           (if
+             (no l)
+               ()
+             (empty-line l)
+               (maybe-code)
+             (indented-line l)
+               (do (= bldg-section (outstring))
+                   (disp l bldg-section)
+                   (disp #\newline bldg-section)
+                   (code))
+               (docs))))
+       code
+       (fn ()
+         (let l (readline p)
+           (if
+             (no l)
+               (do (disp (inside bldg-section) bldg)
+                   ())
+             (empty-line l)
+               (do (disp (inside bldg-section) bldg)
+                   (maybe-code))
+             (indented-line l)
+               (do (disp l bldg-section)
+                   (disp #\newline bldg-section)
+                   (code))
+               (docs)))))
+    (= bldg (outstring))
+    (docs)
+    (w/instring p (inside bldg)
+      (load-slurp p context hook))))
+
+(def empty-line (l)
+  (all whitec l))
+(def indented-line (l)
+  (or (space-indented-line l)
+      (tab-indented-line l)))
+(def space-indented-line (l)
+  (and (>= (len l) 4)
+       (is #\space l.0 l.1 l.2 l.3)))
+(def tab-indented-line (l)
+  (and (>= (len l) 1)
+       (is #\tab l.0)))
 
 (= required-files* (table))
 (= (required-files* (load-resolve "arc.arc")) t)
 
-(def require (file)
+(def require what
   " Loads `file' if it has not yet been `require'd.  Can be fooled by changing
     the name ((require \"foo.arc\") as opposed to (require \"./foo.arc\")), but
     this should not be a problem.
     See also [[load]]. "
+  (err "'require can't understand arguments:" what))
+
+(defm require ((t file string))
   (let file (load-resolve file)
     (or (required-files* file)
         (do
