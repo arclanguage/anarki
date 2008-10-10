@@ -3339,12 +3339,12 @@
 (= required-files* (table))
 (= (required-files* (load-resolve "arc.arc")) t)
 
-(def require (what)
+(def require what
   " Loads `file' if it has not yet been `require'd.  Can be fooled by changing
     the name ((require \"foo.arc\") as opposed to (require \"./foo.arc\")), but
     this should not be a problem.
     See also [[load]]. "
-  nil)
+  (err "'require can't understand arguments:" what))
 
 (defm require ((t file string))
   (let file (load-resolve file)

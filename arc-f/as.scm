@@ -58,9 +58,7 @@
   ; If we have a command line argument that represents a file-name of
   ; a program.
   (begin
-    (call-with-input-file
-      (vector-ref argv 0)
-      aload1)
+    (aload (vector-ref argv 0))
     (exit))
   ; else
   (tl))

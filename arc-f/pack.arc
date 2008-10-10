@@ -53,7 +53,7 @@
 
 (in-package pack)
 (using <arc>v3)
-(load (<arc>load-resolve "lib/files.arc"))
+(using <arc>v3-packages)
 (using <files>v1)
 (interface loading add-path use)
 (interface project defproject proj-load deliver-library)
@@ -74,7 +74,7 @@
   (let name (<arc>unpkg name)
     (when (or force (no (loaded* name)))
       (prn:string "Loading " name)
-      (if (or (some [let path (string _ "/" name ".pack")
+      (if (or (some [let path (file-join _ (string name ".pack"))
                       (when (dir-exists path)
                         (load-dir path))]
                     search-path*)
@@ -85,7 +85,7 @@
 (def load-dir (path)
   "load a library in a directory"
   (prn "Loading as a library")
-  (let files (map [string path "/src/" _] (sort < (dir:string path "/src")))
+  (let files (map [file-join path "src" _] (sort < (dir:file-join path "src")))
     ; if one file doesn't exist load will raise an error
     (each _ files
       (prn:string "Loading " _) 
@@ -107,7 +107,7 @@
 
 (def build-deps (deps out-dir)
   "create a file in out-dir named 0 that loads specified dependencies"
-  (w/stdout (outfile:string out-dir "/src/0")
+  (w/stdout (outfile:file-join out-dir "src" "0")
     (each dep deps 
       (write `(require ,(if (is (type dep) 'sym) `',dep dep)))
       (prn))))
@@ -127,13 +127,13 @@
           (prn "!! Package may be broken"))
         (do
           (mkdir out) ; package directory
-          (mkdir:string out "/src"))) ; dir of source files
-      (w/stdout (outfile:string out "/desc")
+          (mkdir:file-join out "src"))) ; dir of source files
+      (w/stdout (outfile:file-join out "desc")
         (write description))
       (when deps
         (build-deps deps out))
       (each f files
-        (cp (car f) (string out "/src/" (cdr f))))))
+        (cp (car f) (file-join out "src" (cdr f))))))
   'done)
 
 ; integration with require
@@ -209,7 +209,7 @@
 (def deliver-library ((o proj current-project*))
   "build a library out of given project name"
   (let proj (projects* proj)
-    (apply pack-lib (<arc>unpkg proj!name) proj!desc (map norm proj!deps)
+    (apply pack-lib (unpkg proj!name) proj!desc (map norm proj!deps)
                     (map source-name (sources proj)))))
 
 (mac defproject (name deps description . ordered-files)
@@ -228,12 +228,16 @@
 
 (def mk-stub (name (o parent "."))
   "make a stub for a project"
-  (let d (string parent "/" (<arc>unpkg name))
+  (let d (file-join parent (unpkg name))
     (when (dir-exists d)
       (err "Directory already exists!"))
     (mkdir d)
-    (w/stdout (outfile:string d "/proj.arc")
-      (prn "(<pack>defproject " (<arc>unpkg name) " () ; put here list of dependencies")
+    (w/stdout (outfile:file-join d "proj.arc")
+      (prn)
+      (prn "(in-package " (unpkg name) ")")
+      (prn "(using <pack>project)")
+      (prn)
+      (prn "(defproject " (unpkg name) " () ; put here list of dependencies")
       (prn "  \"project description\"")
       (prn "  ; put here your files")
       (prn "  )")
@@ -264,10 +268,10 @@
                           (dir p)))
         (each pack packs
           (write:string pack ":" #\newline
-                        (readfile1:string p "/" pack "/desc")))))))
+                        (readfile1:file-join p pack "desc")))))))
 
 (def ensure-cache ()
-  (unless (file-exists:string cache-dir* "/cache")
+  (unless (file-exists:file-join cache-dir* "cache")
     (build-cache)))
 
 ; straight from strings.arc
@@ -280,8 +284,9 @@
   ; !! readfile in arc-f gives a strange error: 
   ; Error: "Can't get reference #3(tagged <arc>mac #<procedure>)"
   ; substituted with readall:infile
-  (let all (readall:infile (string cache-dir* "/cache"))
+  (let all (readfile (file-join cache-dir* "cache"))
     (each result (keep [re-match re _] all)
       (prn "Found: ")
       (prn result)
       (prn "---"))))
+
