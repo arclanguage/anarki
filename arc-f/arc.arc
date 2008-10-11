@@ -324,7 +324,8 @@
 ; code at any random time.
 (interface <arc>v3-exp
   <arc>v3
-  bit-and bit-or bit-not bit-xor bit-shift)
+  bit-and bit-or bit-not bit-xor bit-shift
+  log)
 ; if you want to propose a new interface for <arc>v4,
 ; provide it first in the form <arc>v3-your-interface-exp
 ; :s/your-interface/whatever you want/
