@@ -8,6 +8,7 @@
 
 ;(profiling-enabled #t)
 ;(profiling-record-enabled #f)
+; http://docs.plt-scheme.org/errortrace/using-errortrace.html
 
 ;find the arc directory
 ;NOTE!  Might not be very portable.
