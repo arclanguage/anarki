@@ -228,7 +228,7 @@
 
 (def mk-stub (name (o parent "."))
   "make a stub for a project"
-  (let d (file-join parent (unpkg name))
+  (let d (file-join parent (string:unpkg name))
     (when (dir-exists d)
       (err "Directory already exists!"))
     (mkdir d)
