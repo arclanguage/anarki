@@ -106,7 +106,7 @@ constructing function below.
 As you can see from the comment above, lazy scanners might
 inadvertently execute the expression multiple times if threads
 are involved.  In general you probably should not cause side
-effects when using lazy scanners.
+effects when using lazy scanners; instead, write functionally.
 
       (let rv (cons nil nil)
 
@@ -132,9 +132,18 @@ themselves, ensuring laziness.
         (annotate 'lazy-scanner-type
           rv)))
 
+
+Using `lazy-destruct`
+---------------------
+
 `lazy-destruct` accepts only one expression.  This expression
 should evaluate to a `cons` cell, or other type which overloads
 `car` and `cdr`.
+
+This variation is useful if you will end up computing the first
+element of the scanner together with the succeeding elements.  In
+such a case you may as well just return both the `car` and `cdr`
+elements together.
     
     (mac lazy-destruct (c)
       " Creates a scanner from a single expression
@@ -143,7 +152,10 @@ should evaluate to a `cons` cell, or other type which overloads
         'car or 'cdr is applied to this scanner.
         See also [[lazy-scanner]] [[generate]] "
       `(symeval!lazy-destruct-f (fn () ,c)))
-    
+
+Again, the pattern is for a macro to expand to an application of
+a global function.
+
     (def lazy-destruct-f (cf)
       (withs (rv (cons nil nil)
               destruct
@@ -153,6 +165,12 @@ should evaluate to a `cons` cell, or other type which overloads
                         d (cdr v))
                   (= (car rv) (delay a))
                   (= (cdr rv) (delay d)))))
+
+The `destruct` function above is a function which executes the
+given expression, and then destructures the result.  Since both
+the `car` and `cdr` fields become available, the `destruct`
+function replaces the fields with delaying thunks for the values.
+
         (= (car rv)
            (fn ()
              (destruct)
@@ -161,13 +179,28 @@ should evaluate to a `cons` cell, or other type which overloads
            (fn ()
              (destruct)
              ((cdr rv))))
+
+Either of `car` or `cdr` on a `lazy-destruct` scanner will
+trigger the evaluation of the given singular expression.  We then
+extract the data.
+
         (annotate 'lazy-scanner-type
           rv)))
-    
-    ; ensure constructing a new lazy-scanner from
-    ; another is truly lazy
-    ; this gets to affect pretty much every sequence-building
-    ; thing in arc.arc
+
+
+Making `map` and friends lazy
+-----------------------------
+
+In order to make the sequence generation functions (such as
+`keep`, `map`, etc.) themselves lazy, we also include a
+definition for `<base>collect-on`.  This definition ensures that
+the result is still a lazy scanner.  It affects any algorithms
+which use `w/collect-on`.
+
+This function works by setting up two coroutines.  One couroutine
+is the caller of the `w/collect-on` algorithm; the other one is
+the body of the `w/collect-on` form.
+
     (defm <base>collect-on ((t seq lazy-scanner-type) bf)
       (point return
         (bf
@@ -181,7 +214,14 @@ should evaluate to a `cons` cell, or other type which overloads
                    (body-return i)))))))
         ; return might have been reassigned
         (return nil)))
-    
+
+Notice how we abuse the `return` variable.  This is necessary in
+order to properly work out what point to return to.
+
+
+Generating an infinite lazy scanner
+-----------------------------------
+
     (def generate (f i)
       " Creates an infinite lazy sequence from the
         continued application of `f' on `i'.
