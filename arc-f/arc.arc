@@ -1379,33 +1379,12 @@
     See also [[is]] "
   (if (isa x 'fn) x (fn (_) (is _ x))))
 
-; NOTE: arguably, 'some and 'find use 'reclist and 'recstring only
-; because of the lack of nice type-based methods in classic Arc.
-; This should probably be implemented with:
-;   (def some (test seq)
-;     (with (rv nil
-;            f (testify test))
-;       (each-early-out i seq
-;         (if (f i)
-;             (do (assert rv)
-;                 nil)
-;             t))
-;       rv))
-; The above will probably be more efficient in Arc-F
 (def some (test seq)
-  " Determines if at least one element of `seq' satisfies `test'.
-    See also [[ormap]] [[all]] [[mem]] [[in]] [[pos]] "
-  (let f (testify test)
-    (some-internal seq f)))
-(def some-internal (seq f)
-  (reclist f:car (scanner seq)))
-(defm some-internal ((t seq string) f)
-  (recstring f:seq seq))
-(defm some-internal ((t seq table) f)
-  (let rv nil
+  (with (rv nil
+         f (testify test))
     (each-early-out i seq
-        (set rv (f i))
-        (no rv))
+      (set rv (f i))
+      (no rv))
     rv))
 
 (def all (test seq) 
@@ -1631,18 +1610,11 @@
 (def find (test seq)
   " Returns the first element that matches the test function.
     See also [[mem]] [[some]] [[in]] "
-  (let f (testify test)
-    (find-internal seq f)))
-(def find-internal (seq f)
-  (reclist [let v (car_) (if (f v) v)] (scanner seq)))
-(defm find-internal ((t seq string) f)
-  (recstring [let v (seq _) (if (f v) v)] seq))
-(defm find-internal ((t seq table) f)
-  (let rv nil
-    (each-early-out v seq
-      (if (f v)
-          (do (set rv v)
-              nil)
+  (with (rv nil
+         f  (testify test))
+    (each-early-out i seq
+      (if (f i)
+          (do (set rv i) nil)
           t))
     rv))
 
