@@ -115,11 +115,7 @@
   (let* ((ss (symbol->string sym))
          (pm (regexp-match rex-is-package ss)))
     (if pm
-        (let ((rv (string->symbol (caddr pm))))
-          (cond
-            ((eq? rv 't)   '<>t)
-            ((eq? rv 'nil) '<>nil)
-            (#t            rv)))
+        (ar-string->symbol (caddr pm))
         sym)))
 
 (define (ar-symbol->string s)
@@ -127,6 +123,12 @@
     ((eq? s '<>t)   "t")
     ((eq? s '<>nil) "nil")
     (#t             (symbol->string s))))
+
+(define (ar-string->symbol s)
+  (cond
+    ((equal? s "t")   '<>t)
+    ((equal? s "nil") '<>nil)
+    (#t               (string->symbol s))))
 
 (define (package-of sym)
   (let ((rv (regexp-match rex-is-package (symbol->string sym))))
@@ -387,8 +389,7 @@
                         (ar-funcall1 (eval '__<arc>require) f-path)
                         ;; try to load it as a library
                         (ar-funcall1 (eval '__<arc>require) 
-                                     (canonicalize-symbol
-                                      (string->symbol pak))))
+                                     (ar-string->symbol pak)))
                     (set! int-list (interface-of-package pkg sym)))))
             ; check if package interface *still* doesn't exist
             (if (not int-list)
@@ -1699,9 +1700,16 @@
 
 (xdef 'uniq gensym)
 
-(xdef 'ccc call-with-current-continuation)
+(xdef 'ccc (lambda (ar)
+             (if (procedure? ar)
+                 (call-with-current-continuation ar)
+                 (call-with-current-continuation (lambda (k) (ar-funcall1 ar k))))))
 
-(xdef 'dynamic-wind dynamic-wind)
+(xdef 'dynamic-wind (lambda (a b c)
+                      (dynamic-wind
+                        (if (procedure? a) a (lambda () (ar-funcall0 a)))
+                        (if (procedure? b) b (lambda () (ar-funcall0 b)))
+                        (if (procedure? c) c (lambda () (ar-funcall0 c))))))
 
 (xdef 'infile  open-input-file)
 
@@ -1734,11 +1742,11 @@
 
 (xdef 'call-w/stdout
       (lambda (port thunk)
-        (parameterize ((current-output-port port)) (thunk))))
+        (parameterize ((current-output-port port)) (ar-funcall0 thunk))))
 
 (xdef 'call-w/stdin
       (lambda (port thunk)
-        (parameterize ((current-input-port port)) (thunk))))
+        (parameterize ((current-input-port port)) (ar-funcall0 thunk))))
 
 ; (readc stream)
 ; nil stream means stdout
@@ -1833,7 +1841,7 @@
                   ((char? x)      (case type
                                     ((<arc>int)    (char->ascii x))
                                     ((<arc>string) (string x))
-                                    ((<arc>sym)    (string->symbol (string x)))
+                                    ((<arc>sym)    (ar-string->symbol (string x)))
                                     (else          (err "Can't coerce" x type))))
                   ((integer? x)   (case type
                                     ((<arc>char)   (ascii->char x))
@@ -1845,7 +1853,7 @@
                                     ((<arc>string) (apply number->string x args))
                                     (else          (err "Can't coerce" x type))))
                   ((string? x)    (case type
-                                    ((<arc>sym)    (string->symbol x))
+                                    ((<arc>sym)    (ar-string->symbol x))
                                     ((<arc>cons)   (ac-niltree (string->list x)))
                                     ((<arc>int)    (or (apply string->number x args)
                                                   (err "Can't coerce" x type)))
@@ -1876,7 +1884,8 @@
                                  (let-values (((us them) (tcp-addresses out)))
                                    them))))))
 
-(xdef 'new-thread thread)
+(xdef 'new-thread (lambda (k)
+                    (thread (if (procedure? k) k (lambda () (ar-funcall0 k))))))
 (xdef 'kill-thread kill-thread)
 (xdef 'break-thread break-thread)
 
@@ -1932,9 +1941,10 @@
                   table))
 
 (xdef 'protect (lambda (during after)
-                  (dynamic-wind (lambda () #t) during after)))
-
-(xdef 'dynamic-wind dynamic-wind)
+                  (dynamic-wind
+                    (lambda () #t)
+                    (if (procedure? during) during (lambda () (ar-funcall0 during)))
+                    (if (procedure? after) after (lambda () (ar-funcall0 after))))))
 
 ; need to use a better seed
 
@@ -1957,7 +1967,7 @@
 (xdef 'load-resolve
   (lambda (file)
     (or (load-resolve file)
-        (err "'load-resolve can't resolve file path for load spec: " file))))
+        'nil)))
 
 (define (load-resolve file)
   (let ((e-path (lambda (p)
@@ -2013,12 +2023,13 @@
       (let ((expr (ar-read)))
         (if (and (ar-symbol? expr) (eq? (unpackaged-symbol expr) ':a))
             'done
-            (let ((val (arc-eval (context-ref cxt expr))))
-              ;(arc-eval `(<arc>input-history-update ',expr))
-              ;(arc-eval `(<arc>output-history-update ',val))
+            (let* ((post-cxt (context-ref cxt expr))
+                   (val      (arc-eval post-cxt)))
+              (arc-eval `(<arc>input-history-update (<axiom>quote ,post-cxt)))
+              (arc-eval `(<arc>output-history-update (<axiom>quote ,val)))
               (ar-write (ac-denil val))
               (namespace-set-variable-value! '__<arc>that val)
-              (namespace-set-variable-value! '__<arc>thatexpr expr)
+              (namespace-set-variable-value! '__<arc>thatexpr post-cxt)
               (newline)
               (tl2 cxt)))))))
 
@@ -2100,8 +2111,8 @@
      (lambda (k) 
        (lambda () 
          (with-handlers ((exn:fail? (lambda (c) 
-                                      (k (lambda () (errfn c)))))) 
-                        (f)))))))
+                                      (k (lambda () (ar-funcall1 errfn c)))))) 
+                        (ar-funcall0 f)))))))
 (xdef 'on-err on-err)
 
 (define (disp-to-string x)
@@ -2165,7 +2176,7 @@
           (ar-polymorph '(cxt) context-ref
             (ar-polymorph '(pkg) package-ref
               (lambda (com . rest)
-                (err "Can't get reference" com)))))))))
+                (err "Can't get reference (function call on inappropriate object)" com)))))))))
 
 (define (nth-set! lst n val)
   (set-car! (list-tail lst n) val))
@@ -2275,6 +2286,8 @@
                    (apply sync events)
                    (let ((rv (apply sync/timeout timeout events)))
                      (if rv rv 'nil)))))
+
+; packages
 
 (xdef 'cxt make-context)
 (xdef 'pkg the-package)

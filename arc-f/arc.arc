@@ -3670,7 +3670,7 @@
 (mac %%% () nil)
 
 ; used internally
-(def input-history-update (expr)
+(def <arc>input-history-update (expr)
   (= %%% %%
      %% %)
   (tostring (mac % () expr)))
@@ -3679,7 +3679,7 @@
    ^^ nil
    ^^^ nil)
 
-(def output-history-update (val)
+(def <arc>output-history-update (val)
   (= ^^^ ^^
      ^^ ^
      ^ val))
