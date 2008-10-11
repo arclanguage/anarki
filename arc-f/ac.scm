@@ -1089,6 +1089,7 @@
       ; note that we have inserted an argument...
       (ar-funcall1 (ar-get-call) fn))))
 
+; hot spot
 (define (ar-funcall1 fn arg1)
   (cond
     ((procedure? fn)
@@ -1111,6 +1112,7 @@
     (#t
       (ar-funcall2 (ar-get-call) fn arg1))))
 
+; hot spot (hotter than ar-funcall1)
 (define (ar-funcall2 fn arg1 arg2)
   (cond
     ((procedure? fn)
@@ -1225,6 +1227,7 @@
 (define (ar-monomethod hash generic)
   (vector 'monomethod hash generic))
 
+; hot spot
 (define (monomethod-lookup f arg)
   (hash-table-get (vector-ref f 1) (ar-type arg) (lambda () (vector-ref f 2))))
 
@@ -1251,7 +1254,7 @@
 
 (define (multimethod-subtable-nested lt spec)
   (if (eq? lt '())
-      (spec)
+      spec
       (let ((rv (make-hash-table 'equal)))
         (hash-table-put!
           rv (car lt) (multimethod-subtable-nested (cdr lt) spec))
@@ -1666,18 +1669,20 @@
 
 ; (type nil) -> bool
 
+; hot spot
 (define (ar-type x)
-  (cond ((eq? x 't)         '<arc>bool)
-        ((ar-false? x)      '<arc>bool)
-        ((ar-tagged? x)     (vector-ref x 1))
+  (cond
         ((pair? x)          '<arc>cons)
-        ((symbol? x)        '<arc>sym)
-        ((ar-procedure? x)  '<axiom>fn) ; notice how this is an axiom ^^
-        ((char? x)          '<arc>char)
         ((string? x)        '<arc>string)
         ((integer? x)       '<arc>int)
         ((number? x)        '<arc>num)     ; unsure about this
         ((hash-table? x)    '<arc>table)
+        ((eq? x 't)         '<arc>bool)
+        ((ar-false? x)      '<arc>bool)
+        ((symbol? x)        '<arc>sym)
+        ((ar-tagged? x)     (vector-ref x 1))
+        ((ar-procedure? x)  '<axiom>fn) ; notice how this is an axiom ^^
+        ((char? x)          '<arc>char)
         ((output-port? x)   '<arc>output)
         ((input-port? x)    '<arc>input)
         ((tcp-listener? x)  '<arc>socket)
