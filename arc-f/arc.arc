@@ -1391,7 +1391,7 @@
 (def all (test seq) 
   " Determines if all elements of `seq' satisfy `test'.
     See also [[andmap]] [[some]] "
-  (~some-internal seq (complement (testify test))))
+  (some (complement (testify test)) seq))
        
 (def dotted (x)
   " Determines if `x' is a dotted cons pair.
@@ -1430,12 +1430,12 @@
 (def andmap (pred seq)
   " Applies `pred' to elements of `seq' until an element fails.
     See also [[all]] [[and]] [[andf]] [[map]] "
-  (some-internal seq ~pred))
+  (some ~pred seq))
 
 (def ormap (pred seq)
   " Applies `pred' to elements of `seq' until an element passes.
     See also [[some]] [[or]] [[orf]] [[map]] "
-  (some-internal seq pred))
+  (some pred seq))
 
 ; The call* global function defines how to deal with non-functions
 ; in functional positions.
