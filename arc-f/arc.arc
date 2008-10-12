@@ -324,7 +324,8 @@
 ; code at any random time.
 (interface <arc>v3-exp
   <arc>v3
-  bit-and bit-or bit-not bit-xor bit-shift)
+  bit-and bit-or bit-not bit-xor bit-shift
+  log)
 ; if you want to propose a new interface for <arc>v4,
 ; provide it first in the form <arc>v3-your-interface-exp
 ; :s/your-interface/whatever you want/
@@ -1379,39 +1380,18 @@
     See also [[is]] "
   (if (isa x 'fn) x (fn (_) (is _ x))))
 
-; NOTE: arguably, 'some and 'find use 'reclist and 'recstring only
-; because of the lack of nice type-based methods in classic Arc.
-; This should probably be implemented with:
-;   (def some (test seq)
-;     (with (rv nil
-;            f (testify test))
-;       (each-early-out i seq
-;         (if (f i)
-;             (do (assert rv)
-;                 nil)
-;             t))
-;       rv))
-; The above will probably be more efficient in Arc-F
 (def some (test seq)
-  " Determines if at least one element of `seq' satisfies `test'.
-    See also [[ormap]] [[all]] [[mem]] [[in]] [[pos]] "
-  (let f (testify test)
-    (some-internal seq f)))
-(def some-internal (seq f)
-  (reclist f:car (scanner seq)))
-(defm some-internal ((t seq string) f)
-  (recstring f:seq seq))
-(defm some-internal ((t seq table) f)
-  (let rv nil
+  (with (rv nil
+         f (testify test))
     (each-early-out i seq
-        (set rv (f i))
-        (no rv))
+      (set rv (f i))
+      (no rv))
     rv))
 
 (def all (test seq) 
   " Determines if all elements of `seq' satisfy `test'.
     See also [[andmap]] [[some]] "
-  (~some-internal seq (complement (testify test))))
+  (no (some (complement (testify test)) seq)))
        
 (def dotted (x)
   " Determines if `x' is a dotted cons pair.
@@ -1450,12 +1430,12 @@
 (def andmap (pred seq)
   " Applies `pred' to elements of `seq' until an element fails.
     See also [[all]] [[and]] [[andf]] [[map]] "
-  (some-internal seq ~pred))
+  (no (some ~pred seq)))
 
 (def ormap (pred seq)
   " Applies `pred' to elements of `seq' until an element passes.
     See also [[some]] [[or]] [[orf]] [[map]] "
-  (some-internal seq pred))
+  (some pred seq))
 
 ; The call* global function defines how to deal with non-functions
 ; in functional positions.
@@ -1631,18 +1611,11 @@
 (def find (test seq)
   " Returns the first element that matches the test function.
     See also [[mem]] [[some]] [[in]] "
-  (let f (testify test)
-    (find-internal seq f)))
-(def find-internal (seq f)
-  (reclist [let v (car_) (if (f v) v)] (scanner seq)))
-(defm find-internal ((t seq string) f)
-  (recstring [let v (seq _) (if (f v) v)] seq))
-(defm find-internal ((t seq table) f)
-  (let rv nil
-    (each-early-out v seq
-      (if (f v)
-          (do (set rv v)
-              nil)
+  (with (rv nil
+         f  (testify test))
+    (each-early-out i seq
+      (if (f i)
+          (do (set rv i) nil)
           t))
     rv))
 
@@ -1689,8 +1662,9 @@
     See also [[pair]] "
   (w/collect
     ((afn (xs)
-       (collect:firstn n xs)
-       (self:nthcdr n xs))
+       (when xs
+         (collect:firstn n xs)
+         (self:nthcdr n xs)))
      (scanner xs))))
 
 (def caris (x val) 
@@ -1893,7 +1867,7 @@
   (if (< start 0) (= start (+ (len seq) start)))
   (w/collect-on seq
     (if end
-        (do (if (< end 0) (= end (+ (len seq) end -1)))
+        (do (if (< end 0) (= end (+ (len seq) end)))
             (= end (- end start))
             (each-skip-early-out start i seq
                 (if (<= end 0)
@@ -2833,6 +2807,7 @@
   (if (no x) y
       (no y) x
       (let lup nil
+        ; hot spot
         (set lup
              (fn (r x y r-x?) ; r-x? for optimization -- is r connected to x?
                (if (less? (car y) (car x))
@@ -2842,9 +2817,11 @@
                  (do (if (no r-x?) (scdr r x))
                      (if (cdr x) (lup x (cdr x) y t) (scdr x y))))))
         (if (less? (car y) (car x))
+          ; hot spot
           (do (if (cdr y) (lup y x (cdr y) nil) (scdr y x))
               y)
           ; (car x) <= (car y)
+          ; hot spot (hotter than true branch above)
           (do (if (cdr x) (lup x (cdr x) y t) (scdr x y))
               x)))))
 
@@ -3267,7 +3244,8 @@
     (after
       (w/infile f file
         (if (is (downcase (cut file -5)) ".larc")
-          (load-literate-arc f context hook)
+          (w/instring p (load-literate-arc f)
+            (load-slurp p context hook))
           (load-slurp f context hook)))
       (do (= current-load-file* (pop load-file-stack*))
           nil))))
@@ -3278,7 +3256,7 @@
     (while (isnt (= e (read p eof)) eof)
       (eval (hook:cxt-ref-d context e)))))
 
-(def load-literate-arc (p context hook)
+(def load-literate-arc (p)
   (let (docs maybe-code code
         bldg bldg-section) nil
     (= docs
@@ -3321,8 +3299,7 @@
                (docs)))))
     (= bldg (outstring))
     (docs)
-    (w/instring p (inside bldg)
-      (load-slurp p context hook))))
+    (inside bldg)))
 
 (def empty-line (l)
   (all whitec l))
@@ -3670,7 +3647,7 @@
 (mac %%% () nil)
 
 ; used internally
-(def input-history-update (expr)
+(def <arc>input-history-update (expr)
   (= %%% %%
      %% %)
   (tostring (mac % () expr)))
@@ -3679,7 +3656,7 @@
    ^^ nil
    ^^^ nil)
 
-(def output-history-update (val)
+(def <arc>output-history-update (val)
   (= ^^^ ^^
      ^^ ^
      ^ val))

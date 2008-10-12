@@ -1,0 +1,177 @@
+
+Numeric Sequences
+=================
+
+    (in-package numeric-sequence)
+    (using <arc>v3)
+    (using <arc>v3-scanner)
+
+This library provides a "numeric sequence" type which can be
+iterated over by the sequencing forms.  These numeric sequences
+are created by the `nseq` constructor.  A special function
+`nslen` can also be used to generate an integer numeric sequence
+across the length of a sequence.
+
+    (interface v1
+      nseq nslen)
+
+Numeric sequences act much like a sorted vector of the numbers in
+the sequence, but are immutable.  For example:
+
+>    (using <numeric-sequence>v1)
+>    (each i (nseq 0 3)
+>      (prn i))
+>    =>
+>    0
+>    1
+>    2
+>    3
+
+Sequence type
+-------------
+
+The basic constructor for the sequence is:
+
+    (def make-nseq (start end step)
+      (annotate 'nseq
+        (cons start (cons end step))))
+
+The representation is thus a simple cons-set.
+
+We can use the above basic constructor to define an "empty"
+sequence.
+
+    (def empty-nseq ()
+      (make-nseq 999 1 1))
+
+We then define a convenience macro, for use in this library, to
+deconstruct the representation of a numeric sequence and provide
+a comparison function:
+
+    (mac w/nseq (s . body)
+      `(let (start end . step) (rep ,s)
+         ,@body))
+    (mac w/nseq< (s . body)
+      `(withs ((start end . step) (rep ,s)
+               <
+               (if (< step 0) > <))
+         ,@body))
+
+This is a sequence type so we have to overload `scanner` and
+`unscan` to convert them.  `scanner` simply needs to build a list
+of values, which incidentally is already done by the builtin
+`range` function:
+
+    (defm scanner ((t s nseq))
+      (w/nseq s
+        (range start end step)))
+
+`unscan` is a bit more complicated.  We need a function that
+determines if the values in the given scanner are numeric.
+
+    (def numeric (x)
+      (err "attempt to unscan an `nseq', but got non-numeric item" x))
+    (defm numeric ((t x int)) x)
+    (defm numeric ((t x int)) x)
+
+`unscan` must then verify the given scanner.
+
+    (defm unscan ((t s nseq) x)
+      (if (no x)
+          (empty-nseq)
+
+If the given scanner is empty, create an empty sequence.
+Otherwise, extract the first element.
+
+          (let start (numeric:car x)
+            (if (no (cdr x))
+                (make-nseq start start 1)
+
+If the given scanner has only one element, then we just
+use the given start to create a one-element numeric
+sequence.
+
+                (withs (end  (numeric:cadr x)
+                        step (- end start))
+                  (each-skip 2 i x
+                    (if (is step (- (numeric i) end))
+                        (= end i)
+                        (err "Unable to build monotonic numeric sequence from" x)))
+                  (make-nseq start end step))))))
+
+Computing length
+----------------
+
+First, we need to detect empty numeric sequences:
+
+    (defm len ((t s nseq))
+      (w/nseq< s
+        (if (and (~< start end) (isnt start end))
+            0
+
+To compute the length, we need to subtract the end and the start,
+then divide by the step.  We then round it off towards zero.
+
+            (+ 1
+               (trunc:/
+                 (- end start)
+                 step)))))
+
+Vector Interface
+----------------
+
+As a convenience we can provide an indexing facility to determine
+the value of the n'th entry of a sequence.  This is done by
+defining a defcall:
+
+    (def integer (x)
+      (err "Attempt to index object of type 'nseq with non-integer" x))
+    (defm integer ((t x int)) x)
+    (defcall nseq (s i)
+      (let i (integer i)
+        (w/nseq< s
+          (let rv (+ start (* i step))
+            (if (or (< rv end) (is rv end))
+                rv
+                nil)))))
+
+Traversal with `each`
+---------------------
+
+The most important use of numeric sequences would be to cleanly
+use sequence-traversing algorithms without allocating extra
+storage for `cons` cells.
+
+To enable this, we have to overload `<base>each`:
+
+    (defm <base>each ((t s nseq) skip bf)
+      (w/nseq< s
+        (zap + start (* skip step))
+        (when (and (< start end) (bf start))
+          ((afn (i)
+             (if (< i end)
+                 (let n (+ i step)
+                   (if (bf n)
+                       (self n)))))
+           start))))
+
+
+API Constructors
+----------------
+
+For convenience, the constructor `nseq` has default values, and
+specifying just one value creates a sequence from 1 to that value.
+
+    (def nseq (start (o end) (o step 1))
+      (if (no end)
+          (nseq 1 start)
+          (make-nseq start end step)))
+
+The other published constructor, `nslen`, creates a numeric
+sequence across the length of another sequence.
+
+    (def nslen (s)
+      (nseq 0 (- (len s) 1)))
+
+
+
