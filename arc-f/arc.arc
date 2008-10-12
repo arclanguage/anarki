@@ -1866,7 +1866,7 @@
   (if (< start 0) (= start (+ (len seq) start)))
   (w/collect-on seq
     (if end
-        (do (if (< end 0) (= end (+ (len seq) end -1)))
+        (do (if (< end 0) (= end (+ (len seq) end)))
             (= end (- end start))
             (each-skip-early-out start i seq
                 (if (<= end 0)
