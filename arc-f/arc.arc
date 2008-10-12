@@ -322,10 +322,6 @@
 ; in any of the above interfaces.  Users of this
 ; interface are warned that it could break their
 ; code at any random time.
-(interface <arc>v3-exp
-  <arc>v3
-  bit-and bit-or bit-not bit-xor bit-shift
-  log)
 ; if you want to propose a new interface for <arc>v4,
 ; provide it first in the form <arc>v3-your-interface-exp
 ; :s/your-interface/whatever you want/
@@ -334,6 +330,14 @@
 (interface <arc>v3-bitops-exp
   bit-and bit-or bit-not bit-xor bit-shift)
 (interface <arc>v3-your-interface-exp)
+
+(interface <arc>v3-exp
+  <arc>v3
+  <arc>v3-bitops-exp
+  ; mathematics
+  log
+  ;
+  pos)
 
 ; NOTE! THIS INTERFACE EXISTS ONLY FOR DOCUMENTATION PURPOSES
 ; IT IS NOT INTENDED FOR ACTUAL USAGE
