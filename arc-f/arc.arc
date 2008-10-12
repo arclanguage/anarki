@@ -1391,7 +1391,7 @@
 (def all (test seq) 
   " Determines if all elements of `seq' satisfy `test'.
     See also [[andmap]] [[some]] "
-  (some (complement (testify test)) seq))
+  (no (some (complement (testify test)) seq)))
        
 (def dotted (x)
   " Determines if `x' is a dotted cons pair.
@@ -1430,7 +1430,7 @@
 (def andmap (pred seq)
   " Applies `pred' to elements of `seq' until an element fails.
     See also [[all]] [[and]] [[andf]] [[map]] "
-  (some ~pred seq))
+  (no (some ~pred seq)))
 
 (def ormap (pred seq)
   " Applies `pred' to elements of `seq' until an element passes.
@@ -3243,7 +3243,8 @@
     (after
       (w/infile f file
         (if (is (downcase (cut file -5)) ".larc")
-          (load-literate-arc f context hook)
+          (w/instring p (load-literate-arc f)
+            (load-slurp p context hook))
           (load-slurp f context hook)))
       (do (= current-load-file* (pop load-file-stack*))
           nil))))
@@ -3254,7 +3255,7 @@
     (while (isnt (= e (read p eof)) eof)
       (eval (hook:cxt-ref-d context e)))))
 
-(def load-literate-arc (p context hook)
+(def load-literate-arc (p)
   (let (docs maybe-code code
         bldg bldg-section) nil
     (= docs
@@ -3297,8 +3298,7 @@
                (docs)))))
     (= bldg (outstring))
     (docs)
-    (w/instring p (inside bldg)
-      (load-slurp p context hook))))
+    (inside bldg)))
 
 (def empty-line (l)
   (all whitec l))
