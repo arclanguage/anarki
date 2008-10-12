@@ -1662,8 +1662,9 @@
     See also [[pair]] "
   (w/collect
     ((afn (xs)
-       (collect:firstn n xs)
-       (self:nthcdr n xs))
+       (when xs
+         (collect:firstn n xs)
+         (self:nthcdr n xs)))
      (scanner xs))))
 
 (def caris (x val) 
