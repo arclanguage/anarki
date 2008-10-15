@@ -244,7 +244,7 @@
   ; anaphora
   self it break collect throw
   ; continuations and weirder control structures
-  ccc breakable point
+  ccc breakable point catch
   protect dynamic-wind
   after
   ; gensyms
