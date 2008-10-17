@@ -125,12 +125,12 @@
                                 (,gstring (- ,glen 1 ,i))))))))))
 
 (def posmatch (pat seq (o start 0))
-  (catch
+  (breakable
     (if (isa pat 'fn)
         (for i start (- (len seq) 1)
-             (when (pat (seq i)) (throw i)))
+             (when (pat (seq i)) (break i)))
         (for i start (- (len seq) (len pat))
-             (when (headmatch pat seq i) (throw i))))
+             (when (headmatch pat seq i) (break i))))
     nil))
 
 (def headmatch (pat seq (o start 0))
