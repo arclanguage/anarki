@@ -337,7 +337,9 @@
   ; mathematics
   log
   ;
-  pos)
+  pos
+  ; control structures
+  catch)
 
 ; NOTE! THIS INTERFACE EXISTS ONLY FOR DOCUMENTATION PURPOSES
 ; IT IS NOT INTENDED FOR ACTUAL USAGE
