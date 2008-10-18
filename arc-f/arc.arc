@@ -339,7 +339,7 @@
   ;
   pos
   ; control structures
-  catch)
+  catch always)
 
 ; NOTE! THIS INTERFACE EXISTS ONLY FOR DOCUMENTATION PURPOSES
 ; IT IS NOT INTENDED FOR ACTUAL USAGE
