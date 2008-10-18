@@ -203,7 +203,7 @@
                    (fn (url)
                      (HEADER "Location" url)
                      (RESPOND 302)
-                     (,abort)))
+                     (,abort nil)))
            (after
              (w/stdout ,gso
                ,@body)
@@ -265,13 +265,12 @@
 (mac defopr (name parm . body)
   (w/uniq (gs rd abort)
     `(defop-raw ,name (,gs ,parm)
-       (point ,abort
-         (let ,rd (do ,@body)
-           (w/stdout ,gs
-             (symeval!prn "HTTP/1.0 302 Moved Temporarily\r")
-             (symeval!prn symeval!serverheader* "\r")
-             (symeval!prn "Location: " ,rd "\r")
-             (symeval!prn "Connection: close\r\n\r\n")))))))
+       (let ,rd (do ,@body)
+         (w/stdout ,gs
+           (symeval!prn "HTTP/1.0 302 Moved Temporarily\r")
+           (symeval!prn symeval!serverheader* "\r")
+           (symeval!prn "Location: " ,rd "\r")
+           (symeval!prn "Connection: close\r\n\r\n"))))))
 
 (mac defopr* (name parm . body)
   `(defopr ,(unpkg name) ,parm ,@body))
