@@ -2299,7 +2299,8 @@
 (xdef 'pkg-of
       (ar-polymorph '(cxt) package-of-context
         (ar-polymorph '(sym) (lambda (a)
-                               (the-package (package-of a)))
+                               (or (the-package (package-of a))
+                                   'nil))
           (lambda rest
             (err "'pkg-of expects a context or symbol")))))
 (xdef 'pkg-name package-name)
