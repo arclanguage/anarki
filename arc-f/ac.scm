@@ -374,6 +374,7 @@
                  (ss (symbol->string sym))
                  (pm (regexp-match rex-is-package ss))
                  (pak (cadr pm))
+                 (pak-file (path->string (apply build-path (split-by-/ pak))))
                  (pkg (the-package pak))
                  (int-list (interface-of-package pkg sym)))
             ; if package interface doesn't exist, try
@@ -383,8 +384,8 @@
                                               #t
                                               (lambda () #f))
                   (let ((f-path
-                         (or (load-resolve (string-append pak ".arc"))
-                             (load-resolve (string-append pak ".larc")))))
+                         (or (load-resolve (string-append pak-file ".arc"))
+                             (load-resolve (string-append pak-file ".larc")))))
                     (if f-path
                         (ar-funcall1 (eval '__<arc>require) f-path)
                         ;; try to load it as a library
@@ -504,6 +505,26 @@
            (arc-map (lambda (x) (context-ref-inner cxt x))
                      ex)))))
     (#t (context-ref-inner cxt ex))))
+
+(define (split-by-/ str)
+  (let ((start 0)
+        (ln    (string-length str))
+        (accum '())
+        (self 'nil))
+    (set! self
+          (lambda (i)
+            (if (= i ln)
+                (set! accum (cons (substring str start i) accum))
+                (if (eqv? #\/ (string-ref str i))
+                    (begin
+                      (set! accum (cons (substring str start i) accum))
+                      (if (< (+ i 1) ln)
+                          (begin
+                            (set! start (+ i 1))
+                            (self (+ i 1)))))
+                    (self (+ i 1))))))
+    (self 0)
+    (reverse accum)))
 
 (define (context-ref-inner cxt x)
   (cond
