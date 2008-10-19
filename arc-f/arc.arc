@@ -336,8 +336,10 @@
   <arc>v3-bitops-exp
   ; mathematics
   log
-  ;
+  ; sequence checking
   pos
+  ; number representation
+  pad
   ; control structures
   catch always)
 
