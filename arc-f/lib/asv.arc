@@ -27,7 +27,7 @@
 ; TODO: determine if we can write to the installation
 ; directory and use that, otherwise base on ~/asv/, else
 ; throw an error or something.
-(= arcdir*  "asv")
+(= arcdir*  (file-join (arc-installation-path) "asv"))
 (= logdir*  (file-join arcdir* "logs")
    rootdir* (file-join arcdir* "public_html")
    breaksrv* nil) 
