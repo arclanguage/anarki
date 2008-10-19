@@ -12,12 +12,17 @@
 (using <files>v1)
 (using <strings>v1)
 
+; pre-release interface: in flux, so new symbols
+; will be added here all the time ^^
 (interface v1-pre
   asv stop-asv allow-asv-break
   defop defop*
   defopr defopr*
+  defoph defoph*
   ; defop special functions
-  REDIRECT HEADER RESPOND CONTENT-TYPE)
+  REDIRECT HEADER RESPOND CONTENT-TYPE
+  ; utility
+  url-to)
 
 ; TODO: determine if we can write to the installation
 ; directory and use that, otherwise base on ~/asv/, else
@@ -191,7 +196,7 @@
            (string op))))
 
 (mac defop-base (name parm . body)
-  (w/uniq (gs gso end abort)
+  (w/uniq (gs gso end abort br)
     `(defop-raw ,name (,gs ,parm)
        (point ,abort
          (withs ((,gso ,end HEADER RESPOND)
@@ -199,11 +204,15 @@
                  CONTENT-TYPE
                    (fn (type)
                      (HEADER "Content-type" type))
-                 REDIRECT
+                 ; base redirect
+                 ,br
                    (fn (url)
                      (HEADER "Location" url)
                      (RESPOND 302)
-                     (,abort nil)))
+                     (,abort nil))
+                 REDIRECT
+                   ; br:url-to
+                   (symeval!compose ,br symeval!url-to))
            (after
              (w/stdout ,gso
                ,@body)
@@ -257,7 +266,7 @@
         (defop ,name ,parm
            (if (,test (,parm 'ip))
                (do ,@body)
-               (pr "Permission denied"))))))
+               (symeval!pr "Permission denied"))))))
 
 
 ; Defines op as a redirector.  Its retval is new location.
@@ -270,7 +279,7 @@
            (symeval!prn "HTTP/1.0 302 Moved Temporarily\r")
            (symeval!prn symeval!serverheader* "\r")
            (symeval!prn "Location: " ,rd "\r")
-           (symeval!prn "Connection: close\r\n\r\n"))))))
+           (symeval!prn "Connection: close\r\n\r"))))))
 
 (mac defopr* (name parm . body)
   `(defopr ,(unpkg name) ,parm ,@body))
@@ -293,9 +302,10 @@
 ;(mac testop (name . args) `((srvops* ',name) ,@args))
 
 (deftem request
-  args  nil
-  cooks nil
-  ip    nil)
+  args   nil
+  cooks  nil
+  ip     nil
+  opname nil)
 
 (= unknown-msg* "Unknown operator.")
 
@@ -319,7 +329,7 @@
 (def respond (str op args cooks ip (o type))
   (aif
     (srvops* op)
-      (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+      (let req (inst 'request 'args args 'cooks cooks 'ip ip 'opname op)
         (it str req))
     (file-exists-in-root op)
       (if (is type "head")
@@ -394,6 +404,26 @@
                                              (string k "=" v))
                                            it)))
        ""))
+
+(def url-to (op . args)
+  " Creates a string link to the desired web operation.
+    GET arguments may be specified with additional parameters:
+      (url-to 'op 'param1 \"value1\"
+                  'param2 \"value2\") "
+  (zap urlify op)
+  (if args
+      (tostring:let first t
+        (pr op "?")
+        (each (k v) (pair args)
+          (if first (wipe first)
+                    (pr "&"))
+          (pr (urlencode k) "=" (urlencode v))))
+      op))
+
+(def urlify (op)
+  (err "'url-to: expects either a string or symbol for target"))
+(defm urlify ((t op string)) op)
+(defm urlify ((t op sym)) (op-of-sym op))
 
 ; start asv
 (asv)
@@ -483,7 +513,7 @@
        (it req)
        "deadlink"))
 
-(defop deadlink req
+(defop* deadlink req
   (pr dead-msg*))
 
 (def url-for (fnid)
@@ -625,7 +655,6 @@
   (pr "<body><p>Hello world!</p></body>")
   (pr "</html>"))
 
-; make-string: expects type <non-negative exact integer> as 1st argument, given: -1; other arguments were: #\0
 
 #|
 (defop* topips req
@@ -653,33 +682,4 @@
   (ensure-dir logdir*)
   (ensure-dir rootdir*)
   (load-userinfo))
-
-;----------------TODO: consider putting these in another file
-
-(= reloads* nil
-   reload-mtimes* (table)
-   reload-interval* 1
-   reload-thread* nil)
-
-(def loadq (path)
-  (tostring:load path)
-  nil)
-
-(def reload paths
-  (each p paths
-        (loadq p)
-        (push p reloads*)
-        (= (reload-mtimes* p) (mtime p)))
-  (if (no reload-thread*) (= reload-thread* (thread (reload-check)))))
-
-(def reload-check ()
-  (sleep reload-interval*)
-  (each p reloads*
-    (when (isnt (reload-mtimes* p) (mtime p))
-      (= (reload-mtimes* p) (mtime p))
-      (prn "*** [" (cut (tostring:system "date +%H:%M:%S") 0 -1)
-           "] reloading " p)
-      (loadq p)))
-  (reload-check))
-
 
