@@ -22,7 +22,7 @@
   ; defop special functions
   REDIRECT HEADER RESPOND CONTENT-TYPE
   ; utility
-  url-to)
+  url-to url-to-me)
 
 ; TODO: determine if we can write to the installation
 ; directory and use that, otherwise base on ~/asv/, else
@@ -66,8 +66,8 @@
           (break t)
           (if breaksrv* 
               (handle-request s)
-              (errsafe (handle-request s)))))))
-  (prn "quit server")
+              (errsafe (handle-request s))))))
+  (prn "quit server"))
 
 (def ensure-srvdirs ()
   (ensure-dir arcdir*)
@@ -406,10 +406,11 @@
        ""))
 
 (def url-to (op . args)
-  " Creates a string link to the desired web operation.
+  " Creates a string of the URL to the desired web operation.
     GET arguments may be specified with additional parameters:
       (url-to 'op 'param1 \"value1\"
-                  'param2 \"value2\") "
+                  'param2 \"value2\")
+    See also [[url-to-me]] "
   (zap urlify op)
   (if args
       (tostring:let first t
@@ -424,6 +425,13 @@
   (err "'url-to: expects either a string or symbol for target"))
 (defm urlify ((t op string)) op)
 (defm urlify ((t op sym)) (op-of-sym op))
+
+(def url-to-me (req)
+  " Creates a string of the URL to the web operation described
+    in the request `req'.
+    Most often used to get a link to the same operation.
+    See also [[url-to]] "
+  (string req!opname (reassemble-args req)))
 
 ; start asv
 (asv)
