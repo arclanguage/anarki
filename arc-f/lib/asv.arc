@@ -290,10 +290,8 @@
   (w/uniq (gs)
     `(defop-raw ,name (,gs ,parm)
        (w/stdout ,gs
-         (symeval!prn "HTTP/1.0 200 OK\r")
-         (symeval!prn symeval!serverheader* "\r")
-         (symeval!prn "Content-type: " symeval!textmime* "\r")
-         (symeval!prn "Connection: close\r\n\r\n")
+         (symeval!prn (symeval!header))
+         (symeval!prn "\r")
          ,@body))))
 
 (mac defoph* (name parm . body)
