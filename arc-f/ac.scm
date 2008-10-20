@@ -1608,9 +1608,9 @@
       (ar-polymorph
         ; potentially also:
         ; (int int) fx+  ;although fx+ is r6rs (mzscheme 372 is r5rs)
-        '(int) +
+        '(int) (lambda (a b) (+ a b))
         (ar-polymorph
-          '(num) +
+          '(num) (lambda (a b) (+ a b))
           (ar-polymorph
             '(string) string-append
             (ar-polymorph
@@ -1627,13 +1627,13 @@
                 (lambda (a b)
                   (err "Unable to add " a " to " b))))))))
 
-(xdef '<base>- -)
-(xdef '<base>negate -)
-(xdef '<base>* *)
-(xdef '<base>/ /)
-(xdef '<base>reciprocal /)
-(xdef '<base>mod modulo)
-(xdef '<base>quotient quotient)
+(xdef '<base>- (lambda (a b) (- a b)))
+(xdef '<base>negate (lambda (a) (- a)))
+(xdef '<base>* (lambda (a b) (* a b)))
+(xdef '<base>/ (lambda (a b) (/ a b)))
+(xdef '<base>reciprocal (lambda (a) (/ a)))
+(xdef '<base>mod (lambda (a b) (modulo a b)))
+(xdef '<base>quotient (lambda (a b) (quotient a b)))
 
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
