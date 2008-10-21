@@ -834,6 +834,7 @@
         ((thread? x)        'thread)
         ((thread-cell? x)   'thread-local)
         ((semaphore? x)     'sema)
+        ((bytes? x)         'bytes)
         (#t                 (err "Type: unknown type" x))))
 (xdef 'type ar-type)
 
