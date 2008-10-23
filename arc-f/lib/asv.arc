@@ -425,7 +425,7 @@
         (each (k v) (pair args)
           (if first (wipe first)
                     (pr "&"))
-          (pr (urlencode k) "=" (urlencode v))))
+          (pr (urlencode:string k) "=" (urlencode:string v))))
       op))
 
 (def urlify (op)
