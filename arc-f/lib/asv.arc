@@ -189,7 +189,9 @@
             (do1 (do ,@body)
                  (symeval!save-optime ',name (- (msec) ,t1))))))))
 
-(def op-of-sym (op)
+(def op-of-sym (x)
+  (err "expected symbol for web operation name - " x))
+(defm op-of-sym ((t op sym))
   (withs (pk (pkg-of op)
           pn (if pk (pkg-name pk)))
     (if pn (string pn "/" (unpkg op))
@@ -391,15 +393,22 @@
        (cdr (tokens s [or (whitec _) (is _ #\;)]))))
 
 (def arg (req key) (alref (req 'args) key))
+(def cookie (req key) (alref (req 'args) key))
+(def source-ip (req) (req 'ip))
 
-; *** Warning: does not currently urlencode args, so if need to do
-; that replace v with (urlencode v).
+(mac w/args (args req . body)
+  (w/uniq greq
+    `(withs (,greq ,req
+             ,@(w/collect:each a args
+                 (collect a)
+                 (collect `(symeval!arg ,greq ,(string:unpkg a)))))
+      ,@body)))
 
 (def reassemble-args (req)
   (aif (req 'args)
        (apply string "?" (intersperse "&"
                                       (map (fn ((k v))
-                                             (string k "=" v))
+                                             (string k "=" (urlencode v)))
                                            it)))
        ""))
 
@@ -493,12 +502,10 @@
 
 (= dead-msg* "\nUnknown or expired link.")
  
-(defop-raw x (str req)
-  (w/stdout str 
-    (prn (header) "\r\n\r")
-    (aif (fns* (sym (arg req "fnid")))
-         (it req)
-         (pr dead-msg*))))
+(defop x req
+  (aif (fns* (sym (arg req "fnid")))
+       (it req)
+       (pr dead-msg*)))
 
 #|
 (defopr-raw y (str req)
