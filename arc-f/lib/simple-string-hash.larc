@@ -40,6 +40,8 @@ library being stable across implementations.
           (= hash
              (bit-and mask
                       (+ (*33 hash)
+                         ; implementor warning: notice how this
+                         ; will act with non-ascii chars!
                          (coerce c 'int)))))
         hash))
 
