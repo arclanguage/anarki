@@ -35,6 +35,11 @@ library being stable across implementations.
     (= default-hash 5381)
 
     (def sshash (s)
+      (err "'sshash expected a string - " s))
+ 
+    (defm sshash ((t s string))
+      " Given a string, returns a 64-bit hash of that string.
+        This function must be given a string. "
       (let hash default-hash
         (each c s
           (= hash
