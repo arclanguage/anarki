@@ -1,0 +1,38 @@
+
+A simple string hashing function, from http://www.cse.yorku.ca/~oz/hash.html
+
+    (in-package simple-string-hash)
+    (using <arc>v3)
+    (using <arc>v3-bitops-exp) ; TODO: port to v4
+    (interface v1
+      sshash)
+
+Original C Code:
+
+>    unsigned long
+>    hash(unsigned char *str)
+>    {
+>        unsigned long hash = 5381;
+>        int c;
+>        
+>        while (c = *str++)
+>            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+>        
+>        return hash;
+>    }
+
+    (= mask (- (bit-shift 1 64) 1))
+    (= default-hash 5381)
+
+    (def sshash (s)
+      (let hash default-hash
+        (each c s
+          (= hash
+             (bit-and mask
+                      (+ (*33 hash)
+                         (coerce c 'int)))))
+        hash))
+
+    (def *33 (x) (+ (bit-shift x 5) x))
+
+
