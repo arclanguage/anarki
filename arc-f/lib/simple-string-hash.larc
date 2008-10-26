@@ -21,6 +21,16 @@ Original C Code:
 >        return hash;
 >    }
 
+Note that this particular library is **explicitly specified** as
+using the above given algorithm.  This means that data files
+which depend on this hash function are useable across different
+implementations.
+
+If another hash algorithm is preferred, it is suggested that a
+new library be built for it rather than to modify this library,
+because existing data files may break if they depend on this
+library being stable across implementations.
+
     (= mask (- (bit-shift 1 64) 1))
     (= default-hash 5381)
 
