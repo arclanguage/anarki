@@ -3196,7 +3196,7 @@
              xs
              (cons init xs))
       (each i xs
-        (zap f init (car xs)))
+        (zap f init i))
       init))
 
   ; Right-associative
