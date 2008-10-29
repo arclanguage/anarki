@@ -5,11 +5,16 @@
 
 (require mzscheme) ; promise we won't redefine mzscheme bindings
 
+(define arc-path (getenv "arc_dir"))
+(define temp-cwd (current-directory))
+(if arc-path (current-directory arc-path))
+
 (require "ac.scm") 
 (require "brackets.scm")
 (use-bracket-readtable)
 (require "bitops.scm")
 (load "ffi.scm")
+
 
 ; in future, need to resolve path properly to
 ; installation path
@@ -21,6 +26,8 @@
       (flush-output (current-output-port))
       (acompile "arc.arc")))
 (aload "libs.arc")
+
+(if arc-path (current-directory temp-cwd))
 
 (when (file-exists? "~/.arcshrc")
   (aload "~/.arcshrc"))

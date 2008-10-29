@@ -1849,10 +1849,11 @@
   " Splits `seq' at offset `pos', returning a two-element list of the
     split.
     See also [[cut]] "
-  (withs (mid (nthcdr (- pos 1) seq) 
-          s2  (cdr mid))
-    (wipe (cdr mid))
-    (list seq s2)))
+  (if (is 0 pos) (list nil seq)
+      (withs (mid (nthcdr (- pos 1) seq) 
+              s2  (cdr mid))
+        (wipe (cdr mid))
+        (list seq s2))))
 
 (def ssplit (str (o delim whitec) (o keepdelim) (o noblanks))
   "Split `str' on chars passing the test `delim', returning a list of

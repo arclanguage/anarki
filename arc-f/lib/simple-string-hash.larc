@@ -1,0 +1,55 @@
+
+A simple string hashing function, from http://www.cse.yorku.ca/~oz/hash.html
+
+    (in-package simple-string-hash)
+    (using <arc>v3)
+    (using <arc>v3-bitops-exp) ; TODO: port to v4
+    (interface v1
+      sshash)
+
+Original C Code:
+
+>    unsigned long
+>    hash(unsigned char *str)
+>    {
+>        unsigned long hash = 5381;
+>        int c;
+>        
+>        while (c = *str++)
+>            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+>        
+>        return hash;
+>    }
+
+Note that this particular library is **explicitly specified** as
+using the above given algorithm.  This means that data files
+which depend on this hash function are useable across different
+implementations.
+
+If another hash algorithm is preferred, it is suggested that a
+new library be built for it rather than to modify this library,
+because existing data files may break if they depend on this
+library being stable across implementations.
+
+    (= mask (- (bit-shift 1 64) 1))
+    (= default-hash 5381)
+
+    (def sshash (s)
+      (err "'sshash expected a string - " s))
+ 
+    (defm sshash ((t s string))
+      " Given a string, returns a 64-bit hash of that string.
+        This function must be given a string. "
+      (let hash default-hash
+        (each c s
+          (= hash
+             (bit-and mask
+                      (+ (*33 hash)
+                         ; implementor warning: notice how this
+                         ; will act with non-ascii chars!
+                         (coerce c 'int)))))
+        hash))
+
+    (def *33 (x) (+ (bit-shift x 5) x))
+
+

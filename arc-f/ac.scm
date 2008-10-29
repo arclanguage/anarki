@@ -374,6 +374,7 @@
                  (ss (symbol->string sym))
                  (pm (regexp-match rex-is-package ss))
                  (pak (cadr pm))
+                 (pak-file (path->string (apply build-path (split-by-/ pak))))
                  (pkg (the-package pak))
                  (int-list (interface-of-package pkg sym)))
             ; if package interface doesn't exist, try
@@ -383,8 +384,8 @@
                                               #t
                                               (lambda () #f))
                   (let ((f-path
-                         (or (load-resolve (string-append pak ".arc"))
-                             (load-resolve (string-append pak ".larc")))))
+                         (or (load-resolve (string-append pak-file ".arc"))
+                             (load-resolve (string-append pak-file ".larc")))))
                     (if f-path
                         (ar-funcall1 (eval '__<arc>require) f-path)
                         ;; try to load it as a library
@@ -504,6 +505,26 @@
            (arc-map (lambda (x) (context-ref-inner cxt x))
                      ex)))))
     (#t (context-ref-inner cxt ex))))
+
+(define (split-by-/ str)
+  (let ((start 0)
+        (ln    (string-length str))
+        (accum '())
+        (self 'nil))
+    (set! self
+          (lambda (i)
+            (if (= i ln)
+                (set! accum (cons (substring str start i) accum))
+                (if (eqv? #\/ (string-ref str i))
+                    (begin
+                      (set! accum (cons (substring str start i) accum))
+                      (if (< (+ i 1) ln)
+                          (begin
+                            (set! start (+ i 1))
+                            (self (+ i 1)))))
+                    (self (+ i 1))))))
+    (self 0)
+    (reverse accum)))
 
 (define (context-ref-inner cxt x)
   (cond
@@ -1587,9 +1608,9 @@
       (ar-polymorph
         ; potentially also:
         ; (int int) fx+  ;although fx+ is r6rs (mzscheme 372 is r5rs)
-        '(int) +
+        '(int) (lambda (a b) (+ a b))
         (ar-polymorph
-          '(num) +
+          '(num) (lambda (a b) (+ a b))
           (ar-polymorph
             '(string) string-append
             (ar-polymorph
@@ -1606,13 +1627,13 @@
                 (lambda (a b)
                   (err "Unable to add " a " to " b))))))))
 
-(xdef '<base>- -)
-(xdef '<base>negate -)
-(xdef '<base>* *)
-(xdef '<base>/ /)
-(xdef '<base>reciprocal /)
-(xdef '<base>mod modulo)
-(xdef '<base>quotient quotient)
+(xdef '<base>- (lambda (a b) (- a b)))
+(xdef '<base>negate (lambda (a) (- a)))
+(xdef '<base>* (lambda (a b) (* a b)))
+(xdef '<base>/ (lambda (a b) (/ a b)))
+(xdef '<base>reciprocal (lambda (a) (/ a)))
+(xdef '<base>mod (lambda (a b) (modulo a b)))
+(xdef '<base>quotient (lambda (a b) (quotient a b)))
 
 (xdef 'expt expt)
 (xdef 'sqrt sqrt)
@@ -2299,7 +2320,8 @@
 (xdef 'pkg-of
       (ar-polymorph '(cxt) package-of-context
         (ar-polymorph '(sym) (lambda (a)
-                               (the-package (package-of a)))
+                               (or (the-package (package-of a))
+                                   'nil))
           (lambda rest
             (err "'pkg-of expects a context or symbol")))))
 (xdef 'pkg-name package-name)

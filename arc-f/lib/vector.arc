@@ -14,6 +14,8 @@
 (using <arc>v3-scanner)
 (interface v1
   vector)
+(interface v2 <vector>v1
+  vector-of)
 
 (= len-tag (uniq))
 
@@ -27,8 +29,17 @@
     val))
 
 (def vector rest
-  " Creates a vector.  A vector is a sequence with O(1) index lookup. "
+  " Creates a vector.  A vector is a sequence with O(1) index lookup.
+    See also [[vector-of]] "
   (unscan-vector rest))
+
+(def vector-of (n (o objs))
+  " Creates a vector of `objs' of length `n'.
+    See also [[vector]] "
+  (collect-on
+    (fn (collect)
+      (for i 0 (- n 1)
+        (collect objs)))))
 
 (defm scanner ((t v vector))
   (w/collect:for i 0 (- v.len-tag 1)

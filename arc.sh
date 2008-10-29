@@ -18,4 +18,6 @@ else
     fi
 fi
 
-$rl mzscheme --no-init-file --mute-banner --load-cd  "$arc_dir/as.scm" -- "$@"
+export arc_dir
+
+$rl mzscheme --no-init-file --mute-banner --load  "$arc_dir/as.scm" -- "$@"

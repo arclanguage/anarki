@@ -336,8 +336,12 @@
   <arc>v3-bitops-exp
   ; mathematics
   log
-  ;
-  pos)
+  ; sequence checking
+  pos
+  ; number representation
+  pad
+  ; control structures
+  catch always)
 
 ; NOTE! THIS INTERFACE EXISTS ONLY FOR DOCUMENTATION PURPOSES
 ; IT IS NOT INTENDED FOR ACTUAL USAGE
@@ -2836,13 +2840,15 @@
   (firstn n (sort f seq)))
 
 (def split (seq pos)
-  " Splits the list `seq' at offset `pos', returning a
-    two-element list of the split.
+  " Destructively splits the cons list `seq' at offset `pos',
+    returning a two-element list of the split.
     See also [[cut]] "
-  (withs (mid (nthcdr (- pos 1) seq) 
-          s2  (cdr mid))
-    (wipe (cdr mid))
-    (list seq s2)))
+  (if (is 0 pos)
+      (list nil seq)
+      (withs (mid (nthcdr (- pos 1) seq) 
+              s2  (cdr mid))
+        (wipe (cdr mid))
+        (list seq s2))))
 
 (def ssplit (str (o delim whitec) (o keepdelim) (o noblanks))
   "Split `str' on chars passing the test `delim', returning a list of
@@ -3190,7 +3196,7 @@
              xs
              (cons init xs))
       (each i xs
-        (zap f init xs))
+        (zap f init i))
       init))
 
   ; Right-associative
