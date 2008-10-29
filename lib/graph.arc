@@ -69,6 +69,14 @@ mutates `var' and reuses the storage space for `vals'. Moreover, modifying
         (each n cdr.it (pr " ") (printer n)))
       (prn))))
 
+(def add-implied-leaves (g)
+  "Adds vertices which are the destination of an edge but are not themselves
+present in the graph. The added vertices will have no outgoing edges."
+  (ontable k v g
+    (each n car.v
+      (unless g.n
+        (= g.n (tconc-new))))))
+
 
 ;; -- Misc algorithms --
 (def transpose (g)
