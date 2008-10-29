@@ -72,8 +72,8 @@ mutates `var' and reuses the storage space for `vals'. Moreover, modifying
 (def add-implied-leaves (g)
   "Adds vertices which are the destination of an edge but are not themselves
 present in the graph. The added vertices will have no outgoing edges."
-  (ontable k v g
-    (each n car.v
+  (each v keys.g
+    (each n (car g.v)
       (unless g.n
         (= g.n (tconc-new))))))
 
