@@ -82,12 +82,13 @@
   "Gets the last cons in a proper list. (Fails on improper lists.)"
   (aif cdr.l foot.it l))
 
+(def join/d/2 (a b)
+  (if b (aif foot.a (do (scdr it b) a) b) a))
+
 (def join/d ls
   " Destructive join.
     See also [[join]]."
-  (when ls
-    (reduce (fn (a b) (aif foot.a (scdr it b)) b) ls))
-  car.ls)
+  (foldr join/d/2 nil ls))
 
 (def partition (test seq)
   "Equivalent to but more efficient than (list (keep test seq) (rem test seq)).
