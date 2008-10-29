@@ -59,7 +59,7 @@ mutates `var' and reuses the storage space for `vals'. Moreover, modifying
 
 (def graph-print (g (o sort-comparison nil) (o printer pr))
   "Pretty-prints a graph."
-  (let sortfn (if cmp [sort cmp _] idfn)
+  (let sortfn (if sort-comparison [sort sort-comparison _] idfn)
     (each v (sortfn keys.g)
       (printer v)
       (pr ": ")
