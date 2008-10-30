@@ -98,13 +98,30 @@ present in the graph. The added vertices will have no outgoing edges."
         vs)
       t)))
 
+(def graph-roots (g)
+  "Finds vertices with no incoming edges.
+  See also: [[graph-leaves]]"
+  (let roots (memtable:keys g)
+    (ontable _ ns g
+      (each n car.ns (wipe roots.n)))
+    keys.roots))
+
+(def graph-leaves (g)
+  "Finds vertices with no outgoing edges.
+  See also: [[graph-roots]]"
+  (let vs nil
+    (ontable v ns g
+      (when (no car.ns) (push v vs)))
+    vs))
+
+
 ;; -- Topological sorting --
 (def top-sort (graph (o roots (keys graph))
                 (o fail (fn () (err 'top-sort "graph contains cycle"))))
   "Topological sorting via postorder depth-first-search, considering only nodes
 reachable from 'roots, which defaults to all vertices in the graph. Will call
 the 'fail parameter if a cycle is detected, which defaults to raising an error.
-  See also: [[top-sort-fast]]"
+  See also: [[top-sort-fast]] [[acyclic]]"
   (let info (table)
     (foldl
       (afn (tail v)
@@ -134,13 +151,13 @@ detects cycles nor loops endlessly on graphs with cycles.
 ;; ;; reference implementation for top-sort-fast
 ;; ;; TODO: compare speed to current 'top-sort-fast
 ;; (def top-sort-fast (graph (o roots (keys graph)))
-;;   (rev:mappend post-order (spanning-forest graph roots)))
+;;   (rev:post-orderf:spanning-forest graph roots))
 
 
 ;; -- Tree algorithms --
 
 ;; N-ary trees are represented as a cons of their value and a list of their
-;; children. Forests lists of trees.
+;; children. Forests are lists of trees.
 
 (def spanning-forest (graph (o roots (keys graph)))
   "Finds a spanning forest of the part of the graph reachable from 'roots, which
