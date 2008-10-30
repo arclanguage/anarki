@@ -29,7 +29,7 @@
 
 ;; TODO: ask AmkG whether we can add this to lib/tconc.arc.
 (def jconc (var vals)
-  " Concatenates the tconc cell `vals' onto the tconc cell `var'. By their
+  "Concatenates the tconc cell `vals' onto the tconc cell `var'. By their
 nature, tconc cell operations are destructive, and 'jconc is no exception: it
 mutates `var' and reuses the storage space for `vals'. Moreover, modifying
 `vals' after calling 'jconc will break the abstraction."
@@ -81,27 +81,61 @@ present in the graph. The added vertices will have no outgoing edges."
 ;; -- Misc algorithms --
 (def transpose (g)
   "Graph transposition."
-  (with (tg (table)
-         al tablist.g)
-    (each (k _) al (= tg.k (tconc-new)))
-    (each (k v) al (each n car.v (tconc tg.n k)))
+  (let tg (table)
+    (ontable k _ g (= tg.k (tconc-new)))
+    (ontable k v g (each n car.v (tconc tg.n k)))
     tg))
 
-(def top-sort (g)
-  "Topological sorting via postorder depth-first-search. Only makes sense on
-DAGs, but neither detect cycles nor loops endlessly on graphs with cycles."
-  (withs (vs keys.g
-          unvisited memtable.vs)
-    (letf (visit (tail v)
-            (if (~unvisited v) tail
-              (do (= unvisited.v nil) (cons v (foldl visit tail (car g.v))))))
-      (foldl visit nil vs))))
+(def acyclic (g)
+  "Returns nil if the graph contains a cycle."
+  (catch
+    (withs (vs keys.g
+            info memtable.vs)
+      (map1 (afn (v)
+              (case info.v
+                t (do (= info.v 'current) (map1 self (car g.v)) (= info.v nil))
+                current (throw nil)))
+        vs)
+      t)))
+
+(def top-sort (graph (o roots (keys graph))
+                (o fail (fn () (err 'top-sort "graph contains cycle"))))
+  "Topological sorting via postorder depth-first-search, considering only nodes
+reachable from 'roots, which defaults to all vertices in the graph. Will call
+the 'fail parameter if a cycle is detected, which defaults to raising an error.
+  See also: [[top-sort-fast]]"
+  (let info (table)
+    (foldl
+      (afn (tail v)
+        (case info.v
+          done tail
+          nil (do
+                (= info.v 'current)
+                (let result (cons v (foldl self tail (car graph.v)))
+                  (= info.v 'done)
+                  result))
+          current (fail)))
+      nil roots)))
+
+(def top-sort-fast (graph (o roots (keys graph)))
+  "Topological sorting via postorder depth-first-search, considering only nodes
+reachable from 'roots, which defaults to all vertices in the graph. Neither
+detects cycles nor loops endlessly on graphs with cycles.
+  See also: [[top-sort]]"
+  (let visited (table)
+    (foldl (afn (tail v)
+             (if visited.v tail
+               (do
+                 (= visited.v t)
+                 (cons v (foldl self tail (car graph.v))))))
+      nil roots)))
 
 
 ;; -- Tarjan's algorithm --
 (def tarjan-x (graph)
   "Computes a graph of the strongly connected components of a graph using an
-extended version of Tarjan's algorithm."
+extended version of Tarjan's algorithm.
+  See also: [[tarjan]]"
   (with (vs keys.g
          info (table)
          scc (table)
@@ -109,14 +143,14 @@ extended version of Tarjan's algorithm."
          index 0)
     (let unvisited memtable.vs
       (withf ((make-scc (nodes succs)
-               (each n car.nodes (= scc.n nodes))
-               (= (scc-graph car.nodes) (map1-conc car succs))
-               nodes)
+                (each n car.nodes (= scc.n nodes))
+                (= (scc-graph car.nodes) (map1-conc car succs))
+                nodes)
               (visit (v)
                 (= unvisited.v nil)
                 (with (nodes (tconc-new)
-                        succs (tconc-new)
-                        v-info (cons index index))
+                       succs (tconc-new)
+                       v-info (cons index index))
                   ;; Add our info to the "stack" and increment the index
                   (= info.v v-info)
                   (++ index)
@@ -156,5 +190,6 @@ extended version of Tarjan's algorithm."
 
 (def tarjan (g)
   "Computes a list of the strongly connected components of a graph using
-Tarjan's algorithm."
+Tarjan's algorithm.
+  See also: [[tarjan-x]]"
   (keys (tarjan-x g)))
