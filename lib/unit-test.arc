@@ -53,7 +53,7 @@
       (execute-single-test desc test results)))
 
 (def execute-single-test (desc test results)
-	(with (expected (test 2) result (eval (cadr test)))
+	(with (expected (test 2) result (on-err [+ "Error thrown: " (details _)] (fn () (eval (cadr test)))))
 	      (if (iso result expected)
 	          (do (if (is show-failed-only nil) (prn desc " - " (car test) " - ok")) (++ results!passed))
 	          (do (prn desc " - " (car test) " - FAILED: expected " expected ", got " result) (++ results!failed)))))
