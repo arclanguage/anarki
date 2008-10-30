@@ -98,6 +98,7 @@ present in the graph. The added vertices will have no outgoing edges."
         vs)
       t)))
 
+;; -- Topological sorting --
 (def top-sort (graph (o roots (keys graph))
                 (o fail (fn () (err 'top-sort "graph contains cycle"))))
   "Topological sorting via postorder depth-first-search, considering only nodes
@@ -129,6 +130,33 @@ detects cycles nor loops endlessly on graphs with cycles.
                  (= visited.v t)
                  (cons v (foldl self tail (car graph.v))))))
       nil roots)))
+
+;; ;; reference implementation for top-sort-fast
+;; ;; TODO: compare speed to current 'top-sort-fast
+;; (def top-sort-fast (graph (o roots (keys graph)))
+;;   (rev:mappend post-order (spanning-forest graph roots)))
+
+
+;; -- Tree algorithms --
+
+;; N-ary trees are represented as a cons of their value and a list of their
+;; children. Forests lists of trees.
+
+(def spanning-forest (graph (o roots (keys graph)))
+  "Finds a spanning forest of the part of the graph reachable from 'roots, which
+defaults to all vertices in the graph, obtained from depth-first-search starting
+at those vertices in order."
+  (let visited (table)
+    (trues (afn (v) (when (~visited v)
+                      (assert visited.v)
+                      (cons v (trues self (car graph.v)))))
+      roots)))
+
+(def pre-order (tree (o tail)) (cons car.tree (foldr pre-order tail cdr.tree)))
+(def post-order (tree (o tail)) (foldr post-order (cons car.tree tail) cdr.tree))
+
+(def pre-orderf (forest (o tail)) (foldr pre-order tail forest))
+(def post-orderf (forest (o tail)) (foldr post-order tail forest))
 
 
 ;; -- Tarjan's algorithm --
