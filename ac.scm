@@ -65,6 +65,7 @@
           ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
           ((eq? head 'quote) (list 'quote (ac-niltree (cadr s))))
           ((eq? head 'quasiquote) (ac-qq (cadr s) env))
+          ((eq? head 'quasisyntax) (ac-qs (cadr s) env))
           ((eq? head 'if) (ac-if (cdr s) env))
 			 ((eq? head 'compile) (ac-compile (cdr s)))
           ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
@@ -74,6 +75,7 @@
           ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
           ((pair? s) (ac-call (car s) (cdr s) env))
           ((eof-object? s) (exit))
+          ((syntax-closure? s) (ac-closure s env))
           (#t (err "Bad object in expression" s)))))
 
 (define (literal? x)
@@ -334,23 +336,37 @@
 (define (ac-qq args env)
   (list 'quasiquote (ac-qq1 1 args env)))
 
+(define (ac-qs args env)
+  `(vector 'closure '() ,(ac-qq args env)))
+
 ; process the argument of a quasiquote. keep track of
 ; depth of nesting. handle unquote only at top level (level = 1).
 ; complete form, e.g. x or (fn x) or (unquote (fn x))
 (define (ac-qq1 level x env)
-  (cond ((= level 0)
-         (ac x env))
-        ((eqv? (xcar x) 'unquote)
-         (list 'unquote (ac-qq1 (- level 1) (cadr x) env)))
-        ((and (eqv? (xcar x) 'unquote-splicing) (= level 1))
-         (list 'unquote-splicing
-               (list 'ar-nil-terminate (ac-qq1 (- level 1) (cadr x) env))))
-        ((eqv? (xcar x) 'quasiquote)
-         (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
-        ((pair? x)
-         (let ((t (lambda (f) (ac-qq1 level (f x) env)))) 
-           (cons (t car) (t cdr))))
-        (#t x)))
+  (cond
+    ((= level 0) (ac x env))
+    ((pair? x)
+      (let ((head (car x)))
+        (cond
+          ((eqv? head 'unquote)
+            (list 'unquote (ac-qq1 (- level 1) (cadr x) env)))
+          ((eqv? head 'unquote-splicing)
+            (list 'unquote-splicing
+              (list 'ar-nil-terminate (ac-qq1 (- level 1) (cadr x) env))))
+          ((eqv? head 'quasiquote)
+            (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
+          ((eqv? head 'unsyntax)
+            (list 'unquote
+              `(vector 'closure (call-env)
+                 ,(ac-qq1 (- level 1) (cadr x) env))))
+          ((eqv? head 'unsyntax-splicing)
+            (list 'unquote-splicing
+              `(map ,(lambda (x) (vector 'closure (call-env) x))
+                 (ar-nil-terminate ,(ac-qq1 (- level 1) (cadr x) env)))))
+          (#t
+            (let ((t (lambda (f) (ac-qq1 level (f x) env))))
+              (cons (t car) (t cdr)))))))
+    (#t x)))
 
 ; (if) -> nil
 ; (if x) -> x
@@ -513,9 +529,20 @@
                       (list ,@(map (lambda (x) (ac x env)) args)))))))
 
 (define (ac-mac-call m args env)
-  (let ((x1 (apply m (map ac-niltree args))))
-    (let ((x2 (ac (ac-denil x1) env)))
-      x2)))
+  (parameterize ((call-env env))
+    (let ((x1 (apply m (map ac-niltree args))))
+      (let ((x2 (ac (ac-denil x1) env)))
+        x2))))
+
+; syntactic closures for (semi-)hygienic macros
+
+(define call-env (make-parameter '()))
+  
+(define (syntax-closure? x)
+  (and (vector? x) (eq? (vector-ref x 0) 'closure)))
+
+(define (ac-closure x env)
+  (ac (vector-ref x 2) (vector-ref x 1)))
 
 ; returns #f or the macro function
 
