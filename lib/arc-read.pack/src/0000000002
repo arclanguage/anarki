@@ -1,0 +1,366 @@
+;;; arc-read.arc
+
+;;; Written by Chris Hooper, released into the public domain
+
+(= readtable* (table)
+   reader-macros* (table)
+   no-value-signal* (uniq))
+
+; used to simulate functions that return no values
+(def no-value (v) (is no-value-signal* v))
+
+; character predicates distinguish between the different character
+; classes used in Common Lisp
+(mac make-character-predicates traits
+  `(do ,@(map make-predicate traits)))
+
+(def make-predicate (trait)
+  `(def ,(coerce (string trait "c") 'sym) (c)
+     (or (isa c ',trait) (is ',trait readtable*.c))))
+
+(make-character-predicates 
+  term-macro 
+  non-term-macro 
+  single-escape 
+  multi-escape 
+  alphabetic 
+  digit 
+  package-marker
+  plus-sign
+  minus-sign
+  dot
+  decimal-point
+  ratio-marker
+  exponent-marker
+  invalid)
+
+(redef alphabeticc (c)
+  (or (old c) (and c (alphadig c) (~digitc c))))
+
+(= signc (orf plus-signc minus-signc))
+
+(= constituentc 
+   (orf alphabeticc digitc package-markerc 
+        plus-signc minus-signc dotc digitc 
+        decimal-pointc ratio-markerc
+        exponent-markerc invalidc))
+
+(= macroc (orf term-macroc non-term-macroc))
+
+;;; Reader-macros
+
+; temporarily sets the reader macro associated with a character
+(mac w/reader-macro (char m . body)
+  (w/uniq old-macros
+    `(let ,old-macros reader-macros*
+       (after (do (= reader-macros* (copy reader-macros*))
+                  (= (reader-macros* ,char) ,m)
+                ,@body)
+        (= reader-macros* ,old-macros)))))
+
+(def lpar-reader (port unused)
+  (list-reader port #\)))
+
+(def list-reader (port endc)
+  (let lst 
+    (catch
+        (rev (withs (acc nil add [push _ acc])
+               (w/reader-macro endc (fn (port unused) no-value-signal*)
+                 (whiler c (peekc port) endc
+                   (if (no c) (err "arc-read: expected a" endc)
+                     (let item (arc-read1 port)
+                       (if (and (isa item 'sym) (is "." (string item))) 
+                           (throw (rreduce cons (rev (add (arc-read1 port)))))
+                           (~no-value item) (add item))))))
+               acc)))
+       (readc port)
+       lst))
+
+(def rpar-reader (port unused)
+  (err "arc-read: unexpected ')'"))
+
+(def quote-reader (port unused)
+  (let quoted (arc-read1 port)
+    (if (no-value quoted) (err "arc-read: expected an element for quoting")
+        (list 'quote quoted))))
+
+(= character-signs*
+   (obj #\n   #\newline
+        #\s     #\space
+        #\e    #\rubout
+        #\p      #\page
+        #\t       #\tab
+        #\b #\backspace
+        #\r    #\return
+        #\l  #\linefeed
+        #\"         #\"
+        #\\         #\\))
+
+(def double-quote-reader (port unused)
+  (let errm "arc-read: expected a closing '\"'"
+    (string:rev:accum add (whiler c (readc port) #\"
+      (if (no c) (err errm)
+          (is #\\ c) (withs (c2 (readc port) 
+                             val character-signs*.c2)
+                       (if (no c2) (err errm)
+                           (no val) (err "arc-read: unknown espace sequence" c2)
+                           (add val)))
+          (add c))))))
+
+(def backquote-reader (port backquote)
+  (let next (arc-read1 port)
+    (if (no-value next)
+        (err "arc-read1: expected an element for quasiquoting after" backquote)
+        (list 'quasiquote next))))
+
+(def comma-reader (port comma)
+  (if (is #\@ (peekc port)) (read-unquote-splice port (string comma (readc port)))
+      (read-unquote port comma)))
+
+(def read-unquote (port unquote-char)
+  (let next (arc-read1 port)
+    (if (no-value next) 
+        (err "arc-read: expected an element for unquoting after" unquote-char)
+        (list 'unquote next))))
+
+(def read-unquote-splice (port splice-string)
+  (let next (arc-read1 port)
+    (if (no-value next) 
+        (err "arc-read: expected an element for unquote-splicing after" splice-string)
+        (list 'unquote-splicing next))))
+
+(def semi-colon-reader (port unused)
+  (let c #\;
+    (while (~pos c '(#\newline  nil)) (= c (readc port)))
+    no-value-signal*))
+
+(def sharpsign-dot (port unused)
+  (let form (arc-read1 port)
+    (if (no-value form) (err "arc-read: #. expects a form")
+        (eval form))))
+
+(= character-names*
+   (obj "newline"   #\newline
+        "space"     #\space
+        "rubout"    #\rubout
+        "page"      #\page
+        "tab"       #\tab
+        "backspace" #\backspace
+        "return"    #\return
+        "linefeed"  #\linefeed))
+
+(def sharpsign-backslash (port unused)
+  (with (c1 (readc port)
+         c2 (peekc port))
+    (if (~constituentc c2) c1
+        (let token (cons c1 (rev:accum add (whiler c (readc port) ~constituentc (add c))))
+          (character-names* (downcase:string token))))))
+
+(def sharpsign-reader (port unused)
+  (let c (readc port)
+    (if (no c) (err "arc-read: dispatching macro character '#' expects a dispatch character")
+        ((sharpsign-dispatch* (downcase c)) port (downcase c)))))
+
+(def left-bracket-reader (port unused)
+  (list 'make-br-fn (list-reader port #\])))
+
+(def right-bracket-reader (port unused)
+  (err "arc-read: unexpected ']'"))
+
+;;; Standard read table and reader macros
+
+(= standard-table* 
+   (obj #\backspace 'invalid
+        #\tab       'whitespace
+        #\newline   'whitespace
+        #\linefeed  'whitespace
+        #\page      'whitespace
+        #\return    'whitespace
+        #\space     'whitespace
+        #\!         'alphabetic
+        #\"         'term-macro
+        #\#         'non-term-macro
+        #\$         'alphabetic
+        #\%         'alphabetic
+        #\&         'alphabetic
+        #\'         'term-macro
+        #\(         'term-macro
+        #\)         'term-macro
+        #\*         'alphabetic
+        #\+         'plus-sign
+        #\,         'term-macro
+        #\-         'minus-sign
+        #\.         'decimal-point
+        #\/         'ratio-marker
+        #\0         'digit
+        #\1         'digit
+        #\2         'digit
+        #\3         'digit
+        #\4         'digit
+        #\5         'digit
+        #\6         'digit
+        #\7         'digit
+        #\8         'digit
+        #\9         'digit
+        #\:         'alphabetic
+        #\;         'term-macro
+        #\<         'alphabetic
+        #\>         'alphabetic
+        #\?         'alphabetic
+        #\=         'alphabetic
+        #\@         'alphabetic
+        #\[         'term-macro
+        #\\         'single-escape
+        #\]         'term-macro
+        #\^         'alphabetic
+        #\_         'alphabetic
+        #\`         'term-macro
+        #\{         'alphabetic
+        #\|         'multi-escape
+        #\}         'alphabetic
+        #\~         'alphabetic
+        #\rubout    'invalid
+        #\e         'exponent-marker))
+
+(= standard-reader-macros*
+   (obj #\( lpar-reader
+        #\) rpar-reader
+        #\; semi-colon-reader
+        #\` backquote-reader
+        #\, comma-reader
+        #\" double-quote-reader
+        #\# sharpsign-reader
+        #\' quote-reader
+        #\[ left-bracket-reader
+        #\] right-bracket-reader))
+
+(= sharpsign-dispatch*
+     (obj #\\ sharpsign-backslash
+          #\. sharpsign-dot))
+
+(= readtable* (copy standard-table*))
+(= reader-macros* (copy standard-reader-macros*))
+
+;;; The main arc-read function and sub-functions
+
+(def arc-read ((o port-or-string (stdin)))
+  (let val (arc-read1 (if (isa port-or-string 'string) 
+                          (instring port-or-string) 
+                          port-or-string))
+    (if (no-value val) nil val)))
+
+(def arc-read1 (port)
+  (let c (readc port)
+    (if (no c) no-value-signal*
+        (whitec c) (arc-read1 port)
+        (macroc c) (call-reader-macro c port)
+        (single-escapec c) (accum-token (read-escape-char c port) port t)
+        (multi-escapec c) (accum-escape-token nil port c)
+        (constituentc c) (accum-token c port nil)
+        (err "Invalid character: " c))))
+
+(def accum-token (last-c port sym (o last-token nil))
+  (with (token (cons last-c last-token)
+         c (peekc port))
+    (if (no c) (finalise-token (rev token) sym)
+        (term-macroc c) (finalise-token (rev token) sym)
+        (whitec c) (finalise-token (rev token) sym)
+        (readc port)
+        (if (or (constituentc c) (non-term-macroc c)) (accum-token c port sym token)
+            (single-escapec c) (accum-token (read-escape-char c port) 
+                                            port t token)
+            (multi-escapec c) (accum-escape-token (readc port) port c token)
+            (err "Invalid character: " c)))))
+
+(def accum-escape-token (last-c port opening-char (o last-token))
+  (with (token (if (no last-c) last-token (cons last-c last-token))
+         c (readc port))
+    (if (no c) (err "read: unbalanced " opening-char)
+        (or (constituentc c)
+            (macroc c)
+            (whitec c)) (accum-escape-token c port opening-char token)
+        (single-escapec c) (accum-escape-token (read-escape-char c port) 
+                                              port opening-char token)
+        (multi-escapec c) (let next-c (readc port)
+                               (if (constituentc next-c) (accum-token next-c port t token)
+                                   (finalise-token (rev token) t)))
+        (err "Invalid character: " c))))
+
+(def read-escape-char (c port)
+  (readc port))
+
+(def call-reader-macro (c port) 
+  (let val (reader-macros*.c port c)
+       (if (no-value val) (arc-read1 port) val)))
+
+;;; Tokens: this is the hard part, telling a number from a symbol
+
+(mac ifsplit (chars pred split-thunk unsplit-thunk)
+  (w/uniq (p s)
+  `(let ,p (pos ,pred ,chars)
+     (if (no ,p) ,unsplit-thunk
+         (withs (,s (split ,chars ,p)
+                 first (car ,s)
+                 second (cdr:car:cdr ,s))
+                ,split-thunk)))))
+
+(def finalise-token (chars sym)
+  (if sym (finalise-symbol chars)
+      (finalise-initial-parse chars)))
+
+(def finalise-initial-parse (chars)
+  (let cpy (copy chars)
+    (ifsplit chars ratio-markerc
+       (finalise-ratio first second cpy)
+       (ifsplit chars exponent-markerc
+          (finalise-exponential-float first second cpy)
+          (ifsplit chars decimal-pointc
+             (if second (finalise-simple-float first second cpy)
+                 (finalise-integer first cpy))
+             (finalise-integer chars cpy))))))
+
+(def finalise-exponential-float (floatc expc chars)
+  (if (or (no floatc) (no expc)) (finalise-symbol chars)
+    (with (float (finalise-initial-parse floatc)
+           exp   (finalise-integer expc chars))
+       (if (and (number float) 
+                (simple-integer expc) 
+                (~pos exponent-markerc floatc))
+           (* 1.0 float (expt 10 exp))
+           (finalise-symbol chars)))))
+
+(def finalise-simple-float (wholec partc chars)
+  (if (isdigits partc)
+      (if (no wholec) (create-float 0 (finalise-integer partc nil))
+          (simple-integer wholec) (create-float (finalise-integer wholec nil) (finalise-integer partc nil))
+          (finalise-symbol chars))
+      (finalise-symbol chars)))
+
+(def create-float (whole frac)
+  (* (+ 0.0 (abs whole) (/ frac (expt 10 (len (string frac)))))
+     (if (or (is 0 whole) (positive whole)) 1 -1)))
+
+(def finalise-ratio (num denom chars)
+    (if (and (simple-integer num) denom (isdigits denom)) 
+        (/ (finalise-integer num nil) (finalise-integer denom nil))
+        (finalise-symbol chars)))
+
+(def finalise-integer (chars original-chars)
+  (if (simple-integer chars)
+    (withs (s    (car chars)
+            full (if (plus-signc s)  (cons #\+ (cdr chars)) 
+                     (minus-signc s) (cons #\- (cdr chars))
+                     (cons #\+ chars)))
+           (coerce (string full) 'int))
+    (finalise-symbol original-chars)))
+
+(def finalise-symbol (chars)
+  (coerce (string chars) 'sym))
+
+(def isdigits (chars) (no:trues no:digitc chars))
+
+; a simple integer is an optional sign plus digits
+; (in general integers can have a decimal point at the end)
+(def simple-integer ((c . chars)) 
+  (and (isdigits chars) (or (and chars (signc c)) (digitc c))))
+

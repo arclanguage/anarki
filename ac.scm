@@ -964,10 +964,21 @@
 (xdef 'write (lambda args (printwith write   args)))
 (xdef 'disp  (lambda args (printwith display args)))
 
+; patch: allows the reader to be changed at run time
+(define current-reader* read)
+
+(define (set-reader reader) 
+    (set! current-reader* 
+          (lambda args 
+            (flush-output) 
+            (ac-denil (if (eq? 1 (length args)) 
+                          (reader (car args)) 
+                          (reader))))))
+
 ; sread = scheme read. eventually replace by writing read
 
 (xdef 'sread (lambda (p eof)
-               (let ((expr (read p)))
+               (let ((expr (current-reader* p)))
                  (if (eof-object? expr) eof expr))))
 
 ; these work in PLT but not scheme48
@@ -1112,7 +1123,7 @@
 
 (define (tle)
   (display "Arc> ")
-  (let ((expr (read)))
+  (let ((expr (current-reader*)))
     (when (not (eqv? expr ':a))
       (write (arc-eval expr))
       (newline)
@@ -1133,7 +1144,7 @@
             (newline)
             (tl2))
     (lambda ()
-      (let ((expr (read)))
+      (let ((expr (current-reader*)))
         (if (eqv? expr ':a)
             'done
             (let ((val (arc-eval expr)))
@@ -1146,7 +1157,7 @@
               (tl2)))))))
 
 (define (aload1 p)
-  (let ((x (read p)))
+  (let ((x (current-reader* p)))
     (if (eof-object? x)
         #t
         (begin
@@ -1154,7 +1165,7 @@
           (aload1 p)))))
 
 (define (atests1 p)
-  (let ((x (read p)))
+  (let ((x (current-reader* p)))
     (if (eof-object? x)
         #t
         (begin
@@ -1174,7 +1185,7 @@
   (call-with-input-file filename atests1))
 
 (define (acompile1 ip op)
-  (let ((x (read ip)))
+  (let ((x (current-reader* ip)))
     (if (eof-object? x)
         #t
         (let ((scm (ac x '())))
