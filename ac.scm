@@ -334,10 +334,8 @@
 (define (ac-qq args env)
   (list 'quasiquote (ac-qq1 1 args env)))
 
-;; FIXME: doesn't hygienify!
 (define (ac-qs args env)
-  `(vector 'closure #t (make-parameter '())
-     ,(ac-qq args env)))
+  `(vector 'closure #t (make-parameter '()) ,(ac-qq args env)))
 
 ; process the argument of a quasiquote. keep track of
 ; depth of nesting. handle unquote only at top level (level = 1).
@@ -655,7 +653,7 @@
 
 (define (ac-closure x env)
   (parameterize ((hygienic? (closure-hygienic? x)))
-    (ac (closure-expr x) ((closure-env-param x)))))
+    (ac (ac-denil (closure-expr x)) ((closure-env-param x)))))
 
 ; closure structure:
 ; #(closure <is-hygienic> <env-param> <expr>)
