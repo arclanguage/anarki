@@ -50,33 +50,48 @@
 (require (lib "pretty.ss"))
 (require (lib "file.ss"))
 
+(define-syntax w/values
+  (syntax-rules ()
+    ((w/values (valsym ...) expr body ...)
+      (call-with-values
+        (lambda () expr)
+        (lambda (valsym ...) body ...)))))
+
+(define (ac-sym sym hyg)
+  (if hyg (gensym sym) sym))
+
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
 ; env is a list of lexically bound variables, which we
 ; need in order to decide whether set should create a global.
 
-(define (ac s env)
+; env is an alist from (name . hyg) to sym
+
+(define (ac s env hyg)
   (let ((head (xcar s)))
     (cond ((string? s) (string-copy s))  ; to avoid immutable strings
           ((literal? s) s)
           ((eqv? s 'nil) (list 'quote 'nil))
-          ((ssyntax? s) (ac (expand-ssyntax s) env))
-          ((symbol? s) (ac-var-ref s env))
-          ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env))
+          ((ssyntax? s) (ac (expand-ssyntax s) env hyg))
+          ((symbol? s) (ac-var-ref s env hyg))
+          ((syntax-closure? s) (ac-closure s env hyg))
+          ((ssyntax? head) (ac (cons (expand-ssyntax head) (cdr s)) env hyg))
           ((eq? head 'quote) (list 'quote (ac-niltree (cadr s))))
-          ((eq? head 'quasiquote) (ac-qq (cadr s) env))
-          ((eq? head 'quasisyntax) (ac-qs (cadr s) env))
-          ((eq? head 'if) (ac-if (cdr s) env))
+          ((eq? head 'quasiquote) (ac-qq (cadr s) env hyg))
+          ((eq? head 'quasisyntax) (ac-qs (cadr s) env hyg))
+          ((eq? head 'if) (ac-if (cdr s) env hyg))
 			 ((eq? head 'compile) (ac-compile (cdr s)))
-          ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env))
-          ((eq? head 'set) (ac-set (cdr s) env))
-          ((eq? head 'lset) (ac-lset (cdr s) env))
+          ((eq? head 'fn) (ac-fn (cadr s) (cddr s) env hyg))
+          ((eq? head 'set) (ac-set (cdr s) env hyg))
+          ((eq? head 'lset) (ac-lset (cdr s) env hyg))
           ; this line could be removed without changing semantics
-          ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env))
-          ((pair? s) (ac-call (car s) (cdr s) env))
+          ((eq? (xcar head) 'compose) (ac (decompose (cdar s) (cdr s)) env hyg))
+          ((pair? s) (ac-call (car s) (cdr s) env hyg))
           ((eof-object? s) (exit))
-          ((syntax-closure? s) (ac-closure s env))
           (#t (err "Bad object in expression" s)))))
+
+; compiles at the toplevel
+(define (ac-tl s) (ac s '() #f))
 
 (define (literal? x)
   (or (boolean? x)
@@ -326,41 +341,45 @@
       (string->symbol (string-append "__" (symbol->string s)))
       s))
 
-(define (ac-var-ref s env)
-  (or (lex s env) (ac-global-name s)))
+(define (ac-var-ref s env hyg)
+  (or (lex s env hyg) (ac-global-name s)))
 
 ; quasiquote
 
-(define (ac-qq args env)
-  (list 'quasiquote (ac-qq1 1 args env)))
+(define (ac-qq args env hyg)
+  (list 'quasiquote (ac-qq1 1 args env hyg)))
 
-(define (ac-qs args env)
-  `(vector 'closure #t (make-parameter '()) ,(ac-qq args env)))
+(define (ac-qs args env hyg)
+  `(vector 'closure (gensym) ,(ac-qq args env hyg)))
 
 ; process the argument of a quasiquote. keep track of
 ; depth of nesting. handle unquote only at top level (level = 1).
 ; complete form, e.g. x or (fn x) or (unquote (fn x))
-(define (ac-qq1 level x env)
+(define (ac-qq1 level x env hyg)
   (cond
-    ((= level 0) (ac x env))
+    ((= level 0) (ac x env hyg))
     ((pair? x)
       (let ((head (car x)))
         (cond
-          ((eqv? head 'unquote)
-            (list 'unquote (ac-qq1 (- level 1) (cadr x) env)))
-          ((eqv? head 'unquote-splicing)
+          ((eq? head 'unquote)
+            (list 'unquote (ac-qq1 (- level 1) (cadr x) env hyg)))
+          ((eq? head 'unquote-splicing)
             (list 'unquote-splicing
-              (list 'ar-nil-terminate (ac-qq1 (- level 1) (cadr x) env))))
-          ((eqv? head 'quasiquote)
-            (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
-          ((eqv? head 'unsyntax)
-            (list 'unquote `(ar-callee-closure ,(ac-qq1 (- level 1) (cadr x) env))))
-          ((eqv? head 'unsyntax-splicing)
+              (list 'ar-nil-terminate (ac-qq1 (- level 1) (cadr x) env hyg))))
+          ((eq? head 'quasiquote)
+            (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env hyg)))
+          ((eq? head 'quasisyntax)
+            `(vector 'closure (gensym)
+               ,(list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env hyg))))
+          ((eq? head 'unsyntax)
+            (list 'unquote
+              `(ar-callee-closure ,(ac-qq1 (- level 1) (cadr x) env hyg))))
+          ((eq? head 'unsyntax-splicing)
             (list 'unquote-splicing
               `(map ar-callee-closure
-                 (ar-nil-terminate ,(ac-qq1 (- level 1) (cadr x) env)))))
+                 (ar-nil-terminate ,(ac-qq1 (- level 1) (cadr x) env hyg)))))
           (#t
-            (let ((t (lambda (f) (ac-qq1 level (f x) env))))
+            (let ((t (lambda (f) (ac-qq1 level (f x) env hyg))))
               (cons (t car) (t cdr)))))))
     (#t x)))
 
@@ -370,302 +389,237 @@
 ; (if nil a b) -> b
 ; (if nil a b c) -> (if b c)
 
-(define (ac-if args env)
+(define (ac-if args env hyg)
   (cond ((null? args) ''nil)
-        ((null? (cdr args)) (ac (car args) env))
-        (#t `(if (not (ar-false? ,(ac (car args) env)))
+        ((null? (cdr args)) (ac (car args) env hyg))
+        (#t `(if (not (ar-false? ,(ac (car args) env hyg)))
 ;(not (eq? 'nil ,(ac (car args) env)))
-                 ,(ac (cadr args) env)
-                 ,(ac-if (cddr args) env)))))
+                 ,(ac (cadr args) env hyg)
+                 ,(ac-if (cddr args) env hyg)))))
 
 
 ; translate fn directly into a lambda if it has ordinary
 ; parameters, otherwise use a rest parameter and parse it.
-(define (ac-fn args body env)
-  ((if (ac-simple-args? args) ac-simple-fn ac-complex-fn)
-    args body env))
+(define (ac-fn args body env hyg)
+  ((if (ac-simple-args? (unclosure args)) ac-simple-fn ac-complex-fn)
+    args body env hyg))
 
 ; does an fn arg list use optional parameters or destructuring?
 ; a rest parameter is not complex
 (define (ac-simple-args? args)
-  (cond
-    ((syntax-closure? args) (ac-simple-args? (closure-expr args)))
-    ((pair? args)
-      (and (or (symbol? (car args))
-               (and (syntax-closure? (car args))
-                    (ac-simple-args? (closure-expr (car args)))))
-        (ac-simple-args? (cdr args))))
-    (#t (or (null? args) (symbol? args)))))
+  (if (pair? args) (and (symbol? (car args)) (ac-simple-args? (cdr args)))
+    (or (symbol? args) (null? args))))
 
-(define (ac-simple-fn args body env)
-  (ac-simple-parms (ac-denil-cdr args) env
-    (lambda (args env)
-      `(lambda ,args ,@(ac-body* body env)))))
+(define (ac-simple-fn args body env hyg)
+  (w/values (arglist argenv) (ac-simple-args args hyg)
+    `(lambda ,arglist
+       ,@(ac-body* body (append argenv env) hyg))))
 
-(define (ac-simple-parms parm env cont)
+(define (ac-simple-arg arg hyg)
   (cond
-    ((null? parm) (cont '() env))
-    
-    ((symbol? parm)
-      (let ((psym (if (hygienic?) (gensym) parm)))
-        (cont psym (cons (cons parm psym) env))))
-    
-    ((syntax-closure? parm)
-      (let* ((pname (closure-expr parm))
-             (penv-param (closure-env-param parm))
-             (psym (if (closure-hygienic? parm) (gensym) pname)))
-        (parameterize ((penv-param (cons (cons pname psym) (penv-param))))
-          (cont psym env))))
-    
-    ((pair? parm)
-      (let ((parm (car parm))
-            (parms (cdr parm)))
-        (ac-simple-parms parms env
-          (lambda (args env)
-            (cond
-              ((symbol? parm)
-                (let ((psym (if (hygienic?) (gensym) parm)))
-                  (cont (cons psym args) (cons (cons parm psym) env))))
-              
-              ((syntax-closure? parm)
-                (let* ((pname (closure-expr parm))
-                       (penv-param (closure-env-param parm))
-                       (psym (if (closure-hygienic? parm) (gensym) (closure-expr parm))))
-                  (parameterize ((penv-param (cons (cons pname psym) (penv-param))))
-                    (cont (cons psym args) env))))
-              
-              (#t (err "Can't understand fn arg list" (cons parm parms))))))))
-    
-    (#t (err "Can't understand fn arg list" parm))))
+    ((symbol? arg) (cons arg hyg))
+    ((syntax-closure? arg) (ac-simple-arg (closure-expr arg) (closure-hyg arg)))
+    (#t (err "Can't understand fn arg" arg))))
+
+(define (ac-simple-args args hyg)
+  (let loop ((args args)
+             (hyg hyg)
+             (arglist '())
+             (argenv '()))
+    (cond
+      ((or (null? args) (eq? args 'nil))
+        (values (reverse arglist) argenv))
+      ((syntax-closure? args)
+        (loop (closure-expr args) (closure-hyg args) arglist argenv))
+      ((symbol? args)
+        (let ((sym (ac-sym args hyg)))
+          (values (append (reverse arglist) sym)
+                  `(((,args . ,hyg) . ,sym) ,@argenv))))
+      ((pair? args)
+        (let* ((arg (ac-simple-arg (car args) hyg))
+               (sym (ac-sym (car arg) (cdr arg))))
+          (loop (cdr args) hyg
+            (cons sym arglist)
+            (cons (cons arg sym) argenv))))
+      (else (err "Can't understand fn arg list" args)))))
 
 ; translate a fn with optional or destructuring args
 ; (fn (x (o y x) (o z 21) (x1 x2) . rest) ...)
 ; arguments in top-level list are mandatory (unless optional),
 ; but it's OK for parts of a list you're destructuring to
 ; be missing.
-(define (ac-complex-fn args body env)
+(define (ac-complex-fn args body env hyg)
   (let ((ra (gensym)))
-    `(lambda ,ra
-       ,@(ac-complex-parms ra args (hygienic?) env
-           (lambda (env) (ac-body* body env))))))
+    (w/values (env letlist) (ac-complex-args ra args env hyg)
+      `(lambda ,ra
+         (let* ,letlist
+           ,@(ac-body* body env hyg))))))
 
-; destructures a parameter list
-(define (ac-complex-parms arg parm hygiene env cont)
-  (cond
-    ((or (null? parm) (eq? parm 'nil))
-      ; this is doing it wrong, since it means fns with complex parms but no
-      ; rest parm will accept more args than they have parms, but it's how
-      ; anarki does it, so in the name of backwards compatibility...
-      (cont env))
-    
-    ((symbol? parm)
-      (if hygiene
-        (cont (cons (cons parm arg) env))
-        `((let ((,parm ,arg))
-            ,@(cont (cons (cons parm parm) env))))))
-    
-    ((syntax-closure? parm)
-      (ac-complex-parms arg
-        (closure-expr parm) (closure-hygienic? parm) ((closure-env-param parm))
-        (lambda (closure-env)
-          (parameterize (((closure-env-param parm) closure-env))
-            (cont env)))))
-    
-    ((pair? parm)
-      (ac-complex-parm arg (car parm) hygiene env
-        (lambda (arg env)
-          (ac-complex-parms arg (cdr parm) hygiene env cont))))
-    
-    (#t (err "Can't understand fn arg list" parm))))
+(define (ac-complex-args expr args fn-env fn-hyg)
+  (let loop ((expr expr) (args args) (hyg fn-hyg) (env fn-env) (letlist '()))
+    (cond
+      ((or (null? args) (eq? args 'nil))
+        ; this is doing it wrong, since it means fns with complex parms but no
+        ; rest parm will accept more args than they have parms, but it's how
+        ; anarki does it, so in the name of backwards compatibility...
+        (values env (reverse letlist)))
+      
+      ((syntax-closure? args)
+        (loop expr (closure-expr args) (closure-hyg args) env letlist))
+      
+      ((symbol? args)
+        (let ((sym (ac-sym args hyg)))
+          (values `(((,args . ,hyg) . ,sym) ,@env)
+                  (reverse (cons `(,sym ,expr) letlist)))))
+      
+      ((pair? args)
+        (let parse ((arg (car args)) (arg-hyg hyg))
+          (cond
+            ((syntax-closure? arg) (parse (closure-expr arg) (closure-hyg arg)))
+            ((symbol? arg)
+              (let ((sym (ac-sym arg arg-hyg)))
+                (loop `(cdr ,expr) (cdr args) hyg
+                  `(((,arg . ,arg-hyg) . ,sym) ,@env)
+                  `((,sym (car ,expr)) ,@letlist))))
+            ((pair? arg)
+              (if (eq? (car arg) 'o)
+                ; optional argument
+                (let unwrap ((arg-name (cadr arg)) (arg-hyg arg-hyg))
+                  (if (syntax-closure? arg-name)
+                    (unwrap (closure-expr arg-name) (closure-hyg arg-name))
+                    (let ((sym (ac-sym arg-name arg-hyg))
+                          (default (if (> (length arg) 2) (caddr arg) 'nil)))
+                      (loop `(ar-xcdr ,expr) (cdr args) hyg
+                        `(((,arg-name . ,arg-hyg) . ,sym) ,@env)
+                        `((,sym (if (pair? ,expr) (car ,expr)
+                                  ,(ac default env fn-hyg)))
+                           ,@letlist)))))
+                ; destructuring argument
+                (w/values (arg-env arg-letlist) (ac-destructure-pair
+                                                  `(car ,expr) arg arg-hyg)
+                  (loop `(cdr ,expr) (cdr args) hyg
+                    (append arg-env env)
+                    (append arg-letlist letlist)))))
+            (else (err "Can't understand fn arg list" args)))))
+      
+      (else (err "Can't understand fn arg list" args)))))
 
-; destructures a single parameter
-(define (ac-complex-parm arg parm hygiene env cont)
-  (cond
-    ((or (null? parm) (eq? parm 'nil))
-      ; as above, this is also doing it wrong but backwards-compatible
-      (let ((rest-gs (gensym)))
-        `((let ((,rest-gs (cdr ,arg)))
-            ,@(cont rest-gs env)))))
-    
-    ((symbol? parm)
-      (if hygiene
-        (let ((head-gs (gensym))
-              (rest-gs (gensym)))
-          `((let ((,head-gs (car ,arg))
-                  (,rest-gs (cdr ,arg)))
-              ,@(cont rest-gs (cons (cons parm head-gs) env)))))
-        (let ((rest-gs (gensym)))
-          `((let ((,parm (car ,arg))
-                  (,rest-gs (cdr ,arg)))
-              ,@(cont rest-gs (cons (cons parm parm) env)))))))
-    
-    ((syntax-closure? parm)
-      (ac-complex-parm arg
-        (closure-expr parm) (closure-hygienic? parm) ((closure-env-param parm))
-        (lambda (arg closure-env)
-          (parameterize (((closure-env-param parm) closure-env))
-            (cont arg env)))))
-    
-    ((pair? parm)
-      (if (eq? (car parm) 'o)
-        ; optional argument
-        (let ((opt-parm (cadr parm))
-              (opt-default (if (pair? (cddr parm)) (caddr parm) 'nil))
-              (arg-gs (gensym))
-              (opt-gs (gensym))
-              (rest-gs (gensym)))
-          `((let* ((,arg-gs (if (pair? ,arg) ,arg
-                              (cons ,(ac opt-default env) ,arg)))
-                   (,opt-gs (car ,arg-gs))
-                   (,rest-gs (cdr ,arg-gs)))
-              ,@(ac-complex-pattern opt-gs opt-parm hygiene env
-                  (lambda (env) (cont rest-gs env))))))
-        ; destructuring argument
-        (let ((arg-gs (gensym))
-              (rest-gs (gensym)))
-          `((let ((,arg-gs (car ,arg))
-                  (,rest-gs (cdr ,arg)))
-              ,@(ac-complex-pattern arg-gs parm hygiene env
-                  (lambda (env) (cont rest-gs env))))))))
-    
-    (#t (err "Can't understand fn arg list" parm))))
+(define (ac-destructure-pair expr pat hyg)
+  (w/values (car-env car-letlist) (ac-destructure `(car ,expr) (car pat) hyg)
+    (w/values (cdr-env cdr-letlist) (ac-destructure `(cdr ,expr) (cdr pat) hyg)
+      (values (append cdr-env car-env) (append cdr-letlist car-letlist)))))
 
-; destructures a single pattern (no optional parameters)
-(define (ac-complex-pattern arg pat hygiene env cont)
+(define (ac-destructure expr pat hyg)
   (cond
-    ((or (null? pat) (eq? pat 'nil))
-      ; as above, doing it wrong
-      (cont env))
-    
+    ((or (null? pat) (eq? pat 'nil)) (values '() '()))
     ((symbol? pat)
-      (if hygiene (cont (cons (cons pat arg) env))
-        `((let ((,pat ,arg))
-            ,@(cont (cons (cons pat pat) env))))))
-    
+      (let ((sym (ac-sym pat hyg)))
+        (values `(((,pat . ,hyg) . ,sym)) `((,sym ,expr)))))
     ((syntax-closure? pat)
-      (ac-complex-pattern arg
-        (closure-expr pat) (closure-hygienic? pat) ((closure-env-param pat))
-        (lambda (closure-env)
-          (parameterize (((closure-env-param pat) closure-env))
-            (cont env)))))
-    
+      (ac-destructure expr (closure-expr pat) (closure-hyg pat)))
     ((pair? pat)
-      (let ((car-gs (gensym))
-            (cdr-gs (gensym)))
-        `((let ((,car-gs (car ,arg))
-                (,cdr-gs (cdr ,arg)))
-            ,@(ac-complex-pattern car-gs (car pat) hygiene env
-                (lambda (env)
-                  (ac-complex-pattern cdr-gs (cdr pat) hygiene env cont)))))))
-    
-    (#t (err "Can't understand fn arg list" pat))))
+      (ac-destructure-pair expr pat hyg))
+    (else (err "Can't understand fn arg list" pat))))
 
-; (a b . c) -> (a b c)
-; a -> (a)
-(define (ac-arglist a)
-  (cond ((null? a) '())
-        ((symbol? a) (list a))
-        ((symbol? (cdr a)) (list (car a) (cdr a)))
-        (#t (cons (car a) (ac-arglist (cdr a))))))
-
-(define (ac-body body env)
-  (map (lambda (x) (ac x env)) body))
+; compiles a function body
+(define (ac-body body env hyg)
+  (map (lambda (x) (ac x env hyg)) body))
 
 ;; like ac-body, but spits out a nil expression if empty
-(define (ac-body* body env)
+(define (ac-body* body env hyg)
   (if (null? body)
       (list (list 'quote 'nil))
-      (ac-body body env)))
+      (ac-body body env hyg)))
 
 ; (set v1 expr1 v2 expr2 ...)
 
-(define (ac-set x env)
-  `(begin ,@(ac-setn x env)))
+(define (ac-set x env hyg)
+  `(begin ,@(ac-setn x env hyg)))
 
-(define (ac-setn x env)
+(define (ac-setn x env hyg)
   (if (null? x)
       '()
-      (cons (ac-set1 (ac-macex (car x)) (ac (cadr x) env) env)
-            (ac-setn (cddr x) env))))
+      (cons (ac-set1 (ac-macex (car x)) (ac (cadr x) env hyg) env hyg)
+            (ac-setn (cddr x) env hyg))))
 
 ; = replaced by set, which is only for vars
 ; = now defined in arc (is it?)
 ; name is to cause fns to have their arc names for debugging
 
-(define (ac-set1 a b env)
+(define (ac-set1 a b env hyg)
   (if (symbol? a)
       (let ((name (string->symbol (string-append " " (symbol->string a)))))
         (list 'let `((,name ,b))
                (cond ((eqv? a 'nil) (err "Can't rebind nil"))
                      ((eqv? a 't) (err "Can't rebind t"))
-                     ((lex a env) => (lambda (v) `(set! ,v ,name)))
+                     ((lex a env hyg) => (lambda (v) `(set! ,v ,name)))
                      (#t
 								`(begin
 									(namespace-set-variable-value! ',(ac-global-name a) ,name)
 									(hash-table-put! *defs* ',(ac-global-name a) ',b))))
                name))
       (err "First arg to set must be a symbol" a)))
-      
-(define (ac-lset x env)
+
+(define (ac-lset x env hyg)
   (if (null? x) '()
       `(define ,(ac-macex (ac-global-name (car x)))
-         ,(ac (cadr x) env))))
+         ,(ac (cadr x) env hyg))))
 
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
 ;   (ar-apply __pr (list 1 2))
 ; which results in 1/2 the CPU time going to GC. Instead:
 ;   (ar-funcall2 __pr 1 2)
-(define (ac-call fn args env)
+(define (ac-call fn args env hyg)
   (let ((macfn (ac-macro? fn)))
     (cond (macfn
-           (ac-mac-call macfn args env))
+           (ac-mac-call macfn args env hyg))
           ((and (pair? fn) (eqv? (car fn) 'fn))
-           `(,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
+           `(,(ac fn env hyg) ,@(map (lambda (x) (ac x env hyg)) args)))
           ((= (length args) 0)
-           `(ar-funcall0 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
+           `(ar-funcall0 ,(ac fn env hyg) ,@(map (lambda (x) (ac x env hyg)) args)))
           ((= (length args) 1)
-           `(ar-funcall1 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
+           `(ar-funcall1 ,(ac fn env hyg) ,@(map (lambda (x) (ac x env hyg)) args)))
           ((= (length args) 2)
-           `(ar-funcall2 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
+           `(ar-funcall2 ,(ac fn env hyg) ,@(map (lambda (x) (ac x env hyg)) args)))
           ((= (length args) 3)
-           `(ar-funcall3 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
+           `(ar-funcall3 ,(ac fn env hyg) ,@(map (lambda (x) (ac x env hyg)) args)))
           ((= (length args) 4)
-           `(ar-funcall4 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
+           `(ar-funcall4 ,(ac fn env hyg) ,@(map (lambda (x) (ac x env hyg)) args)))
           (#t
-           `(ar-apply ,(ac fn env)
-                      (list ,@(map (lambda (x) (ac x env)) args)))))))
+           `(ar-apply ,(ac fn env hyg)
+                      (list ,@(map (lambda (x) (ac x env hyg)) args)))))))
 
-(define (ar-mac-call m args env)
-  (parameterize ((callee-info (cons (hygienic?) (make-parameter env))))
+(define (ar-mac-call m args env hyg)
+  (parameterize ((callee-hyg hyg))
     (apply m (map ac-niltree args))))
 
-(define (ac-mac-call m args env)
-  (ac (ac-denil (ar-mac-call m args env)) env))
+(define (ac-mac-call m args env hyg)
+  (ac (ac-denil (ar-mac-call m args env hyg)) env hyg))
 
 ; syntactic closures for (semi-)hygienic macros
 
-(define callee-info (make-parameter #f))
-(define hygienic? (make-parameter #f))
+(define callee-hyg (make-parameter #f))
 
 (define (syntax-closure? x)
   (and (vector? x) (eq? (vector-ref x 0) 'closure)))
 
-(define (ac-closure x env)
-  (parameterize ((hygienic? (closure-hygienic? x)))
-    (ac (ac-denil (closure-expr x)) ((closure-env-param x)))))
+(define (unclosure x)
+  (cond ((syntax-closure? x) (unclosure (closure-expr x)))
+        ((pair? x) (cons (unclosure (car x)) (unclosure (cdr x))))
+        (#t x)))
+
+(define (ac-closure c env hyg)
+  (ac (ac-denil (closure-expr c)) env (closure-hyg c)))
 
 ; closure structure:
-; #(closure <is-hygienic> <env-param> <expr>)
+; #(closure <hyg> <expr>)
 
-(define (closure-hygienic? x) (vector-ref x 1))
-(define (closure-env-param x) (vector-ref x 2))
-(define (closure-expr x) (vector-ref x 3))
+(define (closure-hyg x) (vector-ref x 1))
+(define (closure-expr x) (vector-ref x 2))
 
 (define (ar-callee-closure exp)
-  (if (callee-info)
-    (vector 'closure (car (callee-info)) (cdr (callee-info)) exp)
-    (err "ar-callee-closure: not in macro, hygienic unquotation is meaningless")))
+  (vector 'closure (callee-hyg) exp))
 
 ; returns #f or the macro function
 
@@ -689,14 +643,10 @@
 
 ; macroexpand the outer call of a form as much as possible
 
-;; FIXME?: Actually a design point. This currently macroexpands at the top
-;; level. If we made the current env a parameter, we could make it expand in the
-;; current env. What semantic difference would this entail? Which is preferable?
-
 (define (ac-macex e . once)
   (let ((m (ac-macro? (xcar e))))
     (if m
-      (let ((expansion (ac-denil (ar-mac-call m (cdr e) '()))))
+      (let ((expansion (ac-denil (ar-mac-call m (cdr e) '() #f))))
         (if (null? once) (ac-macex expansion) expansion))
       e)))
 
@@ -723,8 +673,8 @@
       (ac-denil x)))
 
 ; is v lexically bound?
-(define (lex v env)
-  (let ((binding (assq v env)))
+(define (lex v env hyg)
+  (let ((binding (assoc (cons v hyg) env)))
     (and binding (cdr binding))))
 
 (define (xcar x)
@@ -1246,8 +1196,8 @@
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
 
-(define (arc-eval expr) 
-  (eval (ac expr '()) (interaction-environment)))
+(define (arc-eval expr)
+  (eval (ac-tl expr) (interaction-environment)))
 
 (define (tle)
   (display "Arc> ")
@@ -1316,7 +1266,7 @@
   (let ((x (current-reader* ip)))
     (if (eof-object? x)
         #t
-        (let ((scm (ac x '())))
+        (let ((scm (ac-tl x)))
           (eval scm (interaction-environment))
           (pretty-print scm op)
           (newline op)
@@ -1340,7 +1290,7 @@
 (xdef 'macex1 (lambda (e) (ac-macex (ac-denil e) 'once)))
 
 (xdef 'eval (lambda (e)
-              (eval (ac (ac-denil e) '()) (interaction-environment))))
+              (eval (ac-tl (ac-denil e)) (interaction-environment))))
 
 ; If an err occurs in an on-err expr, no val is returned and code
 ; after it doesn't get executed.  Not quite what I had in mind.
