@@ -59,6 +59,7 @@
   (let ((head (xcar s)))
     (cond ((string? s) (string-copy s))  ; to avoid immutable strings
           ((literal? s) s)
+          ((hash-table? s) (hash-table-copy s))
           ((eqv? s 'nil) (list 'quote 'nil))
           ((ssyntax? s) (ac (expand-ssyntax s) env))
           ((symbol? s) (ac-var-ref s env))
