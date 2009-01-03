@@ -138,7 +138,7 @@
 (mac letf (fun . body)
   `(withf (,fun) ,@body))
 
-;; 'iflet generalization
+;; 'iflet generalizations
 (mac ifwith/p (vars-exps then . rest)
   (withs (vars (map1 car vars-exps)
           exps (map1 cadr vars-exps)
@@ -149,10 +149,23 @@
            ,then)
          (do ,@rest)))))
 
+(mac ifwiths/p (vars-exps then . rest)
+  (w/uniq exit
+    `(point ,exit
+       (let ,exit (fn () (,exit (do ,@rest)))
+         (withs/p ,(mapeach (v e) vars-exps `(,v (or ,e (,exit))))
+           ,then)))))
+
 (mac ifwith (bindings then . rest)
   "ifwith is to iflet as with is to let
    See also [[iflet]] [[with]] [[let]] [[if]]"
   `(ifwith/p ,pair.bindings ,then ,@rest))
 
+(mac ifwiths (bindings then . rest)
+  `(ifwiths/p ,pair.bindings ,then ,@rest))
+
 (mac whenwith (bindings . body)
   `(iflet ,bindings (do ,@body)))
+
+(mac whenwiths (bindings . body)
+  `(ifiwths ,bindings (do ,@body)))
