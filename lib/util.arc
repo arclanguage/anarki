@@ -107,6 +107,11 @@
 
 ;; Binding forms
 
+;; helper function - generates a list of temporaries for each element in 'lst,
+;; with an appropriate base-name if the corresponding element is a symbol
+(def uniqs (lst)
+  (map1 [if (isa _ 'sym) uniq._ (uniq)] lst))
+
 ;; scheme/lisp-like let - ie: with the parens added back in. While I agree with
 ;; pg that the less-parens version is better in code, the more-parens version is
 ;; easier to generate in macros.
@@ -132,3 +137,22 @@
 
 (mac letf (fun . body)
   `(withf (,fun) ,@body))
+
+;; 'iflet generalization
+(mac ifwith/p (vars-exps then . rest)
+  (withs (vars (map1 car vars-exps)
+          exps (map1 cadr vars-exps)
+          tmps (uniqs vars))
+    `(with/p ,(zip gsyms exps)
+       (if (and ,@tmps)
+         (with/p ,(zip vars tmps)
+           ,then)
+         (do ,@rest)))))
+
+(mac ifwith (bindings then . rest)
+  "ifwith is to iflet as with is to let
+   See also [[iflet]] [[with]] [[let]] [[if]]"
+  `(ifwith/p ,pair.bindings ,then ,@rest))
+
+(mac whenwith (bindings . body)
+  `(iflet ,bindings (do ,@body)))
