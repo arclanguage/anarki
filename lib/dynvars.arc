@@ -1,13 +1,17 @@
 ;; Save-based dynamic variables
 (mac with* (parms . body)
   (let uparms (mapeach e pair.parms `(,(uniq) ,(uniq) ,@e))
-    `(with ,(mappend (fn ((save temp var val)) `(,temp ,val ,save ,var))
-              uparms)
-       ,@(mapeach (save temp var val) uparms
-           `(= ,var ,temp))
-       (do1 (do ,@body)
-         ,@(mapeach (save temp var val) uparms
-             `(= ,var ,save))))))
+    `(with ,(mappend (fn ((save temp var val)) `(,temp ,val ,save ,var)) uparms)
+       (protect
+         (fn ()
+           ;; update the variables
+           ,@(mapeach (save temp var val) uparms
+               `(= ,var ,temp))
+           ,@body)
+         (fn ()
+           ;; restore the variables
+           ,@(mapeach (save temp var val) uparms
+               `(= ,var ,save)))))))
 
 (mac let* (var val . body)
   `(with* (,var ,val) ,@body))
@@ -21,11 +25,16 @@
 (mac swith (parms . body)
   (let uparms (mapeach e pair.parms `(,(uniq) ,@e))
     `(with ,(mappend (fn ((temp var val)) `(,temp ,val)) uparms)
-       ,@(mapeach (temp var val) uparms
-           `(push ,temp ,var))
-       (do1 (do ,@body)
-         ,@(mapeach (temp var val) uparms
-             `(pop ,var))))))
+       (protect
+         (fn ()
+           ;; update the variables
+           ,@(mapeach (temp var val) uparms
+               `(push ,temp ,var))
+           ,@body)
+         (fn ()
+           ;; restore the variables
+           ,@(mapeach (temp var val) uparms
+               `(pop ,var)))))))
 
 (mac slet (var val . body)
   `(swith (,var ,val) ,@body))
