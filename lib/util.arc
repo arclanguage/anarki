@@ -168,4 +168,4 @@
   `(iflet ,bindings (do ,@body)))
 
 (mac whenwiths (bindings . body)
-  `(ifiwths ,bindings (do ,@body)))
+  `(ifwiths ,bindings (do ,@body)))
