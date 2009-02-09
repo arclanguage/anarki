@@ -212,27 +212,27 @@ extended version of Tarjan's algorithm.
                 ;; Add our info to the "stack" and increment the index
                 (= info.v v-info)
                 (++ index)
-                
+
                 ;; visit all neighbors
                 (each n (car graph.v)
                   (aif
                     ;; the neighbor has been visited and assigned an SCC. We add
                     ;; it to our list of successor SCCs
                     scc.n (tconc succs it)
-                    
+
                     ;; The neighbor is on the stack. If it has a lower lowlink
                     ;; that us, this becomes our lowlink.
                     info.n (= cdr.v-info (min cdr.v-info cdr.it))
-                    
+
                     ;; The neighbor is unvisited; recurse.
                     (let (sub-nodes sub-succs) (visit n)
                       (jconc nodes sub-nodes)
                       (jconc succs sub-succs)
                       (= cdr.v-info (min cdr.v-info (cdr info.n))))))
-                
+
                 ;; add v to the nodes in the SCC we are building.
                 (tconc nodes v)
-                
+
                 ;; v is root of an SCC if its index equals its lowlink.
                 (if (is car.v-info cdr.v-info)
                   ;; we are the root, create a new SCC and return it as a single
