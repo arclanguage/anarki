@@ -51,10 +51,10 @@ mutates `var' and reuses the storage space for `vals'. Moreover, modifying
 
 
 ;; -- Convenience --
-(def list-graph (l)
+(def alist-graph (l)
   (listtab (mapeach (k v) l (list k (lconc-new v)))))
 
-(def mlist-graph (l)                    ;m for multi
+(def list-graph (l)
   (listtab (mapeach (k . v) l (list k (lconc-new v)))))
 
 (def graph-print (g (o sort-comparison nil) (o printer pr))
@@ -89,22 +89,55 @@ present in the graph. The added vertices will have no outgoing edges."
 (def acyclic (g)
   "Returns nil if the graph contains a cycle."
   (catch
-    (withs (vs keys.g
-            info memtable.vs)
-      (map1 (afn (v)
+    (let info (table)
+      (letf (visit (v)
               (case info.v
-                t (do (= info.v 'current) (map1 self (car g.v)) (= info.v nil))
-                current (throw nil)))
-        vs)
-      t)))
+                nil (do
+                      (= info.v 'current)
+                      (each n (car g.v) visit.n)
+                      (= info.v 'done))
+                current throw.nil))
+        (ontable v _ g
+          (visit v))))
+    t))
 
+(def out-degrees (g)
+  (let degs (table)
+    (ontable k v g
+      (= degs.k (len:car v)))
+    degs))
+
+(def in-degrees (g)
+  (let degs (table)
+    (ontable k _ g (= degs.k 0))
+    (ontable _ ns g
+      (each n car.ns (++ degs.n)))
+    degs))
+
+(def graph-roots (g)
+  "Finds vertices with no incoming edges.
+  See also: [[graph-leaves]]"
+  (let roots (table)
+    (ontable v _ g (assert roots.v))
+    (ontable _ ns g (each n car.ns (wipe roots.n)))
+    keys.roots))
+
+(def graph-leaves (g)
+  "Finds vertices with no outgoing edges.
+  See also: [[graph-roots]]"
+  (let vs nil
+    (ontable v ns g
+      (when (no car.ns) (push v vs)))
+    vs))
+
+
 ;; -- Topological sorting --
 (def top-sort (graph (o roots (keys graph))
                 (o fail (fn () (err 'top-sort "graph contains cycle"))))
   "Topological sorting via postorder depth-first-search, considering only nodes
 reachable from 'roots, which defaults to all vertices in the graph. Will call
 the 'fail parameter if a cycle is detected, which defaults to raising an error.
-  See also: [[top-sort-fast]]"
+  See also: [[top-sort-fast]] [[acyclic]]"
   (let info (table)
     (foldl
       (afn (tail v)
@@ -134,13 +167,13 @@ detects cycles nor loops endlessly on graphs with cycles.
 ;; ;; reference implementation for top-sort-fast
 ;; ;; TODO: compare speed to current 'top-sort-fast
 ;; (def top-sort-fast (graph (o roots (keys graph)))
-;;   (rev:mappend post-order (spanning-forest graph roots)))
+;;   (rev:post-orderf:spanning-forest graph roots))
 
 
 ;; -- Tree algorithms --
 
 ;; N-ary trees are represented as a cons of their value and a list of their
-;; children. Forests lists of trees.
+;; children. Forests are lists of trees.
 
 (def spanning-forest (graph (o roots (keys graph)))
   "Finds a spanning forest of the part of the graph reachable from 'roots, which
@@ -164,57 +197,54 @@ at those vertices in order."
   "Computes a graph of the strongly connected components of a graph using an
 extended version of Tarjan's algorithm.
   See also: [[tarjan]]"
-  (with (vs keys.g
-         info (table)
+  (with (info (table)
          scc (table)
          scc-graph (table)
          index 0)
-    (let unvisited memtable.vs
-      (withf ((make-scc (nodes succs)
-                (each n car.nodes (= scc.n nodes))
-                (= (scc-graph car.nodes) (map1-conc car succs))
-                nodes)
-              (visit (v)
-                (= unvisited.v nil)
-                (with (nodes (tconc-new)
-                       succs (tconc-new)
-                       v-info (cons index index))
-                  ;; Add our info to the "stack" and increment the index
-                  (= info.v v-info)
-                  (++ index)
-                  
-                  ;; visit all neighbors
-                  (each n (car graph.v)
-                    (aif
-                      ;; the neighbor has been visited and assigned an SCC. We add
-                      ;; it to our list of successor SCCs
-                      scc.n (tconc succs it)
-                      
-                      ;; The neighbor is on the stack. If it has a lower lowlink
-                      ;; that us, this becomes our lowlink.
-                      info.n (= cdr.v-info (min cdr.v-info cdr.it))
-                      
-                      ;; The neighbor is unvisited; recurse.
-                      (let (sub-nodes sub-succs) (visit n)
-                        (jconc nodes sub-nodes)
-                        (jconc succs sub-succs)
-                        (= cdr.v-info (min cdr.v-info (cdr info.n))))))
-                  
-                  ;; add v to the nodes in the SCC we are building.
-                  (tconc nodes v)
-                  
-                  ;; v is root of an SCC if its index equals its lowlink.
-                  (if (is car.v-info cdr.v-info)
-                    ;; we are the root, create a new SCC and return it as a single
-                    ;; successor to our parent.
-                    (list (tconc-new) (tconc-list (make-scc nodes succs)))
-                    ;; we are not the root, return the SCC fragment for our parent
-                    ;; to complete.
-                    (list nodes succs)))))
-        (each v vs
-          (when unvisited.v
-            (visit v)))
-        scc-graph))))
+    (withf ((make-scc (nodes succs)
+              (each n car.nodes (= scc.n nodes))
+              (= (scc-graph car.nodes) (map1-conc car succs))
+              nodes)
+            (visit (v)
+              (with (nodes (tconc-new)
+                     succs (tconc-new)
+                     v-info (cons index index))
+                ;; Add our info to the "stack" and increment the index
+                (= info.v v-info)
+                (++ index)
+
+                ;; visit all neighbors
+                (each n (car graph.v)
+                  (aif
+                    ;; the neighbor has been visited and assigned an SCC. We add
+                    ;; it to our list of successor SCCs
+                    scc.n (tconc succs it)
+
+                    ;; The neighbor is on the stack. If it has a lower lowlink
+                    ;; that us, this becomes our lowlink.
+                    info.n (= cdr.v-info (min cdr.v-info cdr.it))
+
+                    ;; The neighbor is unvisited; recurse.
+                    (let (sub-nodes sub-succs) (visit n)
+                      (jconc nodes sub-nodes)
+                      (jconc succs sub-succs)
+                      (= cdr.v-info (min cdr.v-info (cdr info.n))))))
+
+                ;; add v to the nodes in the SCC we are building.
+                (tconc nodes v)
+
+                ;; v is root of an SCC if its index equals its lowlink.
+                (if (is car.v-info cdr.v-info)
+                  ;; we are the root, create a new SCC and return it as a single
+                  ;; successor to our parent.
+                  (list (tconc-new) (tconc-list (make-scc nodes succs)))
+                  ;; we are not the root, return the SCC fragment for our parent
+                  ;; to complete.
+                  (list nodes succs)))))
+      (ontable v _ graph
+        (unless info.v
+          (visit v))))
+    scc-graph))
 
 (def tarjan (g)
   "Computes a list of the strongly connected components of a graph using
