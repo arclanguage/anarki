@@ -2464,7 +2464,9 @@
     (fill-table tb args)
     tb))
 
-(mac src (name) `(source* ',name))
+(mac lsrc (name) `(source* ',name))
+(mac src (name) `(ppr (lsrc ,name)))
+
 
 (mac help ( (o name 'help))
    " Prints the documentation for the given symbol.  To use, type
