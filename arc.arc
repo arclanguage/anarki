@@ -2506,7 +2506,7 @@
                     (cons name (sig name))))
            (and verbose doc (prn doc)))))))
 
-(def fns (pfx (o test [prefix pfx _]))
+(def fns (pfx (o test (let pfx string.pfx [prefix pfx _])))
   "Print sigs for macros & functions starting with pfx, or that pass test if given."
   (each f (sort < (keep test (map [string _] (keys sig))))
         (pr (helpstr (sym f) nil))))
