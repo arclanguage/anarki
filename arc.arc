@@ -2465,7 +2465,10 @@
     tb))
 
 (mac lsrc (name) `(source* ',name))
-(mac src (name) `(ppr (lsrc ,name)))
+(mac src (name)
+     `(do 
+	((only [prn "(from \"" _ "\")"]) (source-file* ',name))
+	(ppr (lsrc ,name))))
 
 
 (mac help ( (o name 'help))
