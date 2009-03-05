@@ -25,6 +25,7 @@
 
 (set help* (table))
 (set call* (table))
+(set source* (table))
 
 (sref call* ref 'cons)
 (sref call* ref 'string)
@@ -75,6 +76,7 @@
                        (sref help* '(fn ,(car body)) ',name)
                        (sref help* '(fn nil) ',name))
                    (sref source-file* current-load-file* ',name)
+		   (sref source* '(def ,name ,parms ,@body) ',name)
                    (safeset ,name (fn ,parms ,@body))))))
 
 ;documentation for def itself
@@ -147,6 +149,7 @@
                       (sref help* '(mac ,(car body)) ',name)
                       (sref help* '(mac nil) ',name))
                   (sref source-file* current-load-file* ',name)
+		  (sref source* '(mac ,name ,parms ,@body) ',name)
                   (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 ;documentation for mac itself
 (sref help*
@@ -2461,6 +2464,10 @@
     (fill-table tb args)
     tb))
 
+(mac lsrc (name) `(source* ',name))
+(mac src (name) `(ppr (lsrc ,name)))
+
+
 (mac help ( (o name 'help))
    " Prints the documentation for the given symbol.  To use, type
      (help symbol) ; you may also use (help \"string\") to search
@@ -2506,10 +2513,12 @@
                     (cons name (sig name))))
            (and verbose doc (prn doc)))))))
 
-(def fns (pfx (o test [prefix pfx _]))
+(mac fns ((o pfx "") (o test))
   "Print sigs for macros & functions starting with pfx, or that pass test if given."
-  (each f (sort < (keep test (map [string _] (keys sig))))
-        (pr (helpstr (sym f) nil))))
+  (w/uniq (p t)
+    `(withs (,p (string ',pfx) ,t (or ,test [prefix ,p _]))
+    	 (each f (sort < (keep ,t (map [string _] (keys sig))))
+               (pr (helpstr (sym f) nil))))))
 
 (= env ($ getenv))
 

@@ -51,10 +51,10 @@ mutates `var' and reuses the storage space for `vals'. Moreover, modifying
 
 
 ;; -- Convenience --
-(def list-graph (l)
+(def alist-graph (l)
   (listtab (mapeach (k v) l (list k (lconc-new v)))))
 
-(def mlist-graph (l)                    ;m for multi
+(def list-graph (l)
   (listtab (mapeach (k . v) l (list k (lconc-new v)))))
 
 (def graph-print (g (o sort-comparison nil) (o printer pr))

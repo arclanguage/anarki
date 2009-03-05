@@ -106,3 +106,23 @@
           host port)))))
 
 (defmultireq multi-get-request "GET")
+
+(mac http-req (type u . headers)
+  "performs an http request"
+  `(exec-request (mk-request ,type ,u ,@headers) (url-host ,u) (url-port ,u)))
+
+(def url-data (pairs)
+  " key-value pairs for use in post or cookie data"
+  (reduce (fn (a b) (string a "&" b))
+    (map (fn (l) (string (car l) "=" (cadr l))) pairs)))
+
+(def http-post (u vars . headers)
+  "performs a post request with vars to url u"
+  (= data (url-data vars) length (len data))
+  (= content-type
+    '("Content-Type" "application/x-www-form-urlencoded"))
+  (= content
+      (list "Content-Length" (string length *ter* *ter* data)))
+  (if (~empty headers)
+    (http-req "POST" u headers content-type content)
+    (http-req "POST" u content-type content)))
