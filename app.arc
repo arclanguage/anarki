@@ -6,9 +6,9 @@
 
 ; A user is simply a string: "pg". Use /whoami to test user cookie.
 
-(= hpwfile*   "arc/hpw"
-   adminfile* "arc/admins"
-   cookfile*  "arc/cooks")
+(= hpwfile*   (+ arcdir* "hpw")
+   adminfile* (+ arcdir* "admins")
+   cookfile*  (+ arcdir* "cooks"))
 
 (def asv ((o port 8080))
   (load-userinfo)
