@@ -7,7 +7,6 @@
 ; should (= x)  mean (= x t)?
 ; add sigs of ops defined in ac.scm
 ; get hold of error types within arc
-; make srv serve more file types
 ; why is macex defined in scheme instead of using def below?
 ; write disp, read, write in arc
 ; could prob write rmfile and dir in terms of system
@@ -15,7 +14,7 @@
 ; warn when shadow a global name
 ; permanent objs that live on disk and are updated when modified
 ; way to spec default 0 rather than nil for hts
-;  do in access call or when ht created?
+;  do in access call or when ht created?  simply have ++ nil -> 1?
 ; some simple regexp/parsing plan
 
 ; compromises in this implementation: 
@@ -55,7 +54,7 @@
 
 (def idfn (x) x)
 
-; Maybe later make this internal.
+; Maybe later make this internal.  Useful to let xs be a fn?
 
 (def map1 (f xs)
   (if (no xs) 
@@ -268,14 +267,14 @@
   (apply + nil (apply map f args)))
 
 (def firstn (n xs)
-  (if (and (> n 0) xs)
-      (cons (car xs) (firstn (- n 1) (cdr xs)))
-      nil))
+  (if (no n)            xs
+      (and (> n 0) xs)  (cons (car xs) (firstn (- n 1) (cdr xs)))
+                        nil))
 
 (def nthcdr (n xs)
-  (if (> n 0)
-      (nthcdr (- n 1) (cdr xs))
-      xs))
+  (if (no n)  xs
+      (> n 0) (nthcdr (- n 1) (cdr xs))
+              xs))
 
 ; Generalization of pair: (tuples x) = (pair x)
 
@@ -917,10 +916,11 @@
          ,@body)
        ,gc)))
 
-(def trav (f base tree)
+(def treewise (f base tree)
   (if (atom tree)
       (base tree)
-      (f (trav f base (car tree)) (trav f base (cdr tree)))))
+      (f (treewise f base (car tree)) 
+         (treewise f base (cdr tree)))))
 
 (def carif (x) (if (atom x) x (car x)))
 
@@ -1131,6 +1131,10 @@
 (mac time10 (expr)
   `(time (repeat 10 ,expr)))
 
+(def union (f xs ys)
+  (+ xs (rem (fn (y) (some [f _ y] xs))
+             ys)))
+
 (= templates* (table))
 
 (mac deftem (tem . fields)
@@ -1139,6 +1143,13 @@
         (+ (mappend templates* ',(rev includes))
            (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
                         (pair fields)))))))
+
+(mac addtem (name . fields)
+  `(= (templates* ',name) 
+      (union (fn (x y) (is (car x) (car y)))
+             (list ,@(map (fn ((k v)) `(list ',k (fn () ,v)))
+                          (pair fields)))
+             (templates* ',name))))
 
 (def inst (tem . args)
   (let x (table)
@@ -1175,6 +1186,10 @@
 
 (def since (t1) (- (seconds) t1))
 
+(def hours-since (t1) (/ (since t1) 60))
+
+(def days-since (t1) (/ (since t1) 86400))
+
 (def cache (timef valf)
   (with (cached nil gentime nil)
     (fn ()
@@ -1195,7 +1210,7 @@
 
 (def ensure-dir (path)
   (unless (dir-exists path)
-    (system (string "mkdir -f " path))))
+    (system (string "mkdir -p " path))))
 
 (def date ((o time (seconds)))
   (let val (tostring (system (string "date -u -r " time " \"+%Y-%m-%d\"")))
@@ -1251,8 +1266,10 @@
 ;(def compare (comparer scorer)
 ;  (fn args (apply comparer map scorer args)))
 
-(def only (f g . args)
-  (aif (apply g args) (f it)))
+; (def only (f g . args) (aif (apply g args) (f it)))
+
+(def only (f) 
+  (fn args (if (car args) (apply f args))))
 
 (mac conswhen (f x y)
   (w/uniq (gf gx)
@@ -1278,11 +1295,6 @@
     (rev acc)))
 
 (def single (x) (and (acons x) (no (cdr x))))
-
-(def plural (n str)
-  (if (or (is n 1) (single n))
-      str 
-      (string str "s")))
 
 (def intersperse (x ys)
   (cons (car ys)
@@ -1469,6 +1481,22 @@
 (mac thread body 
   `(new-thread (fn () ,@body)))
 
+(mac trav (x . fs)
+  (w/uniq g
+    `((afn (,g)
+        (when ,g
+          ,@(map [list _ g] fs)))
+      ,x)))
+
+(= hooks* (table))
+
+(def hook (name . args)
+  (aif (hooks* name) (apply it args)))
+
+(mac defhook (name . rest)
+  `(= (hooks* ',name) (fn ,@rest)))
+  
+
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
@@ -1508,3 +1536,7 @@
 ;  foo_bar means [foo _ bar]
 ;  what does foo:_:bar mean?
 ; matchcase
+; crazy that finding the top 100 nos takes so long:
+;  (let bb (n-of 1000 (rand 50)) (time10 (bestn 100 > bb)))
+;  time: 2237 msec.  -> now down to 850 msec
+

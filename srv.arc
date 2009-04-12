@@ -10,7 +10,7 @@
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
-  (ensure-srvinstall)
+  (ensure-srvdirs)
   (w/socket s port
     (prn "ready to serve port " port)
     (= currsock* s)
@@ -22,6 +22,10 @@
 
 (def serve1 ((o port 8080))
   (w/socket s port (handle-request s)))
+
+(def ensure-srvdirs ()
+  (ensure-dir arcdir*)
+  (ensure-dir logdir*))
 
 (= srv-noisy* nil)
 
@@ -135,7 +139,7 @@ Connection: close")
 
 (mac defopr-raw (name parms . body)
   `(= (redirector* ',name) t
-      (srvops* ',name)      (fn ,parms ,@body)))
+      (srvops* ',name)     (fn ,parms ,@body)))
 
 (mac defop (name parm . body)
   (w/uniq gs
@@ -181,6 +185,8 @@ Connection: close")
   (let str (string sym)
     (and (endmatch ".gif" str) (~find #\/ str))))
 
+; Exclude arc, or anyone can see source.  Need to use a separate dir.
+
 (def static-filetype (sym)
   (let fname (string sym)
     (and (~find #\/ fname)
@@ -190,7 +196,6 @@ Connection: close")
            "css"  'text/html
            "txt"  'text/html
            "html" 'text/html
-           "arc"  'text/html
            ))))
 
 (def respond-err (str msg . args)
@@ -433,15 +438,12 @@ Connection: close")
 
 )
 
-(defop || req
-  (pr "It's alive."))
-
-; make-string: expects type <non-negative exact integer> as 1st argument, given: -1; other arguments were: #\0
+(defop || req (pr "It's alive."))
 
 (defop topips req
   (when (admin (get-user req))
     (whitepage
-      (spacetable
+      (sptab
         (each ip (let leaders nil 
                    (maptable (fn (ip n)
                                (when (> n 100)
@@ -457,12 +459,4 @@ Connection: close")
   (let n (requests/ip* ip) 
     (list ip n (num (* 100 (/ n requests*)) 1))))
 
-(def ensure-srvinstall ()
-  (ensure-dir arcdir*)
-  (ensure-dir logdir*)
-; why did I do this?
-; (when (empty hpasswords*)
-;   (create-acct "frug" "frug")
-;   (writefile1 'frug adminfile*))
-  (load-userinfo))
 
