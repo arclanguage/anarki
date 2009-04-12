@@ -50,7 +50,7 @@
     (let ranking nil
       (maptable (fn (k v)
                   (when (and (isa k 'sym) (bound k))
-                    (insort (compare > [* (len (coerce (car _) 'string))
+                    (insort (compare > [* (len (string (car _)))
                                           (cadr _)])
                             (list k v (* (len (string k)) v))
                             ranking)))
@@ -59,3 +59,4 @@
 
 ;(top40 (space-eaters allfiles*))
 
+(mac flatlen args `(len (flat ',args)))
