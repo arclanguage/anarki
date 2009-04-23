@@ -132,9 +132,13 @@
           (coerce "101E100" 'int 2)
           80.0)
 
-        ("string to int of given base"
+        ("string of given base to int"
           (coerce "FF" 'int 16)
           255)
+
+        ("hexadecimal string containing 'E' to int"
+          (coerce "3E" 'int 16)
+          62)
       )
 
       (suite "iso"

@@ -81,6 +81,10 @@
           ((fn (x) (overwrite (+ x x))) 7)
           17
         )
+
+        ("nested quasiquote with double unquote"
+          ((fn (qqq) `(a b qqq ,qqq `(a b qqq ,qqq ,,qqq))) 'qoo)
+          (a b qqq qoo `(a b qqq ,qqq ,qoo)))
       )
     )
 
@@ -187,7 +191,7 @@
           ( (fn (z) (fopt 2)) 101)
         ))
         (2 . 50))
-        
+
       ("o is not always an optional arg"
         ((fn ()
           (set fioip (fn ((i o ip)) o))
