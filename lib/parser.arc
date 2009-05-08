@@ -29,16 +29,19 @@
                              (if (isa token 'sym)
                                  (make-token 'syntax token start 1)
                                  (do (= token (string:rev token))
-                                     (if (all whitespace? token)
-                                         (make-token 'whitespace token start len.token)
-                                         kind
+                                     (if kind
                                          (make-token kind token start len.token)
+                                         (all whitespace? token)
+                                         (make-token 'whitespace token start len.token)
                                          (headmatch "#\\" token)
                                          (make-token 'char (make-character token) start len.token)
                                          (headmatch ";" token)
                                          (make-token 'comment token start len.token)
                                          (on-err (fn (ex)
-                                                     (make-token 'sym (sym token) start len.token))
+                                                     (make-token 'sym 
+                                                                 (if (is token "||") '|| (sym token)) 
+                                                                 start
+                                                                 len.token))
                                                  (fn ()
                                                      (make-token 'int (coerce token 'int) start len.token)))))))
           char-terminator (fn (ch)
@@ -56,9 +59,9 @@
                              (if ch state.ch))
           token-queue    nil
           enq-token      (fn ((o another nil) (o token-kind nil))
-                             (doif token
-                                   (push (list token (- token-start 1) token-kind) token-queue)
-                                   (wipe token))
+                             (if token 
+                                 (do (push (list token (- token-start 1) token-kind) token-queue)
+                                     (wipe token)))
                              (aif another
                                   (push (list it (- char-count 1) nil) token-queue)))
           enq/switch     (fn (another-tok new-state (o ch))
@@ -80,6 +83,8 @@
       default          (fn (ch)
                            (if whitespace?.ch
                                (add-to-token ch)
+                               (is ch #\.)
+                               (enq-token 'dot)
                                syntax-chars.ch
                                (enq-token syntax-chars.ch)
                                (is ch #\")
@@ -148,7 +153,8 @@
 (def parse (text)
   "parses the given text (input or string)
    and returns the corresponding arc object"
-  (let (unescape-fragment assemble-string next-form read-string read-form read-list) nil
+  (let (unescape-fragment assemble-string next-form read-string read-form read-list ignore) nil
+    (= ignore (uniq))
 
     (def unescape-fragment (fragment)
       (string:rev (accum s
@@ -157,6 +163,7 @@
             (if escaping
                 (do
                   (case ch
+	                  #\# (s ch)
                     #\\ (s ch)
                     #\" (s ch)
                     #\n (s #\newline)
@@ -166,8 +173,7 @@
                 (case ch
                   #\\ (self (cdr chs) t)
                       (do (s ch)
-                          (self (cdr chs) nil)))))
-        ) (coerce fragment 'cons) nil))))
+                          (self (cdr chs) nil)))))) (coerce fragment 'cons) nil))))
 
     (def assemble-string (fragments)
       (if no.fragments
@@ -176,47 +182,58 @@
           car.fragments
           `(string ,@rev.fragments)))
 
-    (def next-form ((kind tok start end) token-generator)
-      (if (is tok 'left-paren)
+    (def next-form (token token-generator)
+      (if (token? token 'syntax 'left-paren)
           (read-list token-generator 'right-paren)
-          (is tok 'left-bracket)
+          (token? token 'syntax 'left-bracket)
           `(fn (_) ,(read-list token-generator 'right-bracket))
-          (is tok 'left-string-delimiter)
+          (token? token 'syntax 'left-string-delimiter)
           (read-string token-generator nil)
-          (in tok 'quasiquote 'quote 'unquote 'unquote-splicing)
-          `(,tok ,(read-form token-generator))
-          (is kind 'whitespace)
-          nil
-          tok))
+          (and (token? token 'syntax) 
+	             (in cadr.token 'quasiquote 'quote 'unquote 'unquote-splicing))
+          `(,cadr.token ,(read-form token-generator))
+          (or (token? token 'whitespace)
+              (token? token 'comment))
+          ignore
+          cadr.token))
 
     (def read-string (token-generator fragments)
-      (let (kind tok start end) (token-generator)
-        (if (is tok 'right-string-delimiter)
+      (let token (token-generator)
+        (if (token? token 'syntax 'right-string-delimiter)
             (assemble-string fragments)
-            (is kind 'interpolation-start)
+            (token? token 'interpolation-start)
             (do (push (read-form token-generator) fragments)
-                (let (k tok s e) (token-generator)
-                  (if (is tok 'right-paren)
+                (let token2 (token-generator)
+                  (if (token? token2 'syntax 'right-paren)
                       token-generator!in-string
                       (err "unclosed string interpolation: " car.fragments)))
                 (read-string token-generator fragments))
-            (is kind 'string-fragment)
-            (do (push unescape-fragment.tok fragments)
+            (token? token 'string-fragment)
+            (do (push (unescape-fragment (cadr token)) fragments)
                 (read-string token-generator fragments))
-            tok
-            (err (string "unexpected token in string: \"" tok "\"")))))
+            token
+            (err (string "unexpected token in string: " token ": fragments are " fragments)))))
 
     (def read-form (token-generator)
-      (next-form (token-generator) token-generator))
+      (let nextform (next-form (token-generator) token-generator)
+        (if (is nextform ignore)
+            (read-form token-generator)
+            nextform)))
 
     (def read-list (token-generator terminator)
-      (let toklist nil
-           ((afn ((kind tok start end))
-                 (if (no:is tok terminator)
-                     (do (aif (next-form (list kind tok start end) token-generator)
-                              (push it toklist))
-                         (self (token-generator))))) (token-generator))
-           (rev toklist)))
+      (let token (token-generator)
+        (if token
+	          (if (token? token 'syntax 'dot)
+	              (car:read-list token-generator terminator)
+                (~token? token 'syntax terminator)
+		            (let nextform (next-form token token-generator)
+		              (if (is nextform ignore)
+		                  (read-list token-generator terminator)
+		                  (cons nextform (read-list token-generator terminator)))
+		            )
+	          )
+	      )
+      ))
 
     (read-form (arc-tokeniser (if (isa text 'string) (instring text) text)))))
 
@@ -262,3 +279,16 @@
     (each p brackets (scar cdr.p 'unmatched-left-bracket))
     (rev result)))
 
+(def si-repl ()
+  (prn "enjoy interpolating. type x! to return to the usual repl")
+  ((afn ()
+        (pr "arc$ ")
+        (on-err (fn (ex)
+                    (prn "Error: " (details ex))
+                    (self))
+                (fn ()
+                    (let expr (parse (stdin))
+                      (if (no:is expr 'x!)
+                          (do (write (eval expr))
+                              (prn)
+                              (self)))))))))

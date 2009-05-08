@@ -14,6 +14,7 @@
   ("parse a number"                     (parse "99/101")                99/101              )
   ("parse a number: is num"             (type:parse "99/101")           num                 )
   ("parse numbers in a list"            (parse "(12 34.56 -17 3/4)")    (12 34.56 -17 3/4)  )
+  ("parse an improper list"             (parse "(a b c . d)")           (a b c . d))
   ("parse a list of characters"         
     (eval (parse "(coerce '(#\\( #\\a #\\b #\\space #\\c #\\  #\\d #\\)) 'string)"))
     "(ab c d)")
@@ -38,9 +39,15 @@
   ("parse bracket syntax for functions"
     (apply (eval (parse "[* _ _]")) '(27))
     729)
+  ("interpolations expand to (string ...)"
+    (parse:string "\"one #" "(2) three #" "(4)\"")
+    (string "one " 2 " three " 4))
   ("parse string interpolations"
-    (eval (parse "(with (foo 120 bar \"this\") \"foo is \#((/ foo 10)), bar is \#(bar), x is \#((+ 1 2 3))\")"))
+    (eval (parse:string "(with (foo 120 bar \"this\") \"foo is #" "((/ foo 10)), bar is #" "(bar), x is #" "((+ 1 2 3))\")"))
     "foo is 12, bar is this, x is 6")
+  ("parse escaped interpolations"
+    (coerce (parse:string "\"foo \\#" "(foo)\"") 'cons)
+    (#\f #\o #\o #\space #\# #\( #\f #\o #\o #\)))
   ("parse a complex expression"    
     (parse "(foo bar '(toto) `(do ,blah ,@blahs \"astring\") titi)")
     (foo bar '(toto) `(do ,blah ,@blahs "astring") titi))))

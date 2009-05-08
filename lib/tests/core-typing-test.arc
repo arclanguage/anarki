@@ -139,6 +139,18 @@
         ("hexadecimal string containing 'E' to int"
           (coerce "3E" 'int 16)
           62)
+
+       ("positive infinity"
+         (coerce "+inf.0" 'int)
+         +inf.0)
+
+       ("negative infinity"
+         (coerce "-inf.0" 'int)
+         -inf.0)
+
+        ("not a number (note: can't compare nan to nan; nan is not nan!)"
+          (coerce (coerce "+nan.0" 'int) 'string)
+          "+nan.0")
       )
 
       (suite "iso"
@@ -158,6 +170,10 @@
       ("sym to string"
         (coerce 'foo 'string)
         "foo" )
+
+      ("empty sym to string"
+        (coerce '|| 'string)
+        "")
 
       ("list to string"
         (coerce '(#\z #\o #\o #\, #\?) 'string)
