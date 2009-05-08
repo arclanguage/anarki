@@ -1,248 +1,264 @@
-;; (arc-tokeniser input) returns a token generator for the
-;; given input. Example:
-;;
-;; arc> (set tkz (arc-tokeniser (instring "(foo bar)")))
-;; #<procedure...>
-;; arc> (tkz)
-;; (left-paren 0 1)
-;; arc> (tkz)
-;; ("foo" 1 4)
-;; arc> (tkz)
-;; (space 4 5)
-;; arc> (tkz)
-;; ("bar" 5 8)
-;; arc> (tkz)
-;; (right-paren 8 9)
-;; arc> (tkz)
-;; nil
-;;
-;; (parse text) returns the arc object represented by the text.
-;; example:
-;;
-;; arc> (parse "(def foo (plop) 'yadda \"toto\" (ccc me))")
-;; (def foo (plop) 'yadda "toto" (ccc me))
-;;
-;; please keep lib/tests/parser-test.arc up to date with this
-;;
-
-(set named-chars  (obj 
-  "#\\space"   #\space 
-  "#\\newline" #\newline 
-  "#\\tab"     #\tab 
-  "#\\return"  #\return))
-
-(set syntax-chars (obj 
-  #\( 'left-paren 
-  #\) 'right-paren 
-  #\[ 'left-bracket 
-  #\] 'right-bracket 
-  #\' 'quote 
+(set syntax-chars (obj
+  #\( 'left-paren
+  #\) 'right-paren
+  #\[ 'left-bracket
+  #\] 'right-bracket
+  #\' 'quote
   #\` 'quasiquote))
 
-(set ws-char-names (obj 
-  space   " "
-  newline "\\n"
-  return  "\\r" 
-  tab     "\\t"))
+(set character-constants  (obj
+  "#\\space"   #\space
+  "#\\newline" #\newline
+  "#\\tab"     #\tab
+  "#\\return"  #\return))
 
-(set syntax-char-names  (obj 
-  left-paren        "(" 
-  left-bracket      "[" 
-  right-paren       ")" 
-  right-bracket     "]" 
-  quote             "'" 
-  quasiquote        "`" 
-  unquote           "," 
-  unquote-splicing  ",@"))
+(def whitespace? (ch)
+  (in ch #\space #\newline #\tab #\return))
 
-(set unmatched (obj 
-  unmatched-left-paren        "(" 
-  unmatched-left-bracket      "[" 
-  unmatched-right-paren       ")" 
-  unmatched-right-bracket     "]"))
+(def arc-tokeniser (char-stream)
+  (withs (make-token     (fn (kind tok start length)
+                             (list kind tok start (+ start length)))
+          make-character (fn (token)
+                             (if (is (len token) 3)
+                                 (token 2)
+                                 character-constants.token
+                                 character-constants.token
+                                 (on-err (fn (ex) (err (string "unknown char: " token)))
+                                         (fn ()   (coerce (coerce (cut token 2) 'int 8) 'char)))))
+          tokenise       (fn ((token start kind))
+                             (if (isa token 'sym)
+                                 (make-token 'syntax token start 1)
+                                 (do (= token (string:rev token))
+                                     (if (all whitespace? token)
+                                         (make-token 'whitespace token start len.token)
+                                         kind
+                                         (make-token kind token start len.token)
+                                         (headmatch "#\\" token)
+                                         (make-token 'char (make-character token) start len.token)
+                                         (headmatch ";" token)
+                                         (make-token 'comment token start len.token)
+                                         (on-err (fn (ex)
+                                                     (make-token 'sym (sym token) start len.token))
+                                                 (fn ()
+                                                     (make-token 'int (coerce token 'int) start len.token)))))))
+          char-terminator (fn (ch)
+                              (or syntax-chars.ch whitespace?.ch (in ch #\" #\, #\#)))
+          char-count     0
+          nextc          (fn ()
+                             (++ char-count)
+                             (readc char-stream))
+          token-start    0
+          token          nil
+          states         nil
+          state          nil
+          switch-state   (fn (new-state (o ch))
+                             (= state states.new-state)
+                             (if ch state.ch))
+          token-queue    nil
+          enq-token      (fn ((o another nil) (o token-kind nil))
+                             (doif token
+                                   (push (list token (- token-start 1) token-kind) token-queue)
+                                   (wipe token))
+                             (aif another
+                                  (push (list it (- char-count 1) nil) token-queue)))
+          enq/switch     (fn (another-tok new-state (o ch))
+                             (enq-token another-tok)
+                             (switch-state new-state ch))
+          tokenator      (afn () (if token-queue
+                                    (let q rev.token-queue
+                                         (= token-queue (rev cdr.q))
+                                         (tokenise car.q))
+                                    (aif (nextc)
+                                         (do (state it) (self))
+                                         token
+                                         (do (enq-token) (self)))))
+          add-to-token   (fn (ch)
+                             (if (no token) (= token-start char-count))
+                             (push ch token)))
 
-(def numeric-char-spec (tok)
-  (on-err (fn (ex) (err (+ "unknown char: #\\" tok)))
-          (fn ()   (coerce (coerce tok 'int 8) 'char))))
+    (= states (obj
+      default          (fn (ch)
+                           (if whitespace?.ch
+                               (add-to-token ch)
+                               syntax-chars.ch
+                               (enq-token syntax-chars.ch)
+                               (is ch #\")
+                               (enq/switch 'left-string-delimiter 'in-string)
+                               (is ch #\#)
+                               (enq/switch nil 'in-character ch)
+                               (is ch #\,)
+                               (enq/switch nil 'in-unquote)
+                               (is ch #\;)
+                               (enq/switch nil 'in-comment ch)
+                               (enq/switch nil 'in-atom ch)))
+      in-string        (fn (ch)
+                           (if (is ch #\\)
+                               (do (add-to-token ch)
+                                   (switch-state 'escaping))
+                               (is ch #\#)
+                               (switch-state 'interpolating)
+                               (is ch #\")
+                               (do (enq-token 'right-string-delimiter 'string-fragment)
+                                   (switch-state 'default))
+                               (add-to-token ch)))
+      interpolating    (fn (ch)
+                           (if (is ch #\()
+                               (do (switch-state 'default)
+                                   (enq-token nil 'string-fragment)
+                                   (add-to-token #\#)
+                                   (add-to-token #\()
+                                   (enq-token nil 'interpolation-start))
+                               (do (add-to-token #\#)
+                                   (if (is len.token 1)
+                                       (-- token-start))
+                                   (switch-state 'in-string ch))))
+      escaping         (fn (ch)
+                           (add-to-token ch)
+                           (switch-state 'in-string))
+      in-character     (fn (ch)
+                           (if (and (> (len token) 2)
+                                    (char-terminator ch))
+                               (enq/switch nil 'default ch)
+                               (add-to-token ch)))
+      in-comment       (fn (ch)
+                           (if (is ch #\newline)
+                               (enq/switch nil 'default ch)
+                               (add-to-token ch)))
+      in-atom          (fn (ch)
+                           (if (or whitespace?.ch syntax-chars.ch)
+                               (enq/switch nil 'default ch)
+                               (add-to-token ch)))
+      in-unquote       (fn (ch)
+                           (if (is ch #\@)
+                               (enq/switch 'unquote-splicing 'default)
+                               (enq/switch 'unquote 'default ch)))))
 
-(def tokenise (charlist)
-  (let tok (string:rev charlist)
-    (if (and (is (tok 0) #\#) (is (tok 1) #\\))
-      (if (is (len tok) 2)      #\space
-          (is (len tok) 3)      (tok 2)
-          (aif (named-chars tok) 
-               it 
-               (numeric-char-spec:string:cddr:rev charlist)))
-      (is (tok 0) #\;) (annotate 'comment tok)
-      tok)))
+    (switch-state 'default)
 
-(def char-terminator (ch)
-  (find ch '(#\( #\) #\[ #\] #\# #\, #\` #\newline #\space #\return #\tab #\" #\')))
+    (fn ((o newstate nil))
+      (if newstate
+          (switch-state newstate)
+          (tokenator)))))
 
-; shamelessly inspired from http://en.wikipedia.org/wiki/Call-with-current-continuation
-(def arc-tokeniser (input) 
-  "returns a generator which returns one 
-   token at a time from the input"
-  (let control-state nil
-    (let generator (fn () (ccc control-state))
-      (= control-state 
-        (fn (return)
-            (read-arc-tokens input 
-               (fn (reader-cc tok start finish)
-                   (= return (ccc (fn (cc)
-                                      (= control-state cc)
-                                      (return (list tok start finish)))))))))
-      generator)))
-
-(def read-arc-tokens (input caller)
-  "caller is a (fn (return tok start finish) ...) where 
-    - return is the return continuation,
-    - tok is either the text of the token, or
-      a symbol naming the token in the case of syntax, 
-    - start is the index of the start of the token, 
-    - finish is the index of the first character 
-      immediately following the token"
-  (with (state        nil
-         escaping     nil 
-         start        0 
-         char-count   0 
-         token        nil
-         return       (fn (tok start finish)
-                          (ccc (fn (cc) (caller cc tok start finish)))))
-    (with (notify           (fn (delim)
-                                (if token 
-                                    (return (tokenise token) start char-count))
-                                (wipe token)
-                                (if delim 
-                                    (return delim char-count (+ char-count 1))))
-           append-to-token  (fn (ch)
-                                (if (no token) (= start char-count))
-                                (push ch token)))
-      ((afn (ch)
-        (if (is state 'reading-comment)
-                                (if (is ch #\newline)   (wipe state)
-                                    ch                  (do (append-to-token ch) 
-                                                            (= ch 'ignore))))
-
-        (if (is state 'reading-unquote)
-                                (do (wipe state)
-                                    (if (is ch #\@)
-                                        (do (notify 'unquote-splicing) 
-                                            (= ch 'ignore))
-                                        (notify 'unquote))))
-
-        (if (is state 'reading-char)
-                                (do (if ch 
-                                        (append-to-token ch)
-                                        (wipe state))
-                                    (if (and (> (len token) 3) (char-terminator ch))
-                                        (do (wipe state) (pop token))
-                                        (= ch 'ignore))))
-
-        (if (is state 'reading-string)
-                                (do (if ch (append-to-token ch))
-                                    (if escaping
-                                        (wipe escaping)
-                                        (if (is ch #\") (wipe state)
-                                            (is ch #\\) (do (assert escaping)))))
-            (and (no token) (is ch #\#))
-                                (do (append-to-token ch)
-                                    (= state 'reading-char))
-            (and (no token) (is ch #\;))
-                                (do (append-to-token ch)
-                                    (= state 'reading-comment))
-            (syntax-chars ch)   (notify (syntax-chars ch))
-            (is ch #\,)         (do (notify nil)
-                                    (= state 'reading-unquote))
-            (is ch #\newline)   (notify 'newline)
-            (is ch #\space)     (notify 'space)
-            (is ch #\")         (do (notify nil)
-                                    (= state 'reading-string)
-                                    (append-to-token ch))
-            (no ch)             (notify nil)
-            (no:is ch 'ignore)  (append-to-token ch))
-
-        (if ch                  (do (++ char-count) 
-                                    (self (readc input))))
-      ) (readc input)))))
+(def read-tokens (text)
+  "writes token information from text to stdout"
+  (let tt (arc-tokeniser (instring text))
+    (while (prn (tt)))))
 
 (def parse (text)
-  "parses the given text (input or string) 
+  "parses the given text (input or string)
    and returns the corresponding arc object"
-  (read-form (arc-tokeniser (if (isa text 'string) (instring text) text))))
+  (let (unescape-fragment assemble-string next-form read-string read-form read-list) nil
 
-(def next-form (tok token-generator)
-  (if 
-    (is tok 'left-paren)          (read-list token-generator 'right-paren)
-    (is tok 'left-bracket)        (list 'fn '(_) (read-list token-generator 'right-bracket))
-    (or (is tok 'quasiquote) (is tok 'quote) (is tok 'unquote) (is tok 'unquote-splicing))
-                                  (list tok (read-form token-generator))
-    (ws-char-names tok)           nil
-                                  (read-atom tok)))
+    (def unescape-fragment (fragment)
+      (string:rev (accum s
+        ((afn (chs escaping)
+          (iflet ch (car chs)
+            (if escaping
+                (do
+                  (case ch
+                    #\\ (s ch)
+                    #\" (s ch)
+                    #\n (s #\newline)
+                    #\r (s #\return)
+                    #\t (s #\tab))
+                  (self (cdr chs) nil))
+                (case ch
+                  #\\ (self (cdr chs) t)
+                      (do (s ch)
+                          (self (cdr chs) nil)))))
+        ) (coerce fragment 'cons) nil))))
 
-(def read-form (token-generator)
-  (next-form (car:token-generator) token-generator))
+    (def assemble-string (fragments)
+      (if no.fragments
+          ""
+          (is len.fragments 1)
+          car.fragments
+          `(string ,@rev.fragments)))
 
-(def read-string-tok (tok-chars)
-  (string:rev (accum s
-    ((afn (chs escaping)
-      (let ch (car chs)
-        (if escaping 
-            (do
-              (case ch
-                #\\ (s ch)
-                #\" (s ch)
-                #\n (s #\newline)
-                #\r (s #\return)
-                #\t (s #\tab))
-              (self (cdr chs) nil))
-            (case ch
-              #\\ (self (cdr chs) t)
-              #\" nil
-                  (do (s ch) 
-                      (self (cdr chs) nil)))))
-    ) (cdr tok-chars) nil))))
+    (def next-form ((kind tok start end) token-generator)
+      (if (is tok 'left-paren)
+          (read-list token-generator 'right-paren)
+          (is tok 'left-bracket)
+          `(fn (_) ,(read-list token-generator 'right-bracket))
+          (is tok 'left-string-delimiter)
+          (read-string token-generator nil)
+          (in tok 'quasiquote 'quote 'unquote 'unquote-splicing)
+          `(,tok ,(read-form token-generator))
+          (is kind 'whitespace)
+          nil
+          tok))
 
-(def read-atom (tok)
-  (if (is (type tok) 'char)     tok
-      (is (type tok) 'comment)  tok
-      (and (is #\" (tok 0)) (is #\" (tok (- (len tok) 1))))
-                                (read-string-tok (coerce tok 'cons))
-                                (on-err (fn (ex) (sym tok))
-                                        (fn ()   (coerce tok 'int)))))
+    (def read-string (token-generator fragments)
+      (let (kind tok start end) (token-generator)
+        (if (is tok 'right-string-delimiter)
+            (assemble-string fragments)
+            (is kind 'interpolation-start)
+            (do (push (read-form token-generator) fragments)
+                (let (k tok s e) (token-generator)
+                  (if (is tok 'right-paren)
+                      token-generator!in-string
+                      (err "unclosed string interpolation: " car.fragments)))
+                (read-string token-generator fragments))
+            (is kind 'string-fragment)
+            (do (push unescape-fragment.tok fragments)
+                (read-string token-generator fragments))
+            tok
+            (err (string "unexpected token in string: \"" tok "\"")))))
 
-(def read-list (token-generator terminator)
-  (let toklist nil
-    ((afn (tok)
-      (if (no:is tok terminator)
-        (do 
-          (aif (next-form tok token-generator) (push it toklist)) 
-          (self:car:token-generator))
-      )) (car:token-generator))
-    (rev toklist)))
+    (def read-form (token-generator)
+      (next-form (token-generator) token-generator))
 
-(def link-parens (right left)
-  (if left
-    (do
-      (= (right 1) (left 1))
-      (= (left 2) (right 2)))
-    (scar right (sym (+ "unmatched-" (string (car right)))))))
+    (def read-list (token-generator terminator)
+      (let toklist nil
+           ((afn ((kind tok start end))
+                 (if (no:is tok terminator)
+                     (do (aif (next-form (list kind tok start end) token-generator)
+                              (push it toklist))
+                         (self (token-generator))))) (token-generator))
+           (rev toklist)))
+
+    (read-form (arc-tokeniser (if (isa text 'string) (instring text) text)))))
+
+(def token? ((kind tok s e) expected-kind (o expected-tok))
+  (and (is kind expected-kind) (or (no expected-tok) (is tok expected-tok))))
 
 (def index-source (text)
   "returns a list of (tok start finish) where start and finish
-   represent where the token occurs in the text, except for 
+   represent where the token occurs in the text, except for
    parens and brackets, where start and end are used for
    matching. Used by welder for colourising"
-  (with (result nil parens nil brackets nil)
-    (read-arc-tokens (instring text)
-                     (fn (return . args)
-                        (push args result)
-                        (if (is (car args) 'left-paren)     (push args parens)
-                            (is (car args) 'left-bracket)   (push args brackets)
-                            (ws-char-names (car args))      (pop result)
-                            (is (car args) 'right-bracket)  (link-parens args (pop brackets))
-                            (is (car args) 'right-paren)    (link-parens args (pop parens)))
-                        (return nil)))
-    (each p parens   (scar p 'unmatched-left-paren))
-    (each p brackets (scar p 'unmatched-left-bracket))
+  (let (result parens brackets string-delimiters link-parens tkz) nil
+    (= link-parens (fn (right left)
+      (if left
+        (do
+          (= (right 2) (left 2))
+          (= (left 3) (right 3)))
+        (scar cdr.right (sym (string "unmatched-" (cadr right)))))))
+
+    (= tkz (arc-tokeniser (instring text)))
+
+    (whilet token (tkz)
+      (push token result)
+      (if (or (token? token 'syntax 'left-paren) (token? token 'interpolation-start))
+          (push token parens)
+          (token? token 'syntax 'left-string-delimiter)
+          (push token string-delimiters)
+          (token? token 'syntax 'left-bracket)
+          (push token brackets)
+          (token? token 'whitespace)
+          (pop result)
+          (token? token 'syntax 'right-string-delimiter)
+          (link-parens token (pop string-delimiters))
+          (token? token 'syntax 'right-bracket)
+          (link-parens token (pop brackets))
+          (token? token 'syntax 'right-paren)
+          (let left-tok (pop parens)
+            (if (token? left-tok 'interpolation-start)
+                tkz!in-string)
+            (link-parens token left-tok))))
+
+    (each p parens   (scar cdr.p 'unmatched-left-paren))
+    (each p brackets (scar cdr.p 'unmatched-left-bracket))
     (rev result)))
+
