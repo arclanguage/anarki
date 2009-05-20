@@ -245,7 +245,7 @@
   left-bracket          'right-bracket
   left-string-delimiter 'right-string-delimiter))
 
-(= (syntax-pairs (string "#" "(")) 'right-paren)
+(= (syntax-pairs (string #\# #\()) 'right-paren)
 
 (def unmatchify (token-name)
   (sym (string "unmatched-" token-name)))
