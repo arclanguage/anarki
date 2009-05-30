@@ -7,7 +7,7 @@
   (w/infile in file
     (summing test
       (whilet line (readline in)
-        (test (aand (pos nonwhite line) (isnt it #\;)))))))
+        (test (aand (find nonwhite line) (isnt it #\;)))))))
 
 (def codeflat (file)
   (len (flat (readall (infile file)))))
@@ -22,8 +22,7 @@
   (let counts (table)
     (each f files
       (each token (flat (readall (infile f)))
-        (= (counts token)
-           (+ 1 (or (counts token) 0)))))
+        (++ (counts token 0))))
     counts))
 
 (def common-tokens (files)

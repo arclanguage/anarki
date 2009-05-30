@@ -1,12 +1,13 @@
 ; Application Server.  Layer inserted 2 Sep 06.
 
-; todo: def a general notion of apps of which the programming app is 
-;   one and the news site another.
+; ideas: 
+; def a general notion of apps of which prompt is one, news another
 ; give each user a place to store data?  A home dir?
 
 ; A user is simply a string: "pg". Use /whoami to test user cookie.
 
 (= hpwfile*   "arc/hpw"
+   oidfile*   "arc/openids"
    adminfile* "arc/admins"
    cookfile*  "arc/cooks")
 
@@ -16,6 +17,7 @@
 
 (def load-userinfo ()
   (= hpasswords*   (safe-load-table hpwfile*)
+     openids*      (safe-load-table oidfile*)
      admins*       (map string (errsafe (readfile adminfile*)))
      cookie->user* (safe-load-table cookfile*))
   (maptable (fn (k v) (= (user->cookie* v) k))
@@ -26,8 +28,8 @@
 (= cookie->user* (table) user->cookie* (table) logins* (table))
 
 (def get-user (req) 
-  (let u (aand (alref (req 'cooks) "user") (cookie->user* (sym it)))
-    (when u (= (logins* u) (req 'ip)))
+  (let u (aand (alref req!cooks "user") (cookie->user* (sym it)))
+    (when u (= (logins* u) req!ip))
     u))
 
 (mac when-umatch (user req . body)
@@ -35,7 +37,8 @@
        (do ,@body)
        (mismatch-message)))
 
-(def mismatch-message () (prn "Dead link: users don't match."))
+(def mismatch-message () 
+  (prn "Dead link: users don't match."))
 
 (mac when-umatch/r (user req . body)
   `(if (is ,user (get-user ,req))
@@ -57,10 +60,10 @@
      ,@body))
 
 ; Like onlink, but checks that user submitting the request is the
-; same it was generated for.  Really should log the username and
-; ip addr of every genlink, and check if they match.
+; same it was generated for.  For extra protection could log the 
+; username and ip addr of every genlink, and check if they match.
 
-(mac userlink (user text . body)  
+(mac ulink (user text . body)  
   (w/uniq req
     `(linkf ,text (,req) 
        (when-umatch ,user ,req ,@body))))
@@ -99,9 +102,6 @@
                           (admin-page user))))))
       (pwfields "create (server) account"))))
 
-; need to define a notion of a hashtable that's always written
-; to a file when modified
-
 (def cook-user (user)
   (let id (new-user-cookie)
     (= (cookie->user*   id) user
@@ -121,6 +121,7 @@
   (save-table cookie->user* cookfile*))
 
 (def create-acct (user pw)
+  (set (dc-usernames* (downcase user)))
   (set-pw user pw))
 
 (def disable-acct (user)
@@ -137,75 +138,62 @@
 (defop login req (login-page 'login))
 
 ; switch is one of: register, login, both
-; afterward is a function on the newly created user, ip addr
-;  or can be a list of such a fn and a string, in which case call fn
-;  then redirect to string
+
+; afterward is either a function on the newly created username and
+; ip address, in which case it is called to generate the next page 
+; after a successful login, or a pair of (function url), which means 
+; call the function, then redirect to the url.
 
 ; classic example of something that should just "return" a val
 ; via a continuation rather than going to a new page.
-
-; ugly code-- too much duplication
 
 (def login-page (switch (o msg nil) (o afterward hello-page))
   (whitepage
     (pagemessage msg)
     (when (in switch 'login 'both)
-      (prbold "Login")
-      (br2)
-      (if (acons afterward)
-          (let (f url) afterward
-            (arformh (fn (req)
-                       (logout-user (get-user req))
-                       (aif (good-login (arg req "u") (arg req "p") (req 'ip))
-                            (do (= (logins* it) (req 'ip))
-                                (prcookie (user->cookie* it))
-                                (f it (req 'ip))
-                                url)
-                            (flink (fn ignore (login-page switch 
-                                                          "Bad login." 
-                                                          afterward)))))
-              (pwfields)))
-          (aformh  (fn (req)
-                     (logout-user (get-user req))
-                     (aif (good-login (arg req "u") (arg req "p") (req 'ip))
-                          (do (= (logins* it) (req 'ip))
-                              (prcookie (user->cookie* it))
-                              (prn)
-                              (afterward it (req 'ip)))
-                          (do (prn)
-                              (login-page switch "Bad login." afterward))))
-            (pwfields)))
+      (login-form "Login" switch login-handler afterward)
+      (hook 'login-form afterward)
       (br2))
     (when (in switch 'register 'both)
-      (prbold "Create Account")
-      (br2)
-      (if (acons afterward)
-          (let (f url) afterward
-            (arformh (fn (req)
-                       (logout-user (get-user req))
-                       (with (user (arg req "u") pw (arg req "p"))
-                         (aif (bad-newacct user pw)
-                              (flink (fn ignore
-                                       (login-page switch it afterward)))
-                              (do (create-acct user pw)
-                                  (= (logins* user) (req 'ip))
-                                  (prcookie (cook-user user))
-                                  (f user (req 'ip))
-                                  url))))
-              (pwfields "create account")))
-          (aformh (fn (req)
-                    (logout-user (get-user req))
-                    (with (user (arg req "u") pw (arg req "p"))
-                      (aif (bad-newacct user pw)
-                           (do (prn)
-                               (login-page switch it afterward))
-                           (do (create-acct user pw)
-                               (= (logins* user) (req 'ip))
-                               (prcookie (cook-user user))
-                               (prn)
-                               (afterward user (req 'ip))))))
-            (pwfields "create account"))))))
-  
+      (login-form "Create Account" switch create-handler afterward))))
+
+(def login-form (label switch handler afterward)
+  (prbold label)
+  (br2)
+  (fnform (fn (req) (handler req switch afterward))
+          (fn () (pwfields (downcase label)))
+          (acons afterward)))
+
+(def login-handler (req switch afterward)
+  (logout-user (get-user req))
+  (aif (good-login (arg req "u") (arg req "p") req!ip)
+       (login it req!ip (user->cookie* it) afterward)
+       (failed-login switch "Bad login." afterward)))
+
+(def create-handler (req switch afterward)
+  (logout-user (get-user req))
+  (with (user (arg req "u") pw (arg req "p"))
+    (aif (bad-newacct user pw)
+         (failed-login switch it afterward)
+         (do (create-acct user pw)
+             (login user req!ip (cook-user user) afterward)))))
+
+(def login (user ip cookie afterward)
+  (= (logins* user) ip)
+  (prcookie cookie)
+  (if (acons afterward)
+      (let (f url) afterward
+        (f user ip)
+        url)
+      (do (prn)
+          (afterward user ip))))
+
+(def failed-login (switch msg afterward)
+  (if (acons afterward)
+      (flink (fn ignore (login-page switch msg afterward)))
+      (do (prn)
+          (login-page switch msg afterward))))
+
 (def prcookie (cook)
   (prn "Set-Cookie: user=" cook "; expires=Sun, 17-Jan-2038 19:14:07 GMT"))
 
@@ -226,8 +214,6 @@
         (do (enq-limit record bad-logins*)
             nil))))
 
-; can remove this once sha1 installed on pi
-
 ; Create a file in case people have quote chars in their pws.  I can't 
 ; believe there's no way to just send the chars.
 
@@ -238,13 +224,20 @@
       (do1 (cut res 0 (- (len res) 1))
            (rmfile fname)))))
 
+(= dc-usernames* (table))
+
+(def username-taken (user)
+  (when (empty dc-usernames*)
+    (ontable k v hpasswords*
+      (set (dc-usernames* (downcase k)))))
+  (dc-usernames* (downcase user)))
+
 (def bad-newacct (user pw)
   (if (no (goodname user 2 15))
        "Usernames can only contain letters, digits, dashes and 
         underscores, and should be between 2 and 15 characters long.  
         Please choose another."
-      (let dcuser (downcase user)
-        (some [is dcuser (downcase _)] (keys hpasswords*)))
+      (username-taken user)
        "That username is taken. Please choose another."
       (or (no pw) (< (len pw) 4))
        "Passwords should be a least 4 characters long.  Please 
@@ -260,7 +253,6 @@
        (or (no max) (<= (len str) max))
        str))
 
-
 (defop logout req
   (aif (get-user req)
        (do (logout-user it)
@@ -269,14 +261,13 @@
 
 (defop whoami req
   (aif (get-user req)
-       (prs it 'at (req 'ip))
+       (prs it 'at req!ip)
        (do (pr "You are not logged in. ")
            (w/link (login-page 'both) (pr "Log in"))
            (pr "."))))
 
 
-
-(= formwid* 60 bigformwid* 80 numwid* 8 formatdoc-url* nil)
+(= formwid* 60 bigformwid* 80 numwid* 16 formatdoc-url* nil)
 
 ; Eventually figure out a way to separate type name from format of 
 ; input field, instead of having e.g. toks and bigtoks
@@ -284,7 +275,7 @@
 (def varfield (typ id val)
   (if (in typ 'string 'string1 'url)
        (gentag input type 'text name id value val size formwid*)
-      (in typ 'num 'int 'posint)
+      (in typ 'num 'int 'posint 'sym)
        (gentag input type 'text name id value val size numwid*)
       (in typ 'users 'toks)
        (gentag input type 'text name id value (tostring (apply prs val))
@@ -296,6 +287,8 @@
       (in typ 'syms 'text 'doc 'mdtext 'mdtext2 'lines 'bigtoks)
        (let text (if (in typ 'syms 'bigtoks)
                       (tostring (apply prs val))
+                     (is typ 'lines)
+                      (tostring (apply pr (intersperse #\newline val)))
                      (in typ 'mdtext 'mdtext2)
                       (unmarkdown val)
                      (no val)
@@ -317,7 +310,11 @@
       (is typ 'yesno)
        (menu id '("yes" "no") (if val "yes" "no"))
       (is typ 'hexcol)
-       (gentag input type 'text name id value val); was (hexrep val)
+       (gentag input type 'text name id value val)
+      (is typ 'time)
+       (gentag input type 'text name id value (if val (english-time val) ""))
+      (is typ 'date)
+       (gentag input type 'text name id value (if val (english-date val) ""))
        (err "unknown varfield type" typ)))
 
 (def text-rows (text wid (o pad 3))
@@ -327,11 +324,14 @@
   (+ pad (max (+ 1 (count #\newline text))
               (roundup (/ (len text) (- cols 5))))))
 
-(def varline (typ id val)
+(def varline (typ id val (o liveurls))
   (if (in typ 'users 'syms 'toks 'bigtoks)  (apply prs val)
       (is typ 'lines)                       (map prn val)
       (is typ 'yesno)                       (pr (if val 'yes 'no))
       (caris typ 'choice)                   (varline (cadr typ) nil val)
+      (is typ 'url)                         (if (and liveurls (valid-url val))
+                                                (link val val)
+                                                (pr val))
       (text-type typ)                       (pr (or val ""))
                                             (pr val)))
 
@@ -348,8 +348,8 @@
 (def readvar (typ str (o fail nil))
   (case (carif typ)
     string  (striptags str)
-    string1 (if (is str "") fail (striptags str))
-    url     (if (is str "") str (valid-url str) (striptags str) fail)
+    string1 (if (blank str) fail (striptags str))
+    url     (if (blank str) "" (valid-url str) (clean-url str) fail)
     num     (let n (saferead str) (if (number n) n fail))
     int     (let n (saferead str)
               (if (number n) (round n) fail))
@@ -359,20 +359,19 @@
     doc     (striptags str)
     mdtext  (md-from-form str)
     mdtext2 (md-from-form str t)                      ; for md with no links
- ;  sym     (aif (tokens str) (sym (car it)) fail)
- ;  syms    (map sym (tokens str))
+    sym     (or (sym:car:tokens str) fail)
+    syms    (map sym (tokens str))
     sexpr   (errsafe (readall str))
     users   (rem [no (goodname _)] (tokens str))
     toks    (tokens str)
     bigtoks (tokens str)
- ;  lines   (or (splitlines (= sss str)) fail)
+    lines   (lines str)
     choice  (readvar (cadr typ) str)
     yesno   (is str "yes")
-    hexcol  (if (hex>color str) str fail) ; was (or (hex>color str) fail)
+    hexcol  (if (hex>color str) str fail)
+    time    (or (errsafe (parse-time str)) fail)
+    date    (or (errsafe (parse-date str)) fail)
             (err "unknown readvar type" typ)))
-
-(def splitlines (str)
-  (map [rem #\return _] (split (cons #\newline "") str)))
 
 (= fail* (uniq))
   
@@ -382,30 +381,35 @@
 
 (def vars-form (user fields f done (o button "update") (o lasts))
   (timed-aform lasts
-               (fn (req)
-                 (when-umatch user req
-                   (each (k v) (req 'args)
-                     (let name (sym k)
-                       (awhen (find [is (cadr _) name] fields)
-                         (let (typ id val mod) it
-                           (when (and mod v)
-                             (let newval (readvar typ v fail*)
-                               (unless (is newval fail*)
-                                 (f name newval))))))))
-                   (done)))
+               (if (all [no (_ 4)] fields)
+                   (fn (req))
+                   (fn (req)
+                     (when-umatch user req
+                       (each (k v) req!args
+                         (let name (sym k)
+                           (awhen (find [is (cadr _) name] fields)
+                             ; added sho to fix bug
+                             (let (typ id val sho mod) it
+                               (when (and mod v)
+                                 (let newval (readvar typ v fail*)
+                                   (unless (is newval fail*)
+                                     (f name newval))))))))
+                       (done))))
      (tab
        (showvars fields))
      (unless (all [no (_ 4)] fields)  ; no modifiable fields
        (br)
        (submit button))))
                 
-(def showvars (fields)
+(def showvars (fields (o liveurls))
   (each (typ id val view mod question) fields
     (when view
       (when question
         (tr (td (prn question))))
       (tr (unless question (tag (td valign 'top)  (pr id ":")))
-          (td ((if mod varfield varline) typ id val)))
+          (td (if mod 
+                  (varfield typ id val)
+                  (varline  typ id val liveurls))))
       (prn))))
 
 ; http://daringfireball.net/projects/markdown/syntax
@@ -437,7 +441,7 @@
                            (or (litmatch "http://" s i) 
                                (litmatch "https://" s i)))
                        (withs (n   (urlend s i)
-                               url (cut s i n))
+                               url (clean-url (cut s i n)))
                          (tag (a href url rel 'nofollow)
                            (pr (if (no maxurl) url (ellipsize url maxurl))))
                          (= i (- n 1)))
@@ -455,12 +459,30 @@
          (indented-code s (+ i 1) (+ newlines 1) 0)
          (indented-code s (+ i 1) newlines       (+ spaces 1)))))
 
+; If i is start a paragraph break, returns index of start of next para.
+
 (def parabreak (s i (o newlines 0))
   (let c (s i)
     (if (or (nonwhite c) (atend i s))
         (if (> newlines 1) i nil)
         (parabreak s (+ i 1) (+ newlines (if (is c #\newline) 1 0))))))
-           
+
+; Returns the indices of the next paragraph break in s, if any.
+
+(def next-parabreak (s i)
+  (unless (atend i s)
+    (aif (parabreak s i) 
+         (list i it)
+         (next-parabreak s (+ i 1)))))
+
+(def paras (s (o i 0))
+  (if (atend i s)
+      nil
+      (iflet (endthis startnext) (next-parabreak s i)
+             (cons (cut s i endthis)
+                   (paras s startnext))
+             (list (trim (cut s i) 'end)))))
+
 
 ; Returns the index of the first char not part of the url beginning
 ; at i, or len of string if url goes all the way to the end.
@@ -470,19 +492,30 @@
 ; with &, which is treated as part of the url.  Perhaps the answer
 ; is just to esc<>& after markdown instead of before.
 
-(def urlend (s i)
+; Treats a delimiter as part of a url if it is (a) an open delimiter
+; not followed by whitespace or eos, or (b) a close delimiter 
+; balancing a previous open delimiter.
+
+(def urlend (s i (o indelim))
   (let c (s i)
     (if (atend i s)
-         (if ((orf punc delimc whitec) c) i (+ i 1))
+         (if ((orf punc whitec opendelim) c) 
+              i 
+             (closedelim c)
+              (if indelim (+ i 1) i)
+             (+ i 1))
         (if (or (whitec c)
-                (delimc c) 
-                (and (punc c)
-                     ((orf whitec delimc) (s (+ i 1)))))
+                (and (punc c) (whitec (s (+ i 1))))
+                (and ((orf whitec punc) (s (+ i 1)))
+                     (or (opendelim c)
+                         (and (closedelim c) (no indelim)))))
             i
-            (urlend s (+ i 1))))))
+            (urlend s (+ i 1) (or (opendelim c)
+                                  (and indelim (no (closedelim c)))))))))
 
-(def delimc (c)
-  (in c #\( #\) #\[ #\] #\{ #\} #\"))
+(def opendelim (c)  (in c #\< #\( #\[ #\{))
+ 
+(def closedelim (c) (in c #\> #\) #\] #\}))
 
 
 (def code-block (s i)
@@ -522,6 +555,100 @@
              (= i (+ it 12)))
           (writec (s i))))))
 
+
+(def english-time (min)
+  (let n (mod min 720)
+    (string (let h (trunc (/ n 60)) (if (is h 0) "12" h))
+            ":"
+            (let m (mod n 60)
+              (if (is m 0) "00"
+                  (< m 10) (string "0" m)
+                           m))
+            (if (is min 0)   " midnight"
+                (is min 720) " noon"
+                (>= min 720) " pm"
+                             " am"))))
+
+(def parse-time (s)
+  (let (nums (o label "")) (halve s letter)
+    (with ((h (o m 0)) (map int (tokens nums ~digit))
+           cleanlabel  (downcase (rem ~alphadig label)))
+      (+ (* (if (is h 12)
+                 (if (in cleanlabel "am" "midnight")
+                     0
+                     12)
+                (is cleanlabel "pm")
+                 (+ h 12)
+                 h)
+            60)
+          m))))
+
+
+(= months* '("January" "February" "March" "April" "May" "June" "July"
+             "August" "September" "October" "November" "December"))
+
+(def english-date ((y m d))
+  (string d " " (months* (- m 1)) " " y))
+
+(= month-names* (obj "january"    1  "jan"        1
+                     "february"   2  "feb"        2
+                     "march"      3  "mar"        3
+                     "april"      4  "apr"        4
+                     "may"        5
+                     "june"       6  "jun"        6
+                     "july"       7  "jul"        7
+                     "august"     8  "aug"        8
+                     "september"  9  "sept"       9  "sep"      9
+                     "october"   10  "oct"       10
+                     "november"  11  "nov"       11
+                     "december"  12  "dec"       12))
+
+(def monthnum (s) (month-names* (downcase s)))
+
+; Doesn't work for BC dates.
+
+(def parse-date (s)
+  (let nums (date-nums s)
+    (if (valid-date nums)
+        nums
+        (err (string "Invalid date: " s)))))
+
+(def date-nums (s)
+  (with ((ynow mnow dnow) (date)
+         toks             (tokens s ~alphadig))
+    (if (all [all digit _] toks)
+         (let nums (map int toks)
+           (case (len nums)
+             1 (list ynow mnow (car nums))
+             2 (iflet d (find [> _ 12] nums)
+                        (list ynow (find [isnt _ d] nums) d)
+                        (cons ynow nums))
+               (if (> (car nums) 31)
+                   (firstn 3 nums)
+                   (rev (firstn 3 nums)))))
+        ([all digit _] (car toks))
+         (withs ((ds ms ys) toks
+                 d          (int ds))
+           (aif (monthnum ms)
+                (list (or (errsafe (int ys)) ynow) 
+                      it
+                      d)
+                nil))
+        (monthnum (car toks))
+         (let (ms ds ys) toks
+           (aif (errsafe (int ds))
+                (list (or (errsafe (int ys)) ynow) 
+                      (monthnum (car toks))
+                      it)
+                nil))
+          nil)))
+
+; To be correct needs to know days per month, and about leap years
+
+(def valid-date ((y m d))
+  (and y m d
+       (< 0 m 13)
+       (< 0 d 32)))
 
 (mac defopl (name parm . body)
   `(defop ,name ,parm

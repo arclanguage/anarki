@@ -1,20 +1,16 @@
 ; Main Arc lib.  Ported to Scheme version Jul 06.
 
-; optimize ~foo in functional position in ac, like compose
+; don't like names of conswhen and consif
+
+; need better way of generating strings; too many calls to string
+;  maybe strings with escape char for evaluation
 ; make foo~bar equiv of foo:~bar (in expand-ssyntax)
-; rename assert
-; (10 x) for (= x 10)?
-; should (= x)  mean (= x t)?
 ; add sigs of ops defined in ac.scm
 ; get hold of error types within arc
-; why is macex defined in scheme instead of using def below?
+; does macex have to be defined in scheme instead of using def below?
 ; write disp, read, write in arc
-; could prob write rmfile and dir in terms of system
 ; could I get all of macros up into arc.arc?
 ; warn when shadow a global name
-; permanent objs that live on disk and are updated when modified
-; way to spec default 0 rather than nil for hts
-;  do in access call or when ht created?  simply have ++ nil -> 1?
 ; some simple regexp/parsing plan
 
 ; compromises in this implementation: 
@@ -22,23 +18,25 @@
 ;  (mac testlit args (listtab args)) breaks when called
 ; separate string type
 ;  (= (cdr (cdr str)) "foo") couldn't work because no way to get str tail
+;  not sure this is a mistake; strings may be subtly different from 
+;  lists of chars
 
 
-(set do (annotate 'mac
-          (fn args `((fn () ,@args)))))
+(assign do (annotate 'mac
+             (fn args `((fn () ,@args)))))
 
-(set safeset (annotate 'mac
-               (fn (var val)
-                 `(do (if (bound ',var)
-                          (do (disp "*** redefining ")
-                              (disp ',var)
-                              (writec #\newline)))
-                      (set ,var ,val)))))
+(assign safeset (annotate 'mac
+                  (fn (var val)
+                    `(do (if (bound ',var)
+                             (do (disp "*** redefining " (stderr))
+                                 (disp ',var (stderr))
+                                 (disp #\newline (stderr))))
+                         (assign ,var ,val)))))
 
-(set def (annotate 'mac
-            (fn (name parms . body)
-              `(do (sref sig ',parms ',name)
-                   (safeset ,name (fn ,parms ,@body))))))
+(assign def (annotate 'mac
+               (fn (name parms . body)
+                 `(do (sref sig ',parms ',name)
+                      (safeset ,name (fn ,parms ,@body))))))
 
 (def caar (xs) (car (car xs)))
 (def cadr (xs) (car (cdr xs)))
@@ -50,7 +48,17 @@
 
 (def atom (x) (no (acons x)))
 
-(def list args args)
+; Can return to this def once Rtm gets ac to make all rest args
+; nil-terminated lists.
+
+; (def list args args)
+
+(def copylist (xs)
+  (if (no xs) 
+      nil 
+      (cons (car xs) (copylist (cdr xs)))))
+
+(def list args (copylist args))
 
 (def idfn (x) x)
 
@@ -69,10 +77,10 @@
       (cons (f (car xs) (cadr xs))
             (pair (cddr xs) f))))
 
-(set mac (annotate 'mac
-           (fn (name parms . body)
-             `(do (sref sig ',parms ',name)
-                  (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
+(assign mac (annotate 'mac
+              (fn (name parms . body)
+                `(do (sref sig ',parms ',name)
+                     (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
 (mac and args
   (if args
@@ -118,11 +126,11 @@
 
 (mac rfn (name parms . body)
   `(let ,name nil
-     (set ,name (fn ,parms ,@body))))
+     (assign ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
   `(let self nil
-     (set self (fn ,parms ,@body))))
+     (assign self (fn ,parms ,@body))))
 
 ; Ac expands x:y:z into (compose x y z), ~x into (complement x)
 
@@ -137,6 +145,8 @@
                (list (car fs) (self (cdr fs)))
                `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
          args))))
+
+; Ditto: complement in functional position optimized by ac.
 
 (mac complement (f)
   (let g (uniq)
@@ -171,7 +181,7 @@
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
 
-; should take n args
+; Could take n args, but have never once needed that.
 
 (def iso (x y)
   (or (is x y)
@@ -284,6 +294,11 @@
       (cons (firstn n xs)
             (tuples (nthcdr n xs) n))))
 
+; If ok to do with =, why not with def?  But see if use it.
+
+(mac defs args
+  `(do ,@(map [cons 'def _] (tuples args 3))))
+
 (def caris (x val) 
   (and (acons x) (is (car x) val)))
 
@@ -304,6 +319,7 @@
 (mac atwiths args
   `(atomic (withs ,@args)))
 
+
 ; setforms returns (vars get set) for a place based on car of an expr
 ;  vars is a list of gensyms alternating with expressions whose vals they
 ;   should be bound to, suitable for use as first arg to withs
@@ -317,7 +333,7 @@
 ; seems meaningful to e.g. (push 1 (pop x)) if (car x) is a cons.
 ; can't in cl though.  could I define a setter for push or pop?
 
-(set setter (table))
+(assign setter (table))
 
 (mac defset (name parms . body)
   (w/uniq gexpr
@@ -368,25 +384,27 @@
          (if (ssyntax expr)
              (setforms (ssexpand expr))
              (w/uniq (g h)
-               (list (list g expr) 
+               (list (list g expr)
                      g
-                     `(fn (,h) (set ,expr ,h)))))
+                     `(fn (,h) (assign ,expr ,h)))))
         ; make it also work for uncompressed calls to compose
         (and (acons expr) (metafn (car expr)))
          (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
+        (and (acons expr) (acons (car expr)) (is (caar expr) 'get))
+         (setforms (list (cadr expr) (cadr (car expr))))
          (let f (setter (car expr))
            (if f
                (f expr)
                ; assumed to be data structure in fn position
                (do (when (caris (car expr) 'fn)
-                     (warn "Inverting what looks like a function call" 
+                     (warn "Inverting what looks like a function call"
                            expr0 expr))
                    (w/uniq (g h)
                      (let argsyms (map [uniq] (cdr expr))
                         (list (+ (list g (car expr))
                                  (mappend list argsyms (cdr expr)))
                               `(,g ,@argsyms)
-                              `(fn (,h) (sref ,g ,h ,@argsyms)))))))))))
+                              `(fn (,h) (sref ,g ,h ,(car argsyms))))))))))))
 
 (def metafn (x)
   (or (ssyntax x)
@@ -394,18 +412,20 @@
 
 (def expand-metafn-call (f args)
   (if (is (car f) 'compose)
-      ((afn (fs)
-         (if (caris (car fs) 'compose)            ; nested compose
-              (self (join (cdr (car fs)) (cdr fs)))
-             (cdr fs)
-              (list (car fs) (self (cdr fs)))
-             (cons (car fs) args)))
-       (cdr f))
-      (err "Can't invert " (cons f args))))
+       ((afn (fs)
+          (if (caris (car fs) 'compose)            ; nested compose
+               (self (join (cdr (car fs)) (cdr fs)))
+              (cdr fs)
+               (list (car fs) (self (cdr fs)))
+              (cons (car fs) args)))
+        (cdr f))
+      (is (car f) 'no)
+       (err "Can't invert " (cons f args))
+       (cons f args)))
 
 (def expand= (place val)
   (if (and (isa place 'sym) (~ssyntax place))
-      `(set ,place ,val)
+      `(assign ,place ,val)
       (let (vars prev setter) (setforms place)
         (w/uniq g
           `(atwith ,(+ vars (list g val))
@@ -429,7 +449,7 @@
 (mac for (v init max . body)
   (w/uniq (gi gm)
     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
-       (loop (set ,v ,gi) (< ,v ,gm) (set ,v (+ ,v 1))
+       (loop (assign ,v ,gi) (< ,v ,gm) (assign ,v (+ ,v 1))
          ,@body))))
 
 (mac repeat (n . body)
@@ -454,8 +474,10 @@
 
 ; (nthcdr x y) = (cut y x).
 
-(def cut (seq start (o end (len seq)))
-  (let end (if (< end 0) (+ (len seq) end) end)
+(def cut (seq start (o end))
+  (let end (if (no end)   (len seq)
+               (< end 0)  (+ (len seq) end) 
+                          end)
     (if (isa seq 'string)
         (let s2 (newstring (- end start))
           (for i 0 (- end start 1)
@@ -491,8 +513,15 @@
 (def keep (test seq) 
   (rem (complement (testify test)) seq))
 
-(def trues (f seq) 
-  (rem nil (map f seq)))
+;(def trues (f seq) 
+;  (rem nil (map f seq)))
+
+(def trues (f xs)
+  (and xs
+      (let fx (f (car xs))
+        (if fx
+            (cons fx (trues f (cdr xs)))
+            (trues f (cdr xs))))))
 
 (mac do1 args
   (w/uniq g
@@ -612,7 +641,7 @@
 (mac wipe args
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
 
-(mac assert args
+(mac set args
   `(do ,@(map (fn (a) `(= ,a t)) args)))
 
 ; Destructuring means ambiguity: are pat vars bound in else? (no)
@@ -646,7 +675,7 @@
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
-       ,gacc)))
+       (rev ,gacc))))
 
 ; Repeatedly evaluates its body till it returns nil, then returns vals.
 
@@ -665,11 +694,9 @@
 
 (mac whiler (var expr endval . body)
   (w/uniq gf
-    `((rfn ,gf (,var)
-        (when (and ,var (no (is ,var ,endval)))
-          ,@body 
-          (,gf ,expr)))
-      ,expr)))
+    `(withs (,var nil ,gf (testify ,endval))
+       (while (no (,gf (= ,var ,expr)))
+         ,@body))))
   
 ;(def macex (e)
 ;  (if (atom e)
@@ -684,13 +711,11 @@
 (def string args
   (apply + "" (map [coerce _ 'string] args)))
 
-(def flat (x (o stringstoo))
-  ((rfn f (x acc)
-     (if (or (no x) (and stringstoo (is x "")))
-          acc
-         (and (atom x) (no (and stringstoo (isa x 'string))))
-          (cons x acc)
-         (f (car x) (f (cdr x) acc))))
+(def flat (x)
+  ((afn (x acc)
+     (if (no x)   acc
+         (atom x) (cons x acc)
+                  (self (car x) (self (cdr x) acc))))
    x nil))
 
 (mac check (x test (o alt))
@@ -739,6 +764,9 @@
 (mac w/outstring (var . body)
   `(let ,var (outstring) ,@body))
 
+; what happens to a file opened for append if arc is killed in
+; the middle of a write?
+
 (mac w/appendfile (var name . body)
   `(let ,var (outfile ,name 'append)
      (after (do ,@body) (close ,var))))
@@ -767,11 +795,11 @@
 (def read ((o x (stdin)) (o eof nil))
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
+; inconsistency between names of readfile[1] and writefile
+
 (def readfile (name) (w/infile s name (drain (read s))))
 
 (def readfile1 (name) (w/infile s name (read s)))
-
-(def writefile1 (val name) (w/outfile s name (write val s)) val)
 
 (def readall (src (o eof nil))
   ((afn (i)
@@ -781,7 +809,15 @@
           (cons x (self i)))))
    (if (isa src 'string) (instring src) src)))
 
+(def writefile (val file)
+  (let tmpfile (+ file ".tmp")
+    (w/outfile o tmpfile (write val o))
+    (mvfile tmpfile file))
+  val)
+
 (def sym (x) (coerce x 'sym))
+
+(def int (x (o b 10)) (coerce x 'int b))
 
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
@@ -795,14 +831,18 @@
        (repeat ,n (push ,expr ,ga))
        (rev ,ga))))
 
+; rejects bytes >= 248 lest digits be overrepresented
+
 (def rand-string (n)
-  (with (cap (fn () (+ 65 (rand 26)))
-         sm  (fn () (+ 97 (rand 26)))
-         dig (fn () (+ 48 (rand 10))))
-    (coerce (map [coerce _ 'char]
-                 (cons (rand-choice (cap) (sm))
-                       (n-of (- n 1) (rand-choice (cap) (sm) (dig)))))
-            'string)))
+  (let c "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    (with (nc 62 s (newstring n) i 0)
+      (w/infile str "/dev/urandom"
+        (while (< i n)
+          (let x (readb str)
+             (unless (> x 247)
+               (= (s i) (c (mod x nc)))
+               (++ i)))))
+      s)))
 
 (mac forlen (var s . body)
   `(for ,var 0 (- (len ,s) 1) ,@body))
@@ -869,33 +909,41 @@
 ; right no of args and didn't have to call apply (or list if 1 arg).
 
 (def memo (f)
-  (let cache (table)
+  (with (cache (table) nilcache (table))
     (fn args
       (or (cache args)
-          (= (cache args) (apply f args))))))
+          (and (no (nilcache args))
+               (aif (apply f args)
+                    (= (cache args) it)
+                    (do (set (nilcache args))
+                        nil)))))))
+
 
 (mac defmemo (name parms . body)
   `(safeset ,name (memo (fn ,parms ,@body))))
 
 (def <= args
-  (or (no args) 
+  (or (no args)
       (no (cdr args))
       (and (no (> (car args) (cadr args)))
            (apply <= (cdr args)))))
 
 (def >= args
-  (or (no args) 
+  (or (no args)
       (no (cdr args))
       (and (no (< (car args) (cadr args)))
            (apply >= (cdr args)))))
-              
+
 (def whitec (c)
   (in c #\space #\newline #\tab #\return))
 
 (def nonwhite (c) (no (whitec c)))
 
-(def alphadig (c)
-  (or (<= #\a c #\z) (<= #\A c #\Z) (<= #\0 c #\9)))
+(def letter (c) (or (<= #\a c #\z) (<= #\A c #\Z)))
+
+(def digit (c) (<= #\0 c #\9))
+
+(def alphadig (c) (or (letter c) (digit c)))
 
 (def punc (c)
   (in c #\. #\, #\; #\: #\! #\?))
@@ -904,7 +952,7 @@
   (awhen (readc str)
     (tostring 
       (writec it)
-      (whiler c (readc str) #\newline
+      (whiler c (readc str) [in _ nil #\newline]
         (writec c)))))
 
 ; Don't currently use this but suspect some code could.
@@ -915,6 +963,11 @@
        (let ,sumfn (fn (,gt) (if ,gt (++ ,gc)))
          ,@body)
        ,gc)))
+
+(def sum (f xs)
+  (let n 0
+    (each x xs (++ n (f x)))
+    n))
 
 (def treewise (f base tree)
   (if (atom tree)
@@ -959,13 +1012,6 @@
   (each (k v) (pair data) (= (table k) v))
   table)
 
-(mac obj args
-  (w/uniq g
-    `(let ,g (table)
-       ,@(map (fn ((k v)) `(= (,g ',k) ,v))
-              (pair args))
-       ,g)))
-
 (def keys (h) 
   (accum a (ontable k v h (a k))))
 
@@ -983,6 +1029,11 @@
          al)
     h))
 
+(mac obj args
+  `(listtab (list ,@(map (fn ((k v))
+                           `(list ',k ,v))
+                         (pair args)))))
+
 (def load-table (file (o eof))
   (w/infile i file (read-table i eof)))
 
@@ -996,7 +1047,7 @@
       (drain (read-table i eof) eof))))
 
 (def save-table (h file)
-  (w/outfile o file (write-table h o)))
+  (writefile (tablist h) file))
 
 (def write-table (h (o o (stdout)))
   (write (tablist h) o))
@@ -1004,7 +1055,7 @@
 (def copy (x . args)
   (let x2 (case (type x)
             sym    x
-            cons   (apply (fn args args) x)
+            cons   (copylist x) ; (apply (fn args args) x)
             string (let new (newstring (len x))
                      (forlen i x
                        (= (new i) (x i)))
@@ -1038,10 +1089,13 @@
         ((if (> n 0) + -) base 1)
         base)))
 
-(def to-nearest (n quantum)
+(def nearest (n quantum)
   (* (roundup (/ n quantum)) quantum))
 
 (def avg (ns) (/ (apply + ns) (len ns)))
+
+(def med (ns (o test >))
+  ((sort > ns) (round (/ (len ns) 2))))
 
 ; Use mergesort on assumption that mostly sorting mostly sorted lists
 ; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1) 
@@ -1094,14 +1148,14 @@
   (if (no x) y
       (no y) x
       (let lup nil
-        (set lup
-             (fn (r x y r-x?) ; r-x? for optimization -- is r connected to x?
-               (if (less? (car y) (car x))
-                 (do (if r-x? (scdr r y))
-                     (if (cdr y) (lup y x (cdr y) nil) (scdr y x)))
-                 ; (car x) <= (car y)
-                 (do (if (no r-x?) (scdr r x))
-                     (if (cdr x) (lup x (cdr x) y t) (scdr x y))))))
+        (assign lup
+                (fn (r x y r-x?) ; r-x? for optimization -- is r connected to x?
+                  (if (less? (car y) (car x))
+                    (do (if r-x? (scdr r y))
+                        (if (cdr y) (lup y x (cdr y) nil) (scdr y x)))
+                    ; (car x) <= (car y)
+                    (do (if (no r-x?) (scdr r x))
+                        (if (cdr x) (lup x (cdr x) y t) (scdr x y))))))
         (if (less? (car y) (car x))
           (do (if (cdr y) (lup y x (cdr y) nil) (scdr y x))
               y)
@@ -1113,10 +1167,12 @@
   (firstn n (sort f seq)))
 
 (def split (seq pos)
-  (withs (mid (nthcdr (- pos 1) seq) 
-          s2  (cdr mid))
-    (wipe (cdr mid))
-    (list seq s2)))
+  (if (< pos 1)
+      (list nil seq)
+      (withs (mid (nthcdr (- pos 1) seq) 
+              s2  (cdr mid))
+        (wipe (cdr mid))
+        (list seq s2))))
 
 (mac time (expr)
   (w/uniq (t1 t2)
@@ -1186,9 +1242,11 @@
 
 (def since (t1) (- (seconds) t1))
 
-(def hours-since (t1) (/ (since t1) 60))
+(def minutes-since (t1) (/ (since t1) 60))
+(def hours-since (t1)   (/ (since t1) 3600))
+(def days-since (t1)    (/ (since t1) 86400))
 
-(def days-since (t1) (/ (since t1) 86400))
+; could use a version for fns of 1 arg at least
 
 (def cache (timef valf)
   (with (cached nil gentime nil)
@@ -1198,23 +1256,30 @@
            gentime (seconds)))
       cached)))
 
+(mac defcache (name lasts . body)
+  `(safeset ,name (cache (fn () ,lasts)
+                         (fn () ,@body))))
+
 (mac errsafe (expr)
   `(on-err (fn (c) nil)
            (fn () ,expr)))
 
-(def saferead (arg) (errsafe (read arg)))
+(def saferead (arg) (errsafe:read arg))
 
 (def safe-load-table (filename) 
-  (or (errsafe (load-table filename))
+  (or (errsafe:load-table filename)
       (table)))
 
 (def ensure-dir (path)
   (unless (dir-exists path)
     (system (string "mkdir -p " path))))
 
-(def date ((o time (seconds)))
-  (let val (tostring (system (string "date -u -r " time " \"+%Y-%m-%d\"")))
-    (cut val 0 (- (len val) 1))))
+(def date ((o s (seconds)))
+  (rev (nthcdr 3 (timedate s))))
+
+(def datestring ((o s (seconds)))
+  (let (y m d) (date s)
+    (string y "-" (if (< m 10) "0") m "-" (if (< d 10) "0") d)))
 
 (def count (test x)
   (with (n 0 testf (testify test))
@@ -1227,7 +1292,7 @@
       str
       (+ (cut str 0 limit) "...")))
 
-(def random-elt (seq) 
+(def rand-elt (seq) 
   (seq (rand (len seq))))
 
 (mac until (test . body)
@@ -1276,34 +1341,32 @@
    `(with (,gf ,f ,gx ,x)
       (if (,gf ,gx) (cons ,gx ,y) ,y))))
 
-; Could rename this get, but don't unless it's frequently used.
 ; Could combine with firstn if put f arg last, default to (fn (x) t).
 
-(def firstn-that (n f xs)
-  (if (or (<= n 0) (no xs))
-       nil
-      (f (car xs))
-       (cons (car xs) (firstn-that (- n 1) f (cdr xs)))
-       (firstn-that n f (cdr xs))))
+(def retrieve (n f xs)
+  (if (no n)                 (keep f xs)
+      (or (<= n 0) (no xs))  nil
+      (f (car xs))           (cons (car xs) (retrieve (- n 1) f (cdr xs)))
+                             (retrieve n f (cdr xs))))
 
 (def dedup (xs)
   (with (h (table) acc nil)
     (each x xs
       (unless (h x)
         (push x acc)
-        (assert (h x))))
+        (set (h x))))
     (rev acc)))
 
 (def single (x) (and (acons x) (no (cdr x))))
 
 (def intersperse (x ys)
-  (cons (car ys)
-        (mappend [list x _] (cdr ys))))
+  (and ys (cons (car ys)
+                (mappend [list x _] (cdr ys)))))
 
 (def counts (seq (o c (table)))
   (if (no seq)
       c
-      (do (zap [if _ (+ _ 1) 1] (c (car seq)))
+      (do (++ (c (car seq) 0))
           (counts (cdr seq) c))))
 
 (def commonest (seq)
@@ -1325,21 +1388,21 @@
 (let argsym (uniq)
 
   (def parse-format (str)
-    (rev (accum a
-           (with (chars nil  i -1)
-             (w/instring s str
-               (whilet c (readc s)
-                 (case c 
-                   #\# (do (a (coerce (rev chars) 'string))
-                           (wipe chars)
-                           (a (read s)))
-                   #\~ (do (a (coerce (rev chars) 'string))
-                           (wipe chars)
-                           (readc s)
-                           (a (list argsym (++ i))))
-                       (push c chars))))
-              (when chars
-                (a (coerce (rev chars) 'string)))))))
+    (accum a
+      (with (chars nil  i -1)
+        (w/instring s str
+          (whilet c (readc s)
+            (case c 
+              #\# (do (a (coerce (rev chars) 'string))
+                      (wipe chars)
+                      (a (read s)))
+              #\~ (do (a (coerce (rev chars) 'string))
+                      (wipe chars)
+                      (readc s)
+                      (a (list argsym (++ i))))
+                  (push c chars))))
+         (when chars
+           (a (coerce (rev chars) 'string))))))
   
   (mac prf (str . args)
     `(let ,argsym (list ,@args)
@@ -1348,11 +1411,9 @@
 
 (def load (file)
   (w/infile f file
-    (whilet e (read f)
-      (eval e))))
-
-(def positive (x)
-  (and (number x) (> x 0)))
+    (w/uniq eof
+      (whiler e (read f eof) eof
+        (eval e)))))
 
 (mac w/table (var . body)
   `(let ,var (table) ,@body ,var))
@@ -1404,12 +1465,11 @@
        (each ,var ,val
          (when (multiple (++ ,gc) ,gn)
            (pr ".") 
-           ;(flushout)
+           (flushout)
            )
          ,@body)
        (prn)
-       ;(flushout)
-       )))
+       (flushout))))
 
 (mac point (name . body)
   (w/uniq g
@@ -1457,7 +1517,7 @@
 
 (def memtable (ks)
   (let h (table)
-    (each k ks (assert (h k)))
+    (each k ks (set (h k)))
     h))
 
 (= bar* " | ")
@@ -1470,7 +1530,7 @@
                        (unless (is ,out "")
                          (if ,needbars
                              (pr bar* ,out)
-                             (do (assert ,needbars)
+                             (do (set ,needbars)
                                  (pr ,out))))))
                   body)))))
 
@@ -1488,6 +1548,11 @@
           ,@(map [list _ g] fs)))
       ,x)))
 
+(mac or= (place expr)
+  (let (binds val setter) (setforms place)
+    `(atwiths ,binds
+       (or ,val (,setter ,expr)))))
+
 (= hooks* (table))
 
 (def hook (name . args)
@@ -1496,6 +1561,32 @@
 (mac defhook (name . rest)
   `(= (hooks* ',name) (fn ,@rest)))
   
+(mac out (expr) `(pr ,(tostring (eval expr))))
+
+; if renamed this would be more natural for (map [_ user] pagefns*)
+
+(def get (index) [_ index])
+
+(= savers* (table))
+
+(mac fromdisk (var file init load save)
+  (w/uniq (gf gv)
+    `(unless (bound ',var)
+       (do1 (= ,var (iflet ,gf (file-exists ,file)
+                               (,load ,gf)
+                               ,init))
+            (= (savers* ',var) (fn (,gv) (,save ,gv ,file)))))))
+
+(mac diskvar (var file)
+  `(fromdisk ,var ,file nil readfile1 writefile))
+
+(mac disktable (var file)
+  `(fromdisk ,var ,file (table) load-table save-table))
+
+(mac todisk (var (o expr var))
+  `((savers* ',var) 
+    ,(if (is var expr) var `(= ,var ,expr))))
+
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?
@@ -1503,6 +1594,12 @@
 ; idea: implicit tables of tables; setf empty field, becomes table
 ;   or should setf on a table just take n args?
 
+; idea: use constants in functional position for currying?
+;       (1 foo) would mean (fn args (apply foo 1 args))
+; another solution would be to declare certain symbols curryable, and 
+;  if > was, >_10 would mean [> _ 10]
+;  or just say what the hell and make _ ssyntax for currying
+; idea: make >10 ssyntax for [> _ 10]
 ; solution to the "problem" of improper lists: allow any atom as a list
 ;  terminator, not just nil.  means list recursion should terminate on 
 ;  atom rather than nil, (def empty (x) (or (atom x) (is x "")))

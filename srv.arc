@@ -1,31 +1,28 @@
 ; HTTP Server.
 
-; could make form fields that know their value type because of
-; gensymed names, and so the receiving fn gets args that are not
-; strings but parsed values.
-
 ; if you want to be able to ^C the server, set breaksrv* to t
 
-(= arcdir* "arc/" logdir* "arc/logs/" quitsrv* nil breaksrv* nil) 
+(= arcdir* "arc/" logdir* "arc/logs/" staticdir* "static/")
+
+(= quitsrv* nil breaksrv* nil) 
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
   (ensure-srvdirs)
+  (map [apply new-bgthread _] pending-bgthreads*)
   (w/socket s port
     (prn "ready to serve port " port)
+    (flushout)
     (= currsock* s)
     (until quitsrv*
-      (if breaksrv* 
-          (handle-request s)
-          (errsafe (handle-request s)))))
+      (handle-request s breaksrv*)))
   (prn "quit server"))
 
 (def serve1 ((o port 8080))
-  (w/socket s port (handle-request s)))
+  (w/socket s port (handle-request s t)))
 
 (def ensure-srvdirs ()
-  (ensure-dir arcdir*)
-  (ensure-dir logdir*))
+  (map ensure-dir (list arcdir* logdir* staticdir*)))
 
 (= srv-noisy* nil)
 
@@ -39,41 +36,72 @@
 ; to handle it. also arrange to kill that thread if it
 ; has not completed in threadlife* seconds.
 
-(= srvthreads* nil threadlimit* 50 threadlife* 30)
+(= threadlife* 30  requests* 0  requests/ip* (table) 
+   throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
 
-; Could auto-throttle ips, e.g. if one has more than x% of recent requests.
+(def handle-request (s breaksrv)
+  (if breaksrv
+      (handle-request-1 s)
+      (errsafe (handle-request-1 s))))
 
-(= requests* 0 requests/ip* (table) throttle-ips* (table) throttle-time* 30)
+(def handle-request-1 (s)
+  (let (i o ip) (socket-accept s)
+    (if (and (or (ignore-ips* ip) (abusive-ip ip))
+             (++ (spurned* ip 0)))
+        (force-close i o)
+        (do (++ requests*)
+            (++ (requests/ip* ip 0))
+            (with (th1 nil th2 nil)
+              (= th1 (thread
+                       (errsafe (handle-request-thread i o ip))
+                       (close i o)
+                       (kill-thread th2)))
+              (= th2 (thread
+                       (sleep threadlife*)
+                       (unless (dead th1)
+                               (prn "srv thread took too long for " ip))
+                       (break-thread th1)
+                       (force-close i o))))))))
 
-(def handle-request (s (o life threadlife*))
-  (if (len< (pull dead srvthreads*) threadlimit*)
-      (let (i o ip) (socket-accept s)
-        (++ requests*)
-        (= (requests/ip* ip) (+ 1 (or (requests/ip* ip) 0)))
-        (let th (thread 
-                  (if (throttle-ips* ip) (sleep (rand throttle-time*)))
-                  (handle-request-thread i o ip))
-          (push th srvthreads*)
-          (thread (sleep life)
-                  (unless (dead th) (prn "srv thread took too long"))
-                  (break-thread th)
-                  (close i o))))
-      (sleep .2)))
+; Returns true if ip has made req-limit* requests in less than
+; req-window* seconds.  If an ip is throttled, only 1 request is 
+; allowed per req-window* seconds.  If an ip makes req-limit* 
+; requests in less than dos-window* seconds, it is a treated as a DoS
+; attack and put in ignore-ips* (for this server invocation).
+
+; To adjust this while running, adjust the req-window* time, not 
+; req-limit*, because algorithm doesn't enforce decreases in the latter.
+
+(= req-times* (table) req-limit* 30 req-window* 20 dos-window* 3)
+
+(def abusive-ip (ip)
+  (and (only.> (requests/ip* ip) 250)
+       (let now (seconds)
+         (do1 (if (req-times* ip)
+                  (and (>= (qlen (req-times* ip)) 
+                           (if (throttle-ips* ip) 1 req-limit*))
+                       (let dt (- now (deq (req-times* ip)))
+                         (if (< dt dos-window*) (set (ignore-ips* ip)))
+                         (< dt req-window*)))
+                  (do (= (req-times* ip) (queue))
+                      nil))
+              (enq now (req-times* ip))))))
 
 (def handle-request-thread (i o ip)
-  (with (nls 0 lines nil line nil responded nil)
+  (with (nls 0 lines nil line nil responded nil t0 (msec))
     (after
       (whilet c (unless responded (readc i))
         (if srv-noisy* (pr c))
         (if (is c #\newline)
             (if (is (++ nls) 2) 
                 (let (type op args n cooks) (parseheader (rev lines))
-                  (srvlog 'srv ip type op cooks)
-                  (case type
-                    get  (respond o op args cooks ip)
-                    post (handle-post i o op n cooks ip)
-                         (respond-err o "Unknown request: " (car lines)))
-                  (assert responded))
+                  (let t1 (msec)
+                    (case type
+                      get  (respond o op args cooks ip)
+                      post (handle-post i o op args n cooks ip)
+                           (respond-err o "Unknown request: " (car lines)))
+                    (log-request type op args cooks ip t0 t1)
+                    (set responded)))
                 (do (push (string (rev line)) lines)
                     (wipe line)))
             (unless (is c #\return)
@@ -82,10 +110,22 @@
       (close i o)))
   (harvest-fnids))
 
+(def log-request (type op args cooks ip t0 t1)
+  (with (parsetime (- t1 t0) respondtime (- (msec) t1))
+    (srvlog 'srv ip 
+                 parsetime 
+                 respondtime 
+                 (if (> (+ parsetime respondtime) 1000) "***" "")
+                 type
+                 op
+                 (let arg1 (car args)
+                   (if (caris arg1 "fnid") "" arg1))
+                 cooks)))
+
 ; Could ignore return chars (which come from textarea fields) here by
 ; (unless (is c #\return) (push c line))
 
-(def handle-post (i o op n cooks ip)
+(def handle-post (i o op args n cooks ip)
   (if srv-noisy* (pr "Post Contents: "))
   (if (no n)
       (respond-err o "Post request without Content-Length.")
@@ -95,7 +135,7 @@
           (-- n)
           (push c line)) 
         (if srv-noisy* (pr "\n\n"))
-        (respond o op (parseargs (string (rev line))) cooks ip))))
+        (respond o op (+ (parseargs (string (rev line))) args) cooks ip))))
 
 (= header* "HTTP/1.0 200 OK
 Content-Type: text/html; charset=utf-8
@@ -103,26 +143,27 @@ Connection: close")
 
 (= srv-header* (table))
 
-(= (srv-header* 'gif) 
-"HTTP/1.0 200 OK
-Content-Type: image/gif
-Connection: close")
+(def gen-srv-header (ctype)
+  (+ "HTTP/1.0 200 OK
+Content-Type: "
+     ctype
+     "
+Connection: close"))
 
-(= (srv-header* 'jpg) 
-"HTTP/1.0 200 OK
-Content-Type: image/jpeg
-Connection: close")
-
-(= (srv-header* 'text/html) 
-"HTTP/1.0 200 OK
-Content-Type: text/html; charset=utf-8
-Connection: close")
+(map (fn ((k v)) (= (srv-header* k) (gen-srv-header v)))
+     '((gif       "image/gif")
+       (jpg       "image/jpeg")
+       (png       "image/png")
+       (text/html "text/html; charset=utf-8")))
 
 (= rdheader* "HTTP/1.0 302 Moved")
 
-(= srvops* (table) redirector* (table) optimes* (table))
+(= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
 
 (def save-optime (name elapsed)
+  ; this is the place to put a/b testing
+  ; toggle a flag and push elapsed into one of two lists
+  (++ (opcounts* name 0))
   (unless (optimes* name) (= (optimes* name) (queue)))
   (enq-limit elapsed (optimes* name) 1000))
 
@@ -143,14 +184,15 @@ Connection: close")
 
 (mac defop (name parm . body)
   (w/uniq gs
-    `(defop-raw ,name (,gs ,parm) 
-       (w/stdout ,gs (prn) ,@body))))
+    `(do (wipe (redirector* ',name))
+         (defop-raw ,name (,gs ,parm) 
+           (w/stdout ,gs (prn) ,@body)))))
 
 ; Defines op as a redirector.  Its retval is new location.
 
 (mac defopr (name parm . body)
   (w/uniq gs
-    `(do (assert (redirector* ',name))
+    `(do (set (redirector* ',name))
          (defop-raw ,name (,gs ,parm)
            ,@body))))
 
@@ -161,41 +203,40 @@ Connection: close")
   cooks nil
   ip    nil)
 
-(= unknown-msg* "Unknown operator.")
+(= unknown-msg* "Unknown.")
 
 (def respond (str op args cooks ip)
   (w/stdout str
     (aif (srvops* op)
-          (let req (inst 'request 'args args 'cooks cooks 'ip ip)
-            (if (redirector* op)
-                (do (prn rdheader*)
-                    (prn "Location: " (it str req))
-                    (prn))
-                (do (prn header*)
-                    (it str req))))
-         (static-filetype op)
-          (do (prn (srv-header* it))
-              (prn)
-              (w/infile i (string op)
-                (whilet b (readb i)
-                  (writeb b str))))
-          (respond-err str unknown-msg*))))
-
-(def gifname (sym)
-  (let str (string sym)
-    (and (endmatch ".gif" str) (~find #\/ str))))
-
-; Exclude arc, or anyone can see source.  Need to use a separate dir.
+         (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+           (if (redirector* op)
+               (do (prn rdheader*)
+                   (prn "Location: " (it str req))
+                   (prn))
+               (do (prn header*)
+                   (it str req))))
+         (let filetype (static-filetype op)
+           (aif (and filetype (file-exists (string staticdir* op)))
+                (do (prn (srv-header* filetype))
+                    (prn)
+                    (w/infile i it
+                      (whilet b (readb i)
+                        (writeb b str))))
+                (respond-err str unknown-msg*))))))
 
 (def static-filetype (sym)
-  (let fname (string sym)
+  (let fname (coerce sym 'string)
     (and (~find #\/ fname)
-         (case (last (check (tokens fname #\.) ~single))
+         (case (downcase (last (check (tokens fname #\.) ~single)))
            "gif"  'gif
            "jpg"  'jpg
+           "jpeg" 'jpg
+           "png"  'png
            "css"  'text/html
            "txt"  'text/html
+           "htm"  'text/html
            "html" 'text/html
+           "arc"  'text/html
            ))))
 
 (def respond-err (str msg . args)
@@ -212,7 +253,7 @@ Connection: close")
           (and (is type 'post)
                (some (fn (s)
                        (and (begins s "Content-Length:")
-                            (coerce (cadr (tokens s)) 'int)))
+                            (errsafe:coerce (cadr (tokens s)) 'int)))
                      (cdr lines)))
           (some (fn (s)
                   (and (begins s "Cookie:")
@@ -240,13 +281,13 @@ Connection: close")
   (map [tokens _ #\=] 
        (cdr (tokens s [or (whitec _) (is _ #\;)]))))
 
-(def arg (req key) (alref (req 'args) key))
+(def arg (req key) (alref req!args key))
 
 ; *** Warning: does not currently urlencode args, so if need to do
 ; that replace v with (urlencode v).
 
 (def reassemble-args (req)
-  (aif (req 'args)
+  (aif req!args
        (apply string "?" (intersperse '&
                                       (map (fn ((k v))
                                              (string k '= v))
@@ -292,7 +333,7 @@ Connection: close")
 ; do is estimate what the max no of fnids can be and set the harvest 
 ; limit there-- beyond that the only solution is to buy more memory.
 
-(def harvest-fnids ((o n 20000)) 
+(def harvest-fnids ((o n 50000))  ; was 20000
   (when (len> fns* n) 
     (pull (fn ((id created lasts))
             (when (> (since created) lasts)    
@@ -357,6 +398,9 @@ Connection: close")
 (mac onlink (text . body)
   `(w/link (do ,@body) (pr ,text)))
 
+(mac onrlink (text . body)
+  `(w/rlink (do ,@body) (pr ,text)))
+
 ; bad to have both flink and linkf; rename flink something like fnid-link
 
 (mac linkf (text parms . body)
@@ -377,6 +421,12 @@ Connection: close")
   (gentag input type 'hidden name 'fnid value id))
 
 ; f should be a fn of one arg, which will be http request args.
+
+(def fnform (f bodyfn (o redir))
+  (tag (form method 'post action (if redir rfnurl2* fnurl*))
+    (fnid-field (fnid f))
+    (bodyfn)))
+
 ; Could also make a version that uses just an expr, and var capture.
 ; Is there a way to ensure user doesn't use "fnid" as a key?
 
@@ -387,6 +437,14 @@ Connection: close")
                            (prn)
                            (,f ,ga))))
        ,@body)))
+
+;(defop test1 req
+;  (fnform (fn (req) (prn) (pr req))
+;          (fn () (single-input "" 'foo 20 "submit"))))
+ 
+;(defop test2 req
+;  (aform (fn (req) (pr req))
+;    (single-input "" 'foo 20 "submit")))
 
 ; Like aform except creates a fnid that will last for lasts seconds
 ; (unless the server is restarted).
@@ -399,10 +457,27 @@ Connection: close")
          (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
          ,@body))))
 
+(mac timed-aform2 (genurl lasts f . body)
+  (w/uniq (gl gf gi ga)
+    `(withs (,gl ,lasts
+             ,gf (fn (,ga) (prn) (,f ,ga)))
+       (tag (form method 'post action fnurl*)
+         (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
+         ,@body))))
+
 (mac arform (f . body)
   `(tag (form method 'post action rfnurl*)
      (fnid-field (fnid ,f))
      ,@body))
+
+; these timed- variants are overlong
+
+(mac timed-arform (lasts f . body)
+  (w/uniq (gl gf)
+    `(withs (,gl ,lasts ,gf ,f)
+       (tag (form method 'post action rfnurl*)
+         (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
+         ,@body))))
 
 (mac aformh (f . body)
   `(tag (form method 'post action fnurl*)
@@ -425,15 +500,18 @@ Connection: close")
         (= (unique-ids* id) id))))
 
 (def srvlog (type . args)
-  (w/appendfile o (string logdir* type "-" (memodate))
-    (w/stdout o (apply prs (seconds) args) (prn))))
+  (w/appendfile o (logfile-name type)
+    (w/stdout o (atomic (apply prs (seconds) args) (prn)))))
+
+(def logfile-name (type)
+  (string logdir* type "-" (memodate)))
 
 (with (lastasked nil lastval nil)
 
 (def memodate ()
   (let now (seconds)
     (if (or (no lastasked) (> (- now lastasked) 60))
-        (= lastasked now lastval (date))
+        (= lastasked now lastval (datestring))
         lastval)))
 
 )
@@ -455,8 +533,44 @@ Connection: close")
           (let n (requests/ip* ip)
             (row ip n (pr (num (* 100 (/ n requests*)) 1)))))))))
 
-(def ttest (ip)
-  (let n (requests/ip* ip) 
-    (list ip n (num (* 100 (/ n requests*)) 1))))
+(defop spurned req
+  (when (admin (get-user req))
+    (whitepage
+      (sptab
+        (map (fn ((ip n)) (row ip n))
+             (sortable spurned*))))))
 
+; eventually promote to general util
+
+(def sortable (ht (o f >))
+  (let res nil
+    (maptable (fn kv
+                (insort (compare f cadr) kv res))
+              ht)
+    res))
+
+
+; Background Threads
+
+(= bgthreads* (table) pending-bgthreads* nil)
+
+(def new-bgthread (id f sec)
+  (aif (bgthreads* id) (break-thread it))
+  (= (bgthreads* id) (new-thread (fn () 
+                                   (while t
+                                     (sleep sec)
+                                     (f))))))
+
+; should be a macro for this?
+
+(mac defbg (id sec . body)
+  `(do (pull [caris _ ',id] pending-bgthreads*)
+       (push (list ',id (fn () ,@body) ,sec) 
+             pending-bgthreads*)))
+
+
+
+; Idea: make form fields that know their value type because of
+; gensymed names, and so the receiving fn gets args that are not
+; strings but parsed values.
 
