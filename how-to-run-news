@@ -1,0 +1,34 @@
+To run News:
+
+tar xvf arc3.tar
+
+cd arc3
+
+mkdir arc
+
+echo "myname" > arc/admins
+
+mzscheme -f as.scm
+
+at the arc prompt:
+
+(load "news.arc")
+
+(nsv)
+
+go to http://localhost:8080
+
+click on login, and create an account called myname
+
+you should now be logged in as an admin
+
+(don't worry about "user break" messages when restarting News.)
+
+
+
+To customize News:
+
+change the variables at the top of news.arc
+
+replace arc3/static/y18.gif with an 18x18 gif of your choice
+
