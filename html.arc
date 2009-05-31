@@ -23,19 +23,17 @@
    black    (gray 0)
    linkblue (color 0 0 190)
    orange   (color 255 102 0)
+   darkred  (color 180 0 0)
+   darkblue (color 0 0 120)
    )
 
 (= opmeths* (table))
 
-; hack: intern key pair till have implicit tables of tables
-
-(mac opmeth (tag opt)
-  `(opmeths* (sym (+ (string ,tag) "."  (string ,opt)))))
+(mac opmeth args
+  `(opmeths* (list ,@args)))
 
 (mac attribute (tag opt f)
-; `(= (opmeth ',tag ',opt) ,f)
-  `(= (opmeths* ',(sym (+ (string tag) "."  (string opt))))
-      ,f))
+  `(= (opmeths* (list ',tag ',opt)) ,f))
 
 (= hexreps (table))
 
@@ -147,13 +145,30 @@
 
 (def start-tag (spec)
   (if (atom spec)
-      `(pr "<" ',spec ">")
-      `(do (pr "<" ',(car spec))
-           ,@(tag-options (car spec) (pair (cdr spec)))
-           (pr ">"))))
+      `(pr ,(string "<" spec ">"))
+      (let opts (tag-options (car spec) (pair (cdr spec)))
+        (if (all [isa _ 'string] opts)
+            `(pr ,(string "<" (car spec) (apply string opts) ">"))
+            `(do (pr ,(string "<" (car spec)))
+                 ,@(map (fn (opt)
+                          (if (isa opt 'string)
+                              `(pr ,opt)
+                              opt))
+                        opts)
+                 (pr ">"))))))
         
 (def end-tag (spec)
-  `(pr "</" ',(carif spec) ">"))
+  `(pr ,(string "</" (carif spec) ">")))
+
+(def literal (x) 
+  (case (type x)
+    sym   (in x nil t)
+    cons  (caris x 'quote)
+          t))
+
+; Returns a list whose elements are either strings, which can 
+; simply be printed out, or expressions, which when evaluated
+; generate output.
 
 (def tag-options (spec options)
   (if (no options)
@@ -162,7 +177,9 @@
         (let meth (if (is opt 'style) opstring (opmeth spec opt))
           (if meth
               (if val
-                  (cons (meth opt val)
+                  (cons (if (literal val)
+                            (tostring (eval (meth opt val)))
+                            (meth opt val))
                         (tag-options spec rest))
                   (tag-options spec rest))
               (do
@@ -189,7 +206,7 @@
 
   (mac td       body         `(tag td ,@(pratoms body)))
   (mac trtd     body         `(tr (td ,@(pratoms body))))
-  (mac tdright  body         `(tag (td align 'right) ,@(pratoms body)))
+  (mac tdr      body         `(tag (td align 'right) ,@(pratoms body)))
   (mac tdcolor  (col . body) `(tag (td bgcolor ,col) ,@(pratoms body)))
 )
 
@@ -201,7 +218,7 @@
     `(tr ,@(map (fn (a) 
                   `(let ,g ,a
                      (if (number ,g)
-                         (tdright (pr ,g))
+                         (tdr (pr ,g))
                          (td (pr ,g)))))
                  args))))
 
@@ -248,8 +265,10 @@
   `(tag (table border 0 cellpadding 0 cellspacing 0)
      ,@body))
 
+; was `(tag (table border 0 cellpadding 0 cellspacing 7) ,@body)
+
 (mac sptab body
-  `(tag (table border 0 cellpadding 0 cellspacing 7) ,@body))
+  `(tag (table style "border-spacing: 7px 0px;") ,@body))
 
 (mac widtable (w . body)
   `(tag (table width ,w) (tr (td ,@body))))
@@ -342,9 +361,12 @@
   (let intag nil
     (tostring
       (each c s
-        (if (is c #\<) (assert intag)
+        (if (is c #\<) (set intag)
             (is c #\>) (wipe intag)
             (no intag) (pr c))))))
+
+(def clean-url (u)
+  (rem [in _ #\" #\' #\< #\>] u))
 
 (def shortlink (url)
   (unless (or (no url) (< (len url) 7))
@@ -357,7 +379,7 @@
     (tostring
       (each c str
         (pr c)
-        (unless (whitec c) (assert ink))
+        (unless (whitec c) (set ink))
         (when (is c #\newline)
           (unless ink (pr "<p>"))
           (wipe ink))))))
@@ -367,3 +389,15 @@
 
 (def pagemessage (text)
   (when text (prn text) (br2)))
+
+; Could be stricter.  Memoized because looking for chars in Unicode
+; strings is terribly inefficient in Mzscheme.
+
+(defmemo valid-url (url)
+  (and (len> url 10)
+       (or (begins url "http://")
+           (begins url "https://"))
+       (~find [in _ #\< #\> #\" #\'] url)))
+
+(mac fontcolor (c . body)
+  `(tag (font color ,c) ,@body))

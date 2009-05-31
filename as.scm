@@ -5,7 +5,7 @@
 
 (require mzscheme) ; promise we won't redefine mzscheme bindings
 
-(load "ac.scm") 
+(require "ac.scm") 
 (require "brackets.scm")
 (use-bracket-readtable)
 

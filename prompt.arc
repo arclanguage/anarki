@@ -21,10 +21,10 @@
     (tag (table border 0 cellspacing 10)
       (each app (dir (+ appdir* user))
         (tr (td app)
-            (td (userlink user 'edit   (edit-app user app)))
-            (td (userlink user 'run    (run-app  user app)))
+            (td (ulink user 'edit   (edit-app user app)))
+            (td (ulink user 'run    (run-app  user app)))
             (td (hspace 40)
-                (userlink user 'delete (rem-app  user app))))))
+                (ulink user 'delete (rem-app  user app))))))
     (br2)
     (aform (fn (req)
              (when-umatch user req
@@ -39,7 +39,7 @@
 (def read-app (user app)
   (aand (app-path user app) 
         (file-exists it)
-        (w/infile i it (readall i))))
+        (readfile it)))
 
 (def write-app (user app exprs)
   (awhen (app-path user app)

@@ -1,4 +1,4 @@
-; Blog tool example.  20 Jan 08.
+; Blog tool example.  20 Jan 08, rev 21 May 09.
 
 ; To run:
 ; arc> (load "blog.arc")
@@ -9,20 +9,16 @@
 
 (= blogtitle* "A Blog")
 
-(deftem post 
-  id     nil
-  title  nil
-  text   nil)
+(deftem post  id nil  title nil  text nil)
 
 (def load-posts ()
-  (each id (map [coerce _ 'int] (dir postdir*))
+  (each id (map int (dir postdir*))
     (= maxid*      (max maxid* id)
        (posts* id) (temload 'post (string postdir* id)))))
 
-(def save-post (p)
-  (save-table p (string postdir* (p 'id))))
+(def save-post (p) (save-table p (string postdir* p!id)))
 
-(def post (id) (posts* (errsafe (coerce id 'int))))
+(def post (id) (posts* (errsafe:int id)))
 
 (mac blogpage body
   `(whitepage 
@@ -35,52 +31,44 @@
          (w/bars (link "archive")
                  (link "new post" "newpost"))))))
 
-(defop viewpost req
-  (aif (post (arg req "id")) 
-       (post-page (get-user req) it) 
-       (notfound)))
+(defop viewpost req (blogop post-page req))
 
-(def permalink (p) (string "viewpost?id=" (p 'id)))
+(def blogop (f req)
+  (aif (post (arg req "id")) 
+       (f (get-user req) it) 
+       (blogpage (pr "No such post."))))
+
+(def permalink (p) (string "viewpost?id=" p!id))
 
 (def post-page (user p) (blogpage (display-post user p)))
 
 (def display-post (user p)
-  (tag b (link (p 'title) (permalink p)))
+  (tag b (link p!title (permalink p)))
   (when user
     (sp)
-    (link "[edit]" (string "editpost?id=" (p 'id))))
+    (link "[edit]" (string "editpost?id=" p!id)))
   (br2)
-  (pr (p 'text)))
-
-(def notfound ()
-  (blogpage (pr "No such post.")))
+  (pr p!text))
 
 (defopl newpost req
   (whitepage
-    (aform (fn (req)
-             (let user (get-user req)
-               (post-page user
-                          (addpost user (arg req "t") (arg req "b")))))
-      (tab
-        (row "title" (input "t" "" 60))
-        (row "text"  (textarea "b" 10 80))
-        (row ""      (submit))))))
+    (aform [let u (get-user _)
+             (post-page u (addpost u (arg _ "t") (arg _ "b")))]
+      (tab (row "title" (input "t" "" 60))
+           (row "text"  (textarea "b" 10 80))
+           (row ""      (submit))))))
 
 (def addpost (user title text)
   (let p (inst 'post 'id (++ maxid*) 'title title 'text text)
     (save-post p)
-    (= (posts* (p 'id)) p)))
+    (= (posts* p!id) p)))
 
-(defopl editpost req
-  (aif (post (arg req "id"))
-       (edit-page (get-user req) it)
-       (notfound)))
+(defopl editpost req (blogop edit-page req))
 
 (def edit-page (user p)
   (whitepage
     (vars-form user
-               `((string title ,(p 'title) t t)
-                 (text   text  ,(p 'text)  t t))
+               `((string title ,p!title t t) (text text ,p!text t t))
                (fn (name val) (= (p name) val))
                (fn () (save-post p)
                       (post-page user p)))))
@@ -89,7 +77,7 @@
   (blogpage
     (tag ul
       (each p (map post (rev (range 1 maxid*)))
-        (tag li (link (p 'title) (permalink p)))))))
+        (tag li (link p!title (permalink p)))))))
 
 (defop blog req
   (let user (get-user req)
