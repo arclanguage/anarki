@@ -29,8 +29,7 @@
 
       ("passes all args to function"
         (apply + '(a b) '(c d) '((e f) (g h)))
-        (a b c d e f g h) )
-    )
+        (a b c d e f g h)))
 
     (suite "eval"
       ("a simple sum function"
@@ -39,34 +38,7 @@
 
       ("an inline function invocation"
         (eval '( (fn (x y) (* x y)) 16 4))
-        64)
-    )
-
-    (suite "ssexpand"
-      ("expand compose"
-        (ssexpand 'x:y)
-        (compose x y))
-
-      ("expand complement"
-        (ssexpand '~p)
-        (complement p))
-
-      ("expand compose/complement"
-        (ssexpand 'p:~q:r)
-        (compose p (complement q) r) )
-
-      ("expand compose/complement"
-        (ssexpand '~p:q:r)
-        (compose (complement p) q r) )
-
-      ("expand list"
-        (ssexpand '+.a.b)
-        (+ a b))
-
-      ("expand quoted list"
-        (ssexpand 'cons!a!b)
-        (cons (quote a) (quote b)) )
-    )
+        64))
 
     (suite "ssyntax"
       ("recognises compose"
@@ -87,14 +59,12 @@
 
       ("recognises list-quoted"
         (ssyntax 'a!b)
-        t )
-    )
+        t ))
 
     (suite "special syntax invocation (compose is implemented in Arc)"
       ("direct invocation"
         ((fn ()
-          (sqrt:+ 40 2.25)
-        ))
+          (sqrt:+ 40 2.25)))
         6.5 )
 
       ("compose macro invocation"
@@ -104,8 +74,5 @@
       ("invoke as parameter"
         ((fn ()
           (set addand (fn (op x y z) (+ z (op x y))))
-          (addand sqrt:* 5 20 1.0)
-        ))
-        11.0 )
-    )
-  )))
+          (addand sqrt:* 5 20 1.0)))
+        11.0 )))))

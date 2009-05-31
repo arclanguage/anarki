@@ -142,22 +142,37 @@
 ; For ops that want to add their own headers.  They must thus remember 
 ; to prn a blank line before anything meant to be part of the page.
 
+(= opsource* (table))
+(= opsource-file* (table))
+(mac lopsrc (name) `(opsource* ',name))
+(mac opsrc (name)
+     `(do
+	(prn (string "(from \"" (opsource-file* ',name) "\")"))
+	(ppr (lopsrc ,name))))
+
 (mac defop-raw (name parms . body)
   (w/uniq t1
-    `(= (srvops* ',name) 
+    `(= (srvops* ',name)
         (fn ,parms 
           (let ,t1 (msec)
             (do1 (do ,@body)
-                 (save-optime ',name (- (msec) ,t1))))))))
+                 (save-optime ',name (- (msec) ,t1)))))
+	(opsource* ',name) '(defop-raw ,name ,parms ,@body)
+	(opsource-file* ',name) current-load-file*)))
 
 (mac defopr-raw (name parms . body)
   `(= (redirector* ',name) t
-      (srvops* ',name)     (fn ,parms ,@body)))
+      (srvops* ',name)     (fn ,parms ,@body)
+      (opsource* ',name) '(defopr-raw ,name ,parms ,@body)
+      (opsource-file* ',name) current-load-file*))
 
 (mac defop (name parm . body)
   (w/uniq gs
-    `(defop-raw ,name (,gs ,parm) 
-       (w/stdout ,gs (prn "\r") ,@body))))
+    `(do
+       (defop-raw ,name (,gs ,parm)
+	 (w/stdout ,gs (prn "\r") ,@body))
+       (= (opsource* ',name) '(defop ,name ,parm ,@body)
+	  (opsource-file* ',name) current-load-file*))))
 
 (mac defsop (name parm auth . body)
   (w/uniq (test auth-var)
@@ -169,7 +184,9 @@
         (defop ,name ,parm
            (if (,test (,parm 'ip))
                (do ,@body)
-               (pr "Permission denied"))))))
+               (pr "Permission denied")))
+	(= (opsource* ',name) '(defsop ,name ,parm ,@body)
+	   (opsource-file* ',name) current-load-file*))))
 
 
 ; Defines op as a redirector.  Its retval is new location.
@@ -178,7 +195,9 @@
   (w/uniq gs
     `(do (assert (redirector* ',name))
          (defop-raw ,name (,gs ,parm)
-           ,@body))))
+           ,@body)
+	 (= (opsource* ',name) '(defopr ,name ,parm ,@body)
+	    (opsource-file* ',name) current-load-file*))))
 
 ;(mac testop (name . args) `((srvops* ',name) ,@args))
 
