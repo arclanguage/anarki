@@ -1,6 +1,6 @@
 ; HTTP Server.
 
-; if you want to be able to ^C the server, set breaksrv* to t
+; To improve performance with static files, set static-max-age*.
 
 (= arcdir* "arc/" logdir* "arc/logs/" staticdir* "static/")
 
@@ -53,13 +53,15 @@
             (++ (requests/ip* ip 0))
             (with (th1 nil th2 nil)
               (= th1 (thread
-                       (errsafe (handle-request-thread i o ip))
+                       (on-err 
+                         (fn (e) (ero (details e)))
+                         (fn () (handle-request-thread i o ip)))
                        (close i o)
                        (kill-thread th2)))
               (= th2 (thread
                        (sleep threadlife*)
                        (unless (dead th1)
-                               (prn "srv thread took too long for " ip))
+                         (prn "srv thread took too long for " ip))
                        (break-thread th1)
                        (force-close i o))))))))
 
@@ -72,7 +74,7 @@
 ; To adjust this while running, adjust the req-window* time, not 
 ; req-limit*, because algorithm doesn't enforce decreases in the latter.
 
-(= req-times* (table) req-limit* 30 req-window* 20 dos-window* 3)
+(= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
 
 (def abusive-ip (ip)
   (and (only.> (requests/ip* ip) 250)
@@ -141,16 +143,16 @@
 Content-Type: text/html; charset=utf-8
 Connection: close")
 
-(= srv-header* (table))
+(= type-header* (table))
 
-(def gen-srv-header (ctype)
+(def gen-type-header (ctype)
   (+ "HTTP/1.0 200 OK
 Content-Type: "
      ctype
      "
 Connection: close"))
 
-(map (fn ((k v)) (= (srv-header* k) (gen-srv-header v)))
+(map (fn ((k v)) (= (type-header* k) (gen-type-header v)))
      '((gif       "image/gif")
        (jpg       "image/jpeg")
        (png       "image/png")
@@ -203,26 +205,30 @@ Connection: close"))
   cooks nil
   ip    nil)
 
-(= unknown-msg* "Unknown.")
+(= unknown-msg* "Unknown." max-age* (table) static-max-age* nil)
 
 (def respond (str op args cooks ip)
   (w/stdout str
-    (aif (srvops* op)
-         (let req (inst 'request 'args args 'cooks cooks 'ip ip)
-           (if (redirector* op)
-               (do (prn rdheader*)
-                   (prn "Location: " (it str req))
-                   (prn))
-               (do (prn header*)
-                   (it str req))))
-         (let filetype (static-filetype op)
-           (aif (and filetype (file-exists (string staticdir* op)))
-                (do (prn (srv-header* filetype))
-                    (prn)
-                    (w/infile i it
-                      (whilet b (readb i)
-                        (writeb b str))))
-                (respond-err str unknown-msg*))))))
+    (iflet f (srvops* op)
+           (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+             (if (redirector* op)
+                 (do (prn rdheader*)
+                     (prn "Location: " (f str req))
+                     (prn))
+                 (do (prn header*)
+                     (awhen (max-age* op)
+                       (prn "Cache-Control: max-age=" it))
+                     (f str req))))
+           (let filetype (static-filetype op)
+             (aif (and filetype (file-exists (string staticdir* op)))
+                  (do (prn (type-header* filetype))
+                      (awhen static-max-age*
+                        (prn "Cache-Control: max-age=" it))
+                      (prn)
+                      (w/infile i it
+                        (whilet b (readb i)
+                          (writeb b str))))
+                  (respond-err str unknown-msg*))))))
 
 (def static-filetype (sym)
   (let fname (coerce sym 'string)

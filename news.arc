@@ -9,7 +9,8 @@
    parent-url*   "http://www.yourdomain.com"
    favicon-url*  ""
    site-desc*    "What this site is about."               ; for rss feed
-   site-color*   (color 160 180 200)
+   site-color*   (color 180 180 180)
+   border-color* (color 180 180 180)
    prefer-url*   t)
 
 
@@ -417,7 +418,7 @@
 
 ; Page Layout
 
-(= up-url* "grayarrow.gif" down-url* "graydown.gif" logo-url* "y18.gif")
+(= up-url* "grayarrow.gif" down-url* "graydown.gif" logo-url* "arc.png")
 
 (defopr favicon.ico req favicon-url*)
 
@@ -494,7 +495,9 @@
                   (pr msg))))
     (br2)))
 
-; remember to (= caching* 0) or won't see changes
+(= (max-age* 'news.css) 86400)   ; cache css in browser for 1 day
+
+; turn off server caching via (= caching* 0) or won't see changes
 
 (defop news.css req
   (pr "
@@ -614,7 +617,9 @@ function vote(node) {
   (tag (td style "width:18px;padding-right:4px")
     (tag (a href parent-url*)
       (gentag img src logo-url* width 18 height 18 
-                  style "border:1px white solid;"))))
+                  style (string "border:1px #" 
+                                (hexrep border-color*) 
+                                " solid;")))))
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "*"))
 
@@ -1538,9 +1543,10 @@ function vote(node) {
             (flink [submit-page user url title showtext text toolong*])
            (and (blank url) (blank text))
             (flink [submit-page user url title showtext text bothblank*])
-           (big-spamsites* (sitename url))
+           (let site (sitename url)
+             (or (big-spamsites* site) (recent-spam site)))
             (flink [msgpage user spammage*])
-           (oversubmitting user ip 'story)
+           (oversubmitting user ip 'story url)
             (flink [msgpage user toofast*])
            (let s (create-story url (process-title title) text user ip)
              (story-ban-test user s ip url)
@@ -1554,6 +1560,11 @@ function vote(node) {
   (save-prof user)
   (vote-for user i))
 
+(def recent-spam (site)
+  (and (caris (banned-sites* site) 'ignore)
+       (len> (recent-items [is (sitename _!url) site] 720)
+             0)))
+
 ; Turn this on when spam becomes a problem.
 
 (= enforce-oversubmit* nil)
@@ -1561,13 +1572,14 @@ function vote(node) {
 ; New user can't submit more than 2 stories in a 2 hour period.
 ; Give overeager users the key toofast to make limit permanent.
 
-(def oversubmitting (user ip (o kind 'story))
+(def oversubmitting (user ip kind (o url))
   (and enforce-oversubmit*
        (or (check-key user 'toofast)
            (ignored user)
            (< (user-age user) new-age-threshold*)
            (< (karma user) new-karma-threshold*))
-       (len> (recent-items [or (author user _) (is _!ip ip)] 120)
+       (len> (recent-items [or (author user _) (is _!ip ip)]
+                           120)
              (if (is kind 'story)
                  (if (ignored user) 0 1)
                  (if (ignored user) 2 10)))))

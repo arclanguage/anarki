@@ -22,7 +22,9 @@ click on login, and create an account called myname
 
 you should now be logged in as an admin
 
-(don't worry about "user break" messages when restarting News.)
+manually give at least 10 karma to your initial set of users
+
+don't worry about "user break" messages when restarting News
 
 
 
@@ -30,5 +32,12 @@ To customize News:
 
 change the variables at the top of news.arc
 
-replace arc3/static/y18.gif with an 18x18 gif of your choice
 
+
+To improve performance:
+
+(= static-max-age* 7200)    ; browsers can cache static files for 7200 sec
+
+(declare direct-calls t)    ; you promise not to redefine fns as tables
+
+(declare explicit-flush t)  ; you take responsibility for flushing output

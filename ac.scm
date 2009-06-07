@@ -1,10 +1,10 @@
-; Arc Compiler
+; Arc Compiler.
 
 (module ac mzscheme
 
 (provide (all-defined))
 ; uncomment the following require for mzscheme-4.x
-; much of Arc will work, but not mutable cons pairs.
+; much of Arc will work, but not mutable pairs.
 ; (require rnrs/mutable-pairs-6)
 (require (lib "port.ss"))
 (require (lib "process.ss"))
@@ -378,7 +378,9 @@
       '()
       (cons (ac (car exprs)
                 (ac-dbname! (if (pair? names) (car names) #f) env))
-            (ac-args (ar-xcdr names) (cdr exprs) env))))
+            (ac-args (if (pair? names) (cdr names) '())
+                     (cdr exprs)
+                     env))))
 
 ; generate special fast code for ordinary two-operand
 ; calls to the following functions. this is to avoid
@@ -415,7 +417,7 @@
            (ac-mac-call macfn args env))
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
-          ((and (symbol? fn) (not (lex? fn env)) (bound? fn)
+          ((and direct-calls (symbol? fn) (not (lex? fn env)) (bound? fn)
                 (procedure? (namespace-variable-value (ac-global-name fn))))
            (ac-global-call fn args env))
           ((= (length args) 0)
@@ -920,6 +922,8 @@
       ((string? x)    (case type
                         ((sym)    (string->symbol x))
                         ((cons)   (ac-niltree (string->list x)))
+                        ((num)    (or (apply string->number x args)
+                                      (err "Can't coerce" x type)))
                         ((int)    (let ((n (apply string->number x args)))
                                     (if n 
                                         (iround n)

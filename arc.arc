@@ -458,19 +458,19 @@
 ; could bind index instead of gensym
 
 (mac each (var expr . body)
-  (w/uniq (gseq g)
+  (w/uniq (gseq gf gv)
     `(let ,gseq ,expr
        (if (alist ,gseq)
-            ((afn (,g)
-               (when (acons ,g)
-                 (let ,var (car ,g) ,@body)
-                 (self (cdr ,g))))
+            ((rfn ,gf (,gv)
+               (when (acons ,gv)
+                 (let ,var (car ,gv) ,@body)
+                 (,gf (cdr ,gv))))
              ,gseq)
            (isa ,gseq 'table)
-            (maptable (fn (,g ,var) ,@body)
+            (maptable (fn ,var ,@body)
                       ,gseq)
-            (for ,g 0 (- (len ,gseq) 1)
-              (let ,var (,gseq ,g) ,@body))))))
+            (for ,gv 0 (- (len ,gseq) 1)
+              (let ,var (,gseq ,gv) ,@body))))))
 
 ; (nthcdr x y) = (cut y x).
 
@@ -1095,7 +1095,7 @@
 (def avg (ns) (/ (apply + ns) (len ns)))
 
 (def med (ns (o test >))
-  ((sort > ns) (round (/ (len ns) 2))))
+  ((sort test ns) (round (/ (len ns) 2))))
 
 ; Use mergesort on assumption that mostly sorting mostly sorted lists
 ; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1) 
@@ -1415,6 +1415,9 @@
       (whiler e (read f eof) eof
         (eval e)))))
 
+(def positive (x)
+  (and (number x) (> x 0)))
+
 (mac w/table (var . body)
   `(let ,var (table) ,@body ,var))
 
@@ -1586,7 +1589,6 @@
 (mac todisk (var (o expr var))
   `((savers* ',var) 
     ,(if (is var expr) var `(= ,var ,expr))))
-
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?
