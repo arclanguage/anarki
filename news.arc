@@ -4,6 +4,8 @@
 ; to run news: (nsv)
 ; put usernames of admins, separated by whitespace, in arc/admins
 
+; bug: somehow (+ votedir* nil) is getting evaluated.
+
 (= this-site*    "My Forum"
    site-url*     "http://news.yourdomain.com/"
    parent-url*   "http://www.yourdomain.com"
@@ -595,6 +597,7 @@ function vote(node) {
        site-color*))
 
 (def pagetop (switch lid label (o title) (o user) (o whence))
+; (tr (tdcolor black (vspace 5)))
   (tr (tdcolor (main-color user)
         (tag (table border 0 cellpadding 0 cellspacing 0 width "100%"
                     style "padding:2px")
@@ -780,12 +783,20 @@ function vote(node) {
         (underlink "comments" (threads-url subject)))
       (hook 'user user subject))))
 
+
+(diskvar ignore-log* (+ newsdir* "ignore-log"))
+
 (def profile-form (user subject)
-  (let prof (profile subject) 
+  (with (prof (profile subject) 
+         ig   (ignored subject))
     (vars-form user
                (user-fields user subject)
                (fn (name val) (= (prof name) val))
                (fn () (save-prof subject)
+                      (when (isnt ig (ignored subject))
+                        (push (list subject user (ignored subject))
+                              ignore-log*)
+                        (todisk ignore-log*))
                       (user-page user subject)))))
 
 (= topcolor-threshold* 250)
@@ -1616,7 +1627,7 @@ function vote(node) {
                           "mx" "th" "sg" "id" "pk" "eg" "il" "at" "pl"))
 
 (= long-domains* '("blogspot" "wordpress" "livejournal" "blogs" "typepad" 
-                   "weebly" "blog-city"
+                   "weebly" "blog-city" "supersized"
                    ; "sampasite"  "multiply" "wetpaint" ; let's just try banning
                    "eurekster" "blogsome" "edogo" "blog" "com"))
 
@@ -1851,7 +1862,7 @@ function vote(node) {
   (with (title (and (cansee user i)
                     (or i!title (aand i!text (ellipsize (striptags it)))))
          here (item-url i!id))
-    (shortpage user nil nil title here
+    (longpage user (msec) nil nil title here
       (tab (display-item nil i user here)
            (display-item-text i user)
            (when (apoll i)
@@ -1863,7 +1874,8 @@ function vote(node) {
              (row "" (comment-form i user here))))
       (br2) 
       (when (and i!kids (commentable i))
-        (tab (display-subcomments i user here))))))
+        (tab (display-subcomments i user here))
+        (br2)))))
 
 (def commentable (i) (in i!type 'story 'comment 'poll))
 
@@ -2396,7 +2408,7 @@ function vote(node) {
       nil
       (let n (rand (len h))
         (catch 
-          (ontable k v h
+          (each (k v) h
             (when (is (-- n) -1)
               (throw k)))))))
 
@@ -2598,7 +2610,7 @@ first asterisk isn't whitespace.
       (awhen (and i!dead (sitename i!url))
         (push i (bads it))))
     (with (acc nil deadcount (table))
-      (ontable site items bads
+      (each (site items) bads
         (let n (len items)
           (when (> n 2)
             (= (deadcount site) n)
@@ -2651,8 +2663,8 @@ first asterisk isn't whitespace.
       (if (and s!dead (commentable s))
           (push s (bads  s!ip))
           (push s (goods s!ip))))
-    (ontable k v bads  (zap rev (bads  k)))
-    (ontable k v goods (zap rev (goods k)))
+    (each (k v) bads  (zap rev (bads  k)))
+    (each (k v) goods (zap rev (goods k)))
     (list bads goods)))
 
 (def sorted-badips (bads goods)

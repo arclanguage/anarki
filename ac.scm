@@ -833,30 +833,24 @@
       (lambda (port thunk)
         (parameterize ((current-input-port port)) (thunk))))
 
-; (readc stream)
-; nil stream means stdout
-; returns nil on eof
+(xdef readc (lambda str
+              (let ((c (read-char (if (pair? str)
+                                      (car str)
+                                      (current-input-port)))))
+                (if (eof-object? c) 'nil c))))
 
-(xdef readc (lambda (str) 
-               (let ((p (if (ar-false? str)
-                            (current-input-port)
-                            str)))
-                 (let ((c (read-char p)))
-                   (if (eof-object? c) 'nil c)))))
 
-(xdef readb (lambda (str)
-               (let ((p (if (ar-false? str)
-                            (current-input-port)
-                            str)))
-                 (let ((c (read-byte p)))
-                   (if (eof-object? c) 'nil c)))))
+(xdef readb (lambda str
+              (let ((c (read-byte (if (pair? str)
+                                      (car str)
+                                      (current-input-port)))))
+                (if (eof-object? c) 'nil c))))
 
-(xdef peekc (lambda (str) 
-               (let ((p (if (ar-false? str)
-                            (current-input-port)
-                            str)))
-                 (let ((c (peek-char p)))
-                   (if (eof-object? c) 'nil c)))))
+(xdef peekc (lambda str 
+              (let ((c (peek-char (if (pair? str)
+                                      (car str)
+                                      (current-input-port)))))
+                (if (eof-object? c) 'nil c))))
 
 (xdef writec (lambda (c . args) 
                 (write-char c 

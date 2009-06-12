@@ -228,7 +228,7 @@
 
 (def username-taken (user)
   (when (empty dc-usernames*)
-    (ontable k v hpasswords*
+    (each (k v) hpasswords*
       (set (dc-usernames* (downcase k)))))
   (dc-usernames* (downcase user)))
 

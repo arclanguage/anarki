@@ -485,9 +485,6 @@
           s2)
         (firstn (- end start) (nthcdr start seq)))))
       
-(mac ontable (k v h . body)
-  `(maptable (fn (,k ,v) ,@body) ,h))
-
 (mac whilet (var test . body)
   (w/uniq (gf gp)
     `((rfn ,gf (,gp)
@@ -1013,10 +1010,10 @@
   table)
 
 (def keys (h) 
-  (accum a (ontable k v h (a k))))
+  (accum a (each (k v) h (a k))))
 
 (def vals (h) 
-  (accum a (ontable k v h (a v))))
+  (accum a (each (k v) h (a v))))
 
 ; These two should really be done by coerce.  Wrap coerce?
 
@@ -1061,7 +1058,7 @@
                        (= (new i) (x i)))
                      new)
             table  (let new (table)
-                     (ontable k v x 
+                     (each (k v) x 
                        (= (new k) v))
                      new)
                    (err "Can't copy " x))
@@ -1371,7 +1368,7 @@
 
 (def commonest (seq)
   (with (winner nil n 0)
-    (ontable k v (counts seq)
+    (each (k v) (counts seq)
       (when (> v n) (= winner k n v)))
     (list winner n)))
 

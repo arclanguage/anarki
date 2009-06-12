@@ -53,11 +53,9 @@
             (++ (requests/ip* ip 0))
             (with (th1 nil th2 nil)
               (= th1 (thread
-                       (on-err 
-                         (fn (e) (ero (details e)))
-                         (fn () (handle-request-thread i o ip)))
-                       (close i o)
-                       (kill-thread th2)))
+                       (after (handle-request-thread i o ip)
+                              (close i o)
+                              (kill-thread th2))))
               (= th2 (thread
                        (sleep threadlife*)
                        (unless (dead th1)
@@ -139,7 +137,7 @@
         (if srv-noisy* (pr "\n\n"))
         (respond o op (+ (parseargs (string (rev line))) args) cooks ip))))
 
-(= header* "HTTP/1.0 200 OK
+(= header* "HTTP/1.1 200 OK
 Content-Type: text/html; charset=utf-8
 Connection: close")
 
@@ -352,7 +350,7 @@ Connection: close"))
         (each id kill 
           (wipe (fns* id)))))))
 
-(= fnurl* "x" rfnurl* "r" rfnurl2* "y" jfnurl* "a")
+(= fnurl* "/x" rfnurl* "/r" rfnurl2* "/y" jfnurl* "/a")
 
 (= dead-msg* "\nUnknown or expired link.")
  
