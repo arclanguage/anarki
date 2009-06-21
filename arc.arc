@@ -210,12 +210,11 @@
   (and xs (or (f xs) (reclist f (cdr xs)))))
 
 (def recstring (test s (o start 0))
-  (let n (len s)
-    ((afn (i)
-       (and (< i (len s))
-            (or (test i)
-                (self (+ i 1)))))
-     start)))
+  ((afn (i)
+     (and (< i (len s))
+          (or (test i)
+              (self (+ i 1)))))
+   start))
 
 (def testify (x)
   (if (isa x 'fn) x [is _ x]))
@@ -452,6 +451,12 @@
        (loop (assign ,v ,gi) (< ,v ,gm) (assign ,v (+ ,v 1))
          ,@body))))
 
+(mac down (v init min . body)
+  (w/uniq (gi gm)
+    `(with (,v nil ,gi ,init ,gm (- ,min 1))
+       (loop (assign ,v ,gi) (> ,v ,gm) (assign ,v (- ,v 1))
+         ,@body))))
+
 (mac repeat (n . body)
   `(for ,(uniq) 1 ,n ,@body))
 
@@ -592,6 +597,14 @@
       `(atwiths ,(+ (list g test) binds)
          (,setter (rem ,g ,val))))))
 
+(mac togglemem (x place . args)
+  (w/uniq gx
+    (let (binds val setter) (setforms place)
+      `(atwiths ,(+ (list gx x) binds)
+         (,setter (if (mem ,gx ,val)
+                      (rem ,gx ,val)
+                      (adjoin ,gx ,val ,@args)))))))
+
 (mac ++ (place (o i 1))
   (if (isa place 'sym)
       `(= ,place (+ ,place ,i))
@@ -608,7 +621,7 @@
           `(atwiths ,(+ binds (list gi i))
              (,setter (- ,val ,gi)))))))
 
-; E.g. (inc x) equiv to (zap + x 1)
+; E.g. (++ x) equiv to (zap + x 1)
 
 (mac zap (op place . args)
   (with (gop    (uniq)
@@ -629,6 +642,10 @@
 
 (def pr args
   (map1 disp args)
+  (car args))
+
+(def prt args
+  (map1 [if _ (disp _)] args)
   (car args))
 
 (def prn args
@@ -708,7 +725,7 @@
 (def string args
   (apply + "" (map [coerce _ 'string] args)))
 
-(def flat (x)
+(def flat x
   ((afn (x acc)
      (if (no x)   acc
          (atom x) (cons x acc)
@@ -805,6 +822,13 @@
           nil
           (cons x (self i)))))
    (if (isa src 'string) (instring src) src)))
+
+(def allchars (str)
+  (tostring (whiler c (readc str nil) no
+              (writec c))))
+
+(def filechars (name)
+  (w/infile s name (allchars s)))
 
 (def writefile (val file)
   (let tmpfile (+ file ".tmp")
@@ -1164,12 +1188,7 @@
   (firstn n (sort f seq)))
 
 (def split (seq pos)
-  (if (< pos 1)
-      (list nil seq)
-      (withs (mid (nthcdr (- pos 1) seq) 
-              s2  (cdr mid))
-        (wipe (cdr mid))
-        (list seq s2))))
+  (list (cut seq 0 pos) (cut seq pos)))
 
 (mac time (expr)
   (w/uniq (t1 t2)
@@ -1300,10 +1319,18 @@
     (and xp (or (no yp) (< xp yp)))))
 
 (def orf fns
-  (fn (x) (some [_ x] fns)))
+  (fn args
+    ((afn (fs)
+       (and fs (or (apply (car fs) args) (self (cdr fs)))))
+     fns)))
 
 (def andf fns
-  (fn (x) (all [_ x] fns)))
+  (fn args
+    ((afn (fs)
+       (if (no fs)       t
+           (no (cdr fs)) (apply (car fs) args)
+                         (and (apply (car fs) args) (self (cdr fs)))))
+     fns)))
 
 (def atend (i s)
   (> i (- (len s) 2)))
@@ -1472,9 +1499,9 @@
        (flushout))))
 
 (mac point (name . body)
-  (w/uniq g
+  (w/uniq (g p)
     `(ccc (fn (,g)
-            (let ,name [,g _]
+            (let ,name (fn ((o ,p)) (,g ,p))
               ,@body)))))
 
 (mac catch body
@@ -1586,6 +1613,28 @@
 (mac todisk (var (o expr var))
   `((savers* ',var) 
     ,(if (is var expr) var `(= ,var ,expr))))
+
+
+(mac evtil (expr test)
+  (w/uniq gv
+    `(let ,gv ,expr
+       (while (no (,test ,gv))
+         (= ,gv ,expr))
+       ,gv)))
+
+(def rand-key (h)
+  (if (empty h)
+      nil
+      (let n (rand (len h))
+        (catch
+          (each (k v) h
+            (when (is (-- n) -1)
+              (throw k)))))))
+
+(def ratio (test xs)
+  (if (empty xs)
+      0
+      (/ (count (testify test) xs) (len xs))))
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?

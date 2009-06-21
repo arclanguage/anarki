@@ -16,7 +16,7 @@
 ; need in order to decide whether set should create a global.
 
 (define (ac s env)
-  (cond ((string? s) (string-copy s))  ; to avoid immutable strings
+  (cond ((string? s) (ac-string s env))
         ((literal? s) s)
         ((eqv? s 'nil) (list 'quote 'nil))
         ((ssyntax? s) (ac (expand-ssyntax s) env))
@@ -27,12 +27,29 @@
         ((eq? (xcar s) 'if) (ac-if (cdr s) env))
         ((eq? (xcar s) 'fn) (ac-fn (cadr s) (cddr s) env))
         ((eq? (xcar s) 'assign) (ac-set (cdr s) env))
-        ; the next two clauses could be removed without changing semantics
+        ; the next three clauses could be removed without changing semantics
+        ; ... except that they work for macros (so prob should do this for
+        ; every elt of s, not just the car)
         ((eq? (xcar (xcar s)) 'compose) (ac (decompose (cdar s) (cdr s)) env))
         ((eq? (xcar (xcar s)) 'complement) 
          (ac (list 'no (cons (cadar s) (cdr s))) env))
+        ((eq? (xcar (xcar s)) 'andf) (ac-andf s env))
         ((pair? s) (ac-call (car s) (cdr s) env))
         (#t (err "Bad object in expression" s))))
+
+(define atstrings #f)
+
+(define (ac-string s env)
+  (if atstrings
+      (if (atpos s 0)
+          (ac (cons 'string (map (lambda (x)
+                                   (if (string? x)
+                                       (unescape-ats x)
+                                       x))
+                                 (codestring s)))
+              env)
+          (unescape-ats s))
+      (string-copy s)))          ; avoid immutable strings
 
 (define (literal? x)
   (or (boolean? x)
@@ -50,7 +67,9 @@
 (define (has-ssyntax-char? string i)
   (and (>= i 0)
        (or (let ((c (string-ref string i)))
-             (or (eqv? c #\:) (eqv? c #\~) ;(eqv? c #\_) 
+             (or (eqv? c #\:) (eqv? c #\~) 
+                 (eqv? c #\+)
+                 ;(eqv? c #\_) 
                  (eqv? c #\.)  (eqv? c #\!)))
            (has-ssyntax-char? string (- i 1)))))
 
@@ -64,8 +83,13 @@
 ; because then _!foo becomes a function.  Maybe use <>.  For now
 ; leave this off and see how often it would have been useful.
 
+; Might want to make ~ have less precedence than +, because
+; ~foo+bar prob should mean (andf (complement foo) bar), not 
+; (complement (andf foo bar)).
+
 (define (expand-ssyntax sym)
   ((cond ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
+         ((insym? #\+ sym) expand-and)
      ;   ((insym? #\_ sym) expand-curry)
          ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
          (#t (error "Unknown ssyntax" sym)))
@@ -86,6 +110,17 @@
     (if (null? (cdr elts))
         (car elts)
         (cons 'compose elts))))
+
+(define (expand-and sym)
+  (let ((elts (map chars->value
+                   (tokens (lambda (c) (eqv? c #\+))
+                           (symbol->chars sym)
+                           '()
+                           '()
+                           #f))))
+    (if (null? (cdr elts))
+        (car elts)
+        (cons 'andf elts))))
 
 ; How to include quoted arguments?  Can't treat all as quoted, because 
 ; never want to quote fn given as first.  Do we want to allow quote chars 
@@ -174,15 +209,6 @@
                  (cons (car source) token)
                  acc
                  keepsep?))))
-
-; Purely an optimization.  Could in principle do it with a preprocessor
-; instead of adding a line to ac, but only want to do it for evaluated
-; subtrees, and much easier to figure those out in ac.
-
-(define (decompose fns args)
-  (cond ((null? fns) `((fn vals (car vals)) ,@args))
-        ((null? (cdr fns)) (cons (car fns) args))
-        (#t (list (car fns) (decompose (cdr fns) args)))))
 
 (define (ac-global-name s)
   (string->symbol (string-append "_" (symbol->string s))))
@@ -513,6 +539,21 @@
         ((or (eq? x #f) (eq? x '())) 'nil)
         (#t x)))
 
+; The next two are optimizations, except work for macros.
+
+(define (decompose fns args)
+  (cond ((null? fns) `((fn vals (car vals)) ,@args))
+        ((null? (cdr fns)) (cons (car fns) args))
+        (#t (list (car fns) (decompose (cdr fns) args)))))
+
+(define (ac-andf s env)
+  (ac (let ((gs (map (lambda (x) (ar-gensym)) (cdr s))))
+               `((fn ,gs
+                   (and ,@(map (lambda (f) `(,f ,@gs))
+                               (cdar s))))
+                 ,@(cdr s)))
+      env))
+
 (define err error)
 
 ; run-time primitive procedures
@@ -649,6 +690,10 @@
   (cond ((null? args) '())
         ((null? (cdr args)) (ar-nil-terminate (car args)))
         (#t (cons (car args) (ar-apply-args (cdr args))))))
+
+
+
+
 
 (xdef cons cons)
 
@@ -898,41 +943,41 @@
     (cond 
       ((ar-tagged? x) (err "Can't coerce annotated object"))
       ((eqv? type (ar-type x)) x)
-
       ((char? x)      (case type
-                        ((int)    (char->ascii x))
-                        ((string) (string x))
-                        ((sym)    (string->symbol (string x)))
-                        (else     (err "Can't coerce" x type))))
+                        ((int)     (char->ascii x))
+                        ((string)  (string x))
+                        ((sym)     (string->symbol (string x)))
+                        (else      (err "Can't coerce" x type))))
       ((integer? x)   (case type
-                        ((char)   (ascii->char x))
-                        ((string) (apply number->string x args))
-                        (else     (err "Can't coerce" x type))))
+                        ((num)     x)
+                        ((char)    (ascii->char x))
+                        ((string)  (apply number->string x args))
+                        (else      (err "Can't coerce" x type))))
       ((number? x)    (case type
-                        ((int)    (iround x))
-                        ((char)   (ascii->char (iround x)))
-                        ((string) (apply number->string x args))
-                        (else     (err "Can't coerce" x type))))
+                        ((int)     (iround x))
+                        ((char)    (ascii->char (iround x)))
+                        ((string)  (apply number->string x args))
+                        (else      (err "Can't coerce" x type))))
       ((string? x)    (case type
-                        ((sym)    (string->symbol x))
-                        ((cons)   (ac-niltree (string->list x)))
-                        ((num)    (or (apply string->number x args)
-                                      (err "Can't coerce" x type)))
-                        ((int)    (let ((n (apply string->number x args)))
-                                    (if n 
-                                        (iround n)
-                                        (err "Can't coerce" x type))))
-                        (else     (err "Can't coerce" x type))))
+                        ((sym)     (string->symbol x))
+                        ((cons)    (ac-niltree (string->list x)))
+                        ((num)     (or (apply string->number x args)
+                                       (err "Can't coerce" x type)))
+                        ((int)     (let ((n (apply string->number x args)))
+                                     (if n 
+                                         (iround n)
+                                         (err "Can't coerce" x type))))
+                        (else      (err "Can't coerce" x type))))
       ((pair? x)      (case type
-                        ((string) (list->string
-                                   (ar-nil-terminate x)))   
-                        (else     (err "Can't coerce" x type))))
+                        ((string)  (list->string
+                                    (ar-nil-terminate x)))   
+                        (else      (err "Can't coerce" x type))))
       ((eqv? x 'nil)  (case type
-                        ((string) "")
-                        (else     (err "Can't coerce" x type))))
+                        ((string)  "")
+                        (else      (err "Can't coerce" x type))))
       ((symbol? x)    (case type 
-                        ((string) (symbol->string x))
-                        (else     (err "Can't coerce" x type))))
+                        ((string)  (symbol->string x))
+                        (else      (err "Can't coerce" x type))))
       (#t             x))))
 
 (xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
@@ -958,6 +1003,7 @@
 (xdef new-thread thread)
 (xdef kill-thread kill-thread)
 (xdef break-thread break-thread)
+(xdef current-thread current-thread)
 
 (define (wrapnil f) (lambda args (apply f args) 'nil))
 
@@ -993,7 +1039,10 @@
 ; PLT scheme provides only eq? and equal? hash tables,
 ; we need the latter for strings.
 
-(xdef table (lambda () (make-hash-table 'equal)))
+(xdef table (lambda args
+              (let ((h (make-hash-table 'equal)))
+                (if (pair? args) ((car args) h))
+                h)))
 
 ;(xdef table (lambda args
 ;               (fill-table (make-hash-table 'equal) 
@@ -1309,6 +1358,8 @@
 
 (xdef declare (lambda (key val)
                 (case key
+                  ((atstrings) 
+                   (set! atstrings (not (eq? val 'nil))))
                   ((direct-calls) 
                    (set! direct-calls (not (eq? val 'nil))))
                   ((explicit-flush) 
@@ -1333,5 +1384,43 @@
 (xdef tan tan)
 (xdef log log)
 
+(define (codestring s)
+  (let ((i (atpos s 0)))
+    (if i
+        (cons (substring s 0 i)
+              (let* ((rest (substring s (+ i 1)))
+                     (in (open-input-string rest))
+                     (expr (read in))
+                     (i2 (let-values (((x y z) (port-next-location in))) z)))
+                (close-input-port in)
+                (cons expr (codestring (substring rest (- i2 1))))))
+        (list s))))
+
+; First unescaped @ in s, if any.  Escape by doubling.
+
+(define (atpos s i)
+  (cond ((eqv? i (string-length s)) 
+         #f)
+        ((eqv? (string-ref s i) #\@)
+         (if (and (< (+ i 1) (string-length s))
+                  (not (eqv? (string-ref s (+ i 1)) #\@)))
+             i
+             (atpos s (+ i 2))))
+        (#t                         
+         (atpos s (+ i 1)))))
+
+(define (unescape-ats s)
+  (list->string (letrec ((unesc (lambda (cs)
+                                  (cond 
+                                    ((null? cs) 
+                                     '())
+                                    ((and (eqv? (car cs) #\@) 
+                                          (not (null? (cdr cs)))
+                                          (eqv? (cadr cs) #\@))
+                                     (unesc (cdr cs)))
+                                    (#t
+                                     (cons (car cs) (unesc (cdr cs))))))))
+                  (unesc (string->list s)))))
+  
 )
 

@@ -36,7 +36,7 @@
 ; to handle it. also arrange to kill that thread if it
 ; has not completed in threadlife* seconds.
 
-(= threadlife* 30  requests* 0  requests/ip* (table) 
+(= threadlife* 30  requests* 0  requests/ip* (table)  
    throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
 
 (def handle-request (s breaksrv)
@@ -474,9 +474,9 @@ Connection: close"))
      (fnid-field (fnid ,f))
      ,@body))
 
-; these timed- variants are overlong
+; overlong
 
-(mac timed-arform (lasts f . body)
+(mac tarform (lasts f . body)
   (w/uniq (gl gf)
     `(withs (,gl ,lasts ,gf ,f)
        (tag (form method 'post action rfnurl*)

@@ -177,7 +177,7 @@
         (let meth (if (is opt 'style) opstring (opmeth spec opt))
           (if meth
               (if val
-                  (cons (if (literal val)
+                  (cons (if (precomputable-tagopt val)
                             (tostring (eval (meth opt val)))
                             (meth opt val))
                         (tag-options spec rest))
@@ -185,6 +185,10 @@
               (do
                 (pr "<!-- ignoring " opt " for " spec "-->")
                 (tag-options spec rest)))))))
+
+(def precomputable-tagopt (val)
+  (and (literal val) 
+       (no (and (is (type val) 'string) (find #\@ val)))))
 
 (def br ((o n 1)) 
   (repeat n (pr "<br>")) 
@@ -400,4 +404,8 @@
        (~find [in _ #\< #\> #\" #\'] url)))
 
 (mac fontcolor (c . body)
-  `(tag (font color ,c) ,@body))
+  (w/uniq g
+    `(let ,g ,c
+       (if ,g
+           (tag (font color ,g) ,@body)
+           (do ,@body)))))
