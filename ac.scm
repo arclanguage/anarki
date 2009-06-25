@@ -748,21 +748,24 @@
 
 (define (arc-list? x) (or (pair? x) (eqv? x 'nil) (eqv? x '())))
       
-; generic +: strings, lists, numbers.
-; problem with generic +: what to return when no args?
-; could even coerce based on type of first arg...
+; Generic +: strings, lists, numbers.
+; Return val has same type as first argument.
 
 (xdef + (lambda args
            (cond ((null? args) 0)
-                 ((all string? args) 
-                  (apply string-append args))
-                 ((all arc-list? args) 
+                 ((char-or-string? (car args))
+                  (apply string-append 
+                         (map (lambda (a) (ar-coerce a 'string))
+                              args)))
+                 ((arc-list? (car args)) 
                   (ac-niltree (apply append (map ar-nil-terminate args))))
                  (#t (apply + args)))))
 
+(define (char-or-string? x) (or (string? x) (char? x)))
+
 (define (ar-+2 x y)
-  (cond ((and (string? x) (string? y))
-         (string-append x y))
+  (cond ((char-or-string? x)
+         (string-append (ar-coerce x 'string) (ar-coerce y 'string)))
         ((and (arc-list? x) (arc-list? y))
          (ac-niltree (append (ar-nil-terminate x) (ar-nil-terminate y))))
         (#t (+ x y))))
@@ -938,47 +941,52 @@
 
 (define (iround x) (inexact->exact (round x)))
 
-(xdef coerce 
-  (lambda (x type . args)
-    (cond 
-      ((ar-tagged? x) (err "Can't coerce annotated object"))
-      ((eqv? type (ar-type x)) x)
-      ((char? x)      (case type
-                        ((int)     (char->ascii x))
-                        ((string)  (string x))
-                        ((sym)     (string->symbol (string x)))
-                        (else      (err "Can't coerce" x type))))
-      ((integer? x)   (case type
-                        ((num)     x)
-                        ((char)    (ascii->char x))
-                        ((string)  (apply number->string x args))
-                        (else      (err "Can't coerce" x type))))
-      ((number? x)    (case type
-                        ((int)     (iround x))
-                        ((char)    (ascii->char (iround x)))
-                        ((string)  (apply number->string x args))
-                        (else      (err "Can't coerce" x type))))
-      ((string? x)    (case type
-                        ((sym)     (string->symbol x))
-                        ((cons)    (ac-niltree (string->list x)))
-                        ((num)     (or (apply string->number x args)
-                                       (err "Can't coerce" x type)))
-                        ((int)     (let ((n (apply string->number x args)))
-                                     (if n 
-                                         (iround n)
-                                         (err "Can't coerce" x type))))
-                        (else      (err "Can't coerce" x type))))
-      ((pair? x)      (case type
-                        ((string)  (list->string
-                                    (ar-nil-terminate x)))   
-                        (else      (err "Can't coerce" x type))))
-      ((eqv? x 'nil)  (case type
-                        ((string)  "")
-                        (else      (err "Can't coerce" x type))))
-      ((symbol? x)    (case type 
-                        ((string)  (symbol->string x))
-                        (else      (err "Can't coerce" x type))))
-      (#t             x))))
+(define (ar-coerce x type . args)
+  (cond 
+    ((ar-tagged? x) (err "Can't coerce annotated object"))
+    ((eqv? type (ar-type x)) x)
+    ((char? x)      (case type
+                      ((int)     (char->ascii x))
+                      ((string)  (string x))
+                      ((sym)     (string->symbol (string x)))
+                      (else      (err "Can't coerce" x type))))
+    ((integer? x)   (case type
+                      ((num)     x)
+                      ((char)    (ascii->char x))
+                      ((string)  (apply number->string x args))
+                      (else      (err "Can't coerce" x type))))
+    ((number? x)    (case type
+                      ((int)     (iround x))
+                      ((char)    (ascii->char (iround x)))
+                      ((string)  (apply number->string x args))
+                      (else      (err "Can't coerce" x type))))
+    ((string? x)    (case type
+                      ((sym)     (string->symbol x))
+                      ((cons)    (ac-niltree (string->list x)))
+                      ((num)     (or (apply string->number x args)
+                                     (err "Can't coerce" x type)))
+                      ((int)     (let ((n (apply string->number x args)))
+                                   (if n 
+                                       (iround n)
+                                       (err "Can't coerce" x type))))
+                      (else      (err "Can't coerce" x type))))
+    ((pair? x)      (case type
+                      ((string)  (apply string-append
+                                        (map (lambda (y) (ar-coerce y 'string)) 
+                                             (ar-nil-terminate x))))
+                      (else      (err "Can't coerce" x type))))
+    ((eqv? x 'nil)  (case type
+                      ((string)  "")
+                      (else      (err "Can't coerce" x type))))
+    ((null? x)      (case type
+                      ((string)  "")
+                      (else      (err "Can't coerce" x type))))
+    ((symbol? x)    (case type 
+                      ((string)  (symbol->string x))
+                      (else      (err "Can't coerce" x type))))
+    (#t             x)))
+
+(xdef coerce ar-coerce)
 
 (xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
 
@@ -1357,13 +1365,12 @@
 (xdef memory current-memory-use)
 
 (xdef declare (lambda (key val)
-                (case key
-                  ((atstrings) 
-                   (set! atstrings (not (eq? val 'nil))))
-                  ((direct-calls) 
-                   (set! direct-calls (not (eq? val 'nil))))
-                  ((explicit-flush) 
-                   (set! explicit-flush (not (eq? val 'nil)))))))
+                (let ((flag (not (ar-false? val))))
+                  (case key
+                    ((atstrings)      (set! atstrings      flag))
+                    ((direct-calls)   (set! direct-calls   flag))
+                    ((explicit-flush) (set! explicit-flush flag)))
+                  val)))
 
 (putenv "TZ" ":GMT")
 
@@ -1382,6 +1389,9 @@
 (xdef sin sin)
 (xdef cos cos)
 (xdef tan tan)
+(xdef asin asin)
+(xdef acos acos)
+(xdef atan atan)
 (xdef log log)
 
 (define (codestring s)

@@ -219,6 +219,9 @@
 (def testify (x)
   (if (isa x 'fn) x [is _ x]))
 
+; Like keep, seems like some shouldn't testify.  But find should,
+; and all probably should.
+
 (def some (test seq)
   (let f (testify test)
     (if (alist seq)
@@ -511,6 +514,11 @@
                             (cons (car s) (self (cdr s)))))
           seq)
         (coerce (rem test (coerce seq 'cons)) 'string))))
+
+; Seems like keep doesn't need to testify-- would be better to
+; be able to use tables as fns.  But rem does need to, because
+; often want to rem a table from a list.  So maybe the right answer
+; is to make keep the more primitive, not rem.
 
 (def keep (test seq) 
   (rem (complement (testify test)) seq))
@@ -1634,7 +1642,7 @@
 (def ratio (test xs)
   (if (empty xs)
       0
-      (/ (count (testify test) xs) (len xs))))
+      (/ (count test xs) (len xs))))
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?
@@ -1681,6 +1689,7 @@
 ;  foo_bar means [foo _ bar]
 ;  what does foo:_:bar mean?
 ; matchcase
+; idea: atable that binds it to table, assumes input is a list
 ; crazy that finding the top 100 nos takes so long:
 ;  (let bb (n-of 1000 (rand 50)) (time10 (bestn 100 > bb)))
 ;  time: 2237 msec.  -> now down to 850 msec

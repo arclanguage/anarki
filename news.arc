@@ -1,6 +1,6 @@
 ; News.  2 Sep 06.
 
-; to run news: (nsv)
+; to run news: (nsv), then go to http://localhost:8080
 ; put usernames of admins, separated by whitespace, in arc/admins
 
 ; bug: somehow (+ votedir* nil) is getting evaluated.
@@ -189,7 +189,7 @@
 (def apoll    (i) (is i!type 'poll))
 
 (def load-item (id)
-  (let i (temload 'item (string storydir* id))
+  (let i (temload 'item (+ storydir* id))
     (= (items* id) i)
     (awhen (and (astory+live i) (check i!url ~blank))
       (register-url i it))
@@ -211,7 +211,7 @@
       url))
 
 (def new-item-id ()
-  (evtil (++ maxid*) [~file-exists (string storydir* _)]))
+  (evtil (++ maxid*) [~file-exists (+ storydir* _)]))
 
 (def item (id)
   (or (items* id) (errsafe:load-item id)))
@@ -232,7 +232,7 @@
 
 (def live (i) (nor i!dead i!deleted))
 
-(def save-item (i) (save-table i (string storydir* i!id)))
+(def save-item (i) (save-table i (+ storydir* i!id)))
 
 (def kill (i how)
   (unless i!dead
@@ -901,7 +901,7 @@ function vote(node) {
       (hook 'listspage user))))
 
 
-(def saved-url (user) (string "saved?id=" user))
+(def saved-url (user) (+ "saved?id=" user))
 
 (newsop saved (id) 
   (if (only.profile id)
@@ -1053,7 +1053,7 @@ function vote(node) {
                      (votelink i user whence 'down))
                  ; don't understand why needed, but is, or a new
                  ; page is generated on voting
-                 (tag (span id (string "down_" i!id)))))
+                 (tag (span id (+ "down_" i!id)))))
         (author user i)
          (do (fontcolor orange (pr "*"))
              (br)
@@ -1074,10 +1074,9 @@ function vote(node) {
         (out (gentag img src down-url* border 0 vspace 3 hspace 2)))))
 
 (def vote-url (user i dir whence)
-  (+ "vote?" (if user (+ "by=" user "&")  "")
-             "for=" (coerce i!id 'string) 
-             "&dir=" (coerce dir 'string)
-             (if user (string "&auth=" (user->cookie* user)) "")
+  (+ "vote?" "for=" i!id
+             "&dir=" dir
+             (if user (+ "&by=" user "&auth=" (user->cookie* user)))
              "&whence=" (urlencode whence)))
 
 (= lowest-score* -8)
@@ -1129,7 +1128,7 @@ function vote(node) {
     (byline i user)))
 
 (def itemscore (i (o user))
-  (tag (span id (string "score_" i!id))
+  (tag (span id (+ "score_" i!id))
     (pr (plural (if (is i!type 'pollopt) (realscore i) i!score)
                 "point")))
   (hook 'itemscore i user))
@@ -1554,10 +1553,10 @@ function vote(node) {
          (if (isa (saferead (car toks)) 'int)
              (tostring (prall toks "" "."))
              (let (t1 t2 t3 . rest) toks  
-               (if (or (mem t1 multi-tld-countries*) 
-                       (and t3 (mem t2 long-domains*)))
-                   (string t3 "." t2 "." t1)
-                   (string t2 "." t1)))))))
+               (if (and t3 (or (mem t1 multi-tld-countries*) 
+                               (mem t2 long-domains*)))
+                   (+ t3 "." t2 "." t1)
+                   (and t2 (+ t2 "." t1))))))))
 
 ; Minor bug: can have both google.at and google.co.at.  Same for jp.
 
@@ -1771,7 +1770,7 @@ function vote(node) {
 
 ; Individual Item Page (= Comments Page of Stories)
 
-(defmemo item-url (id) (string "item?id=" id))
+(defmemo item-url (id) (+ "item?id=" id))
 
 (newsop item (id)
   (let s (safe-item id)
@@ -1825,6 +1824,7 @@ function vote(node) {
 
 (def comments-active (i)
   (and (live+commentable i)
+       (live (superparent i))
        (or (< (item-age i) commentable-threshold*)
            (mem 'commentable i!keys))))
 
@@ -1859,7 +1859,7 @@ function vote(node) {
 
 ; Edit Item
 
-(def edit-url (i) (string "edit?id=" i!id))
+(def edit-url (i) (+ "edit?id=" i!id))
 
 (newsop edit (id)
   (let i (safe-item id)
@@ -2129,7 +2129,7 @@ function vote(node) {
       (> (item-age c) (expt (- indent 1) reply-decay*))))
 
 (def replylink (i whence (o title 'reply))
-  (link title (string "reply?id=" i!id "&whence=" (urlencode whence))))
+  (link title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
 
 (newsop reply (id whence)
   (with (i      (safe-item id)
