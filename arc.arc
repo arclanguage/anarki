@@ -1539,10 +1539,13 @@
       sym    (sym (map upc (coerce x 'string)))
              (err "Can't upcase" x))))
 
+(def inc (x (o n 1))
+  (coerce (+ (coerce x 'int) n) (type x)))
+
 (def range (start end)
   (if (> start end)
       nil
-      (cons start (range (+ start 1) end))))
+      (cons start (range (inc start) end))))
 
 (def mismatch (s1 s2)
   (catch

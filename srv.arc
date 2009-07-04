@@ -461,14 +461,6 @@ Connection: close"))
          (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
          ,@body))))
 
-(mac timed-aform2 (genurl lasts f . body)
-  (w/uniq (gl gf gi ga)
-    `(withs (,gl ,lasts
-             ,gf (fn (,ga) (prn) (,f ,ga)))
-       (tag (form method 'post action fnurl*)
-         (fnid-field (if ,gl (timed-fnid ,gl ,gf) (fnid ,gf)))
-         ,@body))))
-
 (mac arform (f . body)
   `(tag (form method 'post action rfnurl*)
      (fnid-field (fnid ,f))

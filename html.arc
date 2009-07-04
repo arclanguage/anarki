@@ -47,23 +47,23 @@
 (def opcolor (key val) 
   (w/uniq gv
     `(whenlet ,gv ,val
-       (pr " " ',key "=#" (hexrep ,gv)))))
+       (pr ,(string " " key "=#") (hexrep ,gv)))))
 
 (def opstring (key val)
-  `(aif ,val (pr " " ',key "=\"" it #\")))
+  `(aif ,val (pr ,(+ " " key "=\"") it #\")))
 
 (def opnum (key val)
-  `(aif ,val (pr " " ',key "=" it)))
+  `(aif ,val (pr ,(+ " " key "=") it)))
 
 (def opsym (key val)
-  `(pr " " ',key "=" ,val))
+  `(pr ,(+ " " key "=") ,val))
 
 (def opsel (key val)
   `(if ,val (pr " selected")))
 
 (def opesc (key val)
   `(awhen ,val
-     (pr " " ',key "=\"")
+     (pr ,(string " " key "=\""))
      (if (isa it 'string) (pr-escaped it) (pr it))
      (pr  #\")))
 
@@ -156,7 +156,7 @@
                               opt))
                         opts)
                  (pr ">"))))))
-        
+
 (def end-tag (spec)
   `(pr ,(string "</" (carif spec) ">")))
 
