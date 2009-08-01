@@ -21,6 +21,7 @@
 ;  not sure this is a mistake; strings may be subtly different from 
 ;  lists of chars
 
+(assign current-load-file* "arc.arc")
 
 (assign do (annotate 'mac
              (fn args `((fn () ,@args)))))
@@ -1444,11 +1445,15 @@
        (pr ,@(parse-format str))))
 )
 
+(wipe load-file-stack*)
 (def load (file)
-  (w/infile f file
-    (w/uniq eof
-      (whiler e (read f eof) eof
-        (eval e)))))
+  (push current-load-file* load-file-stack*)
+  (= current-load-file* file)
+  (after (w/infile f file
+           (w/uniq eof
+             (whiler e (read f eof) eof
+               (eval e))))
+    (= current-load-file* (pop load-file-stack*))))
 
 (def positive (x)
   (and (number x) (> x 0)))
@@ -1650,6 +1655,8 @@
       0
       (/ (count test xs) (len xs))))
 
+
+(wipe current-load-file*)
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
