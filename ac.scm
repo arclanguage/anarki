@@ -1140,6 +1140,9 @@
             (tl2))
     (lambda ()
       (let ((expr (read)))
+        (if (eof-object? expr)
+             (begin (newline)
+                    (exit)))
         (if (eqv? expr ':a)
             'done
             (let ((val (arc-eval expr)))
