@@ -218,6 +218,8 @@
   (string n #\  (pluralize n x)))
 
 
+(load "help/strings.arc")
+
 ; http://www.eki.ee/letter/chardata.cgi?HTML4=1
 ; http://jrgraphix.net/research/unicode_blocks.php?block=1
 ; http://home.tiscali.nl/t876506/utf8tbl.html

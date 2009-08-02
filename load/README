@@ -12,8 +12,6 @@ Code should go here only if it is either:
 
 2. Features important for, and preferably specific to, the REPL. For example, an
    interactive help subsystem.
-   
-   (on that note, TODO: an interactive help subsystem.)
 
 This is emphatically NOT the place to put libraries. No, we don't care how shiny
 it is. Put it in lib/ where it belongs.

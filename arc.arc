@@ -22,9 +22,15 @@
 ;  lists of chars
 
 (assign current-load-file* "arc.arc")
+(assign source-file* (table))
+(assign source* (table))
+(assign help* (table))
 
 (assign do (annotate 'mac
              (fn args `((fn () ,@args)))))
+
+(sref sig 'args 'do)
+(sref source-file* current-load-file* 'do)
 
 (assign safeset (annotate 'mac
                   (fn (var val)
@@ -34,10 +40,28 @@
                                  (disp #\newline (stderr))))
                          (assign ,var ,val)))))
 
+(sref sig '(var val) 'safeset)
+(sref source-file* current-load-file* 'safeset)
+
+(assign docify-body (fn (body)
+                      (if (if (is (type car.body) 'string) cdr.body) body
+                          (cons nil body))))
+
+(sref sig '(body) 'docify-body)
+(sref source-file* current-load-file* 'docify-body)
+
 (assign def (annotate 'mac
                (fn (name parms . body)
-                 `(do (sref sig ',parms ',name)
-                      (safeset ,name (fn ,parms ,@body))))))
+                 ((fn ((doc . body))
+                    `(do (sref sig ',parms ',name)
+                         (sref help* ',doc ',name)
+                         (sref source-file* current-load-file* ',name)
+                         (sref source* '(def ,name ,parms ,@body) ',name)
+                         (safeset ,name (fn ,parms ,@body))))
+                   (docify-body body)))))
+
+(sref sig '(name parms . body) 'def)
+(sref source-file* current-load-file* 'def)
 
 (def caar (xs) (car (car xs)))
 (def cadr (xs) (car (cdr xs)))
@@ -80,8 +104,16 @@
 
 (assign mac (annotate 'mac
               (fn (name parms . body)
-                `(do (sref sig ',parms ',name)
-                     (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
+                ((fn ((doc . body))
+                   `(do (sref sig ',parms ',name)
+                        (sref help* ',doc ',name)
+                        (sref source-file* current-load-file* ',name)
+                        (sref source* '(mac ,name ,parms ,@body) ',name)
+                        (safeset ,name (annotate 'mac (fn ,parms ,@body)))))
+                  (docify-body body)))))
+
+(sref sig '(name parms . body) 'mac)
+(sref source-file* current-load-file* 'mac)
 
 (mac make-br-fn (body) `(fn (_) ,body))
 
@@ -1657,6 +1689,8 @@
 
 
 (wipe current-load-file*)
+
+(load "help/arc.arc")
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
