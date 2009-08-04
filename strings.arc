@@ -44,6 +44,15 @@
            (a (cut s (+ p 1)))))
      (cons -1 (positions #\newline s)))))
 
+(def slices (s test)
+  (accum a
+    ((afn ((p . ps))
+       (if ps
+           (do (a (cut s (+ p 1) (car ps)))
+               (self ps))
+           (a (cut s (+ p 1)))))
+     (cons -1 (positions test s)))))
+
 ; > (require (lib "uri-codec.ss" "net"))
 ;> (form-urlencoded-decode "x%ce%bbx")
 ;"xλx"
@@ -149,7 +158,7 @@
 
 (def nonblank (s) (unless (blank s) s))
 
-(def trim (s where (o test whitec))
+(def trim (s (o where 'both) (o test whitec))
   (withs (f   (testify test)
            p1 (pos ~f s))
     (if p1

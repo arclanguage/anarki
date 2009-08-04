@@ -61,6 +61,9 @@
 (def opsel (key val)
   `(if ,val (pr " selected")))
 
+(def opcheck (key val)
+  `(if ,val (pr " checked")))
+
 (def opesc (key val)
   `(awhen ,val
      (pr ,(string " " key "=\""))
@@ -106,8 +109,9 @@
 (attribute input      size           opnum)
 (attribute input      type           opsym)
 (attribute input      value          opesc)
-(attribute option     selected       opsel)
+(attribute input      checked        opcheck)
 (attribute select     name           opstring)
+(attribute option     selected       opsel)
 (attribute table      bgcolor        opcolor)
 (attribute table      border         opnum)
 (attribute table      cellpadding    opnum)
@@ -343,7 +347,7 @@
                   #\&  "&#38;"
                         c)))))
 
-(def esc<>& (str)
+(def esc-tags (str)
   (tostring 
     (each c str
       (pr (case c #\<  "&#60;" 

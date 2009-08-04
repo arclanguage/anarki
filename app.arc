@@ -373,28 +373,42 @@
     date    (or (errsafe (parse-date str)) fail)
             (err "unknown readvar type" typ)))
 
-(= fail* (uniq))
+; dates should be tagged date, and just redefine <
+
+(def varcompare (typ)
+  (if (in typ 'syms 'sexpr 'users 'toks 'bigtoks 'lines 'hexcol)
+       (fn (x y) (> (len x) (len y)))
+      (is typ 'date)
+       (fn (x y)
+         (or (no y) (and x (date< x y))))
+       (fn (x y)
+         (or (empty y) (and (~empty x) (< x y))))))
+
+
+; (= fail* (uniq))
+
+(def fail* ()) ; coudn't possibly come back from a form
   
 ; Takes a list of fields of the form (type label value view modify) and 
 ; a fn f and generates a form such that when submitted (f label newval) 
 ; will be called for each valid value.  Finally done is called.
 
 (def vars-form (user fields f done (o button "update") (o lasts))
-  (timed-aform lasts
-               (if (all [no (_ 4)] fields)
-                   (fn (req))
-                   (fn (req)
-                     (when-umatch user req
-                       (each (k v) req!args
-                         (let name (sym k)
-                           (awhen (find [is (cadr _) name] fields)
-                             ; added sho to fix bug
-                             (let (typ id val sho mod) it
-                               (when (and mod v)
-                                 (let newval (readvar typ v fail*)
-                                   (unless (is newval fail*)
-                                     (f name newval))))))))
-                       (done))))
+  (taform lasts
+          (if (all [no (_ 4)] fields)
+              (fn (req))
+              (fn (req)
+                (when-umatch user req
+                  (each (k v) req!args
+                    (let name (sym k)
+                      (awhen (find [is (cadr _) name] fields)
+                        ; added sho to fix bug
+                        (let (typ id val sho mod) it
+                          (when (and mod v)
+                            (let newval (readvar typ v fail*)
+                              (unless (is newval fail*)
+                                (f name newval))))))))
+                  (done))))
      (tab
        (showvars fields))
      (unless (all [no (_ 4)] fields)  ; no modifiable fields
@@ -415,7 +429,7 @@
 ; http://daringfireball.net/projects/markdown/syntax
 
 (def md-from-form (str (o nolinks))
-  (markdown (trim (rem #\return (esc<>& str)) 'end) 60 nolinks))
+  (markdown (trim (rem #\return (esc-tags str)) 'end) 60 nolinks))
 
 (def markdown (s (o maxurl) (o nolinks))
   (let ital nil
@@ -490,7 +504,7 @@
 ; Note that > immediately after a url (http://foo.com>) will cause
 ; an odd result, because the > gets escaped to something beginning
 ; with &, which is treated as part of the url.  Perhaps the answer
-; is just to esc<>& after markdown instead of before.
+; is just to esc-tags after markdown instead of before.
 
 ; Treats a delimiter as part of a url if it is (a) an open delimiter
 ; not followed by whitespace or eos, or (b) a close delimiter 
@@ -573,9 +587,9 @@
                  (if (in cleanlabel "am" "midnight")
                      0
                      12)
-                (is cleanlabel "pm")
-                 (+ h 12)
-                 h)
+                (is cleanlabel "am")
+                 h
+                 (+ h 12))
             60)
           m))))
 

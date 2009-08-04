@@ -11,6 +11,7 @@
   (ensure-srvdirs)
   (map [apply new-bgthread _] pending-bgthreads*)
   (w/socket s port
+    (setuid 2) ; XXX switch from root to pg
     (prn "ready to serve port " port)
     (flushout)
     (= currsock* s)
@@ -453,7 +454,7 @@ Connection: close"))
 ; Like aform except creates a fnid that will last for lasts seconds
 ; (unless the server is restarted).
 
-(mac timed-aform (lasts f . body)
+(mac taform (lasts f . body)
   (w/uniq (gl gf gi ga)
     `(withs (,gl ,lasts
              ,gf (fn (,ga) (prn) (,f ,ga)))

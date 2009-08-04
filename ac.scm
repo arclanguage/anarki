@@ -3,12 +3,11 @@
 (module ac mzscheme
 
 (provide (all-defined))
-; uncomment the following require for mzscheme-4.x
-; much of Arc will work, but not mutable pairs.
-; (require rnrs/mutable-pairs-6)
 (require (lib "port.ss"))
 (require (lib "process.ss"))
 (require (lib "pretty.ss"))
+(require (lib "foreign.ss"))
+(unsafe!)
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
@@ -68,7 +67,7 @@
   (and (>= i 0)
        (or (let ((c (string-ref string i)))
              (or (eqv? c #\:) (eqv? c #\~) 
-                 (eqv? c #\+)
+                 (eqv? c #\&)
                  ;(eqv? c #\_) 
                  (eqv? c #\.)  (eqv? c #\!)))
            (has-ssyntax-char? string (- i 1)))))
@@ -83,15 +82,15 @@
 ; because then _!foo becomes a function.  Maybe use <>.  For now
 ; leave this off and see how often it would have been useful.
 
-; Might want to make ~ have less precedence than +, because
-; ~foo+bar prob should mean (andf (complement foo) bar), not 
+; Might want to make ~ have less precedence than &, because
+; ~foo&bar prob should mean (andf (complement foo) bar), not 
 ; (complement (andf foo bar)).
 
 (define (expand-ssyntax sym)
   ((cond ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
-         ((insym? #\+ sym) expand-and)
-     ;   ((insym? #\_ sym) expand-curry)
          ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
+         ((insym? #\& sym) expand-and)
+     ;   ((insym? #\_ sym) expand-curry)
          (#t (error "Unknown ssyntax" sym)))
    sym))
 
@@ -113,7 +112,7 @@
 
 (define (expand-and sym)
   (let ((elts (map chars->value
-                   (tokens (lambda (c) (eqv? c #\+))
+                   (tokens (lambda (c) (eqv? c #\&))
                            (symbol->chars sym)
                            '()
                            '()
@@ -238,8 +237,17 @@
         ((and (pair? x) (eqv? (car x) 'quasiquote))
          (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
         ((pair? x)
-         (map (lambda (x) (ac-qq1 level x env)) x))
+         (imap (lambda (x) (ac-qq1 level x env)) x))
         (#t x)))
+
+; like map, but don't demand '()-terminated list
+
+(define (imap f l)
+  (cond ((pair? l)
+         (cons (f (car l)) (imap f (cdr l))))
+        ((null? l)
+         '())
+        (#t (f l))))
 
 ; (if) -> nil
 ; (if x) -> x
@@ -815,6 +823,8 @@
 
 ; (type nil) -> sym
 
+(define (exint? x) (and (integer? x) (exact? x)))
+
 (define (ar-type x)
   (cond ((ar-tagged? x)     (vector-ref x 1))
         ((pair? x)          'cons)
@@ -823,7 +833,7 @@
         ((procedure? x)     'fn)
         ((char? x)          'char)
         ((string? x)        'string)
-        ((integer? x)       'int)
+        ((exint? x)         'int)
         ((number? x)        'num)     ; unsure about this
         ((hash-table? x)    'table)
         ((output-port? x)   'output)
@@ -950,7 +960,7 @@
                       ((string)  (string x))
                       ((sym)     (string->symbol (string x)))
                       (else      (err "Can't coerce" x type))))
-    ((integer? x)   (case type
+    ((exint? x)     (case type
                       ((num)     x)
                       ((char)    (ascii->char x))
                       ((string)  (apply number->string x args))
@@ -1007,6 +1017,11 @@
                                    out
                                    (let-values (((us them) (tcp-addresses out)))
                                                them))))))))
+
+; allow Arc to give up root privileges after it
+; calls open-socket. thanks, Eli!
+(define setuid (get-ffi-obj 'setuid #f (_fun _int -> _int)))
+(xdef setuid setuid)
 
 (xdef new-thread thread)
 (xdef kill-thread kill-thread)
@@ -1216,14 +1231,51 @@
 (xdef scar (lambda (x val) 
               (if (string? x) 
                   (string-set! x 0 val)
-                  (set-car! x val))
+                  (x-set-car! x val))
               val))
 
 (xdef scdr (lambda (x val) 
               (if (string? x)
                   (err "Can't set cdr of a string" x)
-                  (set-cdr! x val))
+                  (x-set-cdr! x val))
               val))
+
+; decide at run-time whether the underlying mzscheme supports
+; set-car! and set-cdr!, since I can't figure out how to do it
+; at compile time.
+
+(define (x-set-car! p v)
+  (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))
+    (if (procedure? fn)
+        (fn p v)
+        (n-set-car! p v))))
+
+(define (x-set-cdr! p v)
+  (let ((fn (namespace-variable-value 'set-cdr! #t (lambda () #f))))
+    (if (procedure? fn)
+        (fn p v)
+        (n-set-cdr! p v))))
+
+; Eli's code to modify mzscheme-4's immutable pairs.
+
+;; to avoid a malloc on every call, reuse a single pointer, but make
+;; it thread-local to avoid races
+(define ptr (make-thread-cell #f))
+(define (get-ptr)
+  (or (thread-cell-ref ptr)
+      (let ([p (malloc _scheme 1)]) (thread-cell-set! ptr p) p)))
+
+;; set a pointer to the cons cell, then dereference it as a pointer,
+;; and bang the new value in the given offset
+(define (set-ca/dr! offset who p x)
+  (if (pair? p)
+    (let ([p* (get-ptr)])
+      (ptr-set! p* _scheme p)
+      (ptr-set! (ptr-ref p* _pointer 0) _scheme offset x))
+    (raise-type-error who "pair" p)))
+
+(define (n-set-car! p x) (set-ca/dr! 1 'set-car! p x))
+(define (n-set-cdr! p x) (set-ca/dr! 2 'set-cdr! p x))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
 ; say (if (string? x) (string-replace! x val 1) ...) in scdr, but
@@ -1249,7 +1301,7 @@
     val))
 
 (define (nth-set! lst n val)
-  (set-car! (list-tail lst n) val))
+  (x-set-car! (list-tail lst n) val))
 
 ; rewrite to pass a (true) gensym instead of #f in case var bound to #f
 
@@ -1264,8 +1316,9 @@
 
 (xdef trunc (lambda (x) (inexact->exact (truncate x))))
 
-(xdef exact (lambda (x) 
-               (tnil (and (integer? x) (exact? x)))))
+; bad name
+
+(xdef exact (lambda (x) (tnil (exint? x))))
 
 (xdef msec                         current-milliseconds)
 (xdef current-process-milliseconds current-process-milliseconds)

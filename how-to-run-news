@@ -1,8 +1,8 @@
 To run News:
 
-tar xvf arc3.tar
+tar xvf arc3.1.tar
 
-cd arc3
+cd arc3.1
 
 mkdir arc
 
