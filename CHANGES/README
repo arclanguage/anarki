@@ -1,0 +1,10 @@
+This directory is to be used for documenting changes made relative to official
+arc, especially changes to its core functionality, "hacks" that change or add
+code in ac.scm, arc.arc, or the other files that come with Arc. Libraries, in
+particular, are outside the scope of this project. Why a directory instead of a
+single file? Because that way documentation can be maintained and updated
+separately for different changes. Each file in this directory, save this README,
+should be named after the hack it documents. Documentation is of course
+optional, but recommended: it helps someone browsing the source or version
+history understand the intent of the changes made, and it helps newcomers with
+"feature discovery".
