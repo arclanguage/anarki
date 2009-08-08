@@ -1035,7 +1035,7 @@
 ; Will system "execute" a half-finished string if thread killed
 ; in the middle of generating it?  
 
-(xdef system (wrapnil system))
+(xdef system (lambda (s) (tnil (system s))))
 
 (xdef pipe-from (lambda (cmd)
                    (let ((tf (ar-tmpname)))
