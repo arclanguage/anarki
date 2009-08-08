@@ -21,6 +21,7 @@
         ((ssyntax? s) (ac (expand-ssyntax s) env))
         ((symbol? s) (ac-var-ref s env))
         ((ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env))
+        ((eq? (xcar s) '$) (ac-$ (cadr s) env))
         ((eq? (xcar s) 'quote) (list 'quote (ac-niltree (cadr s))))
         ((eq? (xcar s) 'quasiquote) (ac-qq (cadr s) env))
         ((eq? (xcar s) 'if) (ac-if (cdr s) env))
@@ -217,28 +218,36 @@
       s
       (ac-global-name s)))
 
+; lowering into mzscheme, with (unquote <foo>) lifting us back into arc
+
+(define (ac-$ args env)
+  (ac-qqx args
+    (lambda (x) (ac x env))
+    (lambda (x) (error 'ac-$ "Can't use ,@ from within $ in: ~a" args))))
+
 ; quasiquote
 
 (define (ac-qq args env)
-  (list 'quasiquote (ac-qq1 1 args env)))
+  (list 'quasiquote (ac-qqx args
+                      (lambda (x) (list 'unquote (ac x env)))
+                      (lambda (x) (list 'unquote-splicing
+                                    (list 'ar-nil-terminate (ac x env)))))))
 
 ; process the argument of a quasiquote. keep track of
 ; depth of nesting. handle unquote only at top level (level = 1).
 ; complete form, e.g. x or (fn x) or (unquote (fn x))
 
-(define (ac-qq1 level x env)
-  (cond ((= level 0)
-         (ac x env))
-        ((and (pair? x) (eqv? (car x) 'unquote))
-         (list 'unquote (ac-qq1 (- level 1) (cadr x) env)))
-        ((and (pair? x) (eqv? (car x) 'unquote-splicing) (= level 1))
-         (list 'unquote-splicing
-               (list 'ar-nil-terminate (ac-qq1 (- level 1) (cadr x) env))))
-        ((and (pair? x) (eqv? (car x) 'quasiquote))
-         (list 'quasiquote (ac-qq1 (+ level 1) (cadr x) env)))
-        ((pair? x)
-         (imap (lambda (x) (ac-qq1 level x env)) x))
-        (#t x)))
+(define (ac-qqx x unq splice)
+  (cond
+    ((not (pair? x)) x)
+    ((eqv? (car x) 'unquote) (unq (cadr x)))
+    ((eqv? (car x) 'unquote-splicing) (splice (cadr x)))
+    ((eqv? (car x) 'quasiquote)
+      (list 'quasiquote
+        (ac-qqx (cadr x)
+          (lambda (e) (list 'unquote (ac-qqx e unq splice)))
+          (lambda (e) (list 'unquote-splicing (ac-qqx e unq splice))))))
+    (#t (imap (lambda (e) (ac-qqx e unq splice)) x))))
 
 ; like map, but don't demand '()-terminated list
 
