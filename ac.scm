@@ -463,19 +463,9 @@
           ((and direct-calls (symbol? fn) (not (lex? fn env)) (bound? fn)
                 (procedure? (namespace-variable-value (ac-global-name fn))))
            (ac-global-call fn args env))
-          ((= (length args) 0)
-           `(ar-funcall0 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 1)
-           `(ar-funcall1 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 2)
-           `(ar-funcall2 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 3)
-           `(ar-funcall3 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
-          ((= (length args) 4)
-           `(ar-funcall4 ,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
           (#t
-           `(ar-apply ,(ac fn env)
-                      (list ,@(map (lambda (x) (ac x env)) args)))))))
+           `((ar-coerce ,(ac fn env) 'fn)
+             ,@(map (lambda (x) (ac x env)) args))))))
 
 (define (ac-mac-call m args env)
   (let ((x1 (apply m (map ac-niltree args))))
@@ -642,51 +632,10 @@
 ; just use an atom or 3-elt list to keep the default.
 
 (define (ar-apply fn args)
-  (cond ((procedure? fn) 
-         (apply fn args))
-        ((pair? fn) 
-         (list-ref fn (car args)))
-        ((string? fn) 
-         (string-ref fn (car args)))
-        ((hash-table? fn) 
-         (ar-nill (hash-table-get fn 
-                                  (car args) 
-                                  (if (pair? (cdr args)) (cadr args) #f))))
-; experiment: means e.g. [1] is a constant fn
-;       ((or (number? fn) (symbol? fn)) fn)
-; another possibility: constant in functional pos means it gets 
-; passed to the first arg, i.e. ('kids item) means (item 'kids).
-        (#t (err "Function call on inappropriate object" fn args))))
+  (apply (ar-coerce fn 'fn) args))
 
 (xdef apply (lambda (fn . args)
                (ar-apply fn (ar-apply-args args))))
-
-; special cases of ar-apply for speed and to avoid consing arg lists
-
-(define (ar-funcall0 fn)
-  (if (procedure? fn)
-      (fn)
-      (ar-apply fn (list))))
-
-(define (ar-funcall1 fn arg1)
-  (if (procedure? fn)
-      (fn arg1)
-      (ar-apply fn (list arg1))))
-
-(define (ar-funcall2 fn arg1 arg2)
-  (if (procedure? fn)
-      (fn arg1 arg2)
-      (ar-apply fn (list arg1 arg2))))
-
-(define (ar-funcall3 fn arg1 arg2 arg3)
-  (if (procedure? fn)
-      (fn arg1 arg2 arg3)
-      (ar-apply fn (list arg1 arg2 arg3))))
-
-(define (ar-funcall4 fn arg1 arg2 arg3 arg4)
-  (if (procedure? fn)
-      (fn arg1 arg2 arg3 arg4)
-      (ar-apply fn (list arg1 arg2 arg3 arg4))))
 
 ; replace the nil at the end of a list with a '()
 
@@ -952,52 +901,60 @@
 
 (define (iround x) (inexact->exact (round x)))
 
+; look up first by target type, then by source type
+(define coercions (make-hash-table 'equal))
+
+(for-each (lambda (e)
+            (let ((target-type (car e))
+                  (conversions (make-hash-table 'equal)))
+              (hash-table-put! coercions target-type conversions)
+              (for-each
+               (lambda (x) (hash-table-put! conversions (car x) (cadr x)))
+               (cdr e))))
+ `((fn      (cons   ,(lambda (l) (lambda (i) (list-ref l i))))
+            (string ,(lambda (s) (lambda (i) (string-ref s i))))
+            (table  ,(lambda (h) (case-lambda
+                                  ((k) (hash-table-get h k 'nil))
+                                  ((k d) (hash-table-get h k d))))))
+
+   (string  (int    ,number->string)
+            (num    ,number->string)
+            (char   ,string)
+            (cons   ,(lambda (l) (apply string-append
+                                        (map (lambda (y) (ar-coerce y 'string))
+                                             (ar-nil-terminate l)))))
+            (sym    ,(lambda (x) (if (eqv? x 'nil) "" (symbol->string x)))))
+
+   (sym     (string ,string->symbol)
+            (char   ,(lambda (c) (string->symbol (string c)))))
+
+   (int     (char   ,char->ascii)
+            (num    ,iround)
+            (string ,(lambda (x . args)
+                       (let ((n (apply string->number x args)))
+                         (if n (iround n)
+                             (err "Can't coerce " x 'int))))))
+
+   (num     (string ,(lambda (x . args)
+                       (or (apply string->number x args)
+                           (err "Can't coerce " x 'num))))
+            (int    ,(lambda (x) x)))
+
+   (cons    (string ,(lambda (x) (ac-niltree (string->list x)))))
+
+   (char    (int    ,ascii->char)
+            (num    ,(lambda (x) (ascii->char (iround x)))))))
+
 (define (ar-coerce x type . args)
-  (cond 
-    ((ar-tagged? x) (err "Can't coerce annotated object"))
-    ((eqv? type (ar-type x)) x)
-    ((char? x)      (case type
-                      ((int)     (char->ascii x))
-                      ((string)  (string x))
-                      ((sym)     (string->symbol (string x)))
-                      (else      (err "Can't coerce" x type))))
-    ((exint? x)     (case type
-                      ((num)     x)
-                      ((char)    (ascii->char x))
-                      ((string)  (apply number->string x args))
-                      (else      (err "Can't coerce" x type))))
-    ((number? x)    (case type
-                      ((int)     (iround x))
-                      ((char)    (ascii->char (iround x)))
-                      ((string)  (apply number->string x args))
-                      (else      (err "Can't coerce" x type))))
-    ((string? x)    (case type
-                      ((sym)     (string->symbol x))
-                      ((cons)    (ac-niltree (string->list x)))
-                      ((num)     (or (apply string->number x args)
-                                     (err "Can't coerce" x type)))
-                      ((int)     (let ((n (apply string->number x args)))
-                                   (if n 
-                                       (iround n)
-                                       (err "Can't coerce" x type))))
-                      (else      (err "Can't coerce" x type))))
-    ((pair? x)      (case type
-                      ((string)  (apply string-append
-                                        (map (lambda (y) (ar-coerce y 'string)) 
-                                             (ar-nil-terminate x))))
-                      (else      (err "Can't coerce" x type))))
-    ((eqv? x 'nil)  (case type
-                      ((string)  "")
-                      (else      (err "Can't coerce" x type))))
-    ((null? x)      (case type
-                      ((string)  "")
-                      (else      (err "Can't coerce" x type))))
-    ((symbol? x)    (case type 
-                      ((string)  (symbol->string x))
-                      (else      (err "Can't coerce" x type))))
-    (#t             x)))
+  (let ((x-type (ar-type x)))
+    (if (eqv? type x-type) x
+        (let* ((fail        (lambda () (err "Can't coerce " x type)))
+               (conversions (hash-table-get coercions type fail))
+               (converter   (hash-table-get conversions x-type fail)))
+          (ar-apply converter (cons x args))))))
 
 (xdef coerce ar-coerce)
+(xdef coerce* coercions)
 
 (xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
 
