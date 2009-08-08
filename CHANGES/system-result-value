@@ -1,0 +1,17 @@
+In mzscheme, 'system returns #t if the command it ran failed and #f otherwise.
+This hack makes that information available in arc; 'system returns t on success
+and nil on failure. In vanilla arc, 'system always returns nil.
+
+In vanilla arc:
+
+    arc> (system "false")
+    nil
+    arc> (system "true")
+    nil
+
+With this hack:
+
+    arc> (system "false")
+    nil
+    arc> (system "true")
+    t
