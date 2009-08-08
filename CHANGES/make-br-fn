@@ -1,0 +1,43 @@
+In vanilla arc, [...] is syntax for (fn (_) (...)). This hack instead translates
+[...] into (make-br-fn (...)). This allows the semantics of [] to be redefined
+in arc. A simple definition is added to arc.arc that expands it to (fn (_)
+(...)), allowing the arc code in arc.arc, strings.arc, srv.arc, etc. to use []
+as before. A file load/make-br-fn.arc, which gets autoloaded when arc is
+started, though after the aforementioned files are loaded, replaces this
+definition with a more powerful syntax that is almost backwards-compatible.
+
+The newer syntax interprets all variables beginning with _ found in the br-fn's
+body to be arguments to the br-fn. The order of these arguments is alphabetical,
+so for example:
+
+    arc> ([list _1 _2] 'a 'b) ; ==> ((fn (_1 _2) (list _1 _2)) 'a 'b)
+    (a b)
+    arc> ([list _y _x] 'a 'b) ; ==> ((fn (_x _y) (list _y _x)) 'a 'b)
+    (b a)
+    arc> ([list _ _1] 'a 'b)  ; ==> ((fn (_ _1) (list _ _1)) 'a 'b)
+    (a b)
+
+The variable '__, if present, is taken to be a rest argument:
+
+    arc> ([list _x _y __] 1 2 3 4)
+    (1 2 (3 4))
+
+For compatibility with the old syntax, if no underscore-prefixed variables are
+found, one is implied:
+
+    arc> ([idfn "this is a constant function"] 'foo)
+    "this is a constant function"
+
+Note that the macro is not very intelligent with regards to figuring out what is
+a "variable" and what is not. It ignores anything inside a quoted expression,
+but apart from that, all symbols are treated as variables. Note in particular
+that quasiquotation is not (yet!) handled. So for example:
+
+    arc> ([list '_foo _] 1) ; quoted things are ignored
+    (_foo 1)
+    arc> ([list `_foo _] 1) ; quasiquoted things are _not_
+    Error: "#<procedure>: expects 2 arguments, given 1: 1"
+
+Another finnicky case is nested br-fns. I suggest avoiding these altogether, but
+if you *must* use them, then as long as you use no underscore-prefixed symbols
+within them except '_ itself, it should work exactly as in vanilla arc.
