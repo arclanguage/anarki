@@ -1,0 +1,17 @@
+Replaces arc's implementation of 'uniq with mzscheme's 'gensym. This has two
+effects. First and foremost, 'uniq now returns a "true" gensym - an uninterned
+symbol:
+
+    arc> (= s (uniq))
+    g1831
+    arc> (is s 'g1831)
+    nil  ; in vanilla arc, this would be t
+
+Second, 'uniq takes an optional argument. If present, this argument must be a
+symbol or string, and will be used as the prefix for the gensym:
+
+    arc> (uniq 'i-am-a-gensym)
+    i-am-a-gensym1833
+
+This is useful for giving gensyms more informative names, which can be helpful
+when trying to read macro-generated code.
