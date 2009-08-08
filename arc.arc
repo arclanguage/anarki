@@ -82,6 +82,8 @@
                 `(do (sref sig ',parms ',name)
                      (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
+(mac make-br-fn (body) `(fn (_) ,body))
+
 (mac and args
   (if args
       (if (cdr args)
