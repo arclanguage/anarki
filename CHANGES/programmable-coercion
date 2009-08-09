@@ -1,0 +1,34 @@
+In vanilla arc, all coercions are hard-coded in ac.scm. This hack instead bases
+coercion on a double hashtable lookup, and exposes the table used to arc as
+'coerce*. This allows arc-defined coercions between types. In addition, it adds
+coercions to 'fn, which do exactly what you would expect: return a fn that does
+what the coerced object would in functional position. Moreover, this
+coercion-to-fn is used internally to handle compilation of objects in functional
+position, which simplifies matters a good deal and probably improves performance
+to boot. See http://arclanguage.org/item?id=9828 for more details.
+
+Specifically, the result of (coerce val new), where val is of type old, is
+(((coerce* new) old) val).
+
+Note that changing the value of the variable coerce* itself will *not* affect
+coercion. Rather, coerce* is a hashtable which must be _modified_ to affect
+coercion. That is:
+
+    ; WRONG
+    (= coerce* (let old (copy coerce*) (= old!fn!int (fn (i) (fn _ i)))))
+    ; RIGHT
+    (= coerce*!fn!int (fn (i) (fn _ i)))
+
+A file load/defcall.arc is also provided which defines 'set-coercer, 'defcoerce,
+and 'defcall forms. Examples:
+
+    ; This turns ints into constant functions which return themselves
+    (set-coercer 'fn 'int (fn (i) (fn _ i)))
+    ; this does the same via 'defcoerce
+    (defcoerce fn int (i) (fn _ i))
+    ; this does the same via 'defcall
+    (defcall int (i . _) i)
+
+Note that unlike anarki-as-of-arc2's 'defcall, the first argument to the
+function defined is the object itself, rather than the result of calling 'rep on
+the object.
