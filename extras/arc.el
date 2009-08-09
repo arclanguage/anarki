@@ -7,6 +7,7 @@
 ;; Adapted-by: Dave Love <d.love@dl.ac.uk>
 ;; Adapted-by: Andrew MacDonald <awm@alum.mit.edu>
 ;; Adapted-by: Eric Hanchrow <offby1@blarg.net>
+;; Adapted-by: Michael Arntzenius <daekharel@gmail.com>
 ;; Keywords: languages, lisp
 
 ;; This file is not part of GNU Emacs.
@@ -255,19 +256,31 @@ See `run-hooks'."
       (cons
        (concat
         "(" (regexp-opt
-             '("fn" "rfn" "afn" "def" "mac" "set"
-               "defset" "defop" "deftem" "defmemo"
-               "when" "unless"
-               "do" "while" "until" "only" "each" "if" "=" "for" "repeat"
-               "aif" "aand" "awhen"
-               "case" "zap"
+             '(; define/assign-type forms
+               "++" "--" "=" "assign" "or=" "set" "wipe" "zap"
+               "def" "mac" "defs"
+               "defcache" "defhook" "defmemo" "defop" "defset" "deftem"
+               ; lambdas & binding forms
+               "fn" "rfn" "afn"
                "let" "with" "withs"
-               "apply" "in"
-               ;; Hannes Haug <hannes.haug@student.uni-tuebingen.de> wants:
-               "and" "or"
-               ;; Stefan Monnier <stefan.monnier@epfl.ch> says don't bother:
-               ;;"quasiquote" "quote" "unquote" "unquote-splicing"
-               "map" "sort") t)
+               "atlet" "atwith" "atwiths"
+               ; conditionals
+               "if" "when" "unless" "or" "and" "or" "nor" "case"
+               "iflet" "whenlet" "whenlet"
+               "aif" "awhen" "aand"
+               ; loops
+               "each" "evtil" "for" "forlen" "loop" "repeat" "until" "while"
+               "whiler" "whilet"
+               ; coercions
+               "coerce" "int" "string" "sym"
+               ; significant higher-order functions
+               "andf" "apply" "compare" "complement" "compose" "only" "orf"
+               ; wrapper macros
+               "accum" "after" "atomic" "catch" "errsafe" "point" "thread"
+               "w/table" "w/uniq"
+               ; misc
+               "do" "do1" "get"
+               ) t)
         "\\>") 1)
       )))
   "Gaudy expressions to highlight in Arc modes.")
@@ -396,15 +409,18 @@ rigidly along with this one."
 
 ;;; Let is different in Arc
 
-(defun would-be-symbol (string)
-  (not (string-equal (substring string 0 1) "(")))
+;;; ... but not *this* different. I suspect this code is for an older version of
+;;; arc. - Michael Arntzenius <daekharel@gmail.com>, 2009-08-08
 
-(defun next-sexp-as-string ()
-  ;; Assumes that it is protected by a save-excursion
-  (forward-sexp 1)
-  (let ((the-end (point)))
-    (backward-sexp 1)
-    (buffer-substring (point) the-end)))
+;; (defun would-be-symbol (string)
+;;   (not (string-equal (substring string 0 1) "(")))
+
+;; (defun next-sexp-as-string ()
+;;   ;; Assumes that it is protected by a save-excursion
+;;   (forward-sexp 1)
+;;   (let ((the-end (point)))
+;;     (backward-sexp 1)
+;;     (buffer-substring (point) the-end)))
 
 ;; This is correct but too slow.
 ;; The one below works almost always.
@@ -413,11 +429,11 @@ rigidly along with this one."
 ;;      (arc-indent-specform 2 state indent-point)
 ;;      (arc-indent-specform 1 state indent-point)))
 
-(defun arc-let-indent (state indent-point normal-indent)
-  (skip-chars-forward " \t")
-  (if (looking-at "[-a-zA-Z0-9+*/?!@$%^&_:~]")
-      (lisp-indent-specform 2 state indent-point normal-indent)
-    (lisp-indent-specform 1 state indent-point normal-indent)))
+;; (defun arc-let-indent (state indent-point normal-indent)
+;;   (skip-chars-forward " \t")
+;;   (if (looking-at "[-a-zA-Z0-9+*/?!@$%^&_:~]")
+;;       (lisp-indent-specform 2 state indent-point normal-indent)
+;;     (lisp-indent-specform 1 state indent-point normal-indent)))
 
 ;; (put 'begin 'arc-indent-function 0), say, causes begin to be indented
 ;; like def if the first form is placed on the next line, otherwise
@@ -446,13 +462,15 @@ rigidly along with this one."
 (put 'fn 'arc-indent-function 1)
 (put 'afn 'arc-indent-function 1)
 (put 'rfn 'arc-indent-function 2)
-(put 'let 'arc-indent-function 'arc-let-indent)
+;(put 'let 'arc-indent-function 'arc-let-indent)
+(put 'let 'arc-indent-function 2)
 
 ;; By default, Emacs thinks .arc is an archive extension.
 ;; This makes it normal.
 (dolist (coding auto-coding-alist)
   (when (and (string-match "[Aa][Rr][Cc]\\\\|" (car coding))
-             (eq (cdr coding) 'no-conversion))
+             (or (eq (cdr coding) 'no-conversion)
+                 (eq (cdr coding) 'no-conversion-multibyte)))
     (setcar coding (replace-match "" nil nil (car coding)))))
 
 (provide 'arc)
