@@ -7,7 +7,6 @@ if [ -L "$0" ]; then
 fi
 
 arc_dir=$(dirname "$arc_dir")
-cd $arc_dir
 
 if [ "$(type -p rlwrap)" -a ! "$1" = "--no-rl" ]; then
   rl="rlwrap -C arc"
@@ -36,4 +35,4 @@ else
     esac
 fi
 
-$rl mzscheme $opts as.scm $@
+$rl mzscheme $opts $arc_dir/as.scm $@
