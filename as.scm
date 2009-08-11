@@ -13,5 +13,9 @@
   (aload "arc.arc")
   (aload "libs.arc"))
 
-(tl)
+(let ((args (vector->list (current-command-line-arguments))))
+  (if (null? args)
+    (tl)
+    ; command-line arguments are script filenames to execute
+    (for-each (lambda (f) (aload f)) args)))
 

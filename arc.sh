@@ -18,21 +18,30 @@ case "$(mzscheme --version)" in
     *) plt4=no;;
 esac
 
+if (( $# ))
+then repl='#f'
+else
+    # It seems like there ought to be a program for determining whether standard
+    # input is a tty, but I can't find one; so we use mzscheme instead.
+    if [ $plt4 = yes ]
+    then repl=$(mzscheme -e '(terminal-port? (current-input-port))')
+    else repl=$(mzscheme -mve '(display (terminal-port? (current-input-port)))')
+    fi
+fi
+
 opts="--no-init-file"
 
-# It seems like there ought to be a program for determining whether standard
-# input is a tty, but I can't find one; so we use mzscheme instead.
 if [ $plt4 = yes ]; then
-    case $(mzscheme -e '(terminal-port? (current-input-port))') in
-        '#t') # AFAICT, there is no equivalent of --mute-banner for mzscheme v4
-              opts+=" --repl --load";;
-        *) opts+=" --script";;
-    esac
+    if [ $repl = '#t' ]
+    then # AFAICT, there is no equivalent of --mute-banner for mzscheme v4
+        opts+=' --repl --load'
+    else opts+=' --script'
+    fi
 else
-    case $(mzscheme -mve '(display (terminal-port? (current-input-port)))') in
-        '#t') opts+=" --mute-banner --load";;
-        *) opts+=" --script";;
-    esac
+    if [ $repl = '#t' ]
+    then opts+=" --mute-banner --load"
+    else opts+=" --script"
+    fi
 fi
 
 $rl mzscheme $opts $arc_dir/as.scm $@
