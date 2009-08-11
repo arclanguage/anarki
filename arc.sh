@@ -15,6 +15,6 @@ fi
 
 case "$(mzscheme --version)" in
   *v4.*) # AFAICT, there is no equivalent of --mute-banner for mzscheme v4
-         $rl mzscheme -i --no-init-file --load as.scm;;
+         $rl mzscheme --repl --no-init-file --load as.scm;;
   *) $rl mzscheme --no-init-file --mute-banner --load as.scm;;
 esac
