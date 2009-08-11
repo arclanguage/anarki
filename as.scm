@@ -9,8 +9,13 @@
 (require "brackets.scm")
 (use-bracket-readtable)
 
-(aload "arc.arc")
-(aload "libs.arc") 
+(parameterize ((current-directory (current-load-relative-directory)))
+  (aload "arc.arc")
+  (aload "libs.arc"))
 
-(tl)
+(let ((args (vector->list (current-command-line-arguments))))
+  (if (null? args)
+    (tl)
+    ; command-line arguments are script filenames to execute
+    (for-each (lambda (f) (aload f)) args)))
 
