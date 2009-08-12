@@ -507,6 +507,11 @@
 
 (define (ac-denil x)
   (cond ((pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x))))
+        ((hash-table? x) 
+         (let ((xc (make-hash-table 'equal)))
+           (hash-table-for-each x
+             (lambda (k v) (hash-table-put! xc (ac-denil k) (ac-denil v))))
+           xc))
         (#t x)))
 
 (define (ac-denil-car x)
