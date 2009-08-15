@@ -177,6 +177,12 @@
             (do ,@body (,loop-name ,@(map1 [_ 2] parms)))))
          ,@(map1 [_ 1] parms)))))
 
+(mac w/stdoutfile (name . body)
+  (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
+
+(mac w/stdinfile (name . body)
+  (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
+
 
 ; binding forms
 
