@@ -37,7 +37,7 @@
   " Creates a list from the given parameters.
     See also [[cons]] [[acons]] [[copylist]] "
 
-  idfn " Returns `x'; the identify function. "
+  idfn " Returns `x'; the identity function. "
 
   map1
   " Return a sequence with function f applied to every element in sequence xs.
