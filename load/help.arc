@@ -41,15 +41,18 @@
 (def helpstr (name (o verbose t))
   " Returns a help string for the symbol `name'. "
   (tostring
-    (iflet doc help*.name
-      (let kind (string:type:errsafe:eval name)
-        (when verbose ((only [prn "(from \"" _ "\")"]) source-file*.name))
+    (withs (value (errsafe:eval name)
+            kind  (type value)
+            doc   (help* name))
+      (when (or value doc)
         (pr "[" kind "]")
-        (apply pr (n-of (- 4 len.kind) " "))
-        (prn (aif sig.name (cons name it) name))
-        (when verbose (prn doc)))
-      (when verbose
-        (prn name " is not documented.")))))
+        (apply pr (n-of (- 4 (len:string kind)) " "))
+        (write (aif sig.name (cons name it)
+                    (in kind 'fn 'mac) (list name)
+                    name))
+        (prn)
+        (when verbose
+          (prn (or doc (string name " is not documented."))))))))
 
 (def fns ((o test))
   " Print sigs for macros & functions whose names (as symbols) match `test'.
