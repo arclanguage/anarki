@@ -30,7 +30,7 @@ opts="--no-init-file"
 if [ $plt4 = yes ]; then
     if [ $repl = '#t' ]
     then # AFAICT, there is no equivalent of --mute-banner for mzscheme v4
-        opts+=' --repl --load'
+        opts+=' -qr'
     else opts+=' --script'
     fi
 else
