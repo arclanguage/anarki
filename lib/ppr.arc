@@ -61,8 +61,9 @@
               (do pr.str
                   (sp:- l len.str -1)
                   (ppr cadr.x (+ col 1 l) t))
-              (do (sp (+ l 1)) ;offending expression
-                  pr.str))))))
+              ; lone tail expression
+              (do (sp (+ l 1))
+                  (ppr car.x (+ col (+ l 1)) t)))))))
 
 (def indent-block (xs (o col 0))
   (each x xs (prn) (ppr x col)))
