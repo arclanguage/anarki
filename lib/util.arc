@@ -155,7 +155,7 @@
   `(do ,@(map [list 'assert _] args)))
 
 (mac switchlet (var expr . cases)
-  " Like caselet, except it (lazily) evals the expressions compared against.
+  " Like 'caselet, except it (lazily) evals the expressions compared against.
     See also [[switch]] [[caselet]] [[case]]"
   `(let ,var ,expr
      ,((afn (args)
@@ -164,7 +164,7 @@
               ,(self cddr.args)))) cases)))
 
 (mac switch (expr . cases)
-  " switch is to switchlet as case is to caselet.
+  " 'switch is to 'switchlet as 'case is to 'caselet.
     See also [[switchlet]] [[case]] [[caselet]]"
   `(switchlet ,(uniq) ,exp ,@cases))
 
@@ -179,9 +179,13 @@
          ,@(map1 [_ 1] parms)))))
 
 (mac w/stdoutfile (name . body)
+  " Redirects stdout to the file `name' within `body'. 
+    See also [[w/stdinfile]] [[w/outfile]] [[w/stdout]] "
   (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
 
 (mac w/stdinfile (name . body)
+  " Redirects standard input from the file `name' within `body'.
+    See also [[w/stdoutfile]] [[w/infile]] [[w/stdin]] "
   (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
 
 
