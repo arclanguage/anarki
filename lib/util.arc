@@ -145,7 +145,8 @@
 
 ; now that pg has renamed 'assert to 'set, we're free to use it in its more
 ; conventional sense
-(mac assert (exp (o msg (tostring:pr "Assertion failed: " exp)))
+(mac assert (exp (o msg (+ "Assertion failed: " 
+                           (tostring:ppr exp (len "Assertion failed: ") t))))
   " Errors with `msg' if `exp' evaluates to nil. "
   `(unless ,exp (err ,msg)))
 
