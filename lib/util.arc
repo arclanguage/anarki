@@ -6,6 +6,7 @@
 ; Persons we've shamelessly ripped off:
 ; - Conan Dalton <conan@conandalton.net>
 ; - absz (http://arclanguage.org/user?id=absz)
+; - fallintothis (http://arclanguage.org/user?id=fallintothis)
 
 ; License: Do what you want, but it's not my fault!
 ; This license applies to all code in this file UNLESS OTHERWISE NOTED.
@@ -250,6 +251,22 @@
 
 
 ; ripoffs - licenses unknown
+
+; once-only by fallintothis
+; http://arclanguage.org/item?id=9939
+; CHANGED 2009-08-20:
+;   + take advantage of 'uniqs, 'with/p, 'zip
+;   + wrap 'names in a list if it's an atom
+;   + alter indentation slightly
+;  - Michael Arntzenius
+
+(mac once-only (names . body)
+  (withs (names (check names alist list.names)
+          gensyms (uniqs names))
+    `(w/uniq ,gensyms
+       `(with ,(list ,@(mappend list gensyms names))
+          ,(with/p ,(zip names gensyms)
+             ,@body)))))
 
 ; afnwith by Conan Dalton
 ; http://arclanguage.org/item?id=10055
