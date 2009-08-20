@@ -29,7 +29,10 @@ opts="--no-init-file"
 
 if [ $plt4 = yes ]; then
     if [ $repl = '#t' ]
-    then # AFAICT, there is no equivalent of --mute-banner for mzscheme v4
+    then
+        # AFAICT, there is no equivalent of --mute-banner for mzscheme v4.
+        # Please do NOT add -r/--script here, this removes the ability to access
+        # the Scheme REPL. See http://arclanguage.org/item?id=10356.
         opts="$opts --repl --load"
     else opts="$opts --script"
     fi
