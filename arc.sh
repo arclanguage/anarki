@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 arc_dir=$(dirname "$(readlink -f "$0")")
 
@@ -14,7 +14,7 @@ case "$(mzscheme --version)" in
     *) plt4=no;;
 esac
 
-if (( $# ))
+if [ $# -gt 0 ]
 then repl='#f'
 else
     # It seems like there ought to be a program for determining whether standard
@@ -30,13 +30,13 @@ opts="--no-init-file"
 if [ $plt4 = yes ]; then
     if [ $repl = '#t' ]
     then # AFAICT, there is no equivalent of --mute-banner for mzscheme v4
-        opts+=' --repl --load'
-    else opts+=' --script'
+        opts="$opts --repl --load"
+    else opts="$opts --script"
     fi
 else
     if [ $repl = '#t' ]
-    then opts+=" --mute-banner --load"
-    else opts+=" --script"
+    then opts="$opts --mute-banner --load"
+    else opts="$opts --script"
     fi
 fi
 
