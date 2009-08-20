@@ -30,7 +30,7 @@
   " Returns a list of gensyms, one for each element of `lst'. Elements
     of `lst' that are symbols are used as the base names for their
     corresponding gensyms.
-    See also: [[uniq]] "
+    See also [[uniq]] "
   (map1 (iff asym uniq [uniq]) lst))
 
 ; type checkers
@@ -59,12 +59,12 @@
 
 (def join/d ls
   " Destructive join.
-    See also [[join]]."
+    See also [[join]]"
   (foldr (afn (a b) (if b (aif foot.a (do (scdr it b) a) b) a)) nil ls))
 
 (def partition (test seq)
-  " Equivalent to but more efficient than (list (keep test seq) (rem test seq)).
-    See also [[keep]] [[rem]] "
+  " Equivalent to but more efficient than
+   `(list (keep test seq) (rem test seq))'. See also [[keep]] [[rem]] "
   (let (passed failed) nil
     (each e seq
       (if test.e
@@ -115,7 +115,7 @@
       arc> ((iff < (fn (x y) x) (fn (x y) y)) 1 2)
       1
 
-    See also: [[andf]] [[orf]] [[check]] [[idfn]] "
+    See also [[andf]] [[orf]] [[check]] [[idfn]] "
   (case len.funs
     0 idfn
     1 funs.0
@@ -129,17 +129,17 @@
 
 (mac mapeach (var lst . body)
   " Maps `(fn (,var) ,@body)' over `lst'.
-    See also: [[each]] [[map]] [[mappendeach]] "
+    See also [[each]] [[map]] [[mappendeach]] "
   `(map (fn (,var) ,@body) ,lst))
 
 (mac mappendeach (var lst . body)
   " As 'mapeach, but using 'mappend instead of 'map.
-    See also: [[mapeach]] [[mappend]] [[each]] "
+    See also [[mapeach]] [[mappend]] [[each]] "
   `(mappend (fn (,var) ,@body) ,lst))
 
 (mac ado body
   " Anaphoric do. 
-    See also: [[aif]] [[awhen]] [[aand]] "
+    See also [[aif]] [[awhen]] [[aand]] "
   (aif cdr.body `(let it ,car.body (ado ,@it))
        car.body))
 
@@ -202,20 +202,20 @@
 ; a 'with that works for defining recursive fns
 (mac withr/p (bindings . body)
   " Scheme's 'letrec. 
-    See also: [[withr]] "
+    See also [[withr]] "
   `(let ,(map1 car bindings) nil
      ,@(map [cons 'assign _] bindings)
      ,@body))
 
 (mac withr (bindings . body)
   " Scheme's 'letrec, with the redundant inner parens removed. 
-    See also: [[withf]] [[letf]] [[withr/p]] "
+    See also [[withf]] [[letf]] [[withr/p]] "
   `(withr/p ,pair.bindings ,@body))
 
 ; mutually recursive local fns
 (mac withf/p (fns . body)
   " Like 'withf, only with extra parens, as in 'with/p compared to 'with.
-    See also: [[withf]] [[with/p]] [[withr]] [[withr/p]] "
+    See also [[withf]] [[with/p]] [[withr]] [[withr/p]] "
   `(withr/p ,(mapeach (name . rest) fns `(,name (fn ,@rest)))
      ,@body))
 
@@ -230,7 +230,7 @@
              (keep is-odd (range 0 5)))
       (1 3 5)
 
-    See also: [[letf]] [[withr]] "
+    See also [[letf]] [[withr]] "
   `(withf/p ,(tuples fns 3) ,@body))
 
 (mac letf (name args expr . body)
@@ -241,7 +241,7 @@
              (last '(x y z)))
       z
 
-    See also: [[withf]] [[withr]] "
+    See also [[withf]] [[withr]] "
   `(withf (,name ,args ,expr) ,@body))
 
 
@@ -264,7 +264,7 @@
       ((rfn sum (x) (iflet (a . r) x (+ a (sum r)) 0))
        (range 1 3))
 
-    See also: [[afnwith]] [[w/rfn]] [[rfn]] "
+    See also [[afnwith]] [[w/rfn]] [[rfn]] "
   (let w (pair withses)
     `((rfn ,name ,(map car w) ,@body) ,@(map cadr w))))
 
@@ -277,7 +277,7 @@
              (iflet (a . r) x (+ a (self r)) 0))
       6
 
-    See also: [[rfnwith]] [[w/afn]] [[afn]] "
+    See also [[rfnwith]] [[w/afn]] [[afn]] "
   `(rfnwith self ,withses ,@body))
 
 ; ripoff: w/afn, by absz
@@ -298,7 +298,7 @@
       ((rfn sum (x) (iflet (a . r) x (+ a (sum r)) 0))
        x)
 
-    See also: [[w/afn]] [[rfnwith]] [[rfn]] "
+    See also [[w/afn]] [[rfnwith]] [[rfn]] "
   `(rfnwith ,name ,(mappend [list _ _] withses) ,@body))
 
 (mac w/afn (withses . body)
@@ -315,7 +315,7 @@
       ((afn (x) (iflet (a . r) x (+ a (sum r)) 0))
        x)
 
-    See also: [[w/rfn]] [[afnwith]] [[afn]] "
+    See also [[w/rfn]] [[afnwith]] [[afn]] "
   `(w/rfn self ,withses ,@body))
 
 ; end ripoffs

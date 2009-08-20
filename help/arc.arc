@@ -715,18 +715,18 @@
     See also [[round]] [[roundup]] "
 
   avg
-  " Averages all numbers in `ns'.  See also: [[med]] "
+  " Averages all numbers in `ns'.  See also [[med]] "
 
   med
   " Computes the median of `ns' according to the comparison `test'.
-    See also: [[avg]] "
+    See also [[avg]] "
 
-  sort " Sorts `seq' according to `test'.  See also: [[mergesort]] "
+  sort " Sorts `seq' according to `test'.  See also [[mergesort]] "
 
   mergesort
-  " Sorts a list `lst' according to `less?'.  See also: [[merge]] [[sort]] "
+  " Sorts a list `lst' according to `less?'.  See also [[merge]] [[sort]] "
 
-  merge " Merges two sorted lists by `less?'.  See also: [[mergesort]] "
+  merge " Merges two sorted lists by `less?'.  See also [[mergesort]] "
 
   bestn
   " Returns a list of the best `n' elements of seq according to
@@ -740,16 +740,16 @@
 
   time
   " Prints the time consumed by evaluating `expr', returning the result.
-    See also: [[jtime]] [[time10]] "
+    See also [[jtime]] [[time10]] "
 
   jtime
   " Prints the time consumed by `expr', returning `ok' when the
     expression completes.
-    See also: [[time]] [[time10]] "
+    See also [[time]] [[time10]] "
 
   time10
   " Prints the time consumed by executing `expr' 10 times.
-    See also: [[time]] [[jtime]] "
+    See also [[time]] [[jtime]] "
 
   deftem
   " Defines an object template for field values, with inclusion for
@@ -825,12 +825,12 @@
   orf
   " Creates a function which returns true on its argument if any of the
     given `fns' return true on that argument.
-    See also: [[andf]] "
+    See also [[andf]] "
 
   andf
   " Creates a function which returns true on its argument if all of the
     given `fns' return true on that argument.
-    See also: [[orf]] "
+    See also [[orf]] "
 
   atend
   " Determines if the index `i' is at or beyond the end of the sequence `s'. "
@@ -840,7 +840,7 @@
   nor
   " Computes arguments until one of them returns true, then returns nil,
     or else returns true.
-    See also: [[and]] [[or]] "
+    See also [[and]] [[or]] "
 
   compare
   " Creates a function that compares using `comparer' the result of `scorer'
@@ -848,7 +848,7 @@
 
   conswhen
   " Adds `x' to the front of `y' if `x' passes the test `f'.
-    See also: [[consif]] [[adjoin]] "
+    See also [[consif]] [[adjoin]] "
 
   retrieve
   " Returns the first `n' elements of `xs' which pass `f'.
