@@ -804,6 +804,7 @@
         ((tcp-listener? x)  'socket)
         ((exn? x)           'exception)
         ((thread? x)        'thread)
+        ((thread-cell? x)   'thread-cell)
         (#t                 (err "Type: unknown type" x))))
 (xdef type ar-type)
 
