@@ -621,7 +621,9 @@
     See also [[map]] [[reduce]] [[summing]] "
 
   treewise
-  " Traverses a list as a binary tree.
+  " Folds across `tree' as a binary tree, calling `base' on atoms (leafs) and
+    calling `f' on the results of recursion across the car and the cdr of conses
+    (internal nodes).
     See also [[trav]] [[tree-subst]] [[ontree]] "
 
   carif
@@ -642,8 +644,8 @@
     See also [[treewise]] [[trav]] "
 
   ontree
-  " Applies a function across each node of a list with that list treated
-    as a binary tree.
+  " Applies `f' (for side effects) to each node of the binary tree `tree'.
+    A binary tree is eiher an atom or a cons of two binary trees.
     See also [[treewise]] [[trav]] "
 
   dotted
@@ -951,10 +953,10 @@
     thread ID for that thread. "
 
   trav
-  " Traverses an object `x'; the object is applied to each function
-    in `fs', and sub-nodes of the object may be traversed by
-    (self <node>) in any of the functions.
-    See also [[trav+]] [[treewise]] [[ontree]] "
+  " Traverses an object `x'; each function in `fs' is applied to it, and
+    sub-nodes of the object may be traversed by (self <node>) in any of the
+    functions.
+    See also [[treewise]] [[ontree]] "
 
   get
   " Returns a fn that calls it argument on `index'. "
