@@ -99,6 +99,12 @@
 (def tfn _ " Ignores its arguments and returns t. " t)
 (def nilfn _ " Ignores its arguments and returns nil. " nil)
 
+(def norf fns
+  " Creates a function which returns `t' iff none of `fns' return `t'
+    on its arguments.
+    See also [[orf]] [[andf]] [[nor]] "
+  (complement (apply orf fns)))
+
 (def iff funs
   " Put simply: iff is to if as andf is to and. Specifically: 
 
