@@ -25,7 +25,12 @@
 
 ; miscellaneous
 
-(def bool (x) (if x t))
+(def fst (a . _) " Returns its first argument. See also [[snd]] " a)
+(def snd (a b . _) " Returns its second argument. See also [[fst]] " b)
+
+(def bool (x)
+  " Returns `t' if x is not nil, and `nil' otherwise. "
+  (if x t))
 
 (def uniqs (lst)
   " Returns a list of gensyms, one for each element of `lst'. Elements
@@ -82,6 +87,11 @@
 
 
 ; combinators
+
+(def applied (f)
+  " Returns a fn that calls `f' on the list of its arguments.
+    For example, 'max is equivalent to `(applied [best > _])'. "
+  (fn a (f a)))
 
 (def flip (f)
   " Flips the order of the first two arguments of `f'.
