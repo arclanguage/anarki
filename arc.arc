@@ -501,20 +501,36 @@
 
 ; could bind index instead of gensym
 
+(def walk (seq func)
+  (if alist.seq
+        ((afn (l)
+           (when (acons l)
+             (func (car l))
+             (self (cdr l)))) seq)
+      (isa seq 'table)
+        (maptable (fn (k v) (func (list k v))) seq)
+      ; else
+        (for i 0 (- (len seq) 1)
+          (func (seq i)))))
+
 (mac each (var expr . body)
-  (w/uniq (gseq gf gv)
-    `(let ,gseq ,expr
-       (if (alist ,gseq)
-            ((rfn ,gf (,gv)
-               (when (acons ,gv)
-                 (let ,var (car ,gv) ,@body)
-                 (,gf (cdr ,gv))))
-             ,gseq)
-           (isa ,gseq 'table)
-            (maptable (fn ,var ,@body)
-                      ,gseq)
-            (for ,gv 0 (- (len ,gseq) 1)
-              (let ,var (,gseq ,gv) ,@body))))))
+  `(walk ,expr (fn (,var) ,@body)))
+
+; ; old definition of 'each. possibly faster, but not extendable.
+; (mac each (var expr . body)
+;   (w/uniq (gseq gf gv)
+;     `(let ,gseq ,expr
+;        (if (alist ,gseq)
+;             ((rfn ,gf (,gv)
+;                (when (acons ,gv)
+;                  (let ,var (car ,gv) ,@body)
+;                  (,gf (cdr ,gv))))
+;              ,gseq)
+;            (isa ,gseq 'table)
+;             (maptable (fn ,var ,@body)
+;                       ,gseq)
+;             (for ,gv 0 (- (len ,gseq) 1)
+;               (let ,var (,gseq ,gv) ,@body))))))
 
 ; (nthcdr x y) = (cut y x).
 

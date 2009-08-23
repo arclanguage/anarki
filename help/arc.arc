@@ -250,10 +250,14 @@
   " Repeats the `body' `n' times.
     See also [[for]] [[forlen]] [[n-of]] "
 
+  walk
+  " Calls `func' on each element of `seq' for side-effects.
+    See also [[map]] [[each]] "
+
   each
   " Performs `body' for each element of the sequence returned by `expr',
     with each element assigned to `var'.
-    See also [[forlen]] [[on]] [[map]] [[ontable]] "
+    See also [[walk]] [[forlen]] [[on]] [[map]] [[ontable]] "
 
   cut
   " Returns a subsequence of the given `seq'. If `end' is negative,
