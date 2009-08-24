@@ -5,10 +5,6 @@ Code should go here only if it is either:
 
 1. An important language extension (eg 'make-br-fn), especially one which a
    library writer would find obnoxious or undesirable to have to 'load manually.
-   For example, having to load a file to use 'require ("load this file unless it
-   has already been loaded") would more or less defeat the purpose.
-   
-   (on that note, TODO: implement 'require.)
 
 2. Features important for, and preferably specific to, the REPL. For example, an
    interactive help subsystem.
