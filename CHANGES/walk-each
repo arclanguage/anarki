@@ -1,0 +1,28 @@
+In vanilla arc, 'each is a macro that expands to code that determines how to
+traverse a data structure. This is redundant, and violates the principle of
+never using a macro where a function will do; a higher-order fn that took a data
+structure and a traversal fn could do the same and would be more generic.
+Moreover, such a function could be extended via redefinition to allow new data
+structures to be traversed. However, even given such a function, 'each would
+still be useful as a convenience macro, to avoid unnecessary use of 'fn.
+
+This hack refactors 'each into a higher-order fn 'walk, which takes an object to
+traverse and a function to apply to each part of it, and a simplified 'each
+macro that just wraps 'walk. Example:
+
+    arc> (walk '(1 2 3) prn)
+    1
+    2
+    3
+    nil
+    arc> (let old walk
+           (def walk (x f)
+             (old (if (and (isa x 'int) (>= x 0)) (range 1 x) x)
+                  f)))
+    *** redefining walk
+    #<procedure: walk>
+    arc> (walk 3 prn)
+    1
+    2
+    3
+    nil
