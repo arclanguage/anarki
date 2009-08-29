@@ -21,19 +21,20 @@
   " `func' is called with a fn `yield' to produce a fn `inner'. 'cowrap returns
     a fn `wrapped' that, when called with input, gives it to `inner', then
     returns what `inner' subsequently calls `yield' with. If `inner' does not
-    call `yield', `wrapped' returns the result of calling `end' (without
-    arguments) instead.
+    call `yield', `wrapped' returns the result of calling `end' on the input
+    instead.
     See also [[yielder]] [[ccc]] "
-  (let (enter exit) nil
+  (let (enter exit done) nil
     (withs (yield (yielder (fn (k) (assign enter k))
                            (fn args (apply exit args)))
             outer (yielder (fn (k) (assign exit k))
-                           (fn args
-                             (apply enter args)
+                           (fn input
+                             (assign done (fn () (apply end input)))
+                             (apply enter input)
                              ; inner did not call yield.
-                             ; can't use compose because value of 'exit changes.
-                             (apply (= enter (fn a (exit (apply end a))))
-                                    args))))
+                             ; can't just use compose without wrapping in fn
+                             ; because values of 'exit and 'done can change.
+                             ((= enter (fn _ (exit:done)))))))
       (= enter (func yield))
       outer)))
 
