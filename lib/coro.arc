@@ -1,4 +1,5 @@
 (require "lib/util.arc")
+(require "lib/extend.arc")
 
 ; simpler than point and robust against changes in it, given that 'point
 ; indicates that the form it produces must only be used as an escape procedure.
@@ -69,3 +70,52 @@
     See also [[yfn]] [[yfngen]] [[cowrap]] "
   `(def ,name ,args
      (yfn () ,@body)))
+
+
+; generators - coroutines which take no input and can be iterated over
+(def genwrap (func (o default-sym))
+  " Returns a generator `gen'. When called, `gen' calls `func' with a `yield' fn
+    and returns whatever `func' calls `yield' with. Successive calls continue
+    `func' and return the results of `func''s successive calls to `yield'. `gen'
+    may also be passed an argument; if `func' terminates, this argument is
+    returned instead of nil.
+
+    Generators can be iterated over with 'walk and 'each.
+
+    See also [[cowrap]] [[cofngen]] "
+  (annotate 'generator
+            (cowrap (fn (yield) (fn _ (func yield)))
+                    (fn ((o endsym default-sym)) endsym))))
+
+(set-coercer 'fn 'generator rep)
+
+(extend walk generator
+  (fn (seq . _) (isa seq 'generator))
+  (fn (gtor func) (w/uniq done
+                    (afnwith ()
+                      (let x (gtor done)
+                        (unless (is x done)
+                          (func x)
+                          (self)))))))
+
+(mac ngen (name . body)
+  " Creates a generator executing `body' which uses `name' to yield.
+    See also [[gen]] [[genwrap]] "
+  `(genwrap (fn (,name) ,@body)))
+
+(mac gen body
+  " Creates a generator executing `body' which uses 'yield to yield.
+    See also [[ngen]] [[genwrap]]"
+  `(ngen yield ,@body))
+
+(mac defgen (name args . body)
+  " Defines a function `name' which returns a generator executing `body' that
+    uses 'yield to yield.
+    See also [[gen]] [[genwrap]] [[coro]] "
+  `(def ,name ,args
+     (gen ,@body)))
+
+(defgen genwalk (l)
+  " Turns anything that can be `walk'ed into a generator.
+    See also [[walk]] [[gen]] [[genwrap]] "
+  (walk l yield))
