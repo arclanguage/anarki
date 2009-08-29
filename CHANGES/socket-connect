@@ -1,0 +1,22 @@
+From http://arclanguage.org/item?id=10123:
+
+Vanilla arc3 has the 'open-socket and 'socket-accept functions for receiving
+connections. This hack defines 'socket-connect to establish outgoing
+connections:
+
+    (socket-connect host port) => (in-stream out-stream)
+
+Also, 'flushout is extended to deal with ports other than (stdout). This is not
+strictly necessary, but useful if you're sending data with 'writec or 'writeb.
+
+    (flushout (o out-stream (stdout)))
+
+Usage example:
+
+    (let (in out) (socket-connect "www.google.com" 80)
+      (w/stdout out
+        (prn "GET /index.html HTTP/1.0")
+        (prn "Host: www.google.com")
+        (prn))
+      (while (prn:readline in))
+      (close in out))
