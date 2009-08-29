@@ -1,0 +1,12 @@
+A 'require form has been added to libs.arc. 'require takes a filename and loads
+it if and only if it has not been required before. 'require, like load,
+interprets paths relative to the current directory.
+
+Currently you can fool 'require by giving it a different name for the same file
+(giving an absolute versus relative path, or prefixing with "./"). This is
+considered a bug and may be fixed in future. Another possible future feature is
+reloading a file if it has changed (as determined by its mtime, probably) since
+it was last required.
+
+'require was added to libs.arc rather than being in load/ so that autoloaded
+files can use it for load-ordering; see CHANGES/autoload.
