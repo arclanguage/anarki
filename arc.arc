@@ -710,7 +710,7 @@
 
 (def prn args
   (do1 (apply pr args)
-       (writec #\newline)))
+       (pr #\newline))) ; writec doesn't implicitly flush
 
 (mac wipe args
   `(do ,@(map (fn (a) `(= ,a nil)) args)))

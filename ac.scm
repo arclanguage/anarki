@@ -964,23 +964,36 @@
 
 (xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
 
+(define (ar-init-socket init-fn . args)
+  (let ((oc (current-custodian))
+        (nc (make-custodian)))
+    (current-custodian nc)
+    (apply
+      (lambda (in out . tail)
+        (current-custodian oc)
+        (associate-custodian nc in out)
+        (list* in out tail))
+      (call-with-values
+        init-fn
+        (if (pair? args)
+            (car args)
+            list)))))
+
 ; the 2050 means http requests currently capped at 2 meg
 ; http://list.cs.brown.edu/pipermail/plt-scheme/2005-August/009414.html
 
 (xdef socket-accept (lambda (s)
-                      (let ((oc (current-custodian))
-                            (nc (make-custodian)))
-                        (current-custodian nc)
-                        (call-with-values
-                         (lambda () (tcp-accept s))
-                         (lambda (in out)
-                           (let ((in1 (make-limited-input-port in 100000 #t)))
-                             (current-custodian oc)
-                             (associate-custodian nc in1 out)
-                             (list in1
-                                   out
-                                   (let-values (((us them) (tcp-addresses out)))
-                                               them))))))))
+                      (ar-init-socket
+                        (lambda () (tcp-accept s))
+                        (lambda (in out)
+                          (list (make-limited-input-port in 100000 #t)
+                                out
+                                (let-values (((us them) (tcp-addresses out)))
+                                  them))))))
+
+(xdef socket-connect (lambda (host port)
+                       (ar-init-socket
+                         (lambda () (tcp-connect host port)))))
 
 ; allow Arc to give up root privileges after it
 ; calls open-socket. thanks, Eli!
@@ -1330,7 +1343,10 @@
 ; Added because Mzscheme buffers output.  Not a permanent part of Arc.
 ; Only need to use when declare explicit-flush optimization.
 
-(xdef flushout (lambda () (flush-output) 't))
+(xdef flushout (lambda args (flush-output (if (pair? args)
+                                              (car args)
+                                              (current-output-port)))
+                            't))
 
 (xdef ssyntax (lambda (x) (tnil (ssyntax? x))))
 
