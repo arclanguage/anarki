@@ -356,3 +356,12 @@
   `(w/rfn self ,withses ,@body))
 
 ; end ripoffs
+
+(def butlast (x) 
+  (cut x 0 (- (len x) 1)))
+
+(def joinstr (lst (o glue " ")) 
+  (let lst (keep [len> _ 0] lst)
+    (if lst 
+  (apply + (intersperse (string glue) lst))
+  "")))

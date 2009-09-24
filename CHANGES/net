@@ -1,0 +1,2 @@
+(get-url "http://google.com")
+(post-url "http://google.com" '("foo" "bar"))
