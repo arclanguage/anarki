@@ -1428,6 +1428,12 @@
 (xdef atan atan)
 (xdef log log)
 
+(xdef lor bitwise-ior)
+(xdef land bitwise-and)
+(xdef lxor bitwise-xor)
+(xdef lnot bitwise-not)
+(xdef shl arithmetic-shift)
+
 (define (codestring s)
   (let ((i (atpos s 0)))
     (if i

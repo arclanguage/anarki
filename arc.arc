@@ -1177,6 +1177,9 @@
          (pair args))
     x2))
 
+(def shr (n m)
+  (shl n (- m)))
+
 (def abs (n)
   (if (< n 0) (- n) n))
 
