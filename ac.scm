@@ -37,10 +37,8 @@
         ((pair? s) (ac-call (car s) (cdr s) env))
         (#t (err "Bad object in expression" s))))
 
-(define atstrings #f)
-
 (define (ac-string s env)
-  (if atstrings
+  (if (ar-bflag 'atstrings)
       (if (atpos s 0)
           (ac (cons 'string (map (lambda (x)
                                    (if (string? x)
@@ -452,15 +450,13 @@
 ;   and it's bound to a function, generate (foo bar) instead of
 ;   (ar-funcall1 foo bar)
 
-(define direct-calls #f)
-
 (define (ac-call fn args env)
   (let ((macfn (ac-macro? fn)))
     (cond (macfn
            (ac-mac-call macfn args env))
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
-          ((and direct-calls (symbol? fn) (not (lex? fn env)) (bound? fn)
+          ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
                 (procedure? (namespace-variable-value (ac-global-name fn))))
            (ac-global-call fn args env))
           (#t
@@ -880,15 +876,14 @@
                                 (current-output-port)))
                 b))
 
-(define explicit-flush #f)
-
 (define (printwith f args)
   (let ((port (if (> (length args) 1)
                   (cadr args)
                   (current-output-port))))
     (when (pair? args)
       (f (ac-denil (car args)) port))
-    (unless explicit-flush (flush-output port)))
+    (unless (ar-bflag 'explicit-flush)
+      (flush-output port)))
   'nil)
 
 (xdef write (lambda args (printwith write   args)))
@@ -1404,13 +1399,12 @@
 
 (xdef memory current-memory-use)
 
-(xdef declare (lambda (key val)
-                (let ((flag (not (ar-false? val))))
-                  (case key
-                    ((atstrings)      (set! atstrings      flag))
-                    ((direct-calls)   (set! direct-calls   flag))
-                    ((explicit-flush) (set! explicit-flush flag)))
-                  val)))
+(define ar-declarations (make-hash-table))
+
+(define (ar-bflag key)
+  (not (ar-false? (hash-table-get ar-declarations key 'nil))))
+
+(xdef declarations* ar-declarations)
 
 (putenv "TZ" ":GMT")
 

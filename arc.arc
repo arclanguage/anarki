@@ -357,7 +357,6 @@
 (mac atwiths args
   `(atomic (withs ,@args)))
 
-
 ; setforms returns (vars get set) for a place based on car of an expr
 ;  vars is a list of gensyms alternating with expressions whose vals they
 ;   should be bound to, suitable for use as first arg to withs
@@ -816,6 +815,34 @@
 
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
+
+(def mklist (xs)
+  (check xs alist (list xs)))
+
+(= declare-fns* (table))
+
+(defs decl-idfn (old new args) new
+      decl-bool (old new args) (no:no new))
+
+(def declaration (key (o setfn decl-idfn) (o default))
+  (= declare-fns*.key  setfn
+     declarations*.key default))
+
+(def declare (key val)
+  (let (k . args) (mklist key)
+    (iflet f declare-fns*.k
+           (zap f declarations*.k val args)
+           (declerr key))))
+
+(def decl (key)
+  (if declare-fns*.key
+      declarations*.key
+      (declerr key)))
+
+(= declerr [err "Unknown declaration: " _])
+
+(map [declaration _ decl-bool]
+     '(atstrings direct-calls explicit-flush))
 
 (let expander 
      (fn (f var name body)
