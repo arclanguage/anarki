@@ -816,9 +816,6 @@
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
 
-(def mklist (xs)
-  (check xs alist (list xs)))
-
 (= declare-fns* (table))
 
 (defs decl-idfn (old new args) new
@@ -828,16 +825,18 @@
   (= declare-fns*.key  setfn
      declarations*.key default))
 
-(def declare (key val)
-  (let (k . args) (mklist key)
-    (iflet f declare-fns*.k
-           (zap f declarations*.k val args)
-           (declerr key))))
+(let mklist (fn (x)
+              (check x alist list.x))
+  (def declare (key val)
+    (let (k . args) mklist.key
+      (iflet f declare-fns*.k
+             (zap f declarations*.k val args)
+             declerr.key))))
 
 (def decl (key)
   (if declare-fns*.key
       declarations*.key
-      (declerr key)))
+      declerr.key))
 
 (= declerr [err "Unknown declaration: " _])
 
