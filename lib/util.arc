@@ -84,6 +84,9 @@
     of the shortest list in `ls'; extra elements in other lists are discarded. "
   (apply map list ls))
 
+(def mklist (x)
+  " Wraps atoms in a list; does nothing if `x' is already a list."
+  (check x alist list.x))
 
 
 ; combinators
@@ -336,7 +339,7 @@
        x)
 
     See also [[w/afn]] [[rfnwith]] [[rfn]] "
-  `(rfnwith ,name ,(mappend [list _ _] withses) ,@body))
+  `(rfnwith ,name ,(mappend [list _ _] mklist.withses) ,@body))
 
 (mac w/afn (withses . body)
   " Convenient wrapper for applying an afn using the preexisting variables
