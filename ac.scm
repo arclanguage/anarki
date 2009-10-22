@@ -929,8 +929,8 @@
    (sym     (string ,string->symbol)
             (char   ,(lambda (c) (string->symbol (string c)))))
 
-   (int     (char   ,char->ascii)
-            (num    ,iround)
+   (int     (char   ,(lambda (c . args) (char->ascii c)))
+            (num    ,(lambda (x . args) (iround x)))
             (string ,(lambda (x . args)
                        (let ((n (apply string->number x args)))
                          (if n (iround n)
