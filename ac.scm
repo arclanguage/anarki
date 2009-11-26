@@ -1478,8 +1478,8 @@
 ;; XXX: better place to include scm libs
 ;; To use: export PLTCOLLECTS=<default $PLTCOLLECTS>:<arc location>
 ;; XXX: better way to add to collects list
-(require (lib "lib/packrat"))
-(require (lib "lib/json"))
-(xdef json-read json-read)
+;(require (lib "lib/packrat"))
+;(require (lib "lib/json"))
+;(xdef json-read json-read)
 
 )
