@@ -1472,14 +1472,4 @@
                                      (cons (car cs) (unesc (cdr cs))))))))
                   (unesc (string->list s)))))
 
-;; JSON Parser from
-;; http://www.lshift.net/blog/2005/08/22/json-for-mzscheme-and-a-portable-packrat-parsing-combinator-library
-;; Over 20x faster than Andrew Wilcox's pure-arc version (http://awwx.ws/fromjson)
-;; XXX: better place to include scm libs
-;; To use: export PLTCOLLECTS=<default $PLTCOLLECTS>:<arc location>
-;; XXX: better way to add to collects list
-;(require (lib "lib/packrat"))
-;(require (lib "lib/json"))
-;(xdef json-read json-read)
-
 )

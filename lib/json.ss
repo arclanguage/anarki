@@ -1,3 +1,10 @@
+;; Scheme JSON parser from
+;; http://www.lshift.net/blog/2005/08/22/json-for-mzscheme-and-a-portable-packrat-parsing-combinator-library
+;; To use:
+;;  ($ (require (file "lib/json.ss")))
+;;  ($ (xdef json-read json-read))
+;; Some discussion and bugs in arc: http://arclanguage.org/item?id=10796
+
 ;; JSON implementation for Scheme
 ;; See http://www.json.org/ or http://www.crockford.com/JSON/index.html
 ;;
