@@ -1,213 +1,228 @@
 ;; Scheme JSON parser from
-;; http://www.lshift.net/blog/2005/08/22/json-for-mzscheme-and-a-portable-packrat-parsing-combinator-library
+;;   http://planet.plt-scheme.org/display.ss?package=json.plt&owner=dherman
 ;; To use:
 ;;  ($ (require (file "lib/json.ss")))
-;;  ($ (xdef json-read json-read))
-;; Some discussion and bugs in arc: http://arclanguage.org/item?id=10796
+;;  ($ (xdef json-read read-json))
+;; XXX: write-json untested in arc.
 
-;; JSON implementation for Scheme
-;; See http://www.json.org/ or http://www.crockford.com/JSON/index.html
-;;
-;; Copyright (c) 2005 Tony Garnock-Jones <tonyg@kcbbs.gen.nz>
-;; Copyright (c) 2005 LShift Ltd. <query@lshift.net>
-;; 
-;; Permission is hereby granted, free of charge, to any person
-;; obtaining a copy of this software and associated documentation
-;; files (the "Software"), to deal in the Software without
-;; restriction, including without limitation the rights to use, copy,
-;; modify, merge, publish, distribute, sublicense, and/or sell copies
-;; of the Software, and to permit persons to whom the Software is
-;; furnished to do so, subject to the following conditions:
-;; 
-;; The above copyright notice and this permission notice shall be
-;; included in all copies or substantial portions of the Software.
-;; 
-;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-;; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-;; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-;; BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-;; ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-;; SOFTWARE.
+#lang scheme/base
+(require (only-in scheme/base [read scheme:read] [write scheme:write]))
+(provide read-json write-json jsexpr->json json->jsexpr jsexpr?)
 
-;; JSON Structures are represented as vectors: #((symbol . value) (symbol . value) ...)
-;; JSON Arrays are lists
-;;
-(module json mzscheme
-  (require "packrat.ss")
+(define (write-json json [port (current-output-port)])
+  (cond
+    [(hash? json)
+     (display "{" port)
+     (for ([(key value) json]
+           [i (in-naturals)])
+       (when (> i 0)
+         (display ", " port))
+       (fprintf port "\"~a\"" key)
+       (display ": " port)
+       (write-json value port))
+     (display "}" port)]
+    [(list? json)
+     (display "[" port)
+     (for ([(value i) (in-indexed json)])
+       (when (> i 0)
+         (display ", " port))
+       (write-json value port))
+     (display "]" port)]
+    [(or (string? json) (and (number? json) (or (integer? json) (inexact? json))))
+     (scheme:write json port)]
+    [(boolean? json) (scheme:write (if json 'true 'false) port)]
+    [(null-jsexpr? json) (scheme:write 'null port)]
+    [else (error 'json "bad json value: ~v" json)]))
 
-  (provide json-read
-	   json-write
+(define (read-json [port (current-input-port)])
+  (case (peek-char port)
+    [(#\{) (read/hash port)]
+    [(#\[) (read/list port)]
+    [(#\") (read/string port)]
+    [(#\t) (read/true port)]
+    [(#\f) (read/false port)]
+    [(#\n) (read/null port)]
+    [else (read/number port)]))
 
-	   hashtable->vector
-	   vector->hashtable)
+(define (expect ch . expected)
+  (unless (memq ch expected)
+    (error 'read "expected: ~v, got: ~a" expected ch))
+  ch)
 
-  (define (hashtable->vector ht)
-    (list->vector
-     (hash-table-map ht cons)))
+(define (expect-string port expected)
+  (list->string (for/list ([ch expected])
+                  (expect (read-char port) ch))))
 
-  (define (vector->hashtable v)
-    (let ((ht (make-hash-table)))
-      (for-each (lambda (entry) (hash-table-put! ht (car entry) (cdr entry)))
-		(vector->list v))
-      ht))
+(define (skip-whitespace port)
+  (let ([ch (peek-char port)])
+    (when (char-whitespace? ch)
+      (read-char port)
+      (skip-whitespace port))))
 
-  (define (listofpairs->hashtable l)
-    (let ((ht (make-hash-table 'equal)))
-      (for-each (lambda(entry) (hash-table-put! ht (car entry) (cdr entry)))
-                l)
-      ht))
+(define (in-port-until port reader done?)
+  (make-do-sequence (lambda ()
+                      (values reader
+                              (lambda (port) port)
+                              port
+                              (lambda (port)
+                                (not (done? port)))
+                              (lambda values #t)
+                              (lambda (port . values) #t)))))
 
-  (define json-write
-    (let ()
-      (define (write-ht vec p)
-	(display "{" p)
-	(do ((need-comma #f #t)
-	     (i 0 (+ i 1)))
-	    ((= i (vector-length vec)))
-	  (if need-comma
-	      (display ", " p)
-	      (set! need-comma #t))
-	  (let* ((entry (vector-ref vec i))
-		 (k (car entry))
-		 (v (cdr entry)))
-	    (cond
-	     ((symbol? k) (write (symbol->string k) p))
-	     ((string? k) (write k p)) ;; for convenience
-	     (else (error "Invalid JSON table key in json-write" k)))
-	    (display ": " p)
-	    (write-any v p)))
-	(display "}" p))
+(define (read/hash port)
+  (expect (read-char port) #\{)
+  (skip-whitespace port)
+  (begin0 (for/hasheq ([(key value)
+                        (in-port-until port
+                                       (lambda (port)
+                                         (let ([key (read/string port)])
+                                           (unless (string? key)
+                                             (error 'read "expected: string, got: ~v" key))
+                                           (skip-whitespace port)
+                                           (expect (read-char port) #\:)
+                                           (skip-whitespace port)
+                                           (let ([value (read-json port)])
+                                             (skip-whitespace port)
+                                             (expect (peek-char port) #\, #\})
+                                             (values (string->symbol key) value))))
+                                       (lambda (port)
+                                         (eq? (peek-char port) #\})))])
+            (when (eq? (peek-char port) #\,)
+              (read-char port))
+            (skip-whitespace port)
+            (values key value))
+          (expect (read-char port) #\})))
 
-      (define (write-array a p)
-	(display "[" p)
-	(let ((need-comma #f))
-	  (for-each (lambda (v)
-		      (if need-comma
-			  (display ", " p)
-			  (set! need-comma #t))
-		      (write-any v p))
-		    a))
-	(display "]" p))
+(define (read/list port)
+  (expect (read-char port) #\[)
+  (begin0 (for/list ([value
+                      (in-port-until port
+                                     (lambda (port)
+                                       (skip-whitespace port)
+                                       (begin0 (read-json port)
+                                               (skip-whitespace port)
+                                               (expect (peek-char port) #\, #\])))
+                                     (lambda (port)
+                                       (eq? (peek-char port) #\])))])
+            (when (eq? (peek-char port) #\,)
+              (read-char port))
+            value)
+          (expect (read-char port) #\])))
 
-      (define (write-any x p)
-	(cond
-	 ((hash-table? x) (write-ht (hashtable->vector x) p))
-	 ((vector? x) (write-ht x p))
-	 ((pair? x) (write-array x p))
-	 ((symbol? x) (write (symbol->string x) p)) ;; for convenience
-	 ((or (string? x)
-	      (number? x)) (write x p))
-	 ((boolean? x) (display (if x "true" "false") p))
-	 ((void? x) (display "null" p))
-	 (else (error "Invalid JSON object in json-write" x))))
+(define (read/string port)
+  (expect (read-char port) #\")
+  (begin0 (list->string
+           (for/list ([ch (in-port-until port
+                                         (lambda (port)
+                                           (let ([ch (read-char port)])
+                                             (when (eof-object? ch)
+                                               (error 'read "unexpected EOF"))
+                                             (if (eq? ch #\\)
+                                                 (let ([esc (read-char port)])
+                                                   (when (eof-object? ch)
+                                                     (error 'read "unexpected EOF"))
+                                                   (case esc
+                                                     [(#\b) #\backspace]
+                                                     [(#\n) #\newline]
+                                                     [(#\r) #\return]
+                                                     [(#\f) #\page]
+                                                     [(#\t) #\tab]
+                                                     [(#\\) #\\]
+                                                     [(#\") #\"]
+                                                     [(#\/) #\/]
+                                                     [(#\u) (unescape (read-string 4 port))]
+                                                     [else esc]))
+                                                 ch)))
+                                         (lambda (port)
+                                           (eq? (peek-char port) #\")))])
+             ch))
+          (expect (read-char port) #\")))
 
-      (lambda (x . maybe-port)
-	(write-any x (if (pair? maybe-port) (car maybe-port) (current-output-port))))))
+(define (unescape str)
+  (unless (regexp-match #px"[a-fA-F0-9]{4}" str)
+    (error 'read "bad unicode escape sequence: \"\\u~a\"" str))
+  (integer->char (string->number str 16)))
 
-  (define json-read
-    (let ()
-      (define (generator p)
-	(let ((ateof #f)
-	      (pos (top-parse-position "<?>")))
-	  (lambda ()
-	    (if ateof
-		(values pos #f)
-		(let ((x (read-char p)))
-		  (if (eof-object? x)
-		      (begin
-			(set! ateof #t)
-			(values pos #f))
-		      (let ((old-pos pos))
-			(set! pos (update-parse-position pos x))
-			(values old-pos (cons x x)))))))))
+(define (read/true port)
+  (expect-string port "true")
+  #t)
 
-      (define parser
-	(packrat-parser (begin
-			  (define (white results)
-			    (if (char-whitespace? (parse-results-token-value results))
-				(white (parse-results-next results))
-				(comment results)))
-			  (define (skip-comment-char results)
-			    (comment-body (parse-results-next results)))
-			  (define (skip-to-newline results)
-			    (if (memv (parse-results-token-value results) '(#\newline #\return))
-				(white results)
-				(skip-to-newline (parse-results-next results))))
-			  (define (token str)
-			    (lambda (starting-results)
-			      (let loop ((pos 0) (results starting-results))
-				(if (= pos (string-length str))
-				    (make-result str results)
-				    (if (char=? (parse-results-token-value results) (string-ref str pos))
-					(loop (+ pos 1) (parse-results-next results))
-					(make-expected-result (parse-results-position starting-results) str))))))
-			  (define (interpret-string-escape results k)
-			    (let ((ch (parse-results-token-value results)))
-			      (k (cond
-				  ((assv ch '((#\b . #\backspace)
-					      (#\n . #\newline)
-					      (#\f . #\page)
-					      (#\r . #\return)
-					      (#\t . #\tab))) => cdr) ;; we don't support the "u" escape for unicode
-				  (else ch))
-				 (parse-results-next results))))
-			  (define (jstring-body results)
-			    (let loop ((acc '()) (results results))
-			      (let ((ch (parse-results-token-value results)))
-				(case ch
-				  ((#\\) (interpret-string-escape (parse-results-next results)
-								  (lambda (val results)
-								    (loop (cons val acc) results))))
-				  ((#\") (make-result (list->string (reverse acc)) results))
-				  (else (loop (cons ch acc) (parse-results-next results)))))))
-			  (define (jnumber-body starting-results)
-			    (let loop ((acc '()) (results starting-results))
-			      (let ((ch (parse-results-token-value results)))
-				(if (memv ch '(#\- #\+ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\. #\e #\E))
-				    (loop (cons ch acc) (parse-results-next results))
-				    (let ((n (string->number (list->string (reverse acc)))))
-				      (if n
-					  (make-result n results)
-					  (make-expected-result (parse-results-position starting-results) 'number)))))))
-			  any)
-			(any ((white '#\{ entries <- table-entries white '#\}) (listofpairs->hashtable entries))
-			     ((white '#\[ entries <- array-entries white '#\]) entries)
-			     ((s <- jstring) s)
-			     ((n <- jnumber) n)
-			     ((white (token "true")) 't)
-			     ((white (token "false")) 'nil)
-			     ((white (token "null")) 'nil))
-			(comment (((token "/*") b <- comment-body) b)
-				 (((token "//") b <- skip-to-newline) b)
-				 (() 'whitespace))
-			(comment-body (((token "*/") w <- white) w)
-				      ((skip-comment-char) 'skipped-comment-char))
-			(table-entries ((a <- table-entries-nonempty) a)
-				       (() '()))
-			(table-entries-nonempty ((entry <- table-entry white '#\, entries <- table-entries-nonempty) (cons entry entries))
-						((entry <- table-entry) (list entry)))
-			(table-entry ((key <- jstring white '#\: val <- any) (cons key val)))
-			(array-entries ((a <- array-entries-nonempty) a)
-				       (() '()))
-			(array-entries-nonempty ((entry <- any white '#\, entries <- array-entries-nonempty) (cons entry entries))
-						((entry <- any) (list entry)))
-			(jstring ((white '#\" body <- jstring-body '#\") body))
-			(jnumber ((white body <- jnumber-body) body))
-			))
+(define (read/false port)
+  (expect-string port "false")
+  #f)
 
-      (define (read-any p)
-	(let ((result (parser (base-generator->results (generator p)))))
-	  (if (parse-result-successful? result)
-	      (parse-result-semantic-value result)
-	      (error "JSON Parse Error"
-		     (let ((e (parse-result-error result)))
-		       (list 'json-parse-error
-			     (parse-position->string (parse-error-position e))
-			     (parse-error-expected e)
-			     (parse-error-messages e)))))))
+(define (read/null port)
+  (expect-string port "null")
+  null-jsexpr)
 
-      (lambda maybe-port
-	(read-any (if (pair? maybe-port) (car maybe-port) (current-input-port))))))
-)
+(define (read/digits port)
+  (let ([digits (for/list ([digit (in-port-until port
+                                                 read-char
+                                                 (lambda (port)
+                                                   (let ([ch (peek-char port)])
+                                                     (or (eof-object? ch)
+                                                         (not (char-numeric? ch))))))])
+                  digit)])
+    (when (and (null? digits) (eof-object? (peek-char port)))
+      (error 'read "unexpected EOF"))
+    (when (null? digits)
+      (error 'read "expected: digits, got: ~a" (peek-char port)))
+    digits))
+
+(define (read/exponent port)
+  (expect (read-char port) #\e #\E)
+  (let ([sign (case (peek-char port)
+                [(#\- #\+) (list (read-char port))]
+                [else '()])])
+    (append sign (read/digits port))))
+
+(define (read/frac port)
+  (expect (read-char port) #\.)
+  (append '(#\.) (read/digits port)))
+
+(define (read/number port)
+  (let* ([sign (if (eq? (peek-char port) #\-) '(#\-) '())]
+         [digits (read/digits port)]
+         [frac (if (eq? (peek-char port) #\.) (read/frac port) '())]
+         [exp (if (memq (peek-char port) '(#\e #\E)) (read/exponent port) '())])
+    (string->number
+     (list->string
+      (append sign digits frac exp)))))
+
+(define (jsexpr? x)
+  (or (integer? x)
+      (and (number? x) (inexact? x))
+      (null-jsexpr? x)
+      (boolean? x)
+      (string? x)
+      (null? x)
+      (array-jsexpr? x)
+      (object-jsexpr? x)))
+
+(define (array-jsexpr? x)
+  (or (null? x)
+      (and (pair? x)
+           (jsexpr? (car x))
+           (array-jsexpr? (cdr x)))))
+
+(define (object-jsexpr? x)
+  (let/ec return
+    (and (hash? x)
+         (for ([(key value) x])
+           (unless (and (symbol? key) (jsexpr? value))
+             (return #f)))
+         #t)))
+
+(define (null-jsexpr? x)
+  (eqv? x #\null))
+
+(define null-jsexpr #\null)
+
+(define (jsexpr->json x)
+  (let ([out (open-output-string)])
+    (write-json x out)
+    (get-output-string out)))
+
+(define (json->jsexpr s)
+  (let ([in (open-input-string s)])
+    (read-json in)))
