@@ -1482,6 +1482,9 @@
       (do (++ (c (car seq) 0))
           (counts (cdr seq) c))))
 
+(def tree-counts (tree (o c (table)))
+  (counts (flat tree) c))
+
 (def commonest (seq)
   (with (winner nil n 0)
     (each (k v) (counts seq)
