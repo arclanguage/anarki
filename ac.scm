@@ -1420,6 +1420,10 @@
                         (date-month d)
                         (date-year d))))))
 
+(xdef utf-8-bytes
+  (lambda (str)
+    (bytes->list (string->bytes/utf-8 str))))
+
 (xdef sin sin)
 (xdef cos cos)
 (xdef tan tan)
