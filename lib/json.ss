@@ -169,25 +169,37 @@
       (error 'read "expected: digits, got: ~a" (peek-char port)))
     digits))
 
-(define (read/exponent port)
-  (expect (read-char port) #\e #\E)
-  (let ([sign (case (peek-char port)
-                [(#\- #\+) (list (read-char port))]
-                [else '()])])
-    (append sign (read/digits port))))
-
-(define (read/frac port)
-  (expect (read-char port) #\.)
-  (append '(#\.) (read/digits port)))
-
 (define (read/number port)
-  (let* ([sign (if (eq? (peek-char port) #\-) '(#\-) '())]
+  (let* ([sign (read/sign? port)]
          [digits (read/digits port)]
-         [frac (if (eq? (peek-char port) #\.) (read/frac port) '())]
-         [exp (if (memq (peek-char port) '(#\e #\E)) (read/exponent port) '())])
+         [frac (read/frac? port)]
+         [exp (read/exp? port)])
     (string->number
      (list->string
       (append sign digits frac exp)))))
+
+(define (read/sign? port)
+  (case (peek-char port)
+    [(#\- #\+) (list (read-char port))]
+    [else '()]))
+
+(define (read/exp? port)
+  (if (memq (peek-char port) '(#\e #\E))
+    (begin
+      (skip-peek port)
+      (let ([sign (read/sign? port)])
+        (append (list #\e) sign (read/digits port))))
+    '()))
+
+(define (read/frac? port)
+  (if (eq? (peek-char port) #\.)
+    (begin
+      (skip-peek port)
+      (append '(#\.) (read/digits port)))
+    '()))
+
+(define (skip-peek port)
+  (read-char port))
 
 (define (jsexpr? x)
   (or (integer? x)
