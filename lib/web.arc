@@ -1,4 +1,5 @@
 ; written by Mark Huetsch
+; same license as Arc
 
 ($ (require openssl))
 ($ (xdef ssl-connect (lambda (host port)
@@ -7,6 +8,25 @@
 
 (load "lib/re.arc")
 (load "lib/util.arc")
+
+(def parse-server-cookies (s)
+  (map [map trim _]
+       (map [matchsplit "=" _] 
+	    (tokens (cut s (len "Set-Cookie:")) #\;))))
+
+(def parse-server-header (lines)
+  (withs (http-response (tokens (car lines))
+	  ret 
+	   (list 
+	     (list
+	       (http-response 0)
+	       (http-response 1)
+	       (http-response 2))
+	     (some (fn (s)
+		     (and (begins s "Set-Cookie:")
+			  (parse-server-cookies s)))
+		   (cdr lines))))
+    ret))
 
 (def args->query-string (args)
   (if args
@@ -54,7 +74,7 @@
 				     (+ "?" full-args)))
 		 header-components (list (+ method " " request-path " HTTP/1.0") 
 					 (+ "Host: " (parsed-url 'host))
-					 "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2"
+					 "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2"))
     (when (is method "POST")
       (pushend (+ "Content-Length: " (len (utf-8-bytes full-args))) header-components)
       (pushend "Content-Type: application/x-www-form-urlencoded" header-components))
@@ -78,7 +98,7 @@
 	    header
 	    (if body-start
 		(cut result (+ 4 body-start))
-		result)))))))))
+		result)))))))
 
 (def get-url (url)
   ((get-or-post-url url) 1))
