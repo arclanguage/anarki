@@ -106,6 +106,9 @@
 (def post-url (url args)
   ((get-or-post-url url args "POST") 1))
 
+(def google (q)
+  (get-url (+ "www.google.com/search?q=" (urlencode q))))
+
 ; just some preliminary hacking
 (mac w/browser body
   `(withs (cookies* (table)
