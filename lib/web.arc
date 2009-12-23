@@ -35,24 +35,24 @@
       ""))
 
 (def parse-url (url)
-  (withs (components (joinstr (tokens url #\#) "") ; throw away anchor component
-		     has-trailing-slash (endmatch "/" url)
-		     components (tokens url #\/)
-		     first-component (pop components)
-		     first-component-is-resource (endmatch ":" first-component)
-		     resource (if first-component-is-resource (butlast first-component)
-				  "http") ; defaults to http
-		     host (if first-component-is-resource (pop components)
-			      first-component)
-		     host-tokens (tokens host #\:)
-		     host (car host-tokens)
-		     port (if (> (len host-tokens) 1) (int (last host-tokens)) 80)
-		     components (tokens (if components 
-					    (+ (joinstr components "/") (if has-trailing-slash "/"))
-					    "")
-					#\?)
-		     filename (if (and components (isnt "" (components 0))) (components 0))
-		     query (if (> (len components) 1) (components 1)))
+  (withs (url (joinstr (butlast (tokens url #\#)) "") ; throw away anchor component
+	      has-trailing-slash (endmatch "/" url)
+	      components (tokens url #\/)
+	      first-component (pop components)
+	      first-component-is-resource (endmatch ":" first-component)
+	      resource (if first-component-is-resource (butlast first-component)
+			   "http") ; defaults to http
+	      host (if first-component-is-resource (pop components)
+		       first-component)
+	      host-tokens (tokens host #\:)
+	      host (car host-tokens)
+	      port (if (> (len host-tokens) 1) (int (last host-tokens)) 80)
+	      components (tokens (if components 
+				     (+ (joinstr components "/") (if has-trailing-slash "/"))
+				     "")
+				 #\?)
+	      filename (if (and components (isnt "" (components 0))) (components 0))
+	      query (if (> (len components) 1) (components 1)))
     (obj resource resource host host port port filename filename query query)))
 
 (def encode-cookie (o)
