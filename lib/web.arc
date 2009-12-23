@@ -35,7 +35,9 @@
       ""))
 
 (def parse-url (url)
-  (withs (url (joinstr (butlast (tokens url #\#)) "") ; throw away anchor component
+  (withs (url (if (find #\# url) 
+		  (joinstr (butlast (tokens url #\#)) "")
+		  url) ; throw away anchor component
 	      has-trailing-slash (endmatch "/" url)
 	      components (tokens url #\/)
 	      first-component (pop components)
