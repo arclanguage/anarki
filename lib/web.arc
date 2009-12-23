@@ -40,13 +40,13 @@
 	      components (tokens url #\/)
 	      first-component (pop components)
 	      first-component-is-resource (endmatch ":" first-component)
-	      resource (if first-component-is-resource (butlast first-component)
+	      resource (if first-component-is-resource (downcase (butlast first-component))
 			   "http") ; defaults to http
 	      host (if first-component-is-resource (pop components)
 		       first-component)
 	      host-tokens (tokens host #\:)
 	      host (car host-tokens)
-	      port (if (> (len host-tokens) 1) (int (last host-tokens)) 80)
+	      port (if (> (len host-tokens) 1) (int (last host-tokens)) (is "https" resource) 443 80)
 	      components (tokens (if components 
 				     (+ (joinstr components "/") (if has-trailing-slash "/"))
 				     "")
