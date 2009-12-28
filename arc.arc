@@ -1055,12 +1055,33 @@
 (def punc (c)
   (in c #\. #\, #\; #\: #\! #\?))
 
-(def readline ((o str (stdin)))
-  (awhen (readc str)
-    (tostring 
-      (writec it)
-      (whiler c (readc str) [in _ nil #\newline]
-        (writec c)))))
+;(def readline ((o str (stdin)))
+;  (awhen (readc str)
+;    (tostring 
+;      (writec it)
+;      (whiler c (readc str) [in _ nil #\newline]
+;        (writec c)))))
+
+; from Andrew Wilcox's site (awwx.ws/xloop0.arc)
+(mac xloop (withses . body)
+  (let w (pair withses)
+    `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
+
+; a version of readline that accepts both lf and crlf endings
+; from Andrew Wilcox's site (http://awwx.ws/readline)
+(def readline ((o s (stdin)))
+  (aif (readc s)
+       (string
+	 (accum a
+	   (xloop (c it)
+		  (if (is c #\return)
+		      (if (is (peekc s) #\newline)
+			  (readc s))
+		      (is c #\newline)
+		      nil
+		      (do (a c)
+			  (aif (readc s)
+			       (next it)))))))))
 
 ; Don't currently use this but suspect some code could.
 

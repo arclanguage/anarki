@@ -215,6 +215,10 @@
       (apply + (intersperse (string glue) lst))
       "")))
 
+; by Andrew Wilcox
+(def begins-rest (pattern s)
+  (if (begins s pattern)
+      (cut s (len pattern))))
 
 ; English
 

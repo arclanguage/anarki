@@ -12,9 +12,14 @@
 (def parse-server-cookies (s)
   (map [map trim _]
        (map [matchsplit "=" _] 
-	    (tokens (cut s (len "Set-Cookie:")) #\;))))
+	    (tokens s #\;))))
 
-(def parse-server-header (lines)
+(def read-headers ((o s (stdin)))
+  (accum a
+    (whiler line (readline s) blank
+	    (a line))))
+
+(def parse-server-headers (lines)
   (withs (http-response (tokens (car lines))
 	  ret 
 	   (list 
@@ -23,8 +28,8 @@
 	       (http-response 1)
 	       (http-response 2))
 	     (some (fn (s)
-		     (and (begins s "Set-Cookie:")
-			  (parse-server-cookies s)))
+		     (aand (begins-rest "Set-Cookie:" s)
+			  (parse-server-cookies it)))
 		   (cdr lines))))
     ret))
 
@@ -89,18 +94,11 @@
 			(ssl-connect (parsed-url 'host) (parsed-url 'port))
 			(socket-connect (parsed-url 'host) (parsed-url 'port)))
 	(disp request-message out)
-	(withs (result (tostring
-			 (whilet line (readline in) (if line (prn line))))
-		       body-start (posmatch "\r\n\r\n" result)
-		       header-string (cut result 0 body-start)
-		       header-lines (re-split "\r\n" header-string)
-		       header (parse-server-header header-lines))
+	(withs (header-lines (read-headers in)
+			     header (parse-server-headers header-lines)
+			     body (tostring (whilet line (readline in) (prn line))))
 	  (close in out)
-	  (list
-	    header
-	    (if body-start
-		(cut result (+ 4 body-start))
-		result)))))))
+	  (list header body))))))
 
 (def get-url (url)
   ((get-or-post-url url) 1))

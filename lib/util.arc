@@ -429,7 +429,7 @@
 (def gc ()
   (($ collect-garbage)))
 
-; pulled from Andrew Wilcox's site
+; everything below pulled from Andrew Wilcox's site
 (mac between (var expr within . body)
   (w/uniq first
     `(let ,first t
@@ -437,3 +437,4 @@
          (unless ,first ,within)
          (wipe ,first)
          ,@body))))
+
