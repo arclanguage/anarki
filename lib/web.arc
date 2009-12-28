@@ -94,9 +94,8 @@
 			(ssl-connect (parsed-url 'host) (parsed-url 'port))
 			(socket-connect (parsed-url 'host) (parsed-url 'port)))
 	(disp request-message out)
-	(withs (header-lines (read-headers in)
-			     header (parse-server-headers header-lines)
-			     body (tostring (whilet line (readline in) (prn line))))
+	(with (header (parse-server-headers (read-headers in))
+		      body (tostring (whilet line (readline in) (prn line))))
 	  (close in out)
 	  (list header body))))))
 
