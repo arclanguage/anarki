@@ -205,15 +205,9 @@
     (if (and (< n 0) (find [and (digit _) (isnt _ #\0)] abrep))
         (+ "-" abrep)
         abrep)))
-
-(def cat lst
-  (reduce + (map string lst)))
         
 (def joinstr (lst (o glue " ")) 
-  (let lst (keep [len> _ 0] lst)
-    (if lst 
-      (apply + (intersperse (string glue) lst))
-      "")))
+  (string (intersperse glue lst)))
 
 ; by Andrew Wilcox
 (def begins-rest (pattern s)
