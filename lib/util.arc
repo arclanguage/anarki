@@ -429,6 +429,10 @@
 (def gc ()
   (($ collect-garbage)))
 
+; stolen from skenney26 (http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc)
+(mac ret (var val . body)
+  `(let ,var ,val ,@body ,var))
+
 ; everything below pulled from Andrew Wilcox's site
 (mac between (var expr within . body)
   (w/uniq first
