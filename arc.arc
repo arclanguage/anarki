@@ -357,7 +357,6 @@
 (mac atwiths args
   `(atomic (withs ,@args)))
 
-
 ; setforms returns (vars get set) for a place based on car of an expr
 ;  vars is a list of gensyms alternating with expressions whose vals they
 ;   should be bound to, suitable for use as first arg to withs
@@ -817,6 +816,33 @@
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
 
+(= declare-fns* (table))
+
+(defs decl-idfn (old new args) new
+      decl-bool (old new args) (no:no new))
+
+(def declaration (key (o setfn decl-idfn) (o default))
+  (= declare-fns*.key  setfn
+     declarations*.key default))
+
+(let mklist (fn (x)
+              (check x alist list.x))
+  (def declare (key val)
+    (let (k . args) mklist.key
+      (iflet f declare-fns*.k
+             (zap f declarations*.k val args)
+             declerr.key))))
+
+(def decl (key)
+  (if declare-fns*.key
+      declarations*.key
+      declerr.key))
+
+(= declerr [err "Unknown declaration: " _])
+
+(map [declaration _ decl-bool]
+     '(atstrings direct-calls explicit-flush))
+
 (let expander 
      (fn (f var name body)
        `(let ,var (,f ,name)
@@ -1029,12 +1055,33 @@
 (def punc (c)
   (in c #\. #\, #\; #\: #\! #\?))
 
-(def readline ((o str (stdin)))
-  (awhen (readc str)
-    (tostring 
-      (writec it)
-      (whiler c (readc str) [in _ nil #\newline]
-        (writec c)))))
+;(def readline ((o str (stdin)))
+;  (awhen (readc str)
+;    (tostring 
+;      (writec it)
+;      (whiler c (readc str) [in _ nil #\newline]
+;        (writec c)))))
+
+; from Andrew Wilcox's site (awwx.ws/xloop0.arc)
+(mac xloop (withses . body)
+  (let w (pair withses)
+    `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
+
+; a version of readline that accepts both lf and crlf endings
+; from Andrew Wilcox's site (http://awwx.ws/readline)
+(def readline ((o s (stdin)))
+  (aif (readc s)
+       (string
+	 (accum a
+	   (xloop (c it)
+		  (if (is c #\return)
+		      (if (is (peekc s) #\newline)
+			  (readc s))
+		      (is c #\newline)
+		      nil
+		      (do (a c)
+			  (aif (readc s)
+			       (next it)))))))))
 
 ; Don't currently use this but suspect some code could.
 
@@ -1149,6 +1196,9 @@
     (map (fn ((k v)) (= (x2 k) v))
          (pair args))
     x2))
+
+(def shr (n m)
+  (shl n (- m)))
 
 (def abs (n)
   (if (< n 0) (- n) n))
@@ -1453,6 +1503,9 @@
       (do (++ (c (car seq) 0))
           (counts (cdr seq) c))))
 
+(def tree-counts (tree (o c (table)))
+  (counts (flat tree) c))
+
 (def commonest (seq)
   (with (winner nil n 0)
     (each (k v) (counts seq)
@@ -1572,28 +1625,30 @@
   `(point throw ,@body))
 
 (def downcase (x)
-  (let downc (fn (c)
-               (let n (coerce c 'int)
-                 (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
-                     (coerce (+ n 32) 'char)
-                     c)))
-    (case (type x)
-      string (map downc x)
-      char   (downc x)
-      sym    (sym (map downc (coerce x 'string)))
-             (err "Can't downcase" x))))
+  (if x
+    (let downc (fn (c)
+                 (let n (coerce c 'int)
+                   (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
+                       (coerce (+ n 32) 'char)
+                       c)))
+      (case (type x)
+        string (map downc x)
+        char   (downc x)
+        sym    (sym (map downc (coerce x 'string)))
+               (err "Can't downcase" x)))))
 
 (def upcase (x)
-  (let upc (fn (c)
-             (let n (coerce c 'int)
-               (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
-                   (coerce (- n 32) 'char)
-                   c)))
-    (case (type x)
-      string (map upc x)
-      char   (upc x)
-      sym    (sym (map upc (coerce x 'string)))
-             (err "Can't upcase" x))))
+  (if x
+    (let upc (fn (c)
+               (let n (coerce c 'int)
+                 (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
+                     (coerce (- n 32) 'char)
+                     c)))
+      (case (type x)
+        string (map upc x)
+        char   (upc x)
+        sym    (sym (map upc (coerce x 'string)))
+               (err "Can't upcase" x)))))
 
 (def inc (x (o n 1))
   (coerce (+ (coerce x 'int) n) (type x)))

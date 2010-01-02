@@ -37,10 +37,8 @@
         ((pair? s) (ac-call (car s) (cdr s) env))
         (#t (err "Bad object in expression" s))))
 
-(define atstrings #f)
-
 (define (ac-string s env)
-  (if atstrings
+  (if (ar-bflag 'atstrings)
       (if (atpos s 0)
           (ac (cons 'string (map (lambda (x)
                                    (if (string? x)
@@ -452,15 +450,13 @@
 ;   and it's bound to a function, generate (foo bar) instead of
 ;   (ar-funcall1 foo bar)
 
-(define direct-calls #f)
-
 (define (ac-call fn args env)
   (let ((macfn (ac-macro? fn)))
     (cond (macfn
            (ac-mac-call macfn args env))
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
-          ((and direct-calls (symbol? fn) (not (lex? fn env)) (bound? fn)
+          ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
                 (procedure? (namespace-variable-value (ac-global-name fn))))
            (ac-global-call fn args env))
           (#t
@@ -880,15 +876,14 @@
                                 (current-output-port)))
                 b))
 
-(define explicit-flush #f)
-
 (define (printwith f args)
   (let ((port (if (> (length args) 1)
                   (cadr args)
                   (current-output-port))))
     (when (pair? args)
       (f (ac-denil (car args)) port))
-    (unless explicit-flush (flush-output port)))
+    (unless (ar-bflag 'explicit-flush)
+      (flush-output port)))
   'nil)
 
 (xdef write (lambda args (printwith write   args)))
@@ -934,8 +929,8 @@
    (sym     (string ,string->symbol)
             (char   ,(lambda (c) (string->symbol (string c)))))
 
-   (int     (char   ,char->ascii)
-            (num    ,iround)
+   (int     (char   ,(lambda (c . args) (char->ascii c)))
+            (num    ,(lambda (x . args) (iround x)))
             (string ,(lambda (x . args)
                        (let ((n (apply string->number x args)))
                          (if n (iround n)
@@ -1404,13 +1399,12 @@
 
 (xdef memory current-memory-use)
 
-(xdef declare (lambda (key val)
-                (let ((flag (not (ar-false? val))))
-                  (case key
-                    ((atstrings)      (set! atstrings      flag))
-                    ((direct-calls)   (set! direct-calls   flag))
-                    ((explicit-flush) (set! explicit-flush flag)))
-                  val)))
+(define ar-declarations (make-hash-table))
+
+(define (ar-bflag key)
+  (not (ar-false? (hash-table-get ar-declarations key 'nil))))
+
+(xdef declarations* ar-declarations)
 
 (putenv "TZ" ":GMT")
 
@@ -1426,6 +1420,10 @@
                         (date-month d)
                         (date-year d))))))
 
+(xdef utf-8-bytes
+  (lambda (str)
+    (bytes->list (string->bytes/utf-8 str))))
+
 (xdef sin sin)
 (xdef cos cos)
 (xdef tan tan)
@@ -1433,6 +1431,12 @@
 (xdef acos acos)
 (xdef atan atan)
 (xdef log log)
+
+(xdef lor bitwise-ior)
+(xdef land bitwise-and)
+(xdef lxor bitwise-xor)
+(xdef lnot bitwise-not)
+(xdef shl arithmetic-shift)
 
 (define (codestring s)
   (let ((i (atpos s 0)))
@@ -1471,6 +1475,5 @@
                                     (#t
                                      (cons (car cs) (unesc (cdr cs))))))))
                   (unesc (string->list s)))))
-  
-)
 
+)

@@ -84,6 +84,15 @@
     of the shortest list in `ls'; extra elements in other lists are discarded. "
   (apply map list ls))
 
+(def unzip (xs)
+  (let ret '()
+    (each i (range 0 (- (len (car xs)) 1))
+      (push (map [_ i] xs) ret))
+    (rev ret)))
+
+(def mklist (x)
+  " Wraps atoms in a list; does nothing if `x' is already a list."
+  (check x alist list.x))
 
 
 ; combinators
@@ -336,7 +345,7 @@
        x)
 
     See also [[w/afn]] [[rfnwith]] [[rfn]] "
-  `(rfnwith ,name ,(mappend [list _ _] withses) ,@body))
+  `(rfnwith ,name ,(mappend [list _ _] mklist.withses) ,@body))
 
 (mac w/afn (withses . body)
   " Convenient wrapper for applying an afn using the preexisting variables
@@ -357,11 +366,79 @@
 
 ; end ripoffs
 
+; list utils
+
 (def butlast (x) 
   (cut x 0 (- (len x) 1)))
 
-(def joinstr (lst (o glue " ")) 
-  (let lst (keep [len> _ 0] lst)
-    (if lst 
-  (apply + (intersperse (string glue) lst))
-  "")))
+(def many (lst)
+  (if (and (acons lst) (len> lst 0))))
+
+(def len= (num lst)
+  (is num (len lst)))
+
+(def len- (lst n)
+  (- (len lst) n))
+
+(def car< (x y)
+  (< (car x) (car y)))
+
+(def cadar (lst)
+  (car (cdr (car lst))))
+
+(def mapcar (lst)
+  (map [car _] lst))
+
+(def mapcdr (lst)
+  (map [cdr _] lst))
+
+(def rand-pos (lst)
+  (if lst
+      (rand-elt (range 0 (- (len lst) 1)))))
+
+(mac pushend (elem lst)
+  `(= ,lst (+ ,lst (list ,elem))))
+
+(mac popfind (f lst)
+  (w/uniq g1
+    `(let ,g1 (pos ,f ,lst)
+       (if ,g1 (popnth ,lst ,g1)))))
+
+(mac popnth (lst n)
+  (w/uniq g1
+    `(let ,g1 (,lst ,n)
+       (= ,lst (+ (cut ,lst 0 ,n) (cut ,lst (+ 1 ,n))))
+       ,g1)))
+
+(mac poprand (lst)
+  (w/uniq g1
+    `(if ,lst
+	 (let ,g1 (rand-pos ,lst)
+	   (popnth ,lst ,g1)))))
+
+; utils for lists of hashes
+
+(def keepkey (key lst)
+  (keep [_ key] lst))
+
+(def mapkey (key lst)
+  (map [_ key] lst))
+
+; misc
+
+(def gc ()
+  (($ collect-garbage)))
+
+; stolen from skenney26 (http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc)
+(mac ret (var val . body)
+  `(let ,var ,val ,@body ,var))
+
+; everything below pulled from Andrew Wilcox's site
+(mac between (var expr within . body)
+  (w/uniq first
+    `(let ,first t
+       (each ,var ,expr
+         (unless ,first ,within)
+         (wipe ,first)
+         ,@body))))
+

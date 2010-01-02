@@ -206,6 +206,13 @@
         (+ "-" abrep)
         abrep)))
         
+(def joinstr (lst (o glue " ")) 
+  (string (intersperse glue lst)))
+
+; by Andrew Wilcox
+(def begins-rest (pattern s)
+  (if (begins s pattern)
+      (cut s (len pattern))))
 
 ; English
 
@@ -216,6 +223,10 @@
 
 (def plural (n x)
   (string n #\  (pluralize n x)))
+
+(def capitalize (str)
+  (if (blank str) ""
+      (+ (upcase (str 0)) (cut str 1))))
 
 
 (load "help/strings.arc")
