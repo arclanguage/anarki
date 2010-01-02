@@ -1,3 +1,5 @@
+(require "load/declare.arc")
+
 ; avoid redefinition warning
 ($ (namespace-undefine-variable! (ac-global-name 'make-br-fn)))
 
