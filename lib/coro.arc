@@ -1,3 +1,6 @@
+; I haven't thought deeply enough about the proper semantics here, so please
+; don't rely on this library. - rntz <daekharel@gmail.com> (2010-01-01)
+
 (require "lib/util.arc")
 (require "lib/extend.arc")
 
