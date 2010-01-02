@@ -70,6 +70,19 @@
     See also [[join]]"
   (foldr (afn (a b) (if b (aif foot.a (do (scdr it b) a) b) a)) nil ls))
 
+(def classify (classifier seq)
+  " Groups the elements of `seq' by `classifier', returning back a table,
+    whose keys are the results of `classifier' and whose values are lists
+    of the corresponding elements of `seq'. For example:
+
+      arc> (classify type '(1 \"foo\" a 2 (b)))
+      #hash((cons . ((b))) (int . (2 1)) (string . (\"foo\")) (sym . (a)))
+
+    See also [[partition]] [[keep]] [[rem]] "
+  (w/table h
+    (each e seq
+      (push e (h classifier.e)))))
+
 (def partition (test seq)
   " Equivalent to but more efficient than
    `(list (keep test seq) (rem test seq))'. See also [[keep]] [[rem]] "
@@ -290,14 +303,14 @@
 ; a 'with that works for defining recursive fns
 (mac withr/p (bindings . body)
   " Scheme's 'letrec. 
-    See also [[withr]] "
+    See also [[withr]] [[where]] "
   `(let ,(map1 car bindings) nil
      ,@(map [cons 'assign _] bindings)
      ,@body))
 
 (mac withr (bindings . body)
   " Scheme's 'letrec, with the redundant inner parens removed. 
-    See also [[withf]] [[letf]] [[withr/p]] "
+    See also [[withf]] [[letf]] [[where]] [[withr/p]] "
   `(withr/p ,pair.bindings ,@body))
 
 ; mutually recursive local fns
@@ -331,6 +344,29 @@
 
     See also [[withf]] [[withr]] "
   `(withf (,name ,args ,expr) ,@body))
+
+; inspired by Haskell
+(mac where (expr . parms)
+  " Binds `parms' and evaluates `expr'. Examples:
+
+      arc> (where (square x)
+              square [* _ _]
+              x 2)
+      4
+
+    Note that binding is recursive, but that actual assignment of values is done
+    in the reverse of the order given, so any variables which are both bound and
+    used in `parms' must be used in reverse dependency order:
+
+      arc> (where x x (+ y y) y 0)    ; this works as expected
+      y
+      arc> (where x y 0 x (+ y y))    ; this doesn't
+      nil
+
+    Essentially, this is a reversed form of Scheme's 'letrec,
+    with many fewer parentheses. Inspired by Haskell's \"where\".
+    See also [[withr]] [[withr/p]] [[withf]] "
+  `(withr/p ,(rev:pair parms) ,expr))
 
 
 ; ripoffs - licenses unknown
