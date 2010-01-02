@@ -1028,33 +1028,19 @@
 (def punc (c)
   (in c #\. #\, #\; #\: #\! #\?))
 
-;(def readline ((o str (stdin)))
-;  (awhen (readc str)
-;    (tostring 
-;      (writec it)
-;      (whiler c (readc str) [in _ nil #\newline]
-;        (writec c)))))
-
-; from Andrew Wilcox's site (awwx.ws/xloop0.arc)
-(mac xloop (withses . body)
-  (let w (pair withses)
-    `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
-
 ; a version of readline that accepts both lf and crlf endings
-; from Andrew Wilcox's site (http://awwx.ws/readline)
-(def readline ((o s (stdin)))
-  (aif (readc s)
-       (string
-	 (accum a
-	   (xloop (c it)
-		  (if (is c #\return)
-		      (if (is (peekc s) #\newline)
-			  (readc s))
-		      (is c #\newline)
-		      nil
-		      (do (a c)
-			  (aif (readc s)
-			       (next it)))))))))
+; adapted from Andrew Wilcox's code (http://awwx.ws/readline) by Michael
+; Arntzenius <daekharel@gmail.com>
+
+(def readline ((o str (stdin)))
+  (awhen (readc str)
+    (tostring
+      ((afn (c)
+         (if (is c #\return) (when (is peekc.str #\newline) readc.str)
+             (is c #\newline) nil
+             (do (writec c)
+                 (aif readc.str self.it))))
+       it))))
 
 ; Don't currently use this but suspect some code could.
 
@@ -1598,30 +1584,30 @@
   `(point throw ,@body))
 
 (def downcase (x)
-  (if x
-    (let downc (fn (c)
-                 (let n (coerce c 'int)
-                   (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
-                       (coerce (+ n 32) 'char)
-                       c)))
-      (case (type x)
-        string (map downc x)
-        char   (downc x)
-        sym    (sym (map downc (coerce x 'string)))
-               (err "Can't downcase" x)))))
+  (let downc (fn (c)
+               (let n (coerce c 'int)
+                 (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
+                     (coerce (+ n 32) 'char)
+                     c)))
+    (case (type x)
+      string (map downc x)
+      char   (downc x)
+      sym    (if x (sym (map downc (coerce x 'string))))
+             (err "Can't downcase" x))))
 
 (def upcase (x)
-  (if x
-    (let upc (fn (c)
-               (let n (coerce c 'int)
-                 (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
-                     (coerce (- n 32) 'char)
-                     c)))
-      (case (type x)
-        string (map upc x)
-        char   (upc x)
-        sym    (sym (map upc (coerce x 'string)))
-               (err "Can't upcase" x)))))
+  (let upc (fn (c)
+             (let n (coerce c 'int)
+               (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
+                   (coerce (- n 32) 'char)
+                   c)))
+    (case (type x)
+      string (map upc x)
+      char   (upc x)
+      ; it's arguable whether (upcase nil) should be nil or NIL, but pg has
+      ; chosen NIL, so in the name of compatibility:
+      sym    (if x (sym (map upc (coerce x 'string))) 'NIL)
+             (err "Can't upcase" x))))
 
 (def inc (x (o n 1))
   (coerce (+ (coerce x 'int) n) (type x)))

@@ -225,9 +225,8 @@
   (string n #\  (pluralize n x)))
 
 (def capitalize (str)
-  (if (blank str) ""
+  (if (empty str) str
       (+ (upcase (str 0)) (cut str 1))))
-
 
 (load "help/strings.arc")
 

@@ -39,6 +39,8 @@
     See also [[uniq]] "
   (map1 (iff asym uniq [uniq]) lst))
 
+(def gc () ($.collect-garbage))
+
 ; type checkers
 (def asym (x) " `t' iff `x' is a symbol. " (isa x 'sym))
 (def astring (x) " `t' iff `x' is a string. " (isa x 'string))
@@ -78,21 +80,77 @@
         (push e failed)))
     (list rev.passed rev.failed)))
 
+(def unzip (xs)
+  " Precisely as `zip', except that zip's `ls' is unzip's `xs'; so it takes one
+    list of lists rather than any number of lists as arguments. Can be thought
+    of as performing the inverse operation.
+    See also [[zip]] "
+  (apply map list xs))
+
 (def zip ls
   " Returns a list of lists; the n-th element of the result is a list of the
     n-th elements of the lists in `ls'. The length of the result is the length
-    of the shortest list in `ls'; extra elements in other lists are discarded. "
-  (apply map list ls))
-
-(def unzip (xs)
-  (let ret '()
-    (each i (range 0 (- (len (car xs)) 1))
-      (push (map [_ i] xs) ret))
-    (rev ret)))
+    of the shortest list in `ls'; extra elements in other lists are discarded.
+    See also [[unzip]] "
+  (unzip ls))
 
 (def mklist (x)
-  " Wraps atoms in a list; does nothing if `x' is already a list."
+  " Wraps atoms in a list; does nothing if `x' is already a list.
+    See also [[atom]] [[alist]] [[list]] "
   (check x alist list.x))
+
+; 'many was precisely the same function as 'acons, hence has been removed (any
+; cons has a length > 0, since nil is not a cons). Also, 'popfind has been
+; renamed 'pull1, to fit with the newly-added 'rem1.
+
+(def rem1 (test seq)
+  " Returns a copy of `seq' with the first element that passes `test' removed.
+    See also [[rem]] [[keep]] [[pull1]] [[pull]] "
+  (zap testify test)
+  (if alist.seq ((afn (s)
+                   (if no.s nil
+                       (f car.s) cdr.s
+                       (cons car.s (self cdr.s))))
+                 seq)
+      (coerce (rem1 test (coerce seq 'cons)) 'string)))
+
+(mac pull1 (test place)
+  " Removes the first element that passes `test' from `place'.
+    See also [[pull]] [[rem1]] [[rem]] [[keep]] "
+  `(= ,place (rem1 ,test ,place)))
+
+(def butlast (x)
+  " Returns a list containing every element of `x' but the last.
+    See also: [[cut]] "
+  (cut x 0 (- (len x) 1)))
+
+(= len= [is len._a _b])
+(= len- [- len._a _b])
+(= car< [< car._a car._b])
+(= cdar cdr:car)
+(= cadar car:cdar)
+(= mapcar [map car _])
+(= mapcdr [map cdr _])
+
+(def keepkey (key lst) (keep [_ key] lst))
+(def mapkey (key lst) (map [_ key] lst))
+
+(def rand-pos (lst) (if lst (rand:len lst)))
+
+(mac pushend (elem lst)
+  `(= ,lst (join ,lst (list ,elem))))
+
+(mac popnth (lst n)
+  (w/uniq g1
+    `(let ,g1 (,lst ,n)
+       (= ,lst (+ (cut ,lst 0 ,n) (cut ,lst (+ 1 ,n))))
+       ,g1)))
+
+(mac poprand (lst)
+  (w/uniq g1
+    `(if ,lst
+	 (let ,g1 (rand-pos ,lst)
+	   (popnth ,lst ,g1)))))
 
 
 ; combinators
@@ -364,81 +422,28 @@
     See also [[w/rfn]] [[afnwith]] [[afn]] "
   `(w/rfn self ,withses ,@body))
 
-; end ripoffs
+; ripoff: between, by Andrew Wilcox
+; http://awwx.ws/between
+; CHANGED 2010-01-02:
+;   + added docstrings - Michael Arntzenius
+;   + only wipe first on the first run through
+;  - Michael Arntzenius
 
-; list utils
-
-(def butlast (x) 
-  (cut x 0 (- (len x) 1)))
-
-(def many (lst)
-  (if (and (acons lst) (len> lst 0))))
-
-(def len= (num lst)
-  (is num (len lst)))
-
-(def len- (lst n)
-  (- (len lst) n))
-
-(def car< (x y)
-  (< (car x) (car y)))
-
-(def cadar (lst)
-  (car (cdr (car lst))))
-
-(def mapcar (lst)
-  (map [car _] lst))
-
-(def mapcdr (lst)
-  (map [cdr _] lst))
-
-(def rand-pos (lst)
-  (if lst
-      (rand-elt (range 0 (- (len lst) 1)))))
-
-(mac pushend (elem lst)
-  `(= ,lst (+ ,lst (list ,elem))))
-
-(mac popfind (f lst)
-  (w/uniq g1
-    `(let ,g1 (pos ,f ,lst)
-       (if ,g1 (popnth ,lst ,g1)))))
-
-(mac popnth (lst n)
-  (w/uniq g1
-    `(let ,g1 (,lst ,n)
-       (= ,lst (+ (cut ,lst 0 ,n) (cut ,lst (+ 1 ,n))))
-       ,g1)))
-
-(mac poprand (lst)
-  (w/uniq g1
-    `(if ,lst
-	 (let ,g1 (rand-pos ,lst)
-	   (popnth ,lst ,g1)))))
-
-; utils for lists of hashes
-
-(def keepkey (key lst)
-  (keep [_ key] lst))
-
-(def mapkey (key lst)
-  (map [_ key] lst))
-
-; misc
-
-(def gc ()
-  (($ collect-garbage)))
-
-; stolen from skenney26 (http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc)
-(mac ret (var val . body)
-  `(let ,var ,val ,@body ,var))
-
-; everything below pulled from Andrew Wilcox's site
 (mac between (var expr within . body)
+  " As 'each, but runs `within' between each iteration of `body'.
+    See also [[each]] "
   (w/uniq first
     `(let ,first t
        (each ,var ,expr
-         (unless ,first ,within)
-         (wipe ,first)
+         (unless ,first
+           ,within
+           (wipe ,first))
          ,@body))))
 
+; ripoff: ret, by skenney26
+; http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc
+
+(mac ret (var val . body)
+  `(let ,var ,val ,@body ,var))
+
+; END RIPOFFS
