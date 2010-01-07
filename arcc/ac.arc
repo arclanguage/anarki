@@ -1,5 +1,9 @@
-; compiler itself
-(def ac (s env)
+; we wrap this in a big do so that it gets compiled "all together" and the
+; re-definition of basic functions like ac, eval, macex doesn't happen
+; interleaved with the compilation of this file.
+(do
+
+(def ac (s (o env))
   (case type.s
     string  (ac-string s env)
     sym     (if no.s `'nil
@@ -21,10 +25,29 @@
             (if (ac-literal? s) s
                 (err "Bad object in expression" s))))
 
-(= ac-declarations* (table))
-
-(def ac-global-name (s) (sym:string "_" s))
 (def ac-var-ref (s env) (if (ac-lex s env) s (ac-global-name s)))
+
+; declarations - original code by twilightsentry <twilightsentry@gmail.com>
+; adapted by Michael Arntzenius <daekharel@gmail.com>
+
+(= declare-fns* (table))
+
+(defs decl-idfn (old new args) new
+      decl-bool (old new args) (no:no new))
+
+(def declaration (key (o setfn decl-idfn) (o default))
+  (= declare-fns*.key  setfn
+     declarations*.key default))
+
+(def decl (key)
+  (if declare-fns*.key
+      declarations*.key
+      declerr.key))
+
+(= declerr [err "Unknown declaration: " _])
+
+(map [declaration _ decl-bool]
+     '(atstrings direct-calls explicit-flush))
 
 ; The next two are optimizations, except work for macros.
 
@@ -39,7 +62,7 @@
 
 ; string compilation
 (def ac-string (s env)
-  (if ac-declarations*!atstrings
+  (if decl!atstrings
       (if (some #\@ s)
           (let x ac-codestring.s
             (if (and (is len.x 1) (acons car.x) (is caar.x 'quote))
@@ -78,7 +101,7 @@
 (def ac-ssexpand (s)
   (catch:let n string.s
     (each (test fix keepsep expans) ac-ssyntax*
-      (iflet ps (positions test n)
+      (iflet ps (positions test n)  ;FIXME: dependency on strings.arc: positions
         (let xfrm (case type.expans
                     fn  expans
                     sym (case fix infix [cons expans _]
@@ -121,7 +144,7 @@
 
 ; quasiquotes
 (def ac-qq (args env)
-  `(quasiquote ,(ac-qq1 1 args env)))
+  `(,'quasiquote ,(ac-qq1 1 args env)))
 
 (def ac-qq1 (level x env)
   (if (is level 0) (ac x env)
@@ -129,8 +152,8 @@
       (case car.x
         unquote `(,'unquote ,(ac-qq1 (- level 1) cadr.x env))
         unquote-splicing `(,'unquote-splicing
-                           ,((if (is level 1) [list 'ar-nil-terminate _] idfn)
-                             (ac-qq1 (- level 1) cadr.x env)))
+                           ,(let inner (ac-qq1 (- level 1) cadr.x env)
+                              (if (is level 1) `(ar-nil-terminate ,inner) inner)))
         quasiquote `(,'quasiquote ,(ac-qq1 (+ level 1) cadr.x env))
         (ac-map [ac-qq1 level _ env] x))))
 
@@ -140,9 +163,9 @@
 ; (if nil a ...) -> (if ...)
 
 (def ac-if (args env)
-  (if no.args (list 'quote nil)
+  (if no.args `'nil
       (~cdr args) (ac car.args env)
-      `(if (ar-boolean ,(ac car.args env))
+      `(if (not (ar-false? ,(ac car.args env)))
            ,(ac cadr.args env)
            ,(ac-if cddr.args env))))
 
@@ -152,8 +175,8 @@
 (def ac-fn (args body env)
   (ac-nameit (ac-dbname-find env)
     (if (ac-simple-args? args)
-        `(lambda ,(or ac-denil.args ac-emptylist)
-           ,@(ac-body body (join ac-arglist.args env)))
+        `(lambda ,(aif ac-denil.args it ac-emptylist)
+           ,@(ac-body* body (join ac-arglist.args env)))
         (ac-complex-fn args body env))))
 
 ; does an fn arg list use optional parameters or destructuring?
@@ -172,8 +195,8 @@
 ; be missing.
 
 (def ac-complex-fn (args body env)
-  (with (ra (uniq)
-         z (ac-complex-args args env ra t))
+  (withs (ra (uniq)
+          z (ac-complex-args args env ra t))
     `(lambda ,ra
        (let* ,ac-denil.z
          ,@(ac-body* body (join ac-complex-getargs.z env))))))
@@ -221,7 +244,7 @@
 ; like ac-body, but spits out a nil expression if empty
 
 (def ac-body* (body env)
-  (if body (ac-body body env) `'nil))
+  (if body (ac-body body env) `('nil)))
 
 ; (assign v1 expr1 v2 expr2 ...)
 
@@ -234,7 +257,7 @@
 
 (def ac-assign1 (a b1 env)
   (if (isa a 'sym)
-      `(let ((zz ,(ac b1 (ac-dbname cons a env))))
+      `(let ((zz ,(ac b1 (ac-dbname-cons a env))))
          ,(if (in a nil t) (err "Can't rebind" a)
               (ac-lex a env) `(set! ,a zz)
               `(namespace-set-variable-value! ',(ac-global-name a) zz))
@@ -284,17 +307,17 @@
   (aif ac-macro.fun (ac-mac-call it args env)
        (if (and acons.fun (is car.fun 'fn))
              `(,(ac-fn cadr.fun cddr.fun env) ,@(ac-args cadr.fun args env))
-           (and ac-declarations*!direct-calls
+           (and decl!direct-calls
                 (isa fun 'sym)
                 (not:ac-lex fun env)
                 (bound fun)
-                (isa eval.fun 'fn))
+                (isa ac-eval.fun 'fn))
              (ac-global-call fun args env)
            (with (cfun (ac fun env)
                   cargs (map [ac _ env] args))
              (aif (ac-funcall* len.cargs)
                   `(,it ,cfun ,@cargs)
-                  `(ar-apply ,cfun (list ,cargs)))))))
+                  `(ar-apply ,cfun (list ,@cargs)))))))
 
 (def ac-mac-call (m args env)
   (ac (ac-denil (apply m (map ac-niltree args))) env))
@@ -303,7 +326,7 @@
 
 (def ac-macro (fun)
   (and (isa fun 'sym) (bound fun)
-       (rep:check eval.fun [isa _ 'mac])))
+       (rep:check ac-eval.fun [isa _ 'mac])))
 
 ; macroexpand the outer call of a form as much as possible
 
@@ -314,6 +337,58 @@
                      (if (isa n 'int) (- n 1)))
            e)
       e))
+
+
+; REPL
+(= ac-eval [seval (ac _ nil)])
+
+(def tle ()
+  (pr "Arc> ")
+  (let expr (read)
+    (when (isnt expr ':a)
+      (write:ac-eval expr)
+      (prn)
+      (tle))))
+
+(wipe last-condition*)
+
+(def tl ()
+  (prn "Use (quit) to quit, (_tl) to return here after an interrupt.")
+  (tl2))
+
+(def tl2 ()
+  (catch:while t
+    (pr "arc> ")
+    (on-err
+      (fn (c)
+        (= last-condition* c)
+        (prn "Error: " details.c))
+      (fn ()
+        (let expr (read)
+          (when (is expr ':a) throw.nil)
+          (let val ac-eval.expr
+            (write val)
+            (= that val
+               thatexpr expr)
+            (prn)))))))
+
+(def acompile1 (ip op)
+  (w/uniq eof
+    (w/stdout op
+      (whiler x (read ip eof) eof
+        (let scm (ac x nil)
+          (seval scm)
+          (write scm)
+          (pr "\n\n"))))))
+
+; compile xx.arc to xx.arc.scm
+; useful to examine the Arc compiler output
+(def acompile (inname)
+  (let outname (+ inname ".scm")
+    file-exists&rmfile.outname
+    (w/infile ip inname
+      (w/outfile op outname
+        (acompile1 ip op)))))
 
 
 ; helpers
@@ -328,9 +403,6 @@
   (if acons.l (cons (f:car l) (ac-map f cdr.l))
       no.l ac-emptylist
       (f l)))
-
-; a hack to get '() instead of 'nil
-(= ac-emptylist (read "()"))
 
 ; trick to tell Scheme the name of something, so Scheme
 ; debugging and profiling make more sense.
@@ -349,35 +421,11 @@
         `(let ((,n ,v)) ,n))
       v))
 
-; macros return Arc lists, ending with NIL.
-; but the Arc compiler expects Scheme lists, ending with '().
-; what to do with (is x nil . nil) ?
-;   the first nil ought to be replaced with 'NIL
-;   the second with '()
-; so the rule is: NIL in the car -> 'NIL, NIL in the cdr -> '().
-;   NIL by itself -> NIL
+
+; replace things
+(= eval ac-eval)
+(= macex ac-macex)
+(= ssyntax ac-ssyntax)
+(= ssexpand ac-ssexpand)
 
-(def ac-denil (x)
-  (let orelse (fn (x r) (if x ac-denil.x r))
-    (if acons.x (cons (orelse car.x car.x)
-                      (orelse cdr.x ac-emptylist))
-        x)))
-
-; #f and '() -> nil for a whole quoted list/tree.
-
-; Arc primitives written in Scheme should look like:
-
-; (xdef foo (lambda (lst)
-;           (ac-niltree (scheme-foo (ar-nil-terminate lst)))))
-
-; That is, Arc lists are NIL-terminated. When calling a Scheme
-; function that treats an argument as a list, call ar-nil-terminate
-; to change NIL to '(). When returning any data created by Scheme
-; to Arc, call ac-niltree to turn all '() into NIL.
-; (hash-table-get doesn't use its argument as a list, so it doesn't
-; need ar-nil-terminate).
-
-(def ac-niltree (x)
-  (if acons.x (cons (ac-niltree car.x) (ac-niltree cdr.x))
-      no.x nil
-      x))
+)
