@@ -73,7 +73,7 @@
 
 (def urlencode (s)
   (tostring 
-    (each c s 
+    (each c (utf-8-bytes s)
       (writec #\%)
       (let i (int c)
         (if (< i 16) (writec #\0))
