@@ -103,8 +103,8 @@
   (catch
     (let n (string s)
       (each (test fix keepsep expans) ac-ssyntax*
-        ; FIXME: dependency on strings.arc: positions
-        (iflet ps (positions test n)
+        (zap testify test)
+        (when (some test n)
           (let xfrm (case (type expans)
                       fn  expans
                       sym (case fix infix [cons expans _]
@@ -117,20 +117,21 @@
                             (err (details e))))
                 (fn ()
                   (case fix
-                    prefix (if (is (ps 0) 0)
+                    prefix (if (test (n 0))
                                (xfrm ((if keepsep [cons (n 0) _] idfn)
-                                       (read (cut n 1))))
+                                      (read (cut n 1))))
                                (err "Bad ssyntax"))
-                    infix  (xfrm (ac-toksplit n ps keepsep))
-                           (err "Bad ssyntax fixity:" fix))))))))
-      s)))
+                    infix  (xfrm (ac-toksplit test n keepsep))
+                           (err "Bad ssyntax fixity:" fix)))))))))))
 
-(def ac-toksplit (str posits (o keepsep))
-  (let sub (fn (a b) (if (isnt a b) (list (read (cut str a b)))))
-    (join (sub 0 (posits 0))
-          (mappend (fn (a b) ((if keepsep [cons (str a) _] idfn)
-                              (sub (+ a 1) b)))
-                   posits (+ (cdr posits) (list (len str)))))))
+(def ac-toksplit (test str (o keepsep))
+  ((afn (s)
+     (aif (pos test s)
+          `(,@(if (isnt 0 it) (list (read (cut s 0 it))))
+            ,@(if keepsep (list (s it)))
+            ,@(self (cut s (+ it 1))))
+          (unless empty.s (list (read s)))))
+   str))
 
 (def ac-ssexpand-call (toks)
   (iflet (a . rest) toks
