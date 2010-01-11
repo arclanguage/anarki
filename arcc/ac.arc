@@ -4,24 +4,25 @@
 (do
 
 (def ac (s (o env))
-  (case type.s
+  (case (type s)
     string  (ac-string s env)
-    sym     (if no.s `'nil
-                ac-ssyntax.s (ac ac-ssexpand.s env)
+    sym     (if (no s) `'nil
+                (ac-ssyntax s) (ac (ac-ssexpand s) env)
                 (ac-var-ref s env))
     cons    (let (f . a) s
               (case f
-                quote      `',(ac-niltree car.a)
-                quasiquote (ac-qq car.a env)
+                quote      `',(ac-niltree (car a))
+                quasiquote (ac-qq (car a) env)
                 if         (ac-if a env)
-                fn         (ac-fn car.a cdr.a env)
+                fn         (ac-fn (car a) (cdr a) env)
                 assign     (ac-assign a env)
-                           (case (if acons.f car.f)
-                             ; "optimizations"
-                             compose    (ac (ac-decompose cdr.f a) env)
-                             complement (ac `(no (,cadr.f ,@a)) env)
-                             andf       (ac (ac-andf cdr.f a) env)
-                                        (ac-call f a env))))
+                           (let f (if (ac-ssyntax f) (ac-ssexpand f) f)
+                             (case (if (acons f) (car f))
+                               ; "optimizations"
+                               compose    (ac (ac-decompose (cdr f) a) env)
+                               complement (ac `(no (,(cadr f) ,@a)) env)
+                               andf       (ac (ac-andf (cdr f) a) env)
+                               (ac-call f a env)))))
             (if (ac-literal? s) s
                 (err "Bad object in expression" s))))
 
@@ -33,16 +34,16 @@
 (= declare-fns* (table))
 
 (defs decl-idfn (old new args) new
-      decl-bool (old new args) (no:no new))
+      decl-bool (old new args) (no (no new)))
 
 (def declaration (key (o setfn decl-idfn) (o default))
-  (= declare-fns*.key  setfn
-     declarations*.key default))
+  (= (declare-fns* key)  setfn
+     (declarations* key) default))
 
 (def decl (key)
-  (if declare-fns*.key
-      declarations*.key
-      declerr.key))
+  (if (declare-fns* key)
+      (declarations* key)
+      (declerr key)))
 
 (= declerr [err "Unknown declaration: " _])
 
@@ -52,11 +53,11 @@
 ; The next two are optimizations, except work for macros.
 
 (def ac-decompose (fns args)
-  (if no.fns `((fn vals (car vals)) ,@args)
-      (~cdr fns) (cons car.fns args)
-      `(,car.fns ,(decompose cdr.fns args))))
+  (if (no fns) `((fn vals (car vals)) ,@args)
+      (~cdr fns) (cons (car fns) args)
+      `(,(car fns) ,(ac-decompose (cdr fns) args))))
 
-(def ac-andf (fns args env)
+(def ac-andf (fns args)
   (let gs (map [uniq] args)
     `((fn ,gs (and ,@(map [cons _ gs] fns))) ,@args)))
 
@@ -64,25 +65,25 @@
 (def ac-string (s env)
   (if decl!atstrings
       (if (some #\@ s)
-          (let x ac-codestring.s
-            (if (and (is len.x 1) (acons car.x) (is caar.x 'quote))
-                (cadr:car x)
+          (let x (ac-codestring s)
+            (if (and (is (len x) 1) (acons (car x)) (is (caar x) 'quote))
+                (cadr (car x))
                 `(string ,@x)))
           s)
-      string.s))
+      (string s)))
 
 (def ac-codestring (s)
   (accum a
     (with (tok nil
-           add [a `',(string:rev _)])
+           add [a `',(string (rev _))])
       (w/instring p s
         (whilet c (readc p)
           (if (is c #\@)
-            (if (in peekc.p #\@ nil)
-                (do readc.p (push #\@ tok))
+            (if (in (peekc p) #\@ nil)
+                (do (readc p) (push #\@ tok))
                 (do (add tok)
                     (wipe tok)
-                    (a:read p)))
+                    (a (read p))))
             (push c tok))))
       (add tok))))
 
@@ -96,36 +97,40 @@
   (and (isa x 'sym)
        ;; no currying ssyntax, and andf is done via &, so we don't need this
        ;(~in x '+ '++ '_)
-       (some (apply orf (map testify:car ac-ssyntax*)) string.x)))
+       (some (apply orf (map testify:car ac-ssyntax*)) (string x))))
 
 (def ac-ssexpand (s)
-  (catch:let n string.s
-    (each (test fix keepsep expans) ac-ssyntax*
-      (iflet ps (positions test n)  ;FIXME: dependency on strings.arc: positions
-        (let xfrm (case type.expans
-                    fn  expans
-                    sym (case fix infix [cons expans _]
-                                  prefix (fn (x) `(,expans ,x)))
-                        (err "Bad ssyntax expansion:" expans))
-          (throw:on-err
-            (fn (e) (if (is details.e "Bad ssyntax")
-                      (err "Bad ssyntax" s)
-                      (err details.e)))
-            (fn ()
-              (case fix
-                prefix (if (is ps.0 0)
-                           (xfrm ((if keepsep [cons n.0 _] idfn) (sym:cut n 1)))
-                           (err "Bad ssyntax"))
-                infix  (xfrm:ac-toksplit n ps keepsep)
-                       (err "Bad ssyntax fixity:" fix)))))))
-    s))
+  (catch
+    (let n (string s)
+      (each (test fix keepsep expans) ac-ssyntax*
+        ; FIXME: dependency on strings.arc: positions
+        (iflet ps (positions test n)
+          (let xfrm (case (type expans)
+                      fn  expans
+                      sym (case fix infix [cons expans _]
+                                    prefix (fn (x) `(,expans ,x)))
+                          (err "Bad ssyntax expansion:" expans))
+            (throw
+              (on-err
+                (fn (e) (if (is (details e) "Bad ssyntax")
+                            (err "Bad ssyntax" s)
+                            (err (details e))))
+                (fn ()
+                  (case fix
+                    prefix (if (is (ps 0) 0)
+                               (xfrm ((if keepsep [cons (n 0) _] idfn)
+                                       (read (cut n 1))))
+                               (err "Bad ssyntax"))
+                    infix  (xfrm (ac-toksplit n ps keepsep))
+                           (err "Bad ssyntax fixity:" fix))))))))
+      s)))
 
 (def ac-toksplit (str posits (o keepsep))
-  (let sub (fn (a b) (if (isnt a b) (list:sym:cut str a b)))
-    (join (sub 0 posits.0)
-          (mappend (fn (a b) ((if keepsep [cons str.a _] idfn)
+  (let sub (fn (a b) (if (isnt a b) (list (read (cut str a b)))))
+    (join (sub 0 (posits 0))
+          (mappend (fn (a b) ((if keepsep [cons (str a) _] idfn)
                               (sub (+ a 1) b)))
-                   posits (+ cdr.posits (list:len str))))))
+                   posits (+ (cdr posits) (list (len str)))))))
 
 (def ac-ssexpand-call (toks)
   (iflet (a . rest) toks
@@ -148,13 +153,16 @@
 
 (def ac-qq1 (level x env)
   (if (is level 0) (ac x env)
-      atom.x x
-      (case car.x
-        unquote `(,'unquote ,(ac-qq1 (- level 1) cadr.x env))
-        unquote-splicing `(,'unquote-splicing
-                           ,(let inner (ac-qq1 (- level 1) cadr.x env)
-                              (if (is level 1) `(ar-nil-terminate ,inner) inner)))
-        quasiquote `(,'quasiquote ,(ac-qq1 (+ level 1) cadr.x env))
+      (atom x) x
+      (case (car x)
+        unquote
+          `(,'unquote ,(ac-qq1 (- level 1) (cadr x) env))
+        unquote-splicing
+          `(,'unquote-splicing
+             ,(let inner (ac-qq1 (- level 1) (cadr x) env)
+                (if (is level 1) `(ar-nil-terminate ,inner) inner)))
+        quasiquote
+          `(,'quasiquote ,(ac-qq1 (+ level 1) (cadr x) env))
         (ac-map [ac-qq1 level _ env] x))))
 
 ; (if) -> nil
@@ -163,11 +171,11 @@
 ; (if nil a ...) -> (if ...)
 
 (def ac-if (args env)
-  (if no.args `'nil
-      (~cdr args) (ac car.args env)
-      `(if (not (ar-false? ,(ac car.args env)))
-           ,(ac cadr.args env)
-           ,(ac-if cddr.args env))))
+  (if (no args) `'nil
+      (~cdr args) (ac (car args) env)
+      `(if (not (ar-false? ,(ac (car args) env)))
+           ,(ac (cadr args) env)
+           ,(ac-if (cddr args) env))))
 
 ; translate fn directly into a lambda if it has ordinary
 ; parameters, otherwise use a rest parameter and parse it.
@@ -175,17 +183,17 @@
 (def ac-fn (args body env)
   (ac-nameit (ac-dbname-find env)
     (if (ac-simple-args? args)
-        `(lambda ,(aif ac-denil.args it ac-emptylist)
-           ,@(ac-body* body (join ac-arglist.args env)))
+        `(lambda ,(aif (ac-denil args) it ac-emptylist)
+           ,@(ac-body* body (join (ac-arglist args) env)))
         (ac-complex-fn args body env))))
 
 ; does an fn arg list use optional parameters or destructuring?
 ; a rest parameter is not complex
 
 (def ac-simple-args? (args)
-  (or (and acons.args
-           (isa car.args 'sym)
-           (ac-simple-args? cdr.args))
+  (or (and (acons args)
+           (isa (car args) 'sym)
+           (ac-simple-args? (cdr args)))
       (isa args 'sym)))
 
 ; translate a fn with optional or destructuring args
@@ -198,8 +206,8 @@
   (withs (ra (uniq)
           z (ac-complex-args args env ra t))
     `(lambda ,ra
-       (let* ,ac-denil.z
-         ,@(ac-body* body (join ac-complex-getargs.z env))))))
+       (let* ,(ac-denil z)
+         ,@(ac-body* body (join (ac-complex-getargs z) env))))))
 
 ; returns a list of two-element lists, first is variable name,
 ; second is (compiled) expression. to be used in a let.
@@ -209,17 +217,17 @@
 ;   (not destructuring), so they must be passed or be optional.
 
 (def ac-complex-args (args env ra is-params)
-  (if no.args ac-emptylist
+  (if (no args) ac-emptylist
       (isa args 'sym) `((,args ,ra))
-      acons.args
+      (acons args)
         (withs ((a . r) args
-                x (if (and acons.a (is car.a 'o))
-                      (ac-complex-opt cadr.a (car:cddr a) env ra)
+                x (if (and (acons a) (is (car a) 'o))
+                      (ac-complex-opt (cadr a) (car (cddr a)) env ra)
                       (ac-complex-args a env (if is-params `(car ,ra)
                                                  `(ar-xcar ,ra)) nil))
-                xa ac-complex-getargs.x)
+                xa (ac-complex-getargs x))
           (join x (ac-complex-args
-                    cdr.args (join xa env) `(ar-xcdr ,ra) is-params)))
+                    (cdr args) (join xa env) `(ar-xcdr ,ra) is-params)))
       (err "Can't understand fn arg list" args)))
 
 ; (car ra) is the argument
@@ -236,8 +244,8 @@
 ; a -> (a)
 
 (def ac-arglist (a)
-  (if (isa a 'sym) (and a list.a)
-      (cons car.a (ac-arglist cdr.a))))
+  (if (isa a 'sym) (and a (list a))
+      (cons (car a) (ac-arglist (cdr a)))))
 
 (def ac-body (body env) (map [ac _ env] body))
 
@@ -249,7 +257,7 @@
 ; (assign v1 expr1 v2 expr2 ...)
 
 (def ac-assign (x env)
-  `(begin ,@(map (fn ((a b)) (ac-assign1 ac-macex.a b env)) pair.x)))
+  `(begin ,@(map (fn ((a b)) (ac-assign1 (ac-macex a) b env)) (pair x))))
 
 ; = replaced by assign, which is only for vars
 ; = now defined in arc (is it?)
@@ -269,8 +277,8 @@
 
 (def ac-args (names exprs env)
   (when exprs
-    (cons (ac car.exprs (ac-dbname-cons car.names env))
-          (ac-args cdr.names cdr.exprs env))))
+    (cons (ac (car exprs) (ac-dbname-cons (car names) env))
+          (ac-args (cdr names) (cdr exprs) env))))
 
 ; generate special fast code for ordinary two-operand
 ; calls to the following functions. this is to avoid
@@ -284,7 +292,7 @@
 ; (foo bar) where foo is a global variable bound to a procedure.
 
 (def ac-global-call (fun args env)
-  (aif (and (is len.args 2) ac-binaries.fun)
+  (aif (and (is (len args) 2) (ac-binaries fun))
        `(,it ,@(ac-args nil args env))
        `(,(ac-global-name fun) ,@(ac-args nil args env))))
 
@@ -304,18 +312,18 @@
                     4 'ar-funcall4))
 
 (def ac-call (fun args env)
-  (aif ac-macro.fun (ac-mac-call it args env)
-       (if (and acons.fun (is car.fun 'fn))
-             `(,(ac-fn cadr.fun cddr.fun env) ,@(ac-args cadr.fun args env))
+  (aif (ac-macro fun) (ac-mac-call it args env)
+       (if (and (acons fun) (is (car fun) 'fn))
+             `(,(ac-fn (cadr fun) (cddr fun) env) ,@(ac-args (cadr fun) args env))
            (and decl!direct-calls
                 (isa fun 'sym)
-                (not:ac-lex fun env)
+                (no (ac-lex fun env))
                 (bound fun)
-                (isa ac-eval.fun 'fn))
+                (isa (ac-eval fun) 'fn))
              (ac-global-call fun args env)
            (with (cfun (ac fun env)
                   cargs (map [ac _ env] args))
-             (aif (ac-funcall* len.cargs)
+             (aif (ac-funcall* (len cargs))
                   `(,it ,cfun ,@cargs)
                   `(ar-apply ,cfun (list ,@cargs)))))))
 
@@ -326,14 +334,14 @@
 
 (def ac-macro (fun)
   (and (isa fun 'sym) (bound fun)
-       (rep:check ac-eval.fun [isa _ 'mac])))
+       (rep (check (ac-eval fun) [isa _ 'mac]))))
 
 ; macroexpand the outer call of a form as much as possible
 
 (def ac-macex (e (o n))
-  (if (and acons.e (isnt n 0))
-      (aif (ac-macro car.e)
-           (ac-macex (ac-denil:apply it (map ac-niltree cdr.e))
+  (if (and (acons e) (isnt n 0))
+      (aif (ac-macro (car e))
+           (ac-macex (ac-denil (apply it (map ac-niltree (cdr e))))
                      (if (isa n 'int) (- n 1)))
            e)
       e))
@@ -346,7 +354,7 @@
   (pr "Arc> ")
   (let expr (read)
     (when (isnt expr ':a)
-      (write:ac-eval expr)
+      (write (ac-eval expr))
       (prn)
       (tle))))
 
@@ -357,20 +365,21 @@
   (tl2))
 
 (def tl2 ()
-  (catch:while t
-    (pr "arc> ")
-    (on-err
-      (fn (c)
-        (= last-condition* c)
-        (prn "Error: " details.c))
-      (fn ()
-        (let expr (read)
-          (when (is expr ':a) throw.nil)
-          (let val ac-eval.expr
-            (write val)
-            (= that val
-               thatexpr expr)
-            (prn)))))))
+  (catch
+    (while t
+      (pr "arc> ")
+      (on-err
+        (fn (c)
+          (= last-condition* c)
+          (prn "Error: " (details c)))
+        (fn ()
+          (let expr (read)
+            (when (is expr ':a) (throw nil))
+            (let val (ac-eval expr)
+              (write val)
+              (= that val
+                 thatexpr expr)
+              (prn))))))))
 
 (def acompile1 (ip op)
   (w/uniq eof
@@ -385,7 +394,7 @@
 ; useful to examine the Arc compiler output
 (def acompile (inname)
   (let outname (+ inname ".scm")
-    file-exists&rmfile.outname
+    ((andf file-exists rmfile) outname)
     (w/infile ip inname
       (w/outfile op outname
         (acompile1 ip op)))))
@@ -395,13 +404,13 @@
 (= ac-lex mem)
 
 (def ac-literal? (x)
-  (in type.x 'char 'int 'num))
+  (in (type x) 'char 'int 'num))
 
 ; like map, but doesn't demand nil-terminated lists, and gives back a
 ; ()-terminated list.
 (def ac-map (f l)
-  (if acons.l (cons (f:car l) (ac-map f cdr.l))
-      no.l ac-emptylist
+  (if (acons l) (cons (f (car l)) (ac-map f (cdr l)))
+      (no l) ac-emptylist
       (f l)))
 
 ; trick to tell Scheme the name of something, so Scheme
@@ -409,15 +418,15 @@
 
 (def ac-dbname-cons (name env)
   (if (and (isa name 'sym) name)
-      (cons list.name env)
+      (cons (list name) env)
       env))
 
 (def ac-dbname-find (env)
-  (car:find acons env))
+  (car (find acons env)))
 
 (def ac-nameit (name v)
   (if (and (isa name 'sym) name)
-      (let n (sym:string " " name)
+      (let n (sym (string " " name))
         `(let ((,n ,v)) ,n))
       v))
 
