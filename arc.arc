@@ -1648,6 +1648,10 @@
 
 (mac thread body 
   `(new-thread (fn () ,@body)))
+(def kill-thread(th)
+  (atomic ($:kill-thread th)))
+(def break-thread(th)
+  (atomic ($:break-thread th)))
 
 (mac trav (x . fs)
   (w/uniq g

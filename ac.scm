@@ -996,8 +996,6 @@
 (xdef setuid setuid)
 
 (xdef new-thread thread)
-(xdef kill-thread kill-thread)
-(xdef break-thread break-thread)
 (xdef current-thread current-thread)
 
 (define (wrapnil f) (lambda args (apply f args) 'nil))
