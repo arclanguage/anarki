@@ -1316,22 +1316,20 @@
 ; nest within a thread; the thread-cell keeps track of
 ; whether this thread already holds the lock.
 
-(define ar-the-sema (make-semaphore 1))
-
-(define ar-sema-cell (make-thread-cell #f))
-
+(define ar-atomic-sema (make-semaphore 1))
+(define ar-atomic-cell (make-thread-cell #f))
 (xdef atomic-invoke (lambda (f)
-                       (if (thread-cell-ref ar-sema-cell)
+                       (if (thread-cell-ref ar-atomic-cell)
                            (ar-apply f '())
                            (begin
-                             (thread-cell-set! ar-sema-cell #t)
-			     (protect
-			      (lambda ()
-				(call-with-semaphore
-				 ar-the-sema
-				 (lambda () (ar-apply f '()))))
-			      (lambda ()
-				(thread-cell-set! ar-sema-cell #f)))))))
+                             (thread-cell-set! ar-atomic-cell #t)
+                             (protect
+                              (lambda ()
+                                (call-with-semaphore
+                                 ar-atomic-sema
+                                 (lambda () (ar-apply f '()))))
+                              (lambda ()
+                                (thread-cell-set! ar-atomic-cell #f)))))))
 
 (xdef dead (lambda (x) (tnil (thread-dead? x))))
 
