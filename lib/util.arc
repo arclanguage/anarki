@@ -476,6 +476,13 @@
            (wipe ,first))
          ,@body))))
 
+; Andrew Wilcox henceforth aw
+
+; xloop by aw
+(mac xloop (withses . body)
+  (let w (pair withses)
+      `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
+
 ; ripoff: ret, by skenney26
 ; http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc
 
