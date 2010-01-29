@@ -225,10 +225,13 @@
                  acc
                  keepsep?))))
 
+(defarc (ac-defined-var? s)
+  #f)
+
 (define (ac-var-ref s env)
-  (if (lex? s env)
-      s
-      (ac-global-name s)))
+  (cond ((lex? s env)        s)
+        ((ac-defined-var? s) (list (ac-global-name s)))
+        (#t                  (ac-global-name s))))
 
 ; lowering into mzscheme, with (unquote <foo>) lifting us back into arc
 
@@ -420,6 +423,7 @@
                (cond ((eqv? a 'nil) (err "Can't rebind nil"))
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
+                     ((ac-defined-var? a) `(,(ac-global-name a) zz))
                      (#t `(namespace-set-variable-value! ',(ac-global-name a) 
                                                          zz)))
                'zz))
