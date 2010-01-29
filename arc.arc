@@ -895,6 +895,22 @@
     (mvfile tmpfile file))
   val)
 
+(= ac-denil       ($ ac-denil))
+(= ac-global-name ($ ac-global-name))
+(= ac-niltree     ($ ac-niltree))
+
+; for when we can't use assign
+
+(mac ac-set-global (name val)
+  (w/uniq (gname v)
+    `(with (,gname (ac-global-name ,name)
+            ,v ,val)
+       ($ (namespace-set-variable-value! ,gname ,v))
+       nil)))
+
+(= scheme-f (read "#f"))
+(= scheme-t (read "#t"))
+
 (def sym (x) (coerce x 'sym))
 
 (def int (x (o b 10)) (coerce x 'int b))
