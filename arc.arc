@@ -1714,6 +1714,11 @@
 (def break-thread(th)
   (atomic ($:break-thread th)))
 
+(def thread-send(thd v)
+  ($:thread-send thd v))
+(def thread-recv()
+  ($:thread-receive))
+
 (mac trav (x . fs)
   (w/uniq g
     `((afn (,g)
