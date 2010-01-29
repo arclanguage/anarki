@@ -116,7 +116,7 @@
             (if (is (++ nls) 2)
                 (let (type op args n cooks) (parseheader (rev lines))
                   (if show-requests* (prn lines))
-                  (unless (~abusive-ip (proxy-ip ip-wrapper lines))
+                  (unless (abusive-ip (proxy-ip ip-wrapper lines))
                     (let t1 (msec)
                       (case type
                         get  (respond o op args cooks (ip-wrapper))
