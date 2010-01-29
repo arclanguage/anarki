@@ -561,9 +561,9 @@
 ; need ar-nil-terminate).
 
 (define (ac-niltree x)
-  (cond ((pair? x) (cons (ac-niltree (car x)) (ac-niltree (cdr x))))
-        ((or (eq? x #f) (eq? x '())) 'nil)
-        (#t x)))
+  (cond ((pair? x)   (cons (ac-niltree (car x)) (ac-niltree (cdr x))))
+        ((or (eq? x #f) (eq? x '()) (void? x))   'nil)
+        (#t   x)))
 
 ; The next two are optimizations, except work for macros.
 

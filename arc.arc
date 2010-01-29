@@ -944,8 +944,8 @@
     `(let ,f (fn() ,@body)
        (parameterize-sub ,var ,val ,f))))
 
-(def thread-cell(var)
-  ($:make-thread-cell ,var ,scheme-t))
+(def thread-cell(var (o inherit))
+  ($:make-thread-cell ,var ,(if inherit scheme-t scheme-f)))
 
 (mac thread-local(name val)
   (w/uniq storage
@@ -953,8 +953,8 @@
        (let ,storage (thread-cell ,val)
          (fn args
            (if args
-             ($:thread-cell-set! ,storage (car args))
-             ($:thread-cell-ref ,storage)))))))
+             (ac-niltree:$:thread-cell-set! ,storage (car args))
+             (ac-niltree:$:thread-cell-ref ,storage)))))))
 
 (def sym (x) (coerce x 'sym))
 
@@ -1715,9 +1715,13 @@
   (atomic ($:break-thread th)))
 
 (def thread-send(thd v)
-  ($:thread-send thd v))
-(def thread-recv()
-  ($:thread-receive))
+  (ac-niltree:$:thread-send thd v))
+(def thread-receive()
+  (ac-niltree:$:thread-receive))
+(def thread-try-receive()
+  (ac-niltree:$:thread-try-receive))
+(def thread-rewind-receive args
+  (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
 
 (mac trav (x . fs)
   (w/uniq g
