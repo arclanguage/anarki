@@ -46,23 +46,23 @@
       (errsafe (handle-request-1 s))))
 
 (def handle-request-1 (s)
-  (let (i o ip) (socket-accept s)
-    (if (and (or (ignore-ips* ip) (abusive-ip ip))
-             (++ (spurned* ip 0)))
-        (force-close i o)
-        (do (++ requests*)
-            (++ (requests/ip* ip 0))
-            (with (th1 nil th2 nil)
-              (= th1 (thread
-                       (after (handle-request-thread i o ip)
-                              (close i o)
-                              (kill-thread th2))))
-              (= th2 (thread
-                       (sleep threadlife*)
-                       (unless (dead th1)
-                         (prn "srv thread took too long for " ip))
-                       (break-thread th1)
-                       (force-close i o))))))))
+  (with ((i o ip) (socket-accept s)
+         th1 nil th2 nil)
+    (++ requests*)
+    (let ip-wrapper (fn args
+                      (if args
+                        (= ip car.args)
+                        ip))
+      (= th1 (thread
+               (after (handle-request-thread i o ip-wrapper)
+                      (close i o)
+                      (kill-thread th2))))
+      (= th2 (thread
+               (sleep threadlife*)
+               (unless (dead th1)
+                 (prn "srv thread took too long for " ip))
+               (kill-thread th1)
+               (force-close i o))))))
 
 ; Returns true if ip has made req-limit* requests in less than
 ; req-window* seconds.  If an ip is throttled, only 1 request is 
@@ -75,7 +75,17 @@
 
 (= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
 
+(wipe show-abuse*)
 (def abusive-ip (ip)
+  (++ (requests/ip* ip 0))
+  (if show-abuse*
+    (if (ignore-ips* ip)
+      (prn ip " ignored")
+      (prn ip " " (if (abusive-ip-core ip) "" "not ") "abusive (" requests/ip*.ip ")")))
+  (and (or (ignore-ips* ip) (abusive-ip-core ip))
+       (++ (spurned* ip 0))))
+
+(def abusive-ip-core (ip)
   (and (only.> (requests/ip* ip) 250)
        (let now (seconds)
          (do1 (if (req-times* ip)
@@ -88,21 +98,32 @@
                       nil))
               (enq now (req-times* ip))))))
 
-(def handle-request-thread (i o ip)
+(let proxy-header "X-Forwarded-For: "
+  (def strip-header(s)
+    (subst "" proxy-header s))
+  (def proxy-ip(ip-wrapper lines)
+    (aif (only.strip-header (car:keep [headmatch proxy-header _] lines))
+        (ip-wrapper it)
+        (ip-wrapper))))
+
+(wipe show-requests*)
+(def handle-request-thread (i o ip-wrapper)
   (with (nls 0 lines nil line nil responded nil t0 (msec))
     (after
       (whilet c (unless responded (readc i))
         (if srv-noisy* (pr c))
         (if (is c #\newline)
-            (if (is (++ nls) 2) 
+            (if (is (++ nls) 2)
                 (let (type op args n cooks) (parseheader (rev lines))
-                  (let t1 (msec)
-                    (case type
-                      get  (respond o op args cooks ip)
-                      post (handle-post i o op args n cooks ip)
-                           (respond-err o "Unknown request: " (car lines)))
-                    (log-request type op args cooks ip t0 t1)
-                    (set responded)))
+                  (if show-requests* (prn lines))
+                  (unless (~abusive-ip (proxy-ip ip-wrapper lines))
+                    (let t1 (msec)
+                      (case type
+                        get  (respond o op args cooks (ip-wrapper))
+                        post (handle-post i o op args n cooks (ip-wrapper))
+                             (respond-err o "Unknown request: " (car lines)))
+                      (log-request type op args cooks (ip-wrapper) t0 t1)))
+                  (set responded))
                 (do (push (string (rev line)) lines)
                     (wipe line)))
             (unless (is c #\return)
