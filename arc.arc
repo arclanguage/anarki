@@ -32,12 +32,14 @@
 (sref sig 'args 'do)
 (sref source-file* current-load-file* 'do)
 
+(assign disable-redef-warnings* nil)
 (assign safeset (annotate 'mac
                   (fn (var val)
-                    `(do (if (bound ',var)
+                    `(do (if (is nil disable-redef-warnings*)
+                         (if (bound ',var)
                              (do (disp "*** redefining " (stderr))
                                  (disp ',var (stderr))
-                                 (disp #\newline (stderr))))
+                                 (disp #\newline (stderr)))))
                          (assign ,var ,val)))))
 
 (sref sig '(var val) 'safeset)
@@ -910,6 +912,13 @@
 
 (= scheme-f (read "#f"))
 (= scheme-t (read "#t"))
+
+(mac redef (var expr)
+  `(after
+     (do
+       (set disable-redef-warnings*)
+       (= ,var ,expr))
+     (wipe disable-redef-warnings*)))
 
 (def sym (x) (coerce x 'sym))
 
