@@ -920,6 +920,25 @@
        (= ,var ,expr))
      (wipe disable-redef-warnings*)))
 
+(= defined-variables* (table))
+
+(redef ac-defined-var?
+  (fn (name)
+    (if defined-variables*.name scheme-t scheme-f)))
+
+(mac defvar (name impl)
+  `(do (ac-set-global ',name ,impl)
+       (set (defined-variables* ',name))
+       nil))
+
+(mac defvar-impl (name)
+  (let gname (ac-global-name name)
+    `($ ,gname)))
+
+(mac undefvar (name)
+  `(do (wipe (defined-variables* ',name))
+       (ac-set-global ',name nil)))
+
 (def sym (x) (coerce x 'sym))
 
 (def int (x (o b 10)) (coerce x 'int b))
