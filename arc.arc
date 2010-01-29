@@ -944,6 +944,18 @@
     `(let ,f (fn() ,@body)
        (parameterize-sub ,var ,val ,f))))
 
+(def thread-cell(var)
+  ($:make-thread-cell ,var ,scheme-t))
+
+(mac thread-local(name val)
+  (w/uniq storage
+    `(defvar ,name
+       (let ,storage (thread-cell ,val)
+         (fn args
+           (if args
+             ($:thread-cell-set! ,storage (car args))
+             ($:thread-cell-ref ,storage)))))))
+
 (def sym (x) (coerce x 'sym))
 
 (def int (x (o b 10)) (coerce x 'int b))
