@@ -939,6 +939,11 @@
   `(do (wipe (defined-variables* ',name))
        (ac-set-global ',name nil)))
 
+(mac parameterize(var val . body)
+  (w/uniq f
+    `(let ,f (fn() ,@body)
+       (parameterize-sub ,var ,val ,f))))
+
 (def sym (x) (coerce x 'sym))
 
 (def int (x (o b 10)) (coerce x 'int b))

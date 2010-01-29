@@ -975,6 +975,11 @@
 (xdef coerce ar-coerce)
 (xdef coerce* coercions)
 
+(xdef parameter make-parameter)
+(xdef parameterize-sub
+      (lambda (var val thunk)
+        (parameterize ((var val)) (thunk))))
+
 (xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
 
 (define (ar-init-socket init-fn . args)
