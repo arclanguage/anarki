@@ -9,6 +9,23 @@
 (require (lib "foreign.ss"))
 (unsafe!)
 
+(define (ac-global-name s)
+  (string->symbol (string-append "_" (symbol->string s))))
+
+(define-syntax defarc
+  (syntax-rules ()
+    ((defarc (name . args) body ...)
+     (defarc name (name . args) body ...))
+    ((defarc arc-name (scheme-name . args) body ...)
+     (begin
+       (xdef arc-name (lambda args body ...))
+       (defarc arc-name scheme-name)))
+    ((defarc arc-name scheme-name)
+     (define (scheme-name . args)
+       (apply (namespace-variable-value (ac-global-name 'arc-name)) args)))
+    ((defarc name)
+     (defarc name name))))
+
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
 ; env is a list of lexically bound variables, which we
@@ -207,9 +224,6 @@
                  (cons (car source) token)
                  acc
                  keepsep?))))
-
-(define (ac-global-name s)
-  (string->symbol (string-append "_" (symbol->string s))))
 
 (define (ac-var-ref s env)
   (if (lex? s env)
