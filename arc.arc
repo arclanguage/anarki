@@ -960,6 +960,13 @@
 
 (def int (x (o b 10)) (coerce x 'int b))
 
+(def stringify(sym)
+  (coerce sym 'string))
+(def symize args
+  (coerce (apply + args) 'sym))
+(def globalize l
+  (symize l "*"))
+
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
      ,@(let key -1 
