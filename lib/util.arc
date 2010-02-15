@@ -483,6 +483,16 @@
   (let w (pair withses)
       `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
 
+; http://awwx.ws/implicit2.arc
+(mac implicit (name (o val))
+  `(do (defvar ,name ($.make-parameter ,val))
+       (mac ,(sym (string "w/" name)) (v . body)
+         (w/uniq (param gv gf)
+           `(with (,param (defvar-impl ,',name)
+                   ,gv ,v
+                   ,gf (fn () ,@body))
+              ($ (parameterize ((,param ,gv)) (,gf))))))))
+
 ; ripoff: ret, by skenney26
 ; http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc
 
