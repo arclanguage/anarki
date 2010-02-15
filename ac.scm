@@ -31,7 +31,7 @@
 ; env is a list of lexically bound variables, which we
 ; need in order to decide whether set should create a global.
 
-(define (ac s env)
+(defarc (ac s env)
   (cond ((string? s) (ac-string s env))
         ((literal? s) s)
         ((eqv? s 'nil) (list 'quote 'nil))
