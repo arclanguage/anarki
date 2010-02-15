@@ -481,6 +481,14 @@
 
 ; start Andrew Wilcox (aw) code
 
+; http://awwx.ws/span0.arc
+(def span (tst lst)
+  ((afn (a lst)
+     (if (and lst (tst (car lst)))
+          (self (cons (car lst) a) (cdr lst))
+          (list (rev a) lst)))
+   nil lst))
+
 ; http://awwx.ws/xloop0.arc
 (mac xloop (withses . body)
   (let w (pair withses)
