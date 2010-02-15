@@ -4,10 +4,22 @@
 (def md5 (str)
   (($ bytes->string/utf-8) (($ md5) (($ string->bytes/utf-8) str))))
 
+(def sha1 (data)
+  (perl subprocess “
+	use Digest::SHA qw(sha1_hex);
+	sha1_hex(«data»);
+	”))
+
 (def sha224 (data)
   (perl subprocess “
 	use Digest::SHA qw(sha224_hex);
 	sha224_hex(«data»);
+	”))
+
+(def sha256 (data)
+  (perl subprocess “
+	use Digest::SHA qw(sha256_hex);
+	sha256_hex(«data»);
 	”))
 
 (def sha384 (data)
@@ -21,7 +33,6 @@
 	use Digest::SHA qw(sha512_hex);
 	sha512_hex(«data»);
 	”))
-
 
 (def whirlpool (data)
   (perl subprocess “
