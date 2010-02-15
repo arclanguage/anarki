@@ -1143,7 +1143,7 @@
             'done
             (let ((val (arc-eval expr)))
               (when interactive?
-                (write (ac-denil val))
+                (arc-write (ac-denil val))
                 (newline))
               (namespace-set-variable-value! '_that val)
               (namespace-set-variable-value! '_thatexpr expr)
