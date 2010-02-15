@@ -904,7 +904,7 @@
       (flush-output port)))
   'nil)
 
-(xdef write (lambda args (printwith write   args)))
+(defarc write (arc-write . args) (printwith write args))
 (xdef disp  (lambda args (printwith display args)))
 
 ; sread = scheme read. eventually replace by writing read
