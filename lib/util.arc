@@ -461,18 +461,22 @@
 ; ripoff: between, by Andrew Wilcox
 ; http://awwx.ws/between
 ; CHANGED 2010-02-15
-;   + update to http://awwx.ws/between0.arc - Mark Huetsch
+;   + bugfix: we were wiping first on every run but the first 
+;   - Mark Huetsch
 ; CHANGED 2010-01-02:
 ;   + added docstrings - Michael Arntzenius
 ;   + only wipe first on the first run through
 ;  - Michael Arntzenius
 
 (mac between (var expr within . body)
+  " As 'each, but runs `within' between each iteration of `body'.
+    See also [[each]] "
   (w/uniq first
     `(let ,first t
-       (each , var ,expr
-	 (unless ,first ,within)
-	 (wipe ,first)
+       (each ,var ,expr
+	 (if ,first 
+	     (wipe ,first)
+	     ,within)
 	 ,@body))))
 
 ; start Andrew Wilcox (aw) code
