@@ -476,9 +476,9 @@
            (wipe ,first))
          ,@body))))
 
-; Andrew Wilcox henceforth aw
+; start Andrew Wilcox (aw) code
 
-; xloop by aw
+; http://awwx.ws/xloop0.arc
 (mac xloop (withses . body)
   (let w (pair withses)
       `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
@@ -492,6 +492,18 @@
                    ,gv ,v
                    ,gf (fn () ,@body))
               ($ (parameterize ((,param ,gv)) (,gf))))))))
+
+; http://awwx.ws/extend-readtable0.arc
+(def extend-readtable (c parser)
+  ($
+   (current-readtable
+    (make-readtable (current-readtable)
+                    c
+                    'non-terminating-macro
+                    (lambda (ch port src line col pos)
+                      (parser port))))))
+
+; end aw code
 
 ; ripoff: ret, by skenney26
 ; http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc
