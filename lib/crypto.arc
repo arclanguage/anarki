@@ -10,6 +10,19 @@
 	sha224_hex(«data»);
 	”))
 
+(def sha384 (data)
+  (perl subprocess “
+	use Digest::SHA qw(sha384_hex);
+	sha384_hex(«data»);
+	”))
+
+(def sha512 (data)
+  (perl subprocess “
+	use Digest::SHA qw(sha512_hex);
+	sha512_hex(«data»);
+	”))
+
+
 (def whirlpool (data)
   (perl subprocess “
         use Digest;
