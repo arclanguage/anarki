@@ -9,3 +9,32 @@
 	use Digest::SHA qw(sha224_hex);
 	sha224_hex(«data»);
 	”))
+
+(def whirlpool (data)
+  (perl subprocess “
+        use Digest;
+	
+        my $whirlpool = Digest->new( 'Whirlpool' );
+
+	$whirlpool->add(«data»);
+        $whirlpool->hexdigest;
+	”))
+
+; TODO need a more sane return value than a string
+;(def aes-encrypt (key plaintext)
+;  (perl subprocess “
+;	use Crypt::OpenSSL::AES;
+;
+;	my $cipher = new Crypt::OpenSSL::AES(«key»);
+;	
+;	$cipher->encrypt(«plaintext»);
+;	”))
+;
+;(def aes-decrypt (key ciphertext)
+;  (perl subprocess “
+;	use Crypt::OpenSSL::AES;
+;
+;	my $cipher = new Crypt::OpenSSL::AES(«key»);
+;	
+;	$cipher->decrypt(«ciphertext»);
+;	”))
