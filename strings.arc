@@ -53,6 +53,9 @@
            (a (cut s (+ p 1)))))
      (cons -1 (positions test s)))))
 
+(def nonascii (s)
+  (isnt (len s) (len (utf-8-bytes s))))
+
 ; > (require (lib "uri-codec.ss" "net"))
 ;> (form-urlencoded-decode "x%ce%bbx")
 ;"xλx"
