@@ -5,5 +5,4 @@
     (perl subprocess “
 	  use Date::Language;
 	  arcnum(Date::Language->new('English')->str2time(«str»));
-	  ”))))
-
+	  ”)))
