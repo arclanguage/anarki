@@ -1,12 +1,9 @@
-(load "lib/lang.arc")
+(require "lib/lang.arc")
 
 (def parse-date (str)
-  (timedate (int
-	      (perl subprocess “
-		    use Date::Parse;
-		    use Date::Language;
-		    
-		    my $lang = Date::Language->new('English');
-		    my $time = $lang->str2time(«str»);
-		    ”))))
+  (timedate 
+    (perl subprocess “
+	  use Date::Language;
+	  arcnum(Date::Language->new('English')->str2time(«str»));
+	  ”))))
 
