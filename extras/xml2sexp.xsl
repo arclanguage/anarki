@@ -4,7 +4,7 @@
 
   Usage: xsltproc xml2sexp.xsl somefile.xml > somefile.sml
 
-  arc/sml.arc has functions for converting SML back to XML
+  lib/sml.arc has functions for converting SML back to XML
 
   Copyright (c) 2010 Jeffrey D. Brennan
  
