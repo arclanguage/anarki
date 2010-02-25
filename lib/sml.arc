@@ -48,7 +48,7 @@
 (def sml-pr-attrs (attrs)
   (when attrs
     (pr " " (car attrs) "=\"")
-    (each c (cadr attrs)
+    (each c (string (cadr attrs))
       (pr (case c #\\ "&#x5c;"
 		  #\" "&#x22;"
 		  #\& "&amp;"
