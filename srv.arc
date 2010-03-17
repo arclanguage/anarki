@@ -114,13 +114,13 @@
         (if srv-noisy* (pr c))
         (if (is c #\newline)
             (if (is (++ nls) 2)
-                (let (type op args n cooks) (parseheader (rev lines))
+                (let (type op args n cooks ctype) (parseheader (rev lines))
                   (if show-requests* (prn lines))
                   (unless (abusive-ip (proxy-ip ip-wrapper lines))
                     (let t1 (msec)
                       (case type
-                        get  (respond o op args cooks (ip-wrapper))
-                        post (handle-post i o op args n cooks (ip-wrapper))
+                        get  (respond o op args cooks 0 i "" (ip-wrapper))
+                        post (handle-post i o op args n cooks ctype (ip-wrapper))
                              (respond-err o "Unknown request: " (car lines)))
                       (log-request type op args cooks (ip-wrapper) t0 t1)))
                   (set responded))
@@ -147,17 +147,18 @@
 ; Could ignore return chars (which come from textarea fields) here by
 ; (unless (is c #\return) (push c line))
 
-(def handle-post (i o op args n cooks ip)
+(def handle-post (i o op args n cooks ctype ip)
   (if srv-noisy* (pr "Post Contents: "))
   (if (no n)
       (respond-err o "Post request without Content-Length.")
       (let line nil
-        (whilet c (and (> n 0) (readc i))
-          (if srv-noisy* (pr c))
-          (-- n)
-          (push c line)) 
-        (if srv-noisy* (pr "\n\n"))
-        (respond o op (+ (parseargs (string (rev line))) args) cooks ip))))
+	(unless (begins ctype "multipart/form-data")
+          (whilet c (and (> n 0) (readc i))
+            (if srv-noisy* (pr c))
+	    (-- n)
+	    (push c line)))
+	(if srv-noisy* (pr "\n\n"))
+	(respond o op (+ (parseargs (string (rev line))) args) cooks n ctype i ip))))
 
 (= header* "HTTP/1.1 200 OK
 Content-Type: text/html; charset=utf-8
@@ -223,14 +224,17 @@ Connection: close"))
 (deftem request
   args  nil
   cooks nil
+  ctype nil
+  clen  0
+  in    nil
   ip    nil)
 
 (= unknown-msg* "Unknown." max-age* (table) static-max-age* nil)
 
-(def respond (str op args cooks ip)
+(def respond (str op args cooks clen ctype in ip)
   (w/stdout str
     (iflet f (srvops* op)
-           (let req (inst 'request 'args args 'cooks cooks 'ip ip)
+           (let req (inst 'request 'args args 'cooks cooks 'ctype ctype 'clen clen 'in in 'ip ip)
              (if (redirector* op)
                  (do (prn rdheader*)
                      (prn "Location: " (f str req))
@@ -284,7 +288,12 @@ Connection: close"))
           (some (fn (s)
                   (and (begins s "Cookie:")
                        (parsecookies s)))
-                (cdr lines)))))
+                (cdr lines))
+	  (and (is type 'post)
+	       (some (fn (s)
+		       (and (begins s "Content-Type: ")
+			    (cut s (len "Content-Type: "))))
+		     (cdr lines))))))
 
 ; (parseurl "GET /p1?foo=bar&ug etc") -> (get p1 (("foo" "bar") ("ug")))
 
@@ -462,6 +471,16 @@ Connection: close"))
        (fnid-field (fnid (fn (,ga)
                            (prn)
                            (,f ,ga))))
+       ,@body)))
+
+(mac aform-multi (f . body)
+  (w/uniq ga
+    `(tag (form method 'post
+		enctype "multipart/form-data"
+		action (string fnurl* "?fnid="
+			       (fnid (fn (,ga)
+				       (prn)
+				       (,f ,ga)))))
        ,@body)))
 
 ;(defop test1 req

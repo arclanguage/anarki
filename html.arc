@@ -109,6 +109,7 @@
 (attribute form       id             opstring)
 (attribute form       name           opstring)
 (attribute form       onsubmit       opstring)
+(attribute form       enctype        opstring)
 (attribute img        align          opsym)
 (attribute img        border         opnum)
 (attribute img        height         opnum)
