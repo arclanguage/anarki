@@ -33,36 +33,21 @@
     ""))
 
 (def parse-url (url)
-  (withs (url                   (if (find #\# url)
-                                  (joinstr (butlast (tokens url #\#)) "")
-                                  url) ; throw away anchor component
-          has-trailing-slash    (endmatch "/" url)
-          components            (tokens url #\/)
-          first-component       (pop components)
-          first-component-is-resource (endmatch ":" first-component)
-          resource              (if first-component-is-resource
-                                  (downcase (butlast first-component))
-                                  "http") ; defaults to http
-          host                  (if first-component-is-resource
-                                  (pop components)
-                                  first-component)
-          host-tokens           (tokens host #\:)
-          host                  (car host-tokens)
-          port                  (if
-                                  (> (len host-tokens) 1)
-                                    (int (last host-tokens))
-                                  (is "https" resource)
-                                    443
-                                    80)
-          components            (tokens (if components
-                                           (+ (joinstr components "/")
-                                              (if has-trailing-slash "/"))
-                                           "")
-                                       #\?)
-          filename              (if (and components (isnt "" (components 0)))
-                                  (components 0))
-          query                 (if (len> components 1) (components 1)))
-    (obj resource resource host host port port filename filename query query)))
+  (withs ((resource url)    (split-by "://" (ensure-resource:strip-after url "#"))
+          (host+port path+query)  (split-by "/" url)
+          (host portstr)    (split-by ":" host+port)
+          (path query)      (split-by "?" path+query))
+    (obj resource resource
+         host     host
+         port     (or (only.int portstr) default-port.resource)
+         filename path
+         query    query)))
+
+; TODO: only handles https for now
+(def default-port(resource)
+  (if (is resource "https")
+    443
+    80))
 
 (def encode-cookie (o)
   (let joined-list (map [joinstr _ #\=] (tablist o))
@@ -109,6 +94,23 @@
 
 (def post-url (url args)
   ((get-or-post-url url args "POST") 1))
+
+
+
+(def split-by(delim s)
+  (iflet idx (posmatch delim s)
+    (list (cut s 0 idx) (cut s (+ idx len.delim)))
+    (list s nil)))
+
+(def strip-after(s delim)
+  ((split-by delim s) 0))
+
+(def ensure-resource(url)
+  (if (posmatch "://" url)
+    url
+    (+ "http://" url)))
+
+
 
 (def google (q)
   (get-url (+ "www.google.com/search?q=" (urlencode q))))
