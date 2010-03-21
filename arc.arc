@@ -223,7 +223,15 @@
       (and (acons x) 
            (acons y) 
            (iso (car x) (car y)) 
-           (iso (cdr x) (cdr y)))))
+           (iso (cdr x) (cdr y)))
+      (and (isa x 'table)
+           (isa y 'table)
+           (iso (len:keys x) (len:keys y))
+           (all
+             (fn(pair)
+               (let (k v) pair
+                 (iso y.k v)))
+             tablist.x))))
 
 (mac when (test . body)
   `(if ,test (do ,@body)))
