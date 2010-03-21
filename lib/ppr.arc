@@ -138,8 +138,7 @@
        fn      ,[indent-mac _ 1 _2])))
 
 (def ppr-main (x (o col 0) (o noindent nil))
-  " Pretty print. This function displays arc code with proper
-    indenting and representation of syntax. "
+  " Recursive main body of the ppr function. "
   (aif (or atom.x dotted.x)		;just print the expression if it's an atom or dotted list
          (indent col
 	   print.x
@@ -177,4 +176,6 @@
 	   (pr ")")))))
 
 (def ppr l
+  " Pretty print. This function displays arc code with proper
+    indenting and representation of syntax. "
   (each x l (ppr-main x) (prn)))
