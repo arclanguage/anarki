@@ -137,7 +137,7 @@
        caselet ,(indent-case 2)
        fn      ,[indent-mac _ 1 _2])))
 
-(def ppr (x (o col 0) (o noindent nil))
+(def ppr-main (x (o col 0) (o noindent nil))
   " Pretty print. This function displays arc code with proper
     indenting and representation of syntax. "
   (aif (or atom.x dotted.x)		;just print the expression if it's an atom or dotted list
@@ -147,7 +147,7 @@
        (is car.x 'make-br-fn)		;if the expression is a br-fn, print the brackets and then the contents
          (ppr-sub
 	   (pr "[")
-	   (ppr cadr.x (+ col 1) t)
+	   (ppr-main cadr.x (+ col 1) t)
 	   (pr "]"))
        (pprsyms* car.x)
          (ppr-sub
@@ -162,7 +162,7 @@
 		 l    len.str
 		 xs   cdr.x)
 	   (if (isa proc 'cons)
-	       (do (ppr proc (+ col 1) t)
+	       (do (ppr-main proc (+ col 1) t)
 		   (indent-block xs (+ col 1)))
 	       (do pr.str
 		   (when xs
@@ -175,3 +175,6 @@
 				(indent-mac xs 0 col))
 			  (indent-basic xs l col)))))
 	   (pr ")")))))
+
+(def ppr l
+  (each x l (ppr-main x) (prn)))
