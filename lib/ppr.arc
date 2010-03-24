@@ -60,13 +60,13 @@
           (if cdr.x
               (do pr.str
                   (sp:- l len.str -1)
-                  (ppr cadr.x (+ col 1 l) t))
+                  (ppr-main cadr.x (+ col 1 l) t))
               ; lone tail expression
               (do (sp (+ l 1))
-                  (ppr car.x (+ col (+ l 1)) t)))))))
+                  (ppr-main car.x (+ col (+ l 1)) t)))))))
 
 (def indent-block (xs (o col 0))
-  (each x xs (prn) (ppr x col)))
+  (each x xs (prn) (ppr-main x col)))
 
 (def indent-mac (xs (o args 0) (o col 0))
   (print-spaced (firstn args xs))
@@ -76,14 +76,14 @@
   (if (all [or atom._ (and (is car._ 'quote) (atom cadr._))]
 	   xs)
       print-spaced.xs
-      (do (ppr car.xs (+ col 2 l) t)
+      (do (ppr-main car.xs (+ col 2 l) t)
 	  (indent-block cdr.xs (+ col 2 l)))))
 
 (def indent-wave (xs (o col 0))
-  (do (ppr car.xs col t)
+  (do (ppr-main car.xs col t)
       (on x cdr.xs
 	  (prn)
-	  (ppr x (+ col (* 2 (mod (+ index 1) 2)))))))
+	  (ppr-main x (+ col (* 2 (mod (+ index 1) 2)))))))
 
 (= ifline* 20)
 
@@ -92,7 +92,7 @@
       (if (< len.xs 4)
 	    (on x xs 
 		(if (~is index 0) (prn))
-		(ppr x (+ col 2 l) (is index 0)))
+		(ppr-main x (+ col 2 l) (is index 0)))
 	  (all [< (len:tostring print._) ifline*]
 	       pair.xs)
 	    (indent-pairs xs (+ col 2 l))
@@ -151,7 +151,7 @@
        (pprsyms* car.x)
          (ppr-sub
 	   pr.it
-	   (ppr cadr.x (+ col len.it) t))
+	   (ppr-main cadr.x (+ col len.it) t))
        (ppr-sub
 	 (pr "(")
 	 (withs (proc car.x
