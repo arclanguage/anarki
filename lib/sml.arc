@@ -31,14 +31,14 @@
   (let rest (cdr tag)
     (if (no rest) nil
         (is (safecar (car rest)) '@) (cdr:car rest) ;; old format
-        (isa (car rest) 'cons) nil
+        (no (isa (car rest) 'sym)) nil
         (cons (car rest) (cons (cadr rest) (sml-attrs (cdr rest)))))))
 
 (def sml-elements (tag)
   (let rest (cdr tag)
     (if (no rest) nil
         (is (safecar (car rest)) '@) (cdr rest) ;; old format
-        (isa (car rest) 'cons) rest
+        (no (isa (car rest) 'sym)) rest
         (sml-elements (cdr rest)))))
 
 ;; Return car if the argument is a cons, otherwise nil
