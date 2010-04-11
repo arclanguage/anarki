@@ -18,14 +18,13 @@
   " Print an expression on one line, replacing quote, unquote,
     quasiquote, unquote-splicing, and make-br-fn with their respective symbols. " 
   (do (aif (or atom.x dotted.x)
-	     (do write.x nil)
+	     write.x
 	   (pprsyms* car.x)
 	     (do pr.it
-	       (print cadr.x)
-	       nil)
+	       (print cadr.x))
 	   (is car.x 'make-br-fn)
-	     (do (pr "[") (print-spaced cadr.x) (pr "]") nil)
-	   (do (pr "(") print-spaced.x (pr ")") nil))
+	     (do (pr "[") (print-spaced cadr.x) (pr "]"))
+	   (do (pr "(") print-spaced.x (pr ")")))
       x))
 
 (= oneline* 45)
