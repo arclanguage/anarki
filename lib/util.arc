@@ -460,6 +460,9 @@
 
 ; ripoff: between, by Andrew Wilcox
 ; http://awwx.ws/between
+; CHANGED 2010-02-15
+;   + bugfix: we were wiping first on every run but the first 
+;   - Mark Huetsch
 ; CHANGED 2010-01-02:
 ;   + added docstrings - Michael Arntzenius
 ;   + only wipe first on the first run through
@@ -471,10 +474,47 @@
   (w/uniq first
     `(let ,first t
        (each ,var ,expr
-         (unless ,first
-           ,within
-           (wipe ,first))
-         ,@body))))
+	 (if ,first 
+	     (wipe ,first)
+	     ,within)
+	 ,@body))))
+
+; start Andrew Wilcox (aw) code
+
+; http://awwx.ws/span0.arc
+(def span (tst lst)
+  ((afn (a lst)
+     (if (and lst (tst (car lst)))
+          (self (cons (car lst) a) (cdr lst))
+          (list (rev a) lst)))
+   nil lst))
+
+; http://awwx.ws/xloop0.arc
+(mac xloop (withses . body)
+  (let w (pair withses)
+      `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
+
+; http://awwx.ws/implicit2.arc
+(mac implicit (name (o val))
+  `(do (defvar ,name ($.make-parameter ,val))
+       (mac ,(sym (string "w/" name)) (v . body)
+         (w/uniq (param gv gf)
+           `(with (,param (defvar-impl ,',name)
+                   ,gv ,v
+                   ,gf (fn () ,@body))
+              ($ (parameterize ((,param ,gv)) (,gf))))))))
+
+; http://awwx.ws/extend-readtable0.arc
+(def extend-readtable (c parser)
+  ($
+   (current-readtable
+    (make-readtable (current-readtable)
+                    c
+                    'non-terminating-macro
+                    (lambda (ch port src line col pos)
+                      (parser port))))))
+
+; end aw code
 
 ; ripoff: ret, by skenney26
 ; http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc

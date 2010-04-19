@@ -223,7 +223,15 @@
       (and (acons x) 
            (acons y) 
            (iso (car x) (car y)) 
-           (iso (cdr x) (cdr y)))))
+           (iso (cdr x) (cdr y)))
+      (and (isa x 'table)
+           (isa y 'table)
+           (iso (len:keys x) (len:keys y))
+           (all
+             (fn(pair)
+               (let (k v) pair
+                 (iso y.k v)))
+             tablist.x))))
 
 (mac when (test . body)
   `(if ,test (do ,@body)))
@@ -895,9 +903,70 @@
     (mvfile tmpfile file))
   val)
 
+(= ac-denil       ($ ac-denil))
+(= ac-global-name ($ ac-global-name))
+(= ac-niltree     ($ ac-niltree))
+
+; for when we can't use assign
+
+(mac ac-set-global (name val)
+  (w/uniq (gname v)
+    `(with (,gname (ac-global-name ,name)
+            ,v ,val)
+       ($ (namespace-set-variable-value! ,gname ,v))
+       nil)))
+
+(= scheme-f (read "#f"))
+(= scheme-t (read "#t"))
+
+(= redef =)
+
+(= defined-variables* (table))
+
+(redef ac-defined-var?
+  (fn (name)
+    (if defined-variables*.name scheme-t scheme-f)))
+
+(mac defvar (name impl)
+  `(do (ac-set-global ',name ,impl)
+       (set (defined-variables* ',name))
+       nil))
+
+(mac defvar-impl (name)
+  (let gname (ac-global-name name)
+    `($ ,gname)))
+
+(mac undefvar (name)
+  `(do (wipe (defined-variables* ',name))
+       (ac-set-global ',name nil)))
+
+(mac parameterize(var val . body)
+  (w/uniq f
+    `(let ,f (fn() ,@body)
+       (parameterize-sub ,var ,val ,f))))
+
+(def thread-cell(var (o inherit))
+  ($:make-thread-cell ,var ,(if inherit scheme-t scheme-f)))
+
+(mac thread-local(name val)
+  (w/uniq storage
+    `(defvar ,name
+       (let ,storage (thread-cell ,val)
+         (fn args
+           (if args
+             (ac-niltree:$:thread-cell-set! ,storage (car args))
+             (ac-niltree:$:thread-cell-ref ,storage)))))))
+
 (def sym (x) (coerce x 'sym))
 
 (def int (x (o b 10)) (coerce x 'int b))
+
+(def stringify(sym)
+  (coerce sym 'string))
+(def symize args
+  (coerce (apply + args) 'sym))
+(def globalize l
+  (symize l "*"))
 
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
@@ -1648,6 +1717,19 @@
 
 (mac thread body 
   `(new-thread (fn () ,@body)))
+(def kill-thread(th)
+  (atomic ($:kill-thread th)))
+(def break-thread(th)
+  (atomic ($:break-thread th)))
+
+(def thread-send(thd v)
+  (ac-niltree:$:thread-send thd v))
+(def thread-receive()
+  (ac-niltree:$:thread-receive))
+(def thread-try-receive()
+  (ac-niltree:$:thread-try-receive))
+(def thread-rewind-receive args
+  (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
 
 (mac trav (x . fs)
   (w/uniq g

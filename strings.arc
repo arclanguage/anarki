@@ -53,6 +53,9 @@
            (a (cut s (+ p 1)))))
      (cons -1 (positions test s)))))
 
+(def nonascii (s)
+  (isnt (len s) (len (utf-8-bytes s))))
+
 ; > (require (lib "uri-codec.ss" "net"))
 ;> (form-urlencoded-decode "x%ce%bbx")
 ;"xλx"
@@ -73,7 +76,7 @@
 
 (def urlencode (s)
   (tostring 
-    (each c s 
+    (each c (utf-8-bytes s)
       (writec #\%)
       (let i (int c)
         (if (< i 16) (writec #\0))

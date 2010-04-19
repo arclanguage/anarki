@@ -9,12 +9,29 @@
 (require (lib "foreign.ss"))
 (unsafe!)
 
+(define (ac-global-name s)
+  (string->symbol (string-append "_" (symbol->string s))))
+
+(define-syntax defarc
+  (syntax-rules ()
+    ((defarc (name . args) body ...)
+     (defarc name (name . args) body ...))
+    ((defarc arc-name (scheme-name . args) body ...)
+     (begin
+       (xdef arc-name (lambda args body ...))
+       (defarc arc-name scheme-name)))
+    ((defarc arc-name scheme-name)
+     (define (scheme-name . args)
+       (apply (namespace-variable-value (ac-global-name 'arc-name)) args)))
+    ((defarc name)
+     (defarc name name))))
+
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
 ; env is a list of lexically bound variables, which we
 ; need in order to decide whether set should create a global.
 
-(define (ac s env)
+(defarc (ac s env)
   (cond ((string? s) (ac-string s env))
         ((literal? s) s)
         ((eqv? s 'nil) (list 'quote 'nil))
@@ -49,7 +66,7 @@
           (unescape-ats s))
       (string-copy s)))          ; avoid immutable strings
 
-(define (literal? x)
+(defarc ac-literal (literal? x)
   (or (boolean? x)
       (char? x)
       (string? x)
@@ -208,13 +225,13 @@
                  acc
                  keepsep?))))
 
-(define (ac-global-name s)
-  (string->symbol (string-append "_" (symbol->string s))))
+(defarc (ac-defined-var? s)
+  #f)
 
 (define (ac-var-ref s env)
-  (if (lex? s env)
-      s
-      (ac-global-name s)))
+  (cond ((lex? s env)        s)
+        ((ac-defined-var? s) (list (ac-global-name s)))
+        (#t                  (ac-global-name s))))
 
 ; lowering into mzscheme, with (unquote <foo>) lifting us back into arc
 
@@ -406,6 +423,7 @@
                (cond ((eqv? a 'nil) (err "Can't rebind nil"))
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
+                     ((ac-defined-var? a) `(,(ac-global-name a) zz))
                      (#t `(namespace-set-variable-value! ',(ac-global-name a) 
                                                          zz)))
                'zz))
@@ -543,9 +561,9 @@
 ; need ar-nil-terminate).
 
 (define (ac-niltree x)
-  (cond ((pair? x) (cons (ac-niltree (car x)) (ac-niltree (cdr x))))
-        ((or (eq? x #f) (eq? x '())) 'nil)
-        (#t x)))
+  (cond ((pair? x)   (cons (ac-niltree (car x)) (ac-niltree (cdr x))))
+        ((or (eq? x #f) (eq? x '()) (void? x))   'nil)
+        (#t   x)))
 
 ; The next two are optimizations, except work for macros.
 
@@ -886,7 +904,7 @@
       (flush-output port)))
   'nil)
 
-(xdef write (lambda args (printwith write   args)))
+(defarc write (arc-write . args) (printwith write args))
 (xdef disp  (lambda args (printwith display args)))
 
 ; sread = scheme read. eventually replace by writing read
@@ -957,6 +975,11 @@
 (xdef coerce ar-coerce)
 (xdef coerce* coercions)
 
+(xdef parameter make-parameter)
+(xdef parameterize-sub
+      (lambda (var val thunk)
+        (parameterize ((var val)) (thunk))))
+
 (xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
 
 (define (ar-init-socket init-fn . args)
@@ -996,8 +1019,6 @@
 (xdef setuid setuid)
 
 (xdef new-thread thread)
-(xdef kill-thread kill-thread)
-(xdef break-thread break-thread)
 (xdef current-thread current-thread)
 
 (define (wrapnil f) (lambda args (apply f args) 'nil))
@@ -1122,7 +1143,7 @@
             'done
             (let ((val (arc-eval expr)))
               (when interactive?
-                (write (ac-denil val))
+                (arc-write (ac-denil val))
                 (newline))
               (namespace-set-variable-value! '_that val)
               (namespace-set-variable-value! '_thatexpr expr)
@@ -1316,22 +1337,20 @@
 ; nest within a thread; the thread-cell keeps track of
 ; whether this thread already holds the lock.
 
-(define ar-the-sema (make-semaphore 1))
-
-(define ar-sema-cell (make-thread-cell #f))
-
+(define ar-atomic-sema (make-semaphore 1))
+(define ar-atomic-cell (make-thread-cell #f))
 (xdef atomic-invoke (lambda (f)
-                       (if (thread-cell-ref ar-sema-cell)
+                       (if (thread-cell-ref ar-atomic-cell)
                            (ar-apply f '())
                            (begin
-                             (thread-cell-set! ar-sema-cell #t)
-			     (protect
-			      (lambda ()
-				(call-with-semaphore
-				 ar-the-sema
-				 (lambda () (ar-apply f '()))))
-			      (lambda ()
-				(thread-cell-set! ar-sema-cell #f)))))))
+                             (thread-cell-set! ar-atomic-cell #t)
+                             (protect
+                              (lambda ()
+                                (call-with-semaphore
+                                 ar-atomic-sema
+                                 (lambda () (ar-apply f '()))))
+                              (lambda ()
+                                (thread-cell-set! ar-atomic-cell #f)))))))
 
 (xdef dead (lambda (x) (tnil (thread-dead? x))))
 

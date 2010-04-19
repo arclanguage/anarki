@@ -1,9 +1,6 @@
 ;;; http://testanything.org
 ;;; Original: Shlomi Fish
 
-(def symize args
-  (coerce (apply + args) 'sym))
-
 (with (curr-test 0 num-planned 0)
       (def ok (value (o msg))
            (if value (pr "ok") (pr "not ok"))

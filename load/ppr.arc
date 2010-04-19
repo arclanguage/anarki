@@ -18,14 +18,13 @@
   " Print an expression on one line, replacing quote, unquote,
     quasiquote, unquote-splicing, and make-br-fn with their respective symbols. " 
   (do (aif (or atom.x dotted.x)
-	     (do write.x nil)
+	     write.x
 	   (pprsyms* car.x)
 	     (do pr.it
-	       (print cadr.x)
-	       nil)
+	       (print cadr.x))
 	   (is car.x 'make-br-fn)
-	     (do (pr "[") (print-spaced cadr.x) (pr "]") nil)
-	   (do (pr "(") print-spaced.x (pr ")") nil))
+	     (do (pr "[") (print-spaced cadr.x) (pr "]"))
+	   (do (pr "(") print-spaced.x (pr ")")))
       x))
 
 (= oneline* 45)
@@ -60,13 +59,13 @@
           (if cdr.x
               (do pr.str
                   (sp:- l len.str -1)
-                  (ppr cadr.x (+ col 1 l) t))
+                  (ppr-main cadr.x (+ col 1 l) t))
               ; lone tail expression
               (do (sp (+ l 1))
-                  (ppr car.x (+ col (+ l 1)) t)))))))
+                  (ppr-main car.x (+ col (+ l 1)) t)))))))
 
 (def indent-block (xs (o col 0))
-  (each x xs (prn) (ppr x col)))
+  (each x xs (prn) (ppr-main x col)))
 
 (def indent-mac (xs (o args 0) (o col 0))
   (print-spaced (firstn args xs))
@@ -76,14 +75,14 @@
   (if (all [or atom._ (and (is car._ 'quote) (atom cadr._))]
 	   xs)
       print-spaced.xs
-      (do (ppr car.xs (+ col 2 l) t)
+      (do (ppr-main car.xs (+ col 2 l) t)
 	  (indent-block cdr.xs (+ col 2 l)))))
 
 (def indent-wave (xs (o col 0))
-  (do (ppr car.xs col t)
+  (do (ppr-main car.xs col t)
       (on x cdr.xs
 	  (prn)
-	  (ppr x (+ col (* 2 (mod (+ index 1) 2)))))))
+	  (ppr-main x (+ col (* 2 (mod (+ index 1) 2)))))))
 
 (= ifline* 20)
 
@@ -92,7 +91,7 @@
       (if (< len.xs 4)
 	    (on x xs 
 		(if (~is index 0) (prn))
-		(ppr x (+ col 2 l) (is index 0)))
+		(ppr-main x (+ col 2 l) (is index 0)))
 	  (all [< (len:tostring print._) ifline*]
 	       pair.xs)
 	    (indent-pairs xs (+ col 2 l))
@@ -137,9 +136,8 @@
        caselet ,(indent-case 2)
        fn      ,[indent-mac _ 1 _2])))
 
-(def ppr (x (o col 0) (o noindent nil))
-  " Pretty print. This function displays arc code with proper
-    indenting and representation of syntax. "
+(def ppr-main (x (o col 0) (o noindent nil))
+  " Recursive main body of the ppr function. "
   (aif (or atom.x dotted.x)		;just print the expression if it's an atom or dotted list
          (indent col
 	   print.x
@@ -147,12 +145,12 @@
        (is car.x 'make-br-fn)		;if the expression is a br-fn, print the brackets and then the contents
          (ppr-sub
 	   (pr "[")
-	   (ppr cadr.x (+ col 1) t)
+	   (ppr-main cadr.x (+ col 1) t)
 	   (pr "]"))
        (pprsyms* car.x)
          (ppr-sub
 	   pr.it
-	   (ppr cadr.x (+ col len.it) t))
+	   (ppr-main cadr.x (+ col len.it) t))
        (ppr-sub
 	 (pr "(")
 	 (withs (proc car.x
@@ -162,7 +160,7 @@
 		 l    len.str
 		 xs   cdr.x)
 	   (if (isa proc 'cons)
-	       (do (ppr proc (+ col 1) t)
+	       (do (ppr-main proc (+ col 1) t)
 		   (indent-block xs (+ col 1)))
 	       (do pr.str
 		   (when xs
@@ -175,3 +173,8 @@
 				(indent-mac xs 0 col))
 			  (indent-basic xs l col)))))
 	   (pr ")")))))
+
+(def ppr l
+  " Pretty print. This function displays arc code with proper
+    indenting and representation of syntax. "
+  (each x l (ppr-main x) (prn)))
