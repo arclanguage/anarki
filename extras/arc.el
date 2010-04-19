@@ -100,11 +100,8 @@
 
 (defvar arc-imenu-generic-expression
       '((nil
-         "^(define\\(\\|-\\(generic\\(\\|-procedure\\)\\|method\\)\\)*\\s-+(?\\(\\sw+\\)" 4)
-        ("Types"
-         "^(define-class\\s-+(?\\(\\sw+\\)" 1)
-        ("Macros"
-         "^(\\(defmacro\\|define-macro\\|define-syntax\\)\\s-+(?\\(\\sw+\\)" 2))
+         "^(def\\sw*\\s-+\\(\\sw+\\)" 1)
+        ("Macros" "^(mac\\s-+\\(\\sw+\\)" 1))
   "Imenu generic expression for Arc mode.  See `imenu-generic-expression'.")
 
 (defun arc-mode-variables ()
@@ -153,7 +150,7 @@
   (set (make-local-variable 'font-lock-defaults)
        '((arc-font-lock-keywords
           arc-font-lock-keywords-1 arc-font-lock-keywords-2)
-         nil t (("+-*/.<>=!?$%_&~^:" . "w") (?#. "w 14"))
+         nil nil (("+-*/.<>=!?$%_&~^:" . "w") (?#. "w 14"))
          beginning-of-defun
          (font-lock-mark-block-function . mark-defun)
          (font-lock-syntactic-face-function
@@ -406,64 +403,27 @@ rigidly along with this one."
               (method
                 (funcall method state indent-point normal-indent)))))))
 
-
-;;; Let is different in Arc
-
-;;; ... but not *this* different. I suspect this code is for an older version of
-;;; arc. - Michael Arntzenius <daekharel@gmail.com>, 2009-08-08
-
-;; (defun would-be-symbol (string)
-;;   (not (string-equal (substring string 0 1) "(")))
-
-;; (defun next-sexp-as-string ()
-;;   ;; Assumes that it is protected by a save-excursion
-;;   (forward-sexp 1)
-;;   (let ((the-end (point)))
-;;     (backward-sexp 1)
-;;     (buffer-substring (point) the-end)))
-
-;; This is correct but too slow.
-;; The one below works almost always.
-;;(defun arc-let-indent (state indent-point)
-;;  (if (would-be-symbol (next-sexp-as-string))
-;;      (arc-indent-specform 2 state indent-point)
-;;      (arc-indent-specform 1 state indent-point)))
-
-;; (defun arc-let-indent (state indent-point normal-indent)
-;;   (skip-chars-forward " \t")
-;;   (if (looking-at "[-a-zA-Z0-9+*/?!@$%^&_:~]")
-;;       (lisp-indent-specform 2 state indent-point normal-indent)
-;;     (lisp-indent-specform 1 state indent-point normal-indent)))
-
 ;; (put 'begin 'arc-indent-function 0), say, causes begin to be indented
 ;; like def if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
-(put 'unless 'arc-indent-function 1)
-(put 'case 'arc-indent-function 1)
-(put 'with 'arc-indent-function 1)
-(put 'withs 'arc-indent-function 1)
-(put 'when 'arc-indent-function 1)
-(put 'awhen 'arc-indent-function 1)
-(put 'w/uniq 'arc-indent-function 1)
-(put 'w/stdout 'arc-indent-function 1)
-(put 'w/appendfile 'arc-indent-function 1)
-(put 'w/stdin 'arc-indent-function 1)
-(put 'w/infile 'arc-indent-function 2)
-(put 'whilet 'arc-indent-function 2)
-(put 'each 'arc-indent-function 2)
-(put 'on 'arc-indent-function 2)
-(put 'accum 'arc-indent-function 1)
-(put 'def 'arc-indent-function 2)
-(put 'mac 'arc-indent-function 2)
-(put 'defset 'arc-indent-function 2)
-(put 'defcall 'arc-indent-function 2)
-(put 'redef 'arc-indent-function 2)
-(put 'fn 'arc-indent-function 1)
-(put 'afn 'arc-indent-function 1)
-(put 'rfn 'arc-indent-function 2)
-;(put 'let 'arc-indent-function 'arc-let-indent)
-(put 'let 'arc-indent-function 2)
+(eval-when-compile (require 'cl-macs))
+
+(let ((arc-indent-function-list
+       ;; format is ((LEVEL . SYMS) ...)
+       ;; LEVEL is the value to put for the arc-indent-function property
+       ;; SYMS are the syms whose properties are to be modified
+       ;; eg. ((1 foo) (quux bar xyzzy)) means:
+       ;;   (put 'foo 'arc-indent-function 1)
+       ;;   (put 'bar 'arc-indent-function 'quux)
+       ;;   (put 'xyzzy 'arc-indent-function 'quux)
+       '((1 unless case with withs when awhen accum fn afn
+            w/uniq w/stdout w/appendfile w/stdin w/infile)
+         (2 w/infile whilet each on def mac defset defcall redef rfn let))))
+  (dolist (entry arc-indent-function-list)
+    (destructuring-bind (level . syms) entry
+      (dolist (sym syms)
+        (put sym 'arc-indent-function level)))))
 
 ;; By default, Emacs thinks .arc is an archive extension.
 ;; This makes it normal.
@@ -475,5 +435,4 @@ rigidly along with this one."
 
 (provide 'arc)
 
-;; arch-tag: a8f06bc1-ad11-42d2-9e36-ce651df37a90
 ;;; arc.el ends here
