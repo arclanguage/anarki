@@ -30,20 +30,16 @@
 (def sml-attrs (tag)
   (let rest (cdr tag)
     (if (no rest) nil
-        (is (safecar (car rest)) '@) (cdr:car rest) ;; old format
+        (caris (car rest) '@) (cdr:car rest) ;; old format
         (no (isa (car rest) 'sym)) nil
         (cons (car rest) (cons (cadr rest) (sml-attrs (cdr rest)))))))
 
 (def sml-elements (tag)
   (let rest (cdr tag)
     (if (no rest) nil
-        (is (safecar (car rest)) '@) (cdr rest) ;; old format
+        (caris (car rest) '@) (cdr rest) ;; old format
         (no (isa (car rest) 'sym)) rest
         (sml-elements (cdr rest)))))
-
-;; Return car if the argument is a cons, otherwise nil
-(def safecar (xs)
-  (if (is (type xs) 'cons) (car xs)))
 
 (def sml-pr-attrs (attrs)
   (when attrs
