@@ -867,12 +867,23 @@
                                       (current-input-port)))))
                 (if (eof-object? c) 'nil c))))
 
+(xdef readchars (lambda (n . str)
+                  (let ((cs (read-string n (if (pair? str)
+                                              (car str)
+                                              (current-input-port)))))
+                    (if (eof-object? cs) 'nil (string->list cs)))))
 
 (xdef readb (lambda str
               (let ((c (read-byte (if (pair? str)
                                       (car str)
                                       (current-input-port)))))
                 (if (eof-object? c) 'nil c))))
+
+(xdef readbytes (lambda (n . str)
+                  (let ((bs (read-bytes n (if (pair? str)
+                                              (car str)
+                                              (current-input-port)))))
+                    (if (eof-object? bs) 'nil (bytes->list bs)))))
 
 (xdef peekc (lambda str 
               (let ((c (peek-char (if (pair? str)
