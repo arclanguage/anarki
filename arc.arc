@@ -1643,9 +1643,6 @@
 (mac catch body
   `(point throw ,@body))
 
-(mac whilesc (test . body)
-  `(point break (while ,test (point continue ,@body))))
-
 (def downcase (x)
   (let downc (fn (c)
                (let n (coerce c 'int)
