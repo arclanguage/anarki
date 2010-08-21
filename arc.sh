@@ -1,16 +1,17 @@
 #!/bin/sh
 
-arc_dir=$(dirname "$(readlink -f "$0")")
+arc_dir=$(dirname "$(readlink "$0")")
 
 if [ "$1" = "--no-rl" ]; then
     shift
-elif [ "$(type -p rlwrap)" ]; then
+elif [ "$(type rlwrap)" ]; then
     rl="rlwrap -C arc"
 fi
 
 # I wish there were some cleaner way to do this
 case "$(mzscheme --version)" in
     *v4.*) plt4=yes;;
+    *v5.*) plt4=yes;; # compatible with v4 for the use in this script
     *) plt4=no;;
 esac
 
