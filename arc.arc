@@ -1840,10 +1840,10 @@
   (w/uniq first
     `(let ,first t
        (each ,var ,expr
-	 (if ,first 
-	     (wipe ,first)
-	     ,within)
-	 ,@body))))
+	       (if ,first 
+	         (wipe ,first)
+	         ,within)
+	       ,@body))))
 
 (mac tofile (name . body)
   (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
