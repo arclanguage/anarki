@@ -1840,13 +1840,16 @@
   (w/uniq first
     `(let ,first t
        (each ,var ,expr
-	       (if ,first 
+         (if ,first 
 	         (wipe ,first)
 	         ,within)
 	       ,@body))))
 
 (mac tofile (name . body)
   (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
+
+(mac ontofile (name . body)
+  (w/uniq str `(w/appendfile ,str ,name (w/stdout ,str ,@body))))
 
 (mac fromfile (name . body)
   (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
