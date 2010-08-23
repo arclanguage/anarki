@@ -132,11 +132,6 @@
     See also [[pull]] [[rem1]] [[rem]] [[keep]] "
   `(= ,place (rem1 ,test ,place)))
 
-(def butlast (x)
-  " Returns a list containing every element of `x' but the last.
-    See also: [[cut]] "
-  (cut x 0 (- (len x) 1)))
-
 (= len= [is len._a _b])
 (= len- [- len._a _b])
 (= car< [< car._a car._b])
@@ -274,16 +269,6 @@
           (if ,test ,result
             (do ,@body (,loop-name ,@(map1 [_ 2] parms)))))
          ,@(map1 [_ 1] parms)))))
-
-(mac w/stdoutfile (name . body)
-  " Redirects stdout to the file `name' within `body'. 
-    See also [[w/stdinfile]] [[w/outfile]] [[w/stdout]] "
-  (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
-
-(mac w/stdinfile (name . body)
-  " Redirects standard input from the file `name' within `body'.
-    See also [[w/stdoutfile]] [[w/infile]] [[w/stdin]] "
-  (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
 
 
 ; binding forms
@@ -458,27 +443,6 @@
     See also [[w/rfn]] [[afnwith]] [[afn]] "
   `(w/rfn self ,withses ,@body))
 
-; ripoff: between, by Andrew Wilcox
-; http://awwx.ws/between
-; CHANGED 2010-02-15
-;   + bugfix: we were wiping first on every run but the first 
-;   - Mark Huetsch
-; CHANGED 2010-01-02:
-;   + added docstrings - Michael Arntzenius
-;   + only wipe first on the first run through
-;  - Michael Arntzenius
-
-(mac between (var expr within . body)
-  " As 'each, but runs `within' between each iteration of `body'.
-    See also [[each]] "
-  (w/uniq first
-    `(let ,first t
-       (each ,var ,expr
-	 (if ,first 
-	     (wipe ,first)
-	     ,within)
-	 ,@body))))
-
 ; start Andrew Wilcox (aw) code
 
 ; http://awwx.ws/span0.arc
@@ -515,12 +479,6 @@
                       (parser port))))))
 
 ; end aw code
-
-; ripoff: ret, by skenney26
-; http://github.com/skenney26/kwizwiz/blob/master/kwizwiz.arc
-
-(mac ret (var val . body)
-  `(let ,var ,val ,@body ,var))
 
 ; while with break and continue. by fallintothis
 ; http://arclanguage.org/item?id=12229

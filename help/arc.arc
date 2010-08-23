@@ -964,4 +964,20 @@
 
   get
   " Returns a fn that calls it argument on `index'. "
+
+  butlast
+  " Returns a list containing every element of `x' but the last.
+    See also: [[cut]] "
+
+  between
+  " As 'each, but runs `within' between each iteration of `body'.
+    See also [[each]] "
+
+  tofile
+  " Redirects stdout to the file `name' within `body'. 
+    See also [[fromfile]] [[w/outfile]] [[w/stdout]] "
+
+  fromfile
+  " Redirects standard input from the file `name' within `body'.
+    See also [[tofile]] [[w/infile]] [[w/stdin]] "
   )

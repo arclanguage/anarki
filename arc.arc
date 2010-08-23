@@ -1809,7 +1809,6 @@
   `((savers* ',var) 
     ,(if (is var expr) var `(= ,var ,expr))))
 
-
 (mac evtil (expr test)
   (w/uniq gv
     `(let ,gv ,expr
@@ -1831,6 +1830,26 @@
       0
       (/ (count test xs) (len xs))))
 
+(mac ret (var val . body)
+  `(let ,var ,val ,@body ,var))
+
+(def butlast (x)
+  (cut x 0 (- (len x) 1)))
+
+(mac between (var expr within . body)
+  (w/uniq first
+    `(let ,first t
+       (each ,var ,expr
+	 (if ,first 
+	     (wipe ,first)
+	     ,within)
+	 ,@body))))
+
+(mac tofile (name . body)
+  (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
+
+(mac fromfile (name . body)
+  (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
 
 (wipe current-load-file*)
 
