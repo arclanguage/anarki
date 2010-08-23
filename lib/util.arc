@@ -135,8 +135,6 @@
 (= len= [is len._a _b])
 (= len- [- len._a _b])
 (= car< [< car._a car._b])
-(= cdar cdr:car)
-(= cadar car:cdar)
 (= mapcar [map car _])
 (= mapcdr [map cdr _])
 

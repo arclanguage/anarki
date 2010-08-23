@@ -63,9 +63,11 @@
 (sref sig '(name parms . body) 'def)
 (sref source-file* current-load-file* 'def)
 
-(def caar (xs) (car (car xs)))
-(def cadr (xs) (car (cdr xs)))
-(def cddr (xs) (cdr (cdr xs)))
+(def caar (xs) (car:car xs))
+(def cadr (xs) (car:cdr xs))
+(def cddr (xs) (cdr:cdr xs))
+(def cdar (xs) (cdr:car xs))
+(def cadar (xs) (car:cdar xs))
 
 (def no (x) (is x nil))
 
