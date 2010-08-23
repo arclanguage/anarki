@@ -135,8 +135,6 @@
 (= len= [is len._a _b])
 (= len- [- len._a _b])
 (= car< [< car._a car._b])
-(= mapcar [map car _])
-(= mapcdr [map cdr _])
 
 (def keepkey (key lst) (keep [_ key] lst))
 (def mapkey (key lst) (map [_ key] lst))

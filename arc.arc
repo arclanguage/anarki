@@ -1856,6 +1856,9 @@
 (mac fromfile (name . body)
   (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
 
+(def cars (xs) (map car xs))
+(def cdrs (xs) (map cdr xs))
+
 (wipe current-load-file*)
 
 (load "help/arc.arc")
