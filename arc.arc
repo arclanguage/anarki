@@ -1859,6 +1859,9 @@
 (def cars (xs) (map car xs))
 (def cdrs (xs) (map cdr xs))
 
+(mac mapeach (var lst . body)
+  `(map (fn (,var) ,@body) ,lst))
+
 (wipe current-load-file*)
 
 (load "help/arc.arc")

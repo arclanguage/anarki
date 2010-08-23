@@ -215,11 +215,6 @@
 
 ; macros
 
-(mac mapeach (var lst . body)
-  " Maps `(fn (,var) ,@body)' over `lst'.
-    See also [[each]] [[map]] [[mappendeach]] "
-  `(map (fn (,var) ,@body) ,lst))
-
 (mac mappendeach (var lst . body)
   " As 'mapeach, but using 'mappend instead of 'map.
     See also [[mapeach]] [[mappend]] [[each]] "

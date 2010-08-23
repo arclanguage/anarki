@@ -980,4 +980,8 @@
   fromfile
   " Redirects standard input from the file `name' within `body'.
     See also [[tofile]] [[w/infile]] [[w/stdin]] "
+
+  mapeach
+  " Maps `(fn (,var) ,@body)' over `lst'.
+    See also [[each]] [[map]] [[mappendeach]] "
   )
