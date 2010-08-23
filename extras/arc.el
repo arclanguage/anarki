@@ -230,7 +230,7 @@ See `run-hooks'."
      ;; Declarations.
      (list 
       (concat "(" (regexp-opt 
-                   '("def" "mac" "defop" "defmemo" "defset" "deftem" "defcall" "redef" "set" "=")
+                   '("def" "mac" "defop" "defpath" "defmemo" "defset" "deftem" "defcall" "redef" "set" "=")
                    t)
               "\\>"
               ;; Any whitespace and declared object.
@@ -256,7 +256,7 @@ See `run-hooks'."
              '(; define/assign-type forms
                "++" "--" "=" "assign" "or=" "set" "wipe" "zap"
                "def" "mac" "defs"
-               "defcache" "defhook" "defmemo" "defop" "defset" "deftem"
+               "defcache" "defhook" "defmemo" "defop" "defpath" "defset" "deftem"
                ; lambdas & binding forms
                "fn" "rfn" "afn"
                "let" "with" "withs"
@@ -268,6 +268,7 @@ See `run-hooks'."
                ; loops
                "each" "evtil" "for" "forlen" "loop" "repeat" "until" "while"
                "whiler" "whilet"
+               "mapeach"
                ; coercions
                "coerce" "int" "string" "sym"
                ; significant higher-order functions
@@ -419,7 +420,7 @@ rigidly along with this one."
        ;;   (put 'xyzzy 'arc-indent-function 'quux)
        '((1 unless case with withs when awhen accum fn afn
             w/uniq w/stdout w/appendfile w/stdin w/infile)
-         (2 w/infile whilet each on def mac defset defcall redef rfn let))))
+         (2 w/infile whilet each on def mac defset defcall redef rfn let ret mapeach))))
   (dolist (entry arc-indent-function-list)
     (destructuring-bind (level . syms) entry
       (dolist (sym syms)
