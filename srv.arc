@@ -537,8 +537,8 @@ Connection: close"))
         (= (unique-ids* id) id))))
 
 (def srvlog (type . args)
-  (w/appendfile o (logfile-name type)
-    (w/stdout o (atomic (apply prs (seconds) args) (prn)))))
+  (ontofile (logfile-name type)
+            (atomic (apply prs (seconds) args) (prn))))
 
 (def logfile-name (type)
   (string logdir* type "-" (memodate)))
