@@ -126,6 +126,8 @@
           (car args))
       't))
 
+(mac nand args `(no (and ,@args)))
+
 (def assoc (key al)
   (if (atom al)
        nil
