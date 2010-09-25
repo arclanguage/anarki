@@ -126,8 +126,6 @@
           (car args))
       't))
 
-(mac nand args `(no (and ,@args)))
-
 (def assoc (key al)
   (if (atom al)
        nil
@@ -1472,6 +1470,7 @@
   (is 0 (mod x y)))
 
 (mac nor args `(no (or ,@args))) 
+(mac nand args `(no (and ,@args)))
 
 ; Consider making the default sort fn take compare's two args (when do 
 ; you ever have to sort mere lists of numbers?) and rename current sort
