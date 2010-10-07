@@ -4,6 +4,8 @@
 (def ones (x)
   (n-of x 1))
 
+(def square (x)
+  (* x x))
 
 ;calculus fns
 
