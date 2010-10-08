@@ -126,3 +126,6 @@
 
 (extend - args (all [isa _ 'vector] args)
         (apply -v (map rep args)))
+
+ (defcall vector (vec i)
+    rep.vec.i)

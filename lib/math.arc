@@ -36,7 +36,7 @@
       (let dx (max 1d-9 (abs:* ,x 1d-9)
 	(/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
 	      (,f ,@a-lis    ,x     ,@b-lis))
-	   dx)))))
+	   dx))))))
 
 (mac partial-diff-vec (f n arity)
   "returns vector with each element differentiated with respect to Nth argument"
@@ -48,7 +48,7 @@
 	(let dx (max 1d-9 (abs:* ,x 1d-9)
 	   (vec-scale (vec- (,f ,@a-lis	(+ ,x dx) ,@b-lis)
 			    (,f ,@a-lis    ,x     ,@b-lis))
-		      (/ 1 dx))))))
+		      (/ 1 dx)))))))
 
 (def grad (f)
   "gradient of 3D scalar field given by F"
