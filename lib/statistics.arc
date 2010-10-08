@@ -1,4 +1,5 @@
 (require "lib/math.arc")
+(require "lib/extend.arc")
 
 ; statistics. 06 Oct 2010.
 
@@ -116,3 +117,12 @@
   (let pearm (pearsonm (+ m (list v)))
     (mapeach vec-pos (bestnpos n > (butlast (last pearm)))
 	     (m vec-pos))))
+
+(def vec lst
+  (annotate 'vector lst))
+
+(extend + args (all [isa _ 'vector] args)
+        (apply +v (map rep args)))
+
+(extend - args (all [isa _ 'vector] args)
+        (apply -v (map rep args)))
