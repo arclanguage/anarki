@@ -1,3 +1,4 @@
+(require "lib/util.arc")
 (require "lib/math.arc")
 (require "lib/extend.arc")
 
@@ -129,3 +130,7 @@
 
  (defcall vector (vec i)
     rep.vec.i)
+
+; This manner of setting inspired by lush. I like it because it saves a lot of typing if you're constantly modifying vectors.
+ (defcall vector (vec i val)
+    (= rep.vec.i val))
