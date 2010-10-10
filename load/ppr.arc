@@ -29,14 +29,8 @@
 
 (= oneline* 45)
 
-(def len (x (o c 0))
-  " Measures the length of a string, vector, table, list or dotted list. "
-  (if (isa x 'string) ($.string-length x)
-      (isa x 'vec) ($.vector-length x)
-      (isa x 'table) ($.hash-table-count x)
-      (and atom.x x) (+ c 1)
-      acons.x (len cdr.x (+ c 1))
-      c))
+(defmethod len(x) vec
+  ($.vector-length x))
 
 (mac indent (col . body)
   `(do (unless noindent sp.col)

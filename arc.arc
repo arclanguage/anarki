@@ -954,13 +954,6 @@
 
 (def int (x (o b 10)) (coerce x 'int b))
 
-(def stringify(sym)
-  (coerce sym 'string))
-(def symize args
-  (coerce (apply + args) 'sym))
-(def globalize l
-  (symize l "*"))
-
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
      ,@(let key -1 
@@ -1166,8 +1159,6 @@
 
 (def vals (h) 
   (accum a (each (k v) h (a v))))
-
-; These two should really be done by coerce.  Wrap coerce?
 
 (def tablist (h)
   (accum a (maptable (fn args (a args)) h)))
@@ -1592,29 +1583,29 @@
     (writec #\newline))
   (car args))
 
-(def queue () (list nil nil 0))
+(def queue () (annotate 'queue (list nil nil 0)))
 
 ; Despite call to atomic, once had some sign this wasn't thread-safe.
 ; Keep an eye on it.
 
-(def enq (obj q)
-  (atomic
-    (++ (q 2))
-    (if (no (car q))
-        (= (cadr q) (= (car q) (list obj)))
-        (= (cdr (cadr q)) (list obj)
-           (cadr q)       (cdr (cadr q))))
-    (car q)))
+(def enq (obj qq)
+  (let q rep.qq
+    (atomic
+      (++ q.2)
+      (if (no q.0)
+        (= q.1 (= q.0 list.obj))
+        (= (cdr q.1)  list.obj
+           q.1        (cdr q.1)))
+      q.0)))
 
-(def deq (q)
-  (atomic (unless (is (q 2) 0) (-- (q 2)))
-          (pop (car q))))
+(def deq (qq)
+  (let q rep.qq
+    (atomic (unless (is 0 q.2) (-- q.2))
+            (pop q.0))))
 
-; Should redef len to do this, and make queues lists annotated queue.
+(def qlen (q) (rep.q 2))
 
-(def qlen (q) (q 2))
-
-(def qlist (q) (car q))
+(def qlist (q) (car rep.q))
 
 (def enq-limit (val q (o limit 1000))
   (atomic
@@ -1759,6 +1750,7 @@
   `(= (pickles* ',type)
       ,f))
 
+($:namespace-undefine-variable! '_iso)
 ; Could take n args, but have never once needed that.
 (defgeneric iso(x y)
   (is x y))
@@ -1777,6 +1769,44 @@
          (fn((k v))
            (iso y.k v))
          tablist.x)))
+
+($:namespace-undefine-variable! '_len)
+(defgeneric len(x)
+  ($.length ($.ac-denil x)))
+
+(defmethod len(x) string
+  ($.string-length x))
+
+(defmethod len(x) table
+  ($.hash-table-count x))
+
+(defmethod len(x) queue
+  (qlen x))
+
+; User-definable calling for given types via coerce* extension
+(def set-coercer (to from fun)
+  " Makes 'fun the coercion function from 'from to 'to.
+    See also: [[defcoerce]] "
+  (let cnv (or coerce*.to (= coerce*.to (table)))
+    (= cnv.from fun)))
+
+(mac defcoerce (to from parms . body)
+  " Defines the coercion function from 'from to 'to.
+    See also: [[set-coercer]] [[defcall]] "
+  `(set-coercer ',to ',from (fn ,parms ,@body)))
+
+(mac defcall (type-name parms . body)
+  " Defines the calling function for type 'type-name.
+    See also: [[defcoerce]] "
+  (w/uniq (fnobj args)
+    `(defcoerce fn ,type-name (,fnobj)
+       (fn ,args (apply (fn ,parms ,@body) ,fnobj ,args)))))
+
+(defcoerce list table (h)
+  (tablist h))
+
+(defcoerce table list (al)
+  (listtab al))
 
 (= hooks* (table))
 
