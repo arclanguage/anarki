@@ -1759,6 +1759,7 @@
   `(= (pickles* ',type)
       ,f))
 
+($:namespace-undefine-variable! '_iso)
 ; Could take n args, but have never once needed that.
 (defgeneric iso(x y)
   (is x y))
