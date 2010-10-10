@@ -1,9 +1,20 @@
-(def zeros (x)
-  (n-of x 0))
+(def zeros (x (o y))
+  (if y
+      (n-of y (n-of x 0))
+      (n-of x 0)))
 
-(def ones (x)
-  (n-of x 1))
+(def ones (x (o y))
+  (if y
+      (n-of y (n-of x 1))
+      (n-of x 1)))
 
+(def square (x)
+  (* x x))
+
+(def floor (n) (trunc n))
+(def ceiling (n) (int ($.ceiling n)))
+(def highbyte (n) (floor (/ n 256)))
+(def lowbyte (n) (mod n 256))
 
 ;calculus fns
 
@@ -25,7 +36,7 @@
       (let dx (max 1d-9 (abs:* ,x 1d-9)
 	(/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
 	      (,f ,@a-lis    ,x     ,@b-lis))
-	   dx)))))
+	   dx))))))
 
 (mac partial-diff-vec (f n arity)
   "returns vector with each element differentiated with respect to Nth argument"
@@ -37,7 +48,7 @@
 	(let dx (max 1d-9 (abs:* ,x 1d-9)
 	   (vec-scale (vec- (,f ,@a-lis	(+ ,x dx) ,@b-lis)
 			    (,f ,@a-lis    ,x     ,@b-lis))
-		      (/ 1 dx))))))
+		      (/ 1 dx)))))))
 
 (def grad (f)
   "gradient of 3D scalar field given by F"
