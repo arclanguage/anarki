@@ -2,17 +2,38 @@
 (require "lib/math.arc")
 (require "lib/extend.arc")
 
-; statistics. 06 Oct 2010.
-
+; statistics. 10 Oct 2010.
 ; Ali Moeeny
 
-(def diffSquared (x y) 
+; experimenting with matrices 
+; quit possibly these turn out to be redundant but I need to do it until I find out what the best way to do it is.
+
+; gives a 1D or 2D matrix/list of zeros
+
+(def zeros (x (o y))
+  (if y (map zeros (map (fn (_) (+ _ x)) (zeros y)))
+      (map (fn (_) (= _ 0)) (range 1 x))))
+
+; gives a 1D or 2D matrix/list of ones
+
+(def ones (x (o y))
+  (if y (map ones (map (fn (_) (+ _ x)) (zeros y)))
+      (map (fn (_) (= _ 1)) (range 1 x))))
+
+; gives a 1D or 2D matrix/list of random numbers
+
+(def randmat (x (o y)) 
+  (if y (map randmat (map (fn (_) (+ _ x)) (zeros y)))
+    (map (fn (_) (= _ (rand))) (range 1 x))))
+
+
+(def diffsquared (x y) 
      		 (apply + (map [* (- _ y)(- _ y)] x)))
 
-(def sumSquared (x y) 
+(def sumsquared (x y) 
      	   (apply + (map * x y)))
 
-(def sumDiffMultiplied (x y) 
+(def sumdiffmultiplied (x y) 
        (with (mx (avg x) my (avg y))
        (reduce + 
        	       (map * 
@@ -21,14 +42,14 @@
 
 
 
-(def pearsonsCorrelation (x y) 
-     (/ (sumDiffMultiplied x y) 
+(def pearsonscorrelation (x y) 
+     (/ (sumdiffmultiplied x y) 
         (sqrt 
 	      (* 
-	      	 (diffSquared 
+	      	 (diffsquared 
 		 	 x 
 			 (avg x)) 
-	         (diffSquared y 
+	         (diffsquared y 
 		 	 (avg y)))))
 )
 
