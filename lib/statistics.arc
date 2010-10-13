@@ -11,9 +11,14 @@
 
 ; gives a 1D or 2D matrix/list of random numbers
 
-(def rand-mat (x (o y 1))
-  (n-of y
-    (n-of x (rand))))
+(def rand-mat dims
+  (= dims (flat dims))
+  (if       
+   (no (cdr dims)) 
+        (n-of (car dims) (rand))
+   (cdr dims)
+        (n-of (car dims) (rand-mat (cdr dims))))
+)
 
 (def diff-squared (x y)
   (apply + (map [* (- _ y)(- _ y)] x)))
