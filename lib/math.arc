@@ -1,12 +1,21 @@
-(def zeros (x (o y))
-  (if y
-      (n-of y (n-of x 0))
-      (n-of x 0)))
+(def zeros dims
+  (= dims (flat dims))
+  ( if 
+    (no (cdr dims))
+     (n-of (car dims) 0)
+    (cdr dims)
+     (n-of (car dims) (zeros (cdr dims))))
+)
 
-(def ones (x (o y))
-  (if y
-      (n-of y (n-of x 1))
-      (n-of x 1)))
+(def ones dims
+  (= dims (flat dims))
+  ( if 
+    (no (cdr dims))
+     (n-of (car dims) 1)
+    (cdr dims)
+     (n-of (car dims) (zeros (cdr dims))))
+)
+
 
 (def square (x)
   (* x x))
