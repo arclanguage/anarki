@@ -1,6 +1,6 @@
 (def zeros dims
   (= dims (flat dims))
-  ( if 
+  (if 
     (no (cdr dims))
      (n-of (car dims) 0)
     (cdr dims)
@@ -9,11 +9,11 @@
 
 (def ones dims
   (= dims (flat dims))
-  ( if 
+  (if 
     (no (cdr dims))
      (n-of (car dims) 1)
     (cdr dims)
-     (n-of (car dims) (zeros (cdr dims))))
+     (n-of (car dims) (ones (cdr dims))))
 )
 
 
