@@ -128,12 +128,27 @@
 (extend + args (all [isa _ 'vector] args)
         (apply +v (map rep args)))
 
+;(extend + (v i) (and (isa v 'vector) (mem type.i '(num int)))
+;        (map [+ _ i] rep.v))
+
+;(extend - (v i) (and (isa v 'vector) (mem type.i '(num int)))
+;        (map [- _ i] rep.v))
+
 (extend - args (all [isa _ 'vector] args)
         (apply -v (map rep args)))
 
- (defcall vector (vec i)
-    rep.vec.i)
+(defcall vector (vec i)
+  rep.vec.i)
 
 ; This manner of setting inspired by lush. I like it because it saves a lot of typing if you're constantly modifying vectors.
  (defcall vector (vec i val)
     (= rep.vec.i val))
+
+(defgeneric norm (x))
+
+(extend cos args (all [isa _ 'vector] args)
+        (cosv (rep:car args) (rep:cadr args)))
+
+(defmethod norm (arg) vector
+           ; todo, should take optional argument and make euclidean default, many types of norms
+           (lenv rep.arg))
