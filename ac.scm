@@ -1026,7 +1026,11 @@
 
 ; allow Arc to give up root privileges after it
 ; calls open-socket. thanks, Eli!
-(define setuid (get-ffi-obj 'setuid #f (_fun _int -> _int)))
+(define setuid (get-ffi-obj 'setuid #f (_fun _int -> _int)
+                 ; If we're on Windows, there is no setuid, so we make
+                 ; a dummy version. See "Arc 3.1 setuid problem on
+                 ; Windows," http://arclanguage.org/item?id=10625.
+                 (lambda () (lambda (x) 'nil))))
 (xdef setuid setuid)
 
 (xdef new-thread thread)

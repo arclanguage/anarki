@@ -1772,7 +1772,7 @@
 
 ($:namespace-undefine-variable! '_len)
 (defgeneric len(x)
-  ($.length ($.ac-denil x)))
+  (if x ($.length $.ac-denil.x) 0))
 
 (defmethod len(x) string
   ($.string-length x))
