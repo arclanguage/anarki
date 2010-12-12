@@ -1,20 +1,14 @@
+(def init-matrix(dims initval)
+  (zap flat dims)
+  (if cdr.dims
+    (n-of car.dims (init-matrix cdr.dims initval))
+    (n-of car.dims initval)))
+
 (def zeros dims
-  (= dims (flat dims))
-  (if 
-    (no (cdr dims))
-     (n-of (car dims) 0)
-    (cdr dims)
-     (n-of (car dims) (zeros (cdr dims))))
-)
+  (init-matrix dims 0))
 
 (def ones dims
-  (= dims (flat dims))
-  (if 
-    (no (cdr dims))
-     (n-of (car dims) 1)
-    (cdr dims)
-     (n-of (car dims) (ones (cdr dims))))
-)
+  (init-matrix dims 1))
 
 
 (def square (x)
