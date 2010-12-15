@@ -131,7 +131,7 @@
 	(withs (operator (car form)
 			 tmp-var-forms (butlast (cddr form))
 			 tmp-vars (accum collect (repeat (len tmp-var-forms) (collect (as-gensym "_cmp"))))
-			 all-comparisons (+ (list (cadr form)) tmp-vars (list (last form))))
+			 all-comparisons (join (list (cadr form)) tmp-vars (list (last form))))
 	  `(with (,@(accum collect (each pair (zip tmp-vars tmp-var-forms) (collect (car pair)) (collect (cadr pair)))))
 	     (and ,@(accum collect
 		      (each (x1 x2) (zip (butlast all-comparisons) (cdr all-comparisons))

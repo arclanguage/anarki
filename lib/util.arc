@@ -147,14 +147,14 @@
 (mac popnth (lst n)
   (w/uniq g1
     `(let ,g1 (,lst ,n)
-       (= ,lst (+ (cut ,lst 0 ,n) (cut ,lst (+ 1 ,n))))
+       (= ,lst (join (cut ,lst 0 ,n) (cut ,lst (+ 1 ,n))))
        ,g1)))
 
 (mac poprand (lst)
   (w/uniq g1
     `(if ,lst
-	 (let ,g1 (rand-pos ,lst)
-	   (popnth ,lst ,g1)))))
+         (let ,g1 (rand-pos ,lst)
+           (popnth ,lst ,g1)))))
 
 
 ; combinators
@@ -228,8 +228,8 @@
 
 ; now that pg has renamed 'assert to 'set, we're free to use it in its more
 ; conventional sense
-(mac assert (exp (o msg (+ "Assertion failed: " 
-                           (tostring:ppr exp (len "Assertion failed: ") t))))
+(mac assert (exp (o msg (join "Assertion failed: "
+                              (tostring:ppr exp (len "Assertion failed: ") t))))
   " Errors with `msg' if `exp' evaluates to nil. "
   `(unless ,exp (err ,msg)))
 
