@@ -48,7 +48,7 @@
         ; ... except that they work for macros (so prob should do this for
         ; every elt of s, not just the car)
         ((eq? (xcar (xcar s)) 'compose) (ac (decompose (cdar s) (cdr s)) env))
-        ((eq? (xcar (xcar s)) 'complement) 
+        ((eq? (xcar (xcar s)) 'complement)
          (ac (list 'no (cons (cadar s) (cdr s))) env))
         ((eq? (xcar (xcar s)) 'andf) (ac-andf s env))
         ((pair? s) (ac-call (car s) (cdr s) env))
@@ -82,9 +82,9 @@
 (define (has-ssyntax-char? string i)
   (and (>= i 0)
        (or (let ((c (string-ref string i)))
-             (or (eqv? c #\:) (eqv? c #\~) 
+             (or (eqv? c #\:) (eqv? c #\~)
                  (eqv? c #\&)
-                 ;(eqv? c #\_) 
+                 ;(eqv? c #\_)
                  (eqv? c #\.)  (eqv? c #\!)))
            (has-ssyntax-char? string (- i 1)))))
 
@@ -99,7 +99,7 @@
 ; leave this off and see how often it would have been useful.
 
 ; Might want to make ~ have less precedence than &, because
-; ~foo&bar prob should mean (andf (complement foo) bar), not 
+; ~foo&bar prob should mean (andf (complement foo) bar), not
 ; (complement (andf foo bar)).
 
 (define (expand-ssyntax sym)
@@ -118,9 +118,9 @@
                              `(complement ,(chars->value (cdr tok))))
                          (chars->value tok)))
                    (tokens (lambda (c) (eqv? c #\:))
-                           (symbol->chars sym) 
-                           '() 
-                           '() 
+                           (symbol->chars sym)
+                           '()
+                           '()
                            #f))))
     (if (null? (cdr elts))
         (car elts)
@@ -137,26 +137,26 @@
         (car elts)
         (cons 'andf elts))))
 
-; How to include quoted arguments?  Can't treat all as quoted, because 
-; never want to quote fn given as first.  Do we want to allow quote chars 
-; within symbols?  Could be ugly.  
+; How to include quoted arguments?  Can't treat all as quoted, because
+; never want to quote fn given as first.  Do we want to allow quote chars
+; within symbols?  Could be ugly.
 
 ; If release, fix the fact that this simply uses v0... as vars.  Should
 ; make these vars gensyms.
 
 (define (expand-curry sym)
-  (let ((expr (exc (map (lambda (x) 
+  (let ((expr (exc (map (lambda (x)
                           (if (pair? x) (chars->value x) x))
-                        (tokens (lambda (c) (eqv? c #\_)) 
-                                (symbol->chars sym) 
-                                '() 
-                                '() 
+                        (tokens (lambda (c) (eqv? c #\_))
+                                (symbol->chars sym)
+                                '()
+                                '()
                                 #t))
                     0)))
-    (list 'fn 
-          (keep (lambda (s) 
-                  (and (symbol? s) 
-                       (eqv? (string-ref (symbol->string s) 0) 
+    (list 'fn
+          (keep (lambda (s)
+                  (and (symbol? s)
+                       (eqv? (string-ref (symbol->string s) 0)
                              #\v)))
                 expr)
           expr)))
@@ -204,7 +204,7 @@
 
 (define (tokens test source token acc keepsep?)
   (cond ((null? source)
-         (reverse (if (pair? token) 
+         (reverse (if (pair? token)
                       (cons (reverse token) acc)
                       acc)))
         ((test (car source))
@@ -342,11 +342,11 @@
         ((symbol? args) (list (list args ra)))
         ((pair? args)
          (let* ((x (if (and (pair? (car args)) (eqv? (caar args) 'o))
-                       (ac-complex-opt (cadar args) 
+                       (ac-complex-opt (cadar args)
                                        (if (pair? (cddar args))
-                                           (caddar args) 
+                                           (caddar args)
                                            'nil)
-                                       env 
+                                       env
                                        ra)
                        (ac-complex-args
                         (car args)
@@ -424,7 +424,7 @@
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
                      ((ac-defined-var? a) `(,(ac-global-name a) zz))
-                     (#t `(namespace-set-variable-value! ',(ac-global-name a) 
+                     (#t `(namespace-set-variable-value! ',(ac-global-name a)
                                                          zz)))
                'zz))
       (err "First arg to set must be a symbol" a)))
@@ -456,9 +456,9 @@
 (define (ac-global-call fn args env)
   (cond ((and (assoc fn ac-binaries) (= (length args) 2))
          `(,(cadr (assoc fn ac-binaries)) ,@(ac-args '() args env)))
-        (#t 
+        (#t
          `(,(ac-global-name fn) ,@(ac-args '() args env)))))
-      
+
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
 ;   (ar-apply _pr (list 1 2))
@@ -490,8 +490,8 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-      (let ((v (namespace-variable-value (ac-global-name fn) 
-                                         #t 
+      (let ((v (namespace-variable-value (ac-global-name fn)
+                                         #t
                                          (lambda () #f))))
         (if (and v
                  (ar-tagged? v)
@@ -521,7 +521,7 @@
 
 (define (ac-denil x)
   (cond ((pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x))))
-        ((hash-table? x) 
+        ((hash-table? x)
          (let ((xc (make-hash-table 'equal)))
            (hash-table-for-each x
              (lambda (k v) (hash-table-put! xc (ac-denil k) (ac-denil v))))
@@ -616,7 +616,7 @@
   (if (or (eqv? x 'nil) (eqv? x '()))
       'nil
       (car x)))
-      
+
 (define (ar-xcdr x)
   (if (or (eqv? x 'nil) (eqv? x '()))
       'nil
@@ -639,15 +639,15 @@
 ; call a function or perform an array ref, hash ref, &c
 
 ; Non-fn constants in functional position are valuable real estate, so
-; should figure out the best way to exploit it.  What could (1 foo) or 
+; should figure out the best way to exploit it.  What could (1 foo) or
 ; ('a foo) mean?  Maybe it should mean currying.
 
 ; For now the way to make the default val of a hash table be other than
 ; nil is to supply the val when doing the lookup.  Later may also let
-; defaults be supplied as an arg to table.  To implement this, need: an 
-; eq table within scheme mapping tables to defaults, and to adapt the 
-; code in arc.arc that reads and writes tables to read and write their 
-; default vals with them.  To make compatible with existing written tables, 
+; defaults be supplied as an arg to table.  To implement this, need: an
+; eq table within scheme mapping tables to defaults, and to adapt the
+; code in arc.arc that reads and writes tables to read and write their
+; default vals with them.  To make compatible with existing written tables,
 ; just use an atom or 3-elt list to keep the default.
 
 (define (ar-apply fn args)
@@ -699,7 +699,7 @@
 ; (pairwise pred '(a b c d)) =>
 ;   (and (pred a b) (pred b c) (pred c d))
 ; pred returns t/nil, as does pairwise
-; reduce? 
+; reduce?
 
 (define (pairwise pred lst)
   (cond ((null? lst) 't)
@@ -728,21 +728,21 @@
 (xdef t   't)
 
 (define (all test seq)
-  (or (null? seq) 
+  (or (null? seq)
       (and (test (car seq)) (all test (cdr seq)))))
 
 (define (arc-list? x) (or (pair? x) (eqv? x 'nil) (eqv? x '())))
-      
+
 ; Generic +: strings, lists, numbers.
 ; Return val has same type as first argument.
 
 (xdef + (lambda args
            (cond ((null? args) 0)
                  ((char-or-string? (car args))
-                  (apply string-append 
+                  (apply string-append
                          (map (lambda (a) (ar-coerce a 'string))
                               args)))
-                 ((arc-list? (car args)) 
+                 ((arc-list? (car args))
                   (ac-niltree (apply append (map ar-nil-terminate args))))
                  (#t (apply + args)))))
 
@@ -835,8 +835,8 @@
 
 (xdef infile  open-input-file)
 
-(xdef outfile (lambda (f . args) 
-                 (open-output-file f 
+(xdef outfile (lambda (f . args)
+                 (open-output-file f
                                    'text
                                    (if (equal? args '(append))
                                        'append
@@ -850,7 +850,7 @@
 (xdef inside get-output-string)
 
 (xdef stdout current-output-port)  ; should be a vars
-(xdef stdin  current-input-port) 
+(xdef stdin  current-input-port)
 (xdef stderr current-error-port)
 
 (xdef call-w/stdout
@@ -885,23 +885,23 @@
                                               (current-input-port)))))
                     (if (eof-object? bs) 'nil (bytes->list bs)))))
 
-(xdef peekc (lambda str 
+(xdef peekc (lambda str
               (let ((c (peek-char (if (pair? str)
                                       (car str)
                                       (current-input-port)))))
                 (if (eof-object? c) 'nil c))))
 
-(xdef writec (lambda (c . args) 
-                (write-char c 
-                            (if (pair? args) 
-                                (car args) 
+(xdef writec (lambda (c . args)
+                (write-char c
+                            (if (pair? args)
+                                (car args)
                                 (current-output-port)))
                 c))
 
-(xdef writeb (lambda (b . args) 
-                (write-byte b 
-                            (if (pair? args) 
-                                (car args) 
+(xdef writeb (lambda (b . args)
+                (write-byte b
+                            (if (pair? args)
+                                (car args)
                                 (current-output-port)))
                 b))
 
@@ -991,7 +991,7 @@
       (lambda (var val thunk)
         (parameterize ((var val)) (thunk))))
 
-(xdef open-socket  (lambda (num) (tcp-listen num 50 #t))) 
+(xdef open-socket  (lambda (num) (tcp-listen num 50 #t)))
 
 (define (ar-init-socket init-fn . args)
   (let ((oc (current-custodian))
@@ -1041,7 +1041,7 @@
 (xdef sleep (wrapnil sleep))
 
 ; Will system "execute" a half-finished string if thread killed
-; in the middle of generating it?  
+; in the middle of generating it?
 
 (xdef system (lambda (s) (tnil (system s))))
 
@@ -1051,7 +1051,7 @@
                      (let ((str (open-input-file tf)))
                        (system (string-append "rm -f " tf))
                        str))))
-                   
+
 (define (ar-tmpname)
   (call-with-input-file "/dev/urandom"
     (lambda (rstr)
@@ -1076,9 +1076,9 @@
                 h)))
 
 ;(xdef table (lambda args
-;               (fill-table (make-hash-table 'equal) 
+;               (fill-table (make-hash-table 'equal)
 ;                           (if (pair? args) (ac-denil (car args)) '()))))
-                   
+
 (define (fill-table h pairs)
   (if (eq? pairs '())
       h
@@ -1121,7 +1121,7 @@
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
 
-(define (arc-eval expr) 
+(define (arc-eval expr)
   (eval (ac expr '())))
 
 (define (tle)
@@ -1136,13 +1136,13 @@
 
 (define (tl)
   (let ((interactive? (terminal-port? (current-input-port))))
-    (when interactive? 
+    (when interactive?
       (display "Use (quit) or ^D to quit, (tl) to return here after an interrupt.\n"))
     (tl2 interactive?)))
 
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
-  (on-err (lambda (c) 
+  (on-err (lambda (c)
             (set! last-condition* c)
             (parameterize ((current-output-port (current-error-port)))
               (display "Error: ")
@@ -1211,7 +1211,7 @@
         (delete-file outname))
     (call-with-input-file inname
       (lambda (ip)
-        (call-with-output-file outname 
+        (call-with-output-file outname
           (lambda (op)
             (acompile1 ip op)))))))
 
@@ -1226,11 +1226,11 @@
 ; after it doesn't get executed.  Not quite what I had in mind.
 
 (define (on-err errfn f)
-  ((call-with-current-continuation 
-     (lambda (k) 
-       (lambda () 
-         (with-handlers ((exn:fail? (lambda (c) 
-                                      (k (lambda () (errfn c)))))) 
+  ((call-with-current-continuation
+     (lambda (k)
+       (lambda ()
+         (with-handlers ((exn:fail? (lambda (c)
+                                      (k (lambda () (errfn c))))))
                         (f)))))))
 (xdef on-err on-err)
 
@@ -1243,13 +1243,13 @@
 (xdef details (lambda (c)
                  (disp-to-string (exn-message c))))
 
-(xdef scar (lambda (x val) 
-              (if (string? x) 
+(xdef scar (lambda (x val)
+              (if (string? x)
                   (string-set! x 0 val)
                   (x-set-car! x val))
               val))
 
-(xdef scdr (lambda (x val) 
+(xdef scdr (lambda (x val)
               (if (string? x)
                   (err "Can't set cdr of a string" x)
                   (x-set-cdr! x val))
@@ -1305,7 +1305,7 @@
 
 ; Later may want to have multiple indices.
 
-(xdef sref 
+(xdef sref
   (lambda (com val ind)
     (cond ((hash-table? com)  (if (eqv? val 'nil)
                                   (hash-table-remove! com ind)
@@ -1343,7 +1343,7 @@
 
 (print-hash-table #t)
 
-(xdef client-ip (lambda (port) 
+(xdef client-ip (lambda (port)
                    (let-values (((x y) (tcp-addresses port)))
                      y)))
 
@@ -1444,7 +1444,7 @@
 
 (define (gmt-date sec) (seconds->date sec))
 
-(xdef timedate 
+(xdef timedate
   (lambda args
     (let ((d (gmt-date (if (pair? args) (car args) (current-seconds)))))
       (ac-niltree (list (date-second d)
@@ -1487,22 +1487,22 @@
 ; First unescaped @ in s, if any.  Escape by doubling.
 
 (define (atpos s i)
-  (cond ((eqv? i (string-length s)) 
+  (cond ((eqv? i (string-length s))
          #f)
         ((eqv? (string-ref s i) #\@)
          (if (and (< (+ i 1) (string-length s))
                   (not (eqv? (string-ref s (+ i 1)) #\@)))
              i
              (atpos s (+ i 2))))
-        (#t                         
+        (#t
          (atpos s (+ i 1)))))
 
 (define (unescape-ats s)
   (list->string (letrec ((unesc (lambda (cs)
-                                  (cond 
-                                    ((null? cs) 
+                                  (cond
+                                    ((null? cs)
                                      '())
-                                    ((and (eqv? (car cs) #\@) 
+                                    ((and (eqv? (car cs) #\@)
                                           (not (null? (cdr cs)))
                                           (eqv? (cadr cs) #\@))
                                      (unesc (cdr cs)))
