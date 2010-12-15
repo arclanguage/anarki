@@ -57,8 +57,6 @@
                          (sref help* ',doc ',name)
                          (sref source-file* current-load-file* ',name)
                          (sref source* '(def ,name ,parms ,@body) ',name)
-                         (disp (coerce ',name 'string))
-                         (disp #\newline)
                          (safeset ,name (fn ,parms ,@body))))
                    (docify-body body)))))
 
@@ -1565,7 +1563,6 @@
 
 (wipe load-file-stack*)
 (def load (file)
-  (prn "--- " file)
   (push current-load-file* load-file-stack*)
   (= current-load-file* file)
   (after (w/infile f file
