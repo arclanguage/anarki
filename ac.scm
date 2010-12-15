@@ -732,29 +732,11 @@
       (and (test (car seq)) (all test (cdr seq)))))
 
 (define (arc-list? x) (or (pair? x) (eqv? x 'nil) (eqv? x '())))
-      
-; Generic +: strings, lists, numbers.
-; Return val has same type as first argument.
-
-(xdef + (lambda args
-           (cond ((null? args) 0)
-                 ((char-or-string? (car args))
-                  (apply string-append 
-                         (map (lambda (a) (ar-coerce a 'string))
-                              args)))
-                 ((arc-list? (car args)) 
-                  (ac-niltree (apply append (map ar-nil-terminate args))))
-                 (#t (apply + args)))))
-
-(define (char-or-string? x) (or (string? x) (char? x)))
 
 (define (ar-+2 x y)
-  (cond ((char-or-string? x)
-         (string-append (ar-coerce x 'string) (ar-coerce y 'string)))
-        ((and (arc-list? x) (arc-list? y))
-         (ac-niltree (append (ar-nil-terminate x) (ar-nil-terminate y))))
-        (#t (+ x y))))
+  (+ x y))
 
+(xdef + +)
 (xdef - -)
 (xdef * *)
 (xdef / /)

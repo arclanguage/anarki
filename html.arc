@@ -39,10 +39,10 @@
 
 (for i 0 255 (= (hexreps i)
                 (let s (coerce i 'string 16)
-                  (if (is (len s) 1) (+ "0" s) s))))
+                  (if (is (len s) 1) (join "0" s) s))))
 
 (defmemo hexrep (col)
-  (+ (hexreps (col 'r)) (hexreps (col 'g)) (hexreps (col 'b))))
+  (join (hexreps (col 'r)) (hexreps (col 'g)) (hexreps (col 'b))))
 
 (def opcolor (key val) 
   (w/uniq gv
@@ -50,13 +50,13 @@
        (pr ,(string " " key "=#") (hexrep ,gv)))))
 
 (def opstring (key val)
-  `(aif ,val (pr ,(+ " " key "=\"") it #\")))
+  `(aif ,val (pr ,(join " " key "=\"") it #\")))
 
 (def opnum (key val)
-  `(aif ,val (pr ,(+ " " key "=") it)))
+  `(aif ,val (pr ,(join " " key "=") it)))
 
 (def opsym (key val)
-  `(pr ,(+ " " key "=") ,val))
+  `(pr ,(join " " key "=") ,val))
 
 (def opsel (key val)
   `(if ,val (pr " selected")))

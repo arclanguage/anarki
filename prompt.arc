@@ -19,7 +19,7 @@
     (when msg (hspace 10) (apply pr msg))
     (br2)
     (tag (table border 0 cellspacing 10)
-      (each app (dir (+ appdir* user))
+      (each app (dir (join appdir* user))
         (tr (td app)
             (td (ulink user 'edit   (edit-app user app)))
             (td (ulink user 'run    (run-app  user app)))
@@ -34,7 +34,7 @@
        (tab (row "name:" (input "app") (submit "create app"))))))
 
 (def app-path (user app) 
-  (and user app (+ appdir* user "/" app)))
+  (and user app (join appdir* user "/" app)))
 
 (def read-app (user app)
   (aand (app-path user app) 
