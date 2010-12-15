@@ -51,11 +51,11 @@
 
 (def encode-cookie (o)
   (let joined-list (map [joinstr _ #\=] (tablist o))
-    (join "Cookie: "
-          (if (len> joined-list 1)
-            (reduce [join _1 "; " _2] joined-list)
-            (car joined-list))
-          ";")))
+    (+ "Cookie: "
+       (if (len> joined-list 1)
+         (reduce [+ _1 "; " _2] joined-list)
+         (car joined-list))
+       ";")))
 
 ; TODO this isn't very pretty
 (def get-or-post-url (url (o args) (o method "GET") (o cookie))
@@ -63,23 +63,23 @@
           parsed-url        (parse-url url)
           args-query-string (args->query-string args)
           full-args         (joinstr (list args-query-string (parsed-url 'query)) "&")
-          request-path      (join "/" (parsed-url 'filename)
-                                  (if (and (is method "GET") (> (len full-args) 0))
-                                      (join "?" full-args)))
-          header-components (list (join method " " request-path " HTTP/1.0")
-                                  (join "Host: " (parsed-url 'host))
+          request-path      (+ "/" (parsed-url 'filename)
+                               (if (and (is method "GET") (> (len full-args) 0))
+                                   (+ "?" full-args)))
+          header-components (list (+ method " " request-path " HTTP/1.0")
+                                  (+ "Host: " (parsed-url 'host))
                                   "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2"))
     (when (is method "POST")
-      (pushend (join "Content-Length: "
-                     (len (utf-8-bytes full-args)))
+      (pushend (+ "Content-Length: "
+                  (len (utf-8-bytes full-args)))
                header-components)
       (pushend "Content-Type: application/x-www-form-urlencoded"
                header-components))
     (when cookie
       (push (encode-cookie cookie) header-components))
-    (withs (header          (reduce [join _1 "\r\n" _2] header-components)
-            body            (if (is method "POST") (join full-args "\r\n"))
-            request-message (join header "\r\n\r\n" body))
+    (withs (header          (reduce [+ _1 "\r\n" _2] header-components)
+            body            (if (is method "POST") (+ full-args "\r\n"))
+            request-message (+ header "\r\n\r\n" body))
       (let (in out) (if (is "https" (parsed-url 'resource))
                       (ssl-connect (parsed-url 'host) (parsed-url 'port))
                       (socket-connect (parsed-url 'host) (parsed-url 'port)))
@@ -108,12 +108,12 @@
 (def ensure-resource(url)
   (if (posmatch "://" url)
     url
-    (join "http://" url)))
+    (+ "http://" url)))
 
 
 
 (def google (q)
-  (get-url (join "www.google.com/search?q=" (urlencode q))))
+  (get-url (+ "www.google.com/search?q=" (urlencode q))))
 
 ; just some preliminary hacking
 (mac w/browser body

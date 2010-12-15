@@ -158,7 +158,7 @@
 	    (-- n)
 	    (push c line)))
 	(if srv-noisy* (pr "\n\n"))
-	(respond o op (join (parseargs (string (rev line))) args) cooks n ctype i ip))))
+	(respond o op (+ (parseargs (string (rev line))) args) cooks n ctype i ip))))
 
 (= header* "HTTP/1.1 200 OK
 Content-Type: text/html; charset=utf-8
@@ -167,7 +167,7 @@ Connection: close")
 (= type-header* (table))
 
 (def gen-type-header (ctype)
-  (join "HTTP/1.0 200 OK
+  (+ "HTTP/1.0 200 OK
 Content-Type: "
      ctype
      "

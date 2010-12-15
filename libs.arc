@@ -23,6 +23,6 @@
   " 'require each file in `dirname' ending in \".arc\".
     See also [[require]] "
   (each f (dir-exists&dir dirname)
-    (if (endmatch ".arc" f) (require (join dirname "/" f)))))
+    (if (endmatch ".arc" f) (require (+ dirname "/" f)))))
 
 (autoload)

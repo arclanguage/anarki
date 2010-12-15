@@ -34,5 +34,5 @@
 (def write-text-list (lst path)
   (w/outfile outf path
 	     (each elem (butlast lst)
-	       (disp (join elem "\n") outf))
+	       (disp (+ elem "\n") outf))
 	     (if lst (disp (last lst) outf))))

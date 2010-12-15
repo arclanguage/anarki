@@ -3,7 +3,7 @@
 
 (mac with* (parms . body)
   (let uparms (mapeach (var val) (pair parms)
-                (list var val (uniq (join "old-" var)) (uniq (join "new-" var))))
+                (list var val (uniq (+ "old-" var)) (uniq (+ "new-" var))))
     `(with ,(mappendeach (var val old new) uparms
               `(,old ,var ,new ,val))
        ; we should arguably use dynamic-wind here, but pg's method seems to be

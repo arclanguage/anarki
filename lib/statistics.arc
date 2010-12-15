@@ -103,9 +103,9 @@
   (w/uniq modified-row
     `(= ,m
         (let ,modified-row (,m ,i)
-          (join (cut ,m 0 ,i)
-                (list (join (cut ,modified-row 0 ,j) (list ,v) (cut ,modified-row (+ 1 ,j))))
-                (cut ,m (+ 1 ,i)))))))
+          (+ (cut ,m 0 ,i)
+             (list (+ (cut ,modified-row 0 ,j) (list ,v) (cut ,modified-row (+ 1 ,j))))
+             (cut ,m (+ 1 ,i)))))))
 
 (def bestnpos (n f seq)
   (with (vals (bestn n f seq) indices nil last-val nil last-pos 0)
@@ -117,13 +117,13 @@
     (rev indices)))
 
 (def weighted-nearest-neighbors (v m (o n 10))
-  (let pearm (pearsonm (join m (list v)))
+  (let pearm (pearsonm (+ m (list v)))
     (mapeach vec-pos (bestnpos n > (butlast (last pearm)))
              (list (m vec-pos) ((butlast (last pearm)) vec-pos)))))
 
 ; maybe base this off of a weighted-nearest-neighbors? and allow to choose similarity function
 (def nearest-neighbors (v m (o n 10))
-  (let pearm (pearsonm (join m (list v)))
+  (let pearm (pearsonm (+ m (list v)))
     (mapeach vec-pos (bestnpos n > (butlast (last pearm)))
              (m vec-pos))))
 
