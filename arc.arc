@@ -320,6 +320,9 @@
       (and (> n 0) xs)  (cons (car xs) (firstn (- n 1) (cdr xs)))
                         nil))
 
+(def lastn (n xs)
+  (rev (firstn n (rev xs))))
+
 (def nthcdr (n xs)
   (if (no n)  xs
       (> n 0) (nthcdr (- n 1) (cdr xs))
