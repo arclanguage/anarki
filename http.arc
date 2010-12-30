@@ -39,9 +39,6 @@
 (def normalize-hdname (name)  ; "content-type" -> "Content-Type"
   (string:intersperse #\- (map capitalize (tokens name #\-))))
 
-(def capitalize (word)  ; "foobar" -> "Foobar"
-  (+ (upcase word.0) (cut word 1)))
-
 (def read-req ((o from (stdin)))
   (withs ((m pa pro) (read-reqline from)
   	  (rpa qs)   (tokens pa #\?)
