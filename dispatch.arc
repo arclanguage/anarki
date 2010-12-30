@@ -34,11 +34,11 @@
 (def find-complexpath (ptoks (o cands complexpaths*))
   (whenlet (str (toks f)) (car cands)
     (aif (complexpath-match ptoks toks)
-      	 (list f (rev it))
+      	 (list f rev.it)
 	 (find-complexpath ptoks (cdr cands)))))
 
 (def complexpath-match (pc cc (o acc))  ; return the list of bindings if matched
-  (if (and (no pc) (no cc))
+  (if (and no.pc no.cc)
       acc
       (when (car cc)
       	(case cc.0.0  ; first char
