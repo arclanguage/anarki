@@ -100,29 +100,6 @@
       hd   (req hdname)    (alref req!hds hdname)
       cook (req cookname)  (alref req!cooks cookname))
 
-; 'tag-options redefined to get opstring by default if meth is nil
-; (please, we are no children), and "id" and "class" fields for every
-; tag (please, we use javascript)
-; maybe not the right place to redef?  'opmeth?
-
-(def tag-options (spec options)
-  (if (no options)
-      '()
-      (let ((opt val) . rest) options
-        (let meth (if (in opt 'style 'class) 
-	     	       opstring 
-		      (is opt 'id)
-		       opsym 
-		      (opmeth spec opt))
-          (if meth
-              (if val
-                  (cons (if (precomputable-tagopt val)
-                            (tostring (eval (meth opt val)))
-                            (meth opt val))
-                        (tag-options spec rest))
-                  (tag-options spec rest))
-              (cons (opstring opt val) (tag-options spec rest)))))))
-
 ; we use HTML5.  that means, less cruft (things like closing </html> or
 ; type="text/javascript" not mandatory, so skipped to save bandwidth)
 ; but don't worry old browsers will still be able to handle it (IE6 does!)
