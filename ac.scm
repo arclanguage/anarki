@@ -905,6 +905,13 @@
                                 (current-output-port)))
                 b))
 
+(xdef writebytes (lambda (bs . args)
+                   (write-bytes (list->bytes (ac-denil bs))
+                                (if (pair? args) 
+                                    (car args) 
+                                    (current-output-port)))
+                   bs))
+
 (define (printwith f args)
   (let ((port (if (> (length args) 1)
                   (cadr args)
