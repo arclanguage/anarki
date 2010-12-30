@@ -106,12 +106,4 @@
   " Returns a string \"<n> <x>\" representing `n' of `x' in english, pluralizing
     `x' if necessary.
     See also [[pluralize]] "
-
-  butlast
-  " Returns a list containing every element of `x' but the last.
-    See also: [[cut]] "
-
-  between
-  " As 'each, but runs `within' between each iteration of `body'.
-    See also [[each]] "
   )
