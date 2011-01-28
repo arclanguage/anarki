@@ -9,6 +9,20 @@
 (require (only-in scheme/base [read scheme:read] [write scheme:write]))
 (provide read-json write-json jsexpr->json json->jsexpr jsexpr?)
 
+(define (arc-list-denil x)
+  (cond ((pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x))))
+        (#t x)))
+
+(define (ac-denil-car x)
+  (if (eq? x 'nil)
+      'nil
+      (arc-list-denil x)))
+
+(define (ac-denil-cdr x)
+  (if (eq? x 'nil)
+      '()
+      (arc-list-denil x)))
+
 (define (write-json json [port (current-output-port)])
   (cond
     [(hash? json)
@@ -21,12 +35,12 @@
        (display ": " port)
        (write-json value port))
      (display "}" port)]
-    [(list? json)
-     (display "[" port)
-     (for ([(value i) (in-indexed json)])
-       (when (> i 0)
-         (display ", " port))
-       (write-json value port))
+    [(pair? json)
+      (display "[" port)
+	     (for ([(value i)(in-indexed (arc-list-denil json))])
+         (when (> i 0)
+           (display ", " port))
+         (write-json value port))
      (display "]" port)]
     [(or (string? json) (and (number? json) (or (integer? json) (inexact? json))))
      (scheme:write json port)]
