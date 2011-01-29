@@ -1,27 +1,29 @@
-;; Scheme JSON parser from
-;;   http://planet.plt-scheme.org/display.ss?package=json.plt&owner=dherman
-;; To use:
-;;  ($ (require (file "lib/json.ss")))
-;;  ($ (xdef json-read read-json))
-;; XXX: write-json untested in arc.
+;; Scheme JSON parser from http://planet.plt-scheme.org/display.ss?package=json.plt&owner=dherman
+;; Substantial changes to support arc data structures and json spec.
+;; For any future changes please refer to spec found at http://json.org/
+
+;; To Use:
+;; ($ (require (file "lib/json.ss")))
+;; ($ (xdef read-json read-json))
+;; ($ (xdef write-json write-json))
+
+;; Test Cases:
+;; (tostring (write-json '(1 2 3)))
+;; (tostring (write-json "server"))
+;; (tostring (write-json 3))
+;; (tostring (write-json 3.1476777))
+;; (tostring (write-json 'null))
+;; (tostring (write-json #t))
+;; (tostring (write-json #f))
+;; (tostring (write-json 'true))
+;; (tostring (write-json 'false))
+;; (tostring (write-json 'symtostr))
+;; (tostring (write-json (obj "server" "cool server" "success" 'true)))
+;; (fromstring x (read-json (stdin))) ;; where x is any of the above
 
 #lang scheme/base
 (require (only-in scheme/base [read scheme:read] [write scheme:write]))
 (provide read-json write-json jsexpr->json json->jsexpr jsexpr?)
-
-(define (arc-list-denil x)
-  (cond ((pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x))))
-        (#t x)))
-
-(define (ac-denil-car x)
-  (if (eq? x 'nil)
-      'nil
-      (arc-list-denil x)))
-
-(define (ac-denil-cdr x)
-  (if (eq? x 'nil)
-      '()
-      (arc-list-denil x)))
 
 (define (write-json json [port (current-output-port)])
   (cond
@@ -42,11 +44,41 @@
            (display ", " port))
          (write-json value port))
      (display "]" port)]
-    [(or (string? json) (and (number? json) (or (integer? json) (inexact? json))))
+   [(arc-boolean? json)
+     (scheme:write (if (eq? json 'true) 'true 'false)  port)]
+   [(or (char? json)(string? json)(number? json)(integer? json)(arc-nil? json))
      (scheme:write json port)]
-    [(boolean? json) (scheme:write (if json 'true 'false) port)]
-    [(null-jsexpr? json) (scheme:write 'null port)]
-    [else (error 'json "bad json value: ~v" json)]))
+   [(symbol? json)
+     (scheme:write (symbol->string json) port)]
+    [else (error 'json "bad json value: ~v" json)]))     
+
+; arc data handlers
+
+(define (arc-list-denil x)
+  (cond ((pair? x) (cons (arc-denil-car (car x)) (arc-denil-cdr (cdr x))))
+        (#t x)))
+
+(define (arc-denil-car x)
+  (if (eq? x 'nil)
+      'nil
+      (arc-list-denil x)))
+
+(define (arc-denil-cdr x)
+  (if (eq? x 'nil)
+      '()
+      (arc-list-denil x)))
+
+ (define (arc-nil? x)
+    (or (eq? x 'nil)
+        (eq? x 'null)))
+
+(define (arc-boolean? x)
+  (or (eq? x 'true) 
+      (eq? x 'false)
+      (eq? x #t)
+      (eq? x #f)))
+
+; reader
 
 (define (read-json [port (current-input-port)])
   (case (peek-char port)
@@ -167,7 +199,7 @@
 
 (define (read/null port)
   (expect-string port "null")
-  null-jsexpr)
+  'nil)
 
 (define (read/digits port)
   (let ([digits (for/list ([digit (in-port-until port
