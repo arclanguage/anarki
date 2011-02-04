@@ -1266,27 +1266,23 @@
 ; http://arclanguage.org/item?id=13616
 (require racket/unsafe/ops)
 
-(define (set-ca/dr! offset who p x)
-  (if (pair? p)
-      (unsafe-vector-set! p offset x)
-      (raise-type-error who "pair" p)))
-
-(define (n-set-car! p x)
-  (set-ca/dr! -1 'set-car! p x))
-(define (n-set-cdr! p x)
-  (set-ca/dr! 0 'set-cdr! p x))
-
 (define x-set-car!
   (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))
     (if (procedure? fn)
         fn
-        n-set-car!)))
+        (lambda (p x)
+          (if (pair? p)
+              (unsafe-set-mcar! p x)
+              (raise-type-error 'set-car! "pair" p))))))
 
 (define x-set-cdr!
   (let ((fn (namespace-variable-value 'set-cdr! #t (lambda () #f))))
     (if (procedure? fn)
         fn
-        n-set-cdr!)))
+        (lambda (p x)
+          (if (pair? p)
+              (unsafe-set-mcdr! p x)
+              (raise-type-error 'set-cdr! "pair" p))))))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
 ; say (if (string? x) (string-replace! x val 1) ...) in scdr, but
