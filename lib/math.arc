@@ -24,7 +24,7 @@
 (def deriv (f)
   "provides differential of a function of a single vairable"
   (fn (x)
-    (let dx (max 1d-9 (abs:* x 1d-9))
+    (let dx (min 1d-9 (abs:* x 1d-9))
        (/ (- (f (+ x dx))
 	     (f x))
           dx))))
@@ -36,10 +36,10 @@
 	  x arglis.n
 	  b-lis (nthcdr (+ n 1) arglis))
     `(fn ,arglis
-      (let dx (max 1d-9 (abs:* ,x 1d-9)
+      (let dx (min 1d-9 (abs:* ,x 1d-9))
 	(/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
 	      (,f ,@a-lis    ,x     ,@b-lis))
-	   dx))))))
+	   dx)))))
 
 (mac partial-diff-vec (f n arity)
   "returns vector with each element differentiated with respect to Nth argument"
@@ -48,10 +48,10 @@
 	  x arglis.n
 	  b-lis (nthcdr (+ n 1) arglis))
     `(fn ,arglis
-	(let dx (max 1d-9 (abs:* ,x 1d-9)
+	(let dx (max 1d-9 (abs:* ,x 1d-9))
 	   (vec-scale (vec- (,f ,@a-lis	(+ ,x dx) ,@b-lis)
 			    (,f ,@a-lis    ,x     ,@b-lis))
-		      (/ 1 dx)))))))
+		      (/ 1 dx))))))
 
 (def grad (f)
   "gradient of 3D scalar field given by F"
@@ -188,6 +188,6 @@
 (def quad-roots (a b c)
   "returns roots of the equation ax²+bx+c=0"
   (let sqroot (sqrt (- (* b b) (* 4 a c)))
-    (rem-dups
-     (list (/ (- sqroot b) 2 a)
-	   (/ (- 0 sqroot b) 2 a)))))
+    (if (is sqroot 0) (list (/ (- b) 2 a))
+	(list (/ (- sqroot b) 2 a)
+	      (/ (- 0 sqroot b) 2 a)))))
