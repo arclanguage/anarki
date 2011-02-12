@@ -17,35 +17,35 @@
 
 (def register-path (str f)
   (if (some [in _ #\: #\*] str)
-      (register-complexpath str f)
-      (= litpaths*.str f)))
+    (register-complexpath str f)
+    (= litpaths*.str f)))
 
 (def register-complexpath (str f)
   (let pstruct (list (tokens str #\/) f)
     (aif (assoc str complexpaths*)
-    	 (= it.1 pstruct)  ; already exists, replace
-	 (push (list str pstruct) complexpaths*))))
+      (= it.1 pstruct)  ; already exists, replace
+      (push (list str pstruct) complexpaths*))))
 
 (def findpath (path)  ; actually "find the handler function for this path"
   (aif litpaths*.path
-       it
-       (find-complexpath (tokens path #\/))))
+    it
+    (find-complexpath (tokens path #\/))))
 
 (def find-complexpath (ptoks (o cands complexpaths*))
   (whenlet (str (toks f)) (car cands)
     (aif (complexpath-match ptoks toks)
-      	 (list f rev.it)
-	 (find-complexpath ptoks (cdr cands)))))
+      (list f rev.it)
+      (find-complexpath ptoks (cdr cands)))))
 
 (def complexpath-match (pc cc (o acc))  ; return the list of bindings if matched
   (if (and no.pc no.cc)
-      acc
-      (when (car cc)
-      	(case cc.0.0  ; first char
-      	  #\: (complexpath-match (cdr pc) (cdr cc) (cons (car pc) acc))
-	  #\* (cons (string:intersperse #\/ pc) acc)
-	      (when (is cc.0 (car pc))  ; literal token
-	      	(complexpath-match (cdr pc) (cdr cc) acc))))))
+    acc
+    (when (car cc)
+      (case cc.0.0  ; first char
+        #\: (complexpath-match (cdr pc) (cdr cc) (cons (car pc) acc))
+        #\* (cons (string:intersperse #\/ pc) acc)
+            (when (is cc.0 (car pc))  ; literal token
+              (complexpath-match (cdr pc) (cdr cc) acc))))))
 
 (mac defpath-raw (path vars . body)
   `(register-path ,(string path) (fn ,vars ,@body)))
@@ -62,7 +62,7 @@
 ; and also, no twenty ...form ('arform 'tarform and 'onclick etc.)
 ; You're of course free to define 'onclick and co., if you need them:
 ; but we advice you to think twice about it: this stuff is good, but its
-; scope is or at least should be limited.  Javascript exists, and 
+; scope is or at least should be limited.  Javascript exists, and
 ; client caching is cool.  It's 2k9 now, not 1999.  Be a man and code an
 ; Arc to JS compiler (have a look at scheme2js).  The Arc challenge
 ; is a joke.
@@ -74,7 +74,7 @@
 (register-path (string opurl* ":")
   (fn (req id)  (aif ops*.id (it req) (resp-err))))
 
-(def new-opid ((o leng 12)) 
+(def new-opid ((o leng 12))
   (check (rand-string leng) ~ops* (new-opid leng)))
 
 (def newop (f)
@@ -106,18 +106,18 @@
 
 (def prdoctype ((o dt "html"))  (pr "<!doctype " dt ">"))
 
- (mac htmlpage (headers . body)  
+ (mac htmlpage (headers . body)
    `(do (prdoctype)
         (start-tag 'html)
-	(tag head 
-	     (gentag meta http-equiv "content-type" 
-	     	  	  content "text/html; charset=utf-8")
-	     ; better to specify encoding here, in the html: avoid
-	     ; problems if the user locally saves and consults the page
-	     ,@headers)
-	(flushout)
+        (tag head
+             (gentag meta http-equiv "content-type"
+                    content "text/html; charset=utf-8")
+             ; better to specify encoding here, in the html: avoid
+             ; problems if the user locally saves and consults the page
+             ,@headers)
+        (flushout)
         (start-tag 'body)
-	,@body))
+        ,@body))
 
 (defs js   (url) (tag (script src url))
       ijs  (str) (tag script (disp str))  ; inline code
@@ -131,11 +131,11 @@
 
 (def dispatch (req)
   (iflet hand (findpath req!path)
-        (if (alist hand)  ; true if complex path
-	    (apply hand.0 (cons req hand.1))
-	    (hand req))
-        (resp-err)))
+    (if (alist hand)  ; true if complex path
+      (apply hand.0 (cons req hand.1))
+      (hand req))
+    (resp-err)))
 
 ; (= httpd-handler dispatch)  ; the right choice for 95% of cases, but
-; for instance you might want to use a unique session cookie for each 
+; for instance you might want to use a unique session cookie for each
 ; visitor, in this case, do some "Cookie" header parsing before to dispatch.
