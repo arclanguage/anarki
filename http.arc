@@ -147,7 +147,7 @@
     (list prot host port path)))
 
 (def mk-http-req (method host path (o hds) (o port 80) (o body))
-  (let (in out) (client-socket host port)
+  (let (in out) (socket-connect host port)
     (w/stdout out
       (reqhead (upcase method) path hds)
       (prt body)
