@@ -1,8 +1,17 @@
+;matrix fns
+
 (def init-matrix(dims initval)
   (zap flat dims)
   (if cdr.dims
     (n-of car.dims (init-matrix cdr.dims initval))
     (n-of car.dims initval)))
+
+(def matrix-rank (mat)
+  (if atom.mat 0
+      (let rec (afn (M r)
+		 (if (atom car.M) r
+		     (self car.M (+ r 1))))
+	(rec mat 1))))
 
 (def zeros dims
   (init-matrix dims 0))
@@ -10,21 +19,65 @@
 (def ones dims
   (init-matrix dims 1))
 
+(mac elt (mat pos)
+  "access the element of the matix given by co-ords listed in pos"
+  (if (cdr pos) 
+      `(elt (,mat ,(car pos)) ,(cdr pos))
+      `(,mat ,(car pos))))
 
-(def square (x)
-  (* x x))
+(def matrix-multiply (a b)
+  "multiplies the matrix a by the matrix b  (N.B. Rank one row vectors need to be in the form ((a b c d ...)) /NOT/ (a b c d), i.e. initiated with dims=(1 n) not (n))"
+  (with (col (fn (mat i) (map [_ i] mat))
+	 result-matrix (list))
+    (for rw 0 (- len.a 1)
+          (push (let result-row (list)
+		  (for cl 0 (- (len b.0) 1)
+		       (push (apply + (map * a.rw (col b cl))) result-row))
+		  rev.result-row)
+		result-matrix))
+    rev.result-matrix));could be generalised as a recursive macro to work on arbitrary rank tensors? 
 
-(def floor (n) (trunc n))
-(def ceiling (n) (int ($.ceiling n)))
-(def highbyte (n) (floor (/ n 256)))
-(def lowbyte (n) (mod n 256))
+(def gauss-elim (mat rhs)
+  "solve the linear equations:
+
+mat_00*x_0 + mat_01*x_1 ... mat_0n*x_n = rhs_0
+mat_10*x_0 + mat_11*x_1 ... mat_1n*x_n = rhs_1
+...
+mat_n0*x_0 + mat_n1*x_1 ... mat_nn*x_n = rhs_n
+
+using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)"
+  (zap flat rhs)
+  (withs (N (if (no (is len.mat (len car.mat))) (err "mat must be a square matrix, use co-effs of 0 for equations which dont have a certain variable in them")
+	     len.mat)
+	  tmp (list)
+	  MAX 0
+	  i 0 j 0 k 0
+	  X (zeros N))
+    (for i 0 (- N 1) (push (join mat.i (cons rhs.i ())) tmp))
+    (let M rev.tmp
+      ;elimination step
+      (loop (= i 0) (<= i (- N 1)) (++ i) 
+       (= MAX i)
+       (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
+        (if (> (abs:elt M (j i)) (abs:elt M (MAX i))) (= MAX j)))
+       (if (isnt MAX i) (swap M.i M.MAX))
+       (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
+	  (loop (= k N) (>= k i) (-- k)
+	   (-- (elt M (j k)) (/ (* (elt M (i k)) (elt M (j i))) (elt M (i i))))))) ;;end of elimination step
+      ;;substitution
+      (loop (= j (- N 1)) (>= j 0) (-- j) 
+	    (= tmp 0.0)
+	    (loop (= k (+ j 1)) (<= k(- N 1)) (++ k) (++ tmp (* (elt M (j k)) X.k)))
+	    (= X.j (/ (- (elt M (j N)) tmp) (elt M (j j))))))
+    X))
+
 
 ;calculus fns
 
 (def deriv (f)
   "provides differential of a function of a single vairable"
   (fn (x)
-    (let dx (min 1d-9 (abs:* x 1d-9))
+    (let dx (if (is x 0) 1d-9 (abs:* x 1d-9))
        (/ (- (f (+ x dx))
 	     (f x))
           dx))))
@@ -36,7 +89,7 @@
 	  x arglis.n
 	  b-lis (nthcdr (+ n 1) arglis))
     `(fn ,arglis
-      (let dx (min 1d-9 (abs:* ,x 1d-9))
+      (let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
 	(/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
 	      (,f ,@a-lis    ,x     ,@b-lis))
 	   dx)))))
@@ -48,7 +101,7 @@
 	  x arglis.n
 	  b-lis (nthcdr (+ n 1) arglis))
     `(fn ,arglis
-	(let dx (max 1d-9 (abs:* ,x 1d-9))
+	(let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
 	   (vec-scale (vec- (,f ,@a-lis	(+ ,x dx) ,@b-lis)
 			    (,f ,@a-lis    ,x     ,@b-lis))
 		      (/ 1 dx))))))
@@ -81,20 +134,21 @@
 	     ((d/dy x y z) 0))))))
 
 (def integral (f)
-  "returns the integral of a single argument function"
-  (fn (lower upper (o its 10000))
+  "returns the integral of a single argument function using Simpson's method"
+  (fn (lower upper (o its 100))
     (withs (dx      (/ (- upper lower) its)
 	    x       lower
 	    current (f x)
 	    next    (f (+ x dx))
 	    accum   0) 
       (while (<= x (- upper dx))
-	     (++ accum (* (/ (+ current next) 2) dx))
+	     (++ accum (/ (+ (* (+ current next) 1/2 dx)
+			     (* 2 dx (f (+ x (/ dx 2)))))
+			  3))
 	     (++ x dx)
 	     (= current next)
-	     (= next (f:+ x dx)))
+	     (= next (f x)))
       accum)))
-
 
 
 ; vector fns
@@ -103,11 +157,10 @@
   (apply + (map (fn (x y) (* x y)) v1 v2)))
 
 (def vec-cross (v1 v2 . args)
-  (if (car args)
-      (vec-cross (vec-cross v1 v2) (car args) (cdr args))
-      (list (- (* v1.1 v2.2) (* v2.1 v1.2))
-	    (- (* v1.2 v2.0) (* v2.2 v1.0))
-	    (- (* v1.0 v2.1) (* v2.0 v1.1)))))
+  (if (car args)(vec-cross (vec-cross v1 v2) (car args) (cdr args))
+                (list (- (* v1.1 v2.2) (* v2.1 v1.2))
+		      (- (* v1.2 v2.0) (* v2.2 v1.0))
+		      (- (* v1.0 v2.1) (* v2.0 v1.1)))))
 
 (with (v+ (fn (v1 v2)
 	     (map (fn (x y) (+ x y)) v1 v2))
@@ -121,7 +174,6 @@
   (def vec- (v1 . args)
     (if no.args (map [- _] v1)
 	(v- v1 (apply vec+ args))))
-
 )
 
 
@@ -140,6 +192,13 @@
 
 
 ;others
+
+(def square (x) (* x x))
+(def cube (x) (* x x x))
+(def floor (n) (trunc n))
+(def ceiling (n) (int ($.ceiling n)))
+(def highbyte (n) (floor (/ n 256)))
+(def lowbyte (n) (mod n 256))
 
 (def fact (num)
   "factorial of num (num must be a fixnum)"
@@ -186,7 +245,7 @@
     (+ (* tot (/ sigma 25)) middle)))
 
 (def quad-roots (a b c)
-  "returns roots of the equation ax²+bx+c=0"
+  "returns roots of the equation ax^2+bx+c=0"
   (let sqroot (sqrt (- (* b b) (* 4 a c)))
     (if (is sqroot 0) (list (/ (- b) 2 a))
 	(list (/ (- sqroot b) 2 a)
