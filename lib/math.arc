@@ -147,7 +147,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 			  3))
 	     (++ x dx)
 	     (= current next)
-	     (= next (f x)))
+	     (= next (f:+ x dx)))
       accum)))
 
 
