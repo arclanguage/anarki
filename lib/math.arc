@@ -19,6 +19,19 @@
 (def ones dims
   (init-matrix dims 1))
 
+(def mat-to-table (mat)
+  "coerces a list-of-lists representation of a matrix into a hash table one where the key is a list of indices (0 referenced)"
+  (let ans (table)
+       (let rec (afn (X pre)
+		  (if (atom:car X)
+		      (for i 0 (- len.X 1)
+			 (= (ans (cons i pre)) X.i))
+		      (for i 0 (- len.X 1)
+			 (self X.i (cons i pre)))))
+	    (rec mat (list)))
+       ans))
+
+
 (mac elt (mat pos)
   "access the element of the matix given by co-ords listed in pos"
   (if (cdr pos) 
@@ -38,7 +51,7 @@
     rev.result-matrix));could be generalised as a recursive macro to work on arbitrary rank tensors? 
 
 (def gauss-elim (mat rhs)
-  "solve the linear equations:
+  "solves the linear equations:
 
 mat_00*x_0 + mat_01*x_1 ... mat_0n*x_n = rhs_0
 mat_10*x_0 + mat_11*x_1 ... mat_1n*x_n = rhs_1
