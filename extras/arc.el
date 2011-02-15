@@ -408,7 +408,7 @@ rigidly along with this one."
 ;; like def if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
-;(eval-when-compile (require 'cl-macs))
+(eval-when-compile (require 'cl-macs))
 
 (let ((arc-indent-function-list
        ;; format is ((LEVEL . SYMS) ...)
