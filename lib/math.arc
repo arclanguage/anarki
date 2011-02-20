@@ -1,3 +1,6 @@
+(= pi 3.14159265358979323846)
+(= e  2.71828182845904523536)
+
 ;matrix fns
 
 (def init-matrix(dims initval)
@@ -209,6 +212,15 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	     (= next (f:+ x dx)))
       accum)))
 
+(def adaptive-integral (f)
+  (let int (memo:integral f)
+       (afn (lower upper (o tol 0.001))
+	    (with (a (int lower upper 2)
+		   b (int lower upper 8))
+	       (if (and (isnt b 0) (< (abs:/ (- a b) b) tol))
+		   b
+		   (let half (+ lower (/ (- upper lower) 2))
+			(+ (self lower half tol) (self half upper tol))))))))
 
 ; vector fns
 
@@ -235,7 +247,6 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	(v- v1 (apply vec+ args))))
 )
 
-
 (def vec-scale (vec . scalars)
   (let c (apply * scalars)
     (map [* _ c] vec)))
@@ -248,7 +259,6 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     
 (def vec-norm (vec)
   (vec-scale vec (/ (apply quad-add vec))))
-
 
 ;others
 
