@@ -81,58 +81,34 @@ mat_n0*x_0 + mat_n1*x_1 ... mat_nn*x_n = rhs_n
 
 using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)"
   (zap flat rhs)
-  (if (acons mat) 
-      (withs (N (if (no (is len.mat (len car.mat))) (err "mat must be a square matrix, use co-effs of 0 for equations which dont have a certain variable in them")
-		    len.mat)
-		tmp (list)
-		MAX 0
-		i 0 j 0 k 0
-		X (zeros N))
-	     (for i 0 (- N 1) (push (join mat.i (cons rhs.i ())) tmp))
-	     (let M rev.tmp
-		  ;;elimination step
-		  (loop (= i 0) (<= i (- N 1)) (++ i) 
-		     (= MAX i)
-		     (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
-			(if (> (abs:elt M (i j)) (abs:elt M (i MAX))) (= MAX j)))
-		     (if (isnt MAX i) (swap M.i M.MAX))
-		     (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
-			(loop (= k N) (>= k i) (-- k)
-			   (-- (elt M (k j)) (/ (* (elt M (k i)) (elt M (i j))) (elt M (i i))))))) ;;end of elimination step
-		  ;;substitution
-		  (loop (= j (- N 1)) (>= j 0) (-- j) 
-		     (= tmp 0.0)
-		     (loop (= k (+ j 1)) (<= k(- N 1)) (++ k) (++ tmp (* (elt M (k j)) X.k)))
-		     (= X.j (/ (- (elt M (N j)) tmp) (elt M (j j))))))
-	     X)
-      (do (zap table-to-mat mat)
-	  (withs (N (if (no (is len.mat (len car.mat))) (err "mat must be a square matrix, use co-effs of 0 for equations which dont have a certain variable in them")
-			len.mat)
-		    tmp (list)
-		    MAX 0
-		    i 0 j 0 k 0
-		    X (zeros N))
-		 (for i 0 (- N 1) (push (join mat.i (cons rhs.i ())) tmp))
-		 (let M (mat-to-table rev.tmp)
-		      ;;elimination step
-		      (loop (= i 0) (<= i (- N 1)) (++ i)
-			 (= MAX i)
-			 (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
-			    (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
-			 (if (isnt MAX i) (let temp ()
-					       (for a 0 N 
-						 (= temp (M (list a i)))
-						 (= (M (list a i)) (M (list a MAX)))
-						 (= (M (list a MAX)) temp))))
-			 (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
-			    (loop (= k N) (>= k i) (-- k)
-			       (-- (M (list k j)) (/ (* (M (list k i)) (M (list i j))) (M (list i i))))))) ;;end of elimination step
-		      ;;substitution
-		      (loop (= j (- N 1)) (>= j 0) (-- j) 
-			 (= tmp 0.0)
-			 (loop (= k (+ j 1)) (<= k(- N 1)) (++ k) (++ tmp (* (M (list k j)) X.k)))
-			 (= X.j (/ (- (M (list N j)) tmp) (M (list j j))))))
-	     X))))
+  (if (isa mat 'table)
+      (withs (MAX 0
+	      i 0 j 0 k 0
+	      keys (list)
+	      _ (maptable (fn (key _) (push key keys)) mat)
+	      N (+ 1 (apply max (map car keys))) N2 (+ 1 (apply max (map cadr keys)))
+	      X (if (is N N2 len.rhs) (zeros N) (do (pr "N:")(prn N)(pr "N2:")(prn N2)(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable"))))
+	  (let M (copy mat)
+	       (for i 0 N (= (M (list (+ 1 N2) i)) rhs.i))
+	       ;;elimination step
+	       (loop (= i 0) (<= i (- N 1)) (++ i)
+		  (= MAX i)
+		  (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
+		     (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
+		  (if (isnt MAX i) (let temp ()
+					(for a 0 N 
+					     (= temp (M (list a i)))
+					     (= (M (list a i)) (M (list a MAX)))
+					     (= (M (list a MAX)) temp))))
+		  (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
+		     (loop (= k N) (>= k i) (-- k)
+			(-- (M (list k j)) (/ (* (M (list k i)) (M (list i j))) (M (list i i))))))) ;;end of elimination step
+	       ;;substitution
+	       (loop (= j (- N 1)) (>= j 0) (-- j)
+		  (let tmp 0.0
+		       (loop (= k (+ j 1)) (<= k(- N 1)) (++ k) (++ tmp (* (M (list k j)) X.k)))
+		       (= X.j (/ (- (M (list N j)) tmp) (M (list j j)))))))
+	  X)))
 
 ;calculus fns
 
