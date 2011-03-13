@@ -1,6 +1,6 @@
 ;matrix fns
 
-(def init-matrix(dims initval)
+(def init-matrix (dims initval)
   (zap flat dims)
   (if cdr.dims
     (n-of car.dims (init-matrix cdr.dims initval))
@@ -27,20 +27,22 @@
 
 (def mat-to-table (mat)
   "coerces a list-of-lists representation of a matrix into a hash table one where the key is a list of indices (0 referenced)"
-  (let ans (table)
+  (with (ans (table) keys (list))
        (let rec (afn (X pre)
 		  (if (atom:car X)
 		      (for i 0 (- len.X 1)
-			 (= (ans (cons i pre)) X.i))
+			 (= (ans (cons i pre)) X.i)
+			 (push (cons i pre) keys))
 		      (for i 0 (- len.X 1)
 			 (self X.i (cons i pre)))))
 	    (rec mat (list)))
+       (= ans!dims (map [+ _ 1] (car:sort (fn (x y) (> (apply + x) (apply + y))) keys)))
        ans))
 
 (def table-to-mat (tab)
   "coerces a table representation of a matrix into a list-of-lists one"
   (let key-val-lis (list)
-    (maptable (fn (key val) (push (cons key val) key-val-lis)) tab)
+    (maptable (fn (key val) (if (isnt key 'dims) (push (cons key val) key-val-lis))) tab)
     (let rec (afn (lis)
 	       (if (is (len caar.lis) 1)  (map cdr (sort (fn (x y) (< caar.x caar.y)) lis)) ;if there is only one index sort by it
 		   (map (fn (tp) (self:map [cons (butlast car._) cdr._] tp))            ;
@@ -58,6 +60,8 @@
 
 (def matrix-multiply (a b)
   "multiplies the matrix a by the matrix b (N.B. Rank one row vectors need to be in the form ((a b c d ...)) /NOT/ (a b c d), i.e. initiated with dims=(1 n) not (n))"
+  (if (isa a 'table) (zap table-to-mat a))
+  (if (isa b 'table) (zap table-to-mat b))
   (with (col (fn (mat i) (map [_ i] mat))
 	 result-matrix (list))
     (for rw 0 (- len.a 1)
@@ -69,43 +73,46 @@
     rev.result-matrix));could be generalised as a recursive macro to work on arbitrary rank tensors? 
 
 (def gauss-elim (mat rhs)
-  "solves the linear equations:
+ "solves the linear equations:
 
 mat_00*x_0 + mat_01*x_1 ... mat_0n*x_n = rhs_0
 mat_10*x_0 + mat_11*x_1 ... mat_1n*x_n = rhs_1
 ...
 mat_n0*x_0 + mat_n1*x_1 ... mat_nn*x_n = rhs_n
 
-using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)"
+using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)" 
   (zap flat rhs)
-  (if (isa mat 'table)
-      (withs (MAX 0
-	      i 0 j 0 k 0
-	      keys (list)
-	      _ (maptable (fn (key _) (push key keys)) mat)
-	      N (+ 1 (apply max (map car keys))) N2 (+ 1 (apply max (map cadr keys)))
-	      X (if (is N N2 len.rhs) (zeros N) (do (pr "N:")(prn N)(pr "N2:")(prn N2)(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable"))))
-	  (let M (copy mat)
-	       (for i 0 N (= (M (list (+ 1 N2) i)) rhs.i))
-	       ;;elimination step
-	       (loop (= i 0) (<= i (- N 1)) (++ i)
-		  (= MAX i)
-		  (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
-		     (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
-		  (if (isnt MAX i) (let temp ()
-					(for a 0 N 
-					     (= temp (M (list a i)))
-					     (= (M (list a i)) (M (list a MAX)))
-					     (= (M (list a MAX)) temp))))
-		  (loop (= j (+ i 1)) (<= j (- N 1)) (++ j)
-		     (loop (= k N) (>= k i) (-- k)
-			(-- (M (list k j)) (/ (* (M (list k i)) (M (list i j))) (M (list i i))))))) ;;end of elimination step
-	       ;;substitution
-	       (loop (= j (- N 1)) (>= j 0) (-- j)
-		  (let tmp 0.0
-		       (loop (= k (+ j 1)) (<= k(- N 1)) (++ k) (++ tmp (* (M (list k j)) X.k)))
-		       (= X.j (/ (- (M (list N j)) tmp) (M (list j j)))))))
-	  X)))
+  (if (acons mat) (zap mat-to-table mat)) ;assumes if using list-of-lists representation of matrices you arent worried about efficiency and so wont mind inline conversion
+  (withs (MAX 0
+	  i 0  j 0  k 0  tmp 0
+	  X (if (is (car mat!dims) (cadr mat!dims) len.rhs) (zeros (car mat!dims))
+		(do (pr "car.dims:")(pr (car mat!dims))(pr " ")(pr " cadr.dims:")(pr (cadr mat!dims))(pr " ")(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable")))
+	  N (car mat!dims))
+      (let M (copy mat)
+	   (for i 0 (- N 1)
+		(= (M (list N i)) rhs.i))
+	   ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients 
+	   (loop (= i 0) (< i N) (++ i)
+	      (= MAX i)
+	      (loop (= j (+ i 1)) (< j N) (++ j)
+		 (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
+	      (loop (= k i) (<= k N) (++ k)
+		 (= tmp (M (list k i)))
+		    (M (list k i)) (M (list k MAX))
+		    (M (list k MAX)) tmp)
+	      (loop (= j (+ i 1)) (< j N) (++ j)
+		 (loop (= k N) (>= k i) (-- k)
+		    (-- (M (list k j)) (/ (* (M (list k i)) (M (list i j)))
+					  (M (list i i)))))))
+	   ;;sub step - starting from bottom element which just has one co-efficient and can therefore be easily calculated sub in the value of the know variables and solve
+	   (loop (= j (- N 1)) (>= j 0) (-- j)
+	      (= tmp 0)
+	      (loop (= k (+ j 1)) (< k N) (++ k)
+		 (++ tmp (* X.k (M (list k j)))))
+	      (= X.j (/ (- (M (list N j)) tmp)
+			(M (list j j)))))
+	   X)))
+
 
 ;calculus fns
 
@@ -118,7 +125,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
           dx))))
 
 (mac partial-diff (f n arity)
-  "returns deriv function of f (w/ num args ARITY) wrt Nth variable(from 0) "
+  "returns deriv function of f (w/ num args ARITY) wrt Nth variable(from 0)"
   (withs (arglis (n-of arity (uniq))
 	  a-lis (firstn n arglis)
 	  x arglis.n
@@ -175,7 +182,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	    x       lower
 	    current (f x)
 	    next    (f (+ x dx))
-	    accum   0) 
+	    accum   0)
       (while (<= x (- upper dx))
 	     (++ accum (/ (+ (* (+ current next) 1/2 dx)
 			     (* 2 dx (f (+ x (/ dx 2)))))
@@ -184,6 +191,17 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	     (= current next)
 	     (= next (f:+ x dx)))
       accum)))
+
+(def adaptive-integral (f)
+  (let int (memo:integral f)
+       (afn (lower upper (o tol 0.001))
+	    (with (a (int lower upper 2)
+		   b (int lower upper 8))
+	       (if (and (isnt b 0) (< (abs:/ (- a b) b) tol))
+		   b
+		   (let half (+ lower (/ (- upper lower) 2))
+			(+ (self lower half tol) (self half upper tol))))))))
+ 
 
 
 ; vector fns
