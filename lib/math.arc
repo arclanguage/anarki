@@ -385,7 +385,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
   "creates a function for the nth spherical bessel function of the first kind"
   (let Y (Yn-bessel (+ n 1/2))
      (fn (x) (* (sqrt:/ pi 2 x)
-		J.x))))
+		Y.x))))
 
 (def P-legendre (l m)
   "creates a function for the Legendre polynomial P_m,l(x) with an optional second argument for re-normalising by the spherical harmonics co-efficients (from Numerical recipes 3rd edition section 6.7)"
