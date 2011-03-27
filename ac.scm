@@ -9,6 +9,8 @@
 (require (lib "foreign.ss"))
 (unsafe!)
 
+(define main-namespace (current-namespace))
+
 (define (ac-global-name s)
   (string->symbol (string-append "_" (symbol->string s))))
 
@@ -22,7 +24,13 @@
        (defarc arc-name scheme-name)))
     ((defarc arc-name scheme-name)
      (define (scheme-name . args)
-       (apply (namespace-variable-value (ac-global-name 'arc-name)) args)))
+       
+       ; The following 'parameterize has been added. See the note at
+       ; 'arc-exec, below.
+       ;
+       (apply (parameterize ((current-namespace main-namespace))
+                (namespace-variable-value (ac-global-name 'arc-name)))
+              args)))
     ((defarc name)
      (defarc name name))))
 
@@ -424,8 +432,12 @@
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
                      ((ac-defined-var? a) `(,(ac-global-name a) zz))
-                     (#t `(namespace-set-variable-value! ',(ac-global-name a)
-                                                         zz)))
+                     
+                     ; The following has been changed from
+                     ; 'namespace-set-variable-value! to 'set!. See
+                     ; the note at 'arc-exec, below.
+                     ;
+                     (#t `(set! ,(ac-global-name a) zz)))
                'zz))
       (err "First arg to set must be a symbol" a)))
 
@@ -475,7 +487,12 @@
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
           ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
-                (procedure? (namespace-variable-value (ac-global-name fn))))
+                
+                ; The following has been changed from using
+                ; 'namespace-variable-value to using 'arc-eval. See
+                ; the note at 'arc-exec, below.
+                ;
+                (procedure? (arc-eval fn)))
            (ac-global-call fn args env))
           (#t
            `((ar-coerce ,(ac fn env) 'fn)
@@ -490,9 +507,12 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-      (let ((v (namespace-variable-value (ac-global-name fn)
-                                         #t
-                                         (lambda () #f))))
+      
+      ; The following has been changed from using
+      ; 'namespace-variable-value to using 'bound? and 'arc-eval. See
+      ; the note at 'arc-exec, below.
+      ;
+      (let ((v (and (bound? fn) (arc-eval fn))))
         (if (and v
                  (ar-tagged? v)
                  (eq? (ar-type v) 'mac))
@@ -1128,8 +1148,39 @@
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
 
+; To make namespace and module handling more seamless (see
+; lib/ns.arc), we use Racket's 'set! even for undefined variables,
+; rather than using 'namespace-set-variable-value! for all Arc
+; globals. This makes it possible to parameterize the value of
+; 'current-namespace without getting odd behavior, and it makes it
+; possible to assign to imported module variables and use
+; assignment-aware syntax transformers (particularly those made with
+; Racket's 'make-set!-transformer and 'make-rename-transformer).
+;
+; However, by default 'set! is disallowed when the variable is
+; undefined, and we have to use the 'compile-allow-set!-undefined
+; parameter to go against that default. Rather than sprinkling
+; (parameterize ...) forms all over the code and trying to keep them
+; in sync, we put them all in this function, and we use this function
+; instead of 'eval when executing the output of 'ac.
+;
+; In the same spirit, several other uses of 'namespace-variable-value
+; and 'namespace-set-variable-value! have been changed to more direct
+; versions ((set! ...) forms and direct variable references) or less
+; direct versions (uses of full 'arc-eval) depending on how their
+; behavior should change when a module import or syntax obstructs the
+; original meaning of the variable. Some have instead been kept
+; around, but surrounded by (parameterize ...) forms so they're tied
+; the main namespace. Another utility changed in this spirit is
+; 'bound?, which should now be able to see variables which are bound
+; as Racket syntax.
+;
+(define (arc-exec racket-expr)
+  (eval (parameterize ((compile-allow-set!-undefined #t))
+          (compile racket-expr))))
+
 (define (arc-eval expr)
-  (eval (ac expr '())))
+  (arc-exec (ac expr '())))
 
 (define (tle)
   (display "Arc> ")
@@ -1167,8 +1218,13 @@
               (when interactive?
                 (arc-write (ac-denil val))
                 (newline))
-              (namespace-set-variable-value! '_that val)
-              (namespace-set-variable-value! '_thatexpr expr)
+              
+              ; The following 'parameterize has been added. See the
+              ; note at 'arc-exec, above.
+              ;
+              (parameterize ((current-namespace main-namespace))
+                (namespace-set-variable-value! '_that val)
+                (namespace-set-variable-value! '_thatexpr expr))
               (tl2 interactive?)))))))
 
 (define (aload1 p)
@@ -1204,7 +1260,7 @@
     (if (eof-object? x)
         #t
         (let ((scm (ac x '())))
-          (eval scm)
+          (arc-exec scm)
           (pretty-print scm op)
           (newline op)
           (newline op)
@@ -1227,7 +1283,7 @@
 (xdef macex1 (lambda (e) (ac-macex (ac-denil e) 'once)))
 
 (xdef eval (lambda (e)
-              (eval (ac (ac-denil e) '()))))
+              (arc-eval (ac-denil e))))
 
 ; If an err occurs in an on-err expr, no val is returned and code
 ; after it doesn't get executed.  Not quite what I had in mind.
@@ -1310,12 +1366,11 @@
 (define (nth-set! lst n val)
   (x-set-car! (list-tail lst n) val))
 
-; rewrite to pass a (true) gensym instead of #f in case var bound to #f
-
 (define (bound? arcname)
-  (namespace-variable-value (ac-global-name arcname)
-                            #t
-                            (lambda () #f)))
+  (with-handlers ((exn:fail:syntax? (lambda (e) #t))
+                  (exn:fail:contract:variable? (lambda (e) #f)))
+    (namespace-variable-value (ac-global-name arcname))
+    #t))
 
 (xdef bound (lambda (x) (tnil (bound? x))))
 
