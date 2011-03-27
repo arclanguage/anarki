@@ -17,8 +17,8 @@
 ;     global variables, such as type symbols and global table entries.
 ;     For instance, if two Arc libraries both use types named
 ;     'special-fn with 'defcall behavior, you get type symbol conflict
-;     table entry conflict (the entry for coerce*!fn!special-fn) at
-;     the same time.
+;     *and* table entry conflict (the entry for coerce*!fn!special-fn)
+;     at the same time.
 ;
 ; Parts of these issues can be solved by having all Arc programmers
 ; follow certain conventions in their code. However, there's a good
@@ -32,9 +32,9 @@
 ; "namespace", and the MODECULE stands for justice and freedom. For
 ; each type that starts with R, the non-R version (if there is one)
 ; automatically converts between Arc variable names and Racket
-; variable and Racket variable names so that it's easy to do a certain
-; amount of acrobatics with modules and namespaces without
-; acknowledging their Racket origins.
+; variable names so that it's easy to do a certain amount of
+; acrobatics with modules and namespaces without acknowledging their
+; Racket origins.
 ;
 ; Modecules are a bit of an experiment that doesn't seem so useful
 ; after the fact. Short for "module molecule," they're like modules
