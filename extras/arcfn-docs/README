@@ -1,0 +1,19 @@
+This directory generates the Arc documentation as seen at http://arcfn.com/doc
+
+To run:
+$ mkdir html
+
+Run arc startup script
+> (load "template.arc")
+> (runall)
+after this, you can regenerate a single file:
+> (run "time.tem")
+
+The .tem files are the templates that generate the html files.
+
+The generated html files go into the html directory.
+
+This is unsupported, and is put in anarki in the hopes that it will be
+helpful to someone.
+
+Ken Shirriff		kens@arcfn.com
