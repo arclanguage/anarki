@@ -2,8 +2,11 @@
 (ensure-dir "html")
 (load "template.arc")
 (runall)
-; currently not working
-; (run "foundation-doc.tem")
+
+;; fails with "Expected tests" error
+;; (run "foundation-doc.tem")
+(system "cp foundation-doc.html html/")
+
 (system "rm -rf output")
 (ensure-dir "output")
 (system "cp docs/* html/* output/")
