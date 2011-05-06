@@ -1,19 +1,29 @@
-This directory generates the Arc documentation as seen at http://arcfn.com/doc
+This directory generates the Arc documentation published at
+http://arcdoc.eval.to/
 
-To run:
-$ mkdir html
+To generate the documentation after making changes to the .tem
+template files, run:
 
-Run arc startup script
-> (load "template.arc")
-> (runall)
-after this, you can regenerate a single file:
-> (run "time.tem")
+$ ./generate.sh
 
-The .tem files are the templates that generate the html files.
+The resulting output will appear in the output/ directory.  You can
+open the output/index.html file directly in your web browser; you
+don't need to be running a web server.
 
-The generated html files go into the html directory.
+When you're happy with your changes commit them to Anarki.  We'll put
+together some system to automatically publish commits to Anarki to
+arcdoc.eval.to; in the meantime, ping <andrew.wilcox@gmail.com> to
+push the button.
 
-This is unsupported, and is put in anarki in the hopes that it will be
-helpful to someone.
+NOTE: I (Andrew) couldn't figure out how to run Anarki from the
+arcfn-docs directory, so I used the hackinator instead.  *You don't
+have to do this*.  Just fix generate.sh to use Anarki instead if you
+want.
 
-Ken Shirriff		kens@arcfn.com
+How the automatic process will work:  It will
+ - pull the latest code from Anarki
+ - run generate.sh
+ - copy the contents of output/ to arcdoc.eval.to
+
+This Arc documentation was originally written by Ken Shirriff
+<kens@arcfn.com>, and is now community supported in Anarki.
