@@ -1779,6 +1779,19 @@
 (defgeneric len(x)
   (if x ($.length $.ac-denil.x) 0))
 
+(defmethod len(x) cons
+  ((afn (x l)
+       (aif (and acons.x cdr.x) 
+	    (self it ++.l)
+	    ++.l))
+   x 0))
+
+(defmethod len(x) sym
+  1)
+
+(defmethod len(x) vec
+  ($.vector-length x))
+
 (defmethod len(x) string
   ($.string-length x))
 
