@@ -29,9 +29,6 @@
 
 (= oneline* 45)
 
-(defmethod len(x) vec
-  ($.vector-length x))
-
 (mac indent (col . body)
   `(do (unless noindent sp.col)
        ,@body))
