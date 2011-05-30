@@ -1787,7 +1787,7 @@
    x 0))
 
 (defmethod len(x) sym
-  1)
+  (if x 1 0))
 
 (defmethod len(x) vec
   ($.vector-length x))
