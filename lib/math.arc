@@ -57,6 +57,7 @@
 	 (rec key-val-lis))))
 
 (def ident-matrix (rank size (o table? nil))
+  "creates an identity maxtrix of number of dimensions rank and of size size"
   (let M (mat-to-table (zeros (n-of rank size)))
        (for i 0 (- size 1)
 	 (= (M (n-of size i)) 1))
@@ -126,8 +127,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
   (fn (x)
     (let dx (if (is x 0) 1d-9 (abs:* x 1d-9))
        (/ (- (f (+ x dx))
-	     (f x))
-          dx))))
+	     (f (- x dx)))
+          2 dx))))
 
 (mac partial-diff (f n arity)
   "returns deriv function of f (w/ num args ARITY) wrt Nth variable(from 0)"
@@ -138,8 +139,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     `(fn ,arglis
       (let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
 	(/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
-	      (,f ,@a-lis    ,x     ,@b-lis))
-	   dx)))))
+	      (,f ,@a-lis (- ,x dx) ,@b-lis))
+	   2 dx)))))
 
 (mac partial-diff-vec (f n arity)
   "returns vector with each element differentiated with respect to Nth argument"
@@ -150,8 +151,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     `(fn ,arglis
 	(let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
 	   (vec-scale (vec- (,f ,@a-lis	(+ ,x dx) ,@b-lis)
-			    (,f ,@a-lis    ,x     ,@b-lis))
-		      (/ 1 dx))))))
+			    (,f ,@a-lis (- ,x dx) ,@b-lis))
+		      (/ 1 2 dx))))))
 
 (def grad (f)
   "gradient of 3D scalar field given by F"
