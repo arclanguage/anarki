@@ -289,10 +289,6 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	     q (+ (* x x) (* y (- (* 0.196 y) (* 0.25472 x))))))
 	(+ mu (/ (* sigma v) u))))
 
-;  (let tot 0
-;    (for i 0 999
-;      (++ tot  (- (* (rand) 2.0) 1)))
-;    (+ (* tot (/ sigma 25)) middle)))
 
 (def quad-roots (a b c)
   "returns roots of the equation ax^2+bx+c=0"
@@ -331,8 +327,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
       (ln-gamma (+ num 1))))
 
 (def bin-coef (n k)
-  "number of ways of picking n elements from x (ie no. of ways of mixing 2 different sets of identical objects of size n and (- x n))"
-  (if (< n k)   (err "n > x in bin-coef")
+  "number of ways of picking n elements from k (ie no. of ways of mixing 2 different sets of identical objects of size n and (- k n))"
+  (if (< n k)   (err "n > k in bin-coef")
       (< n 171) (/ (fact n) (* (fact k) (fact (- n k)))) ; 170! is largest factorial which is represented exactly as a double-float
       (floor:+ 0.5 (e^:- ln-fact.n ln-fact.k (ln-fact:- n k)))))
 
@@ -414,7 +410,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	      (if remorm? pll (* pll (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m)))))))))))))
 
 (def sphere-harm (l m)
-  "creates a function for the spherical harmonic Y_l,m(x)"
+  "creates a function for the spherical harmonic Y_l,m(theta phi)"
   (let P_lm (P-legendre l m)
     (fn (theta phi)
 	(* (P_lm (cos theta) t) (e^:* i m phi)))))
@@ -455,3 +451,49 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
   (if (no:<= 0 p 1) (err "p is a probability and muxt be between 0 and 1"))
   (fn (k)
       (* (bin-coef n k) (expt p k) (expt (- 1 p) (- n k)))))
+
+
+;data-fitting
+
+(def least-squares-linear (data)
+  "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in acsending order"
+  (if (< len.data 2) (err "cannot fit to less than 2 points"))
+  (withs (xs (map car  data)
+	  ys (map cadr data)
+	  fs (list (map (fn (x) 1) xs)
+		   (map (fn (x) x) xs))
+	  A (mat-to-table (init-matrix '(2 2) 0))
+	  B (map [vec-dot _ ys] fs))
+	 (for i 0 1
+	   (for j 0 1
+	     (= (A (list i j)) (vec-dot fs.i fs.j))))
+	 (gauss-elim A B)))
+
+(def least-squares-quadratic (data)
+  "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in acsending order"
+  (if (< len.data 3) (err "cannot fit to less than 3 points"))
+  (withs (xs (map car  data)
+	  ys (map cadr data)
+	  fs (list (map (fn (x) 1) xs)
+		   (map (fn (x) x) xs)
+		   (map (fn (x) square.x) xs))
+	  A (mat-to-table (init-matrix '(3 3) 0))
+	  B (map [vec-dot _ ys] fs))
+	 (for i 0 2
+	   (for j 0 2
+	     (= (A (list i j)) (vec-dot fs.i fs.j))))
+	 (gauss-elim A B)))
+
+(def least-squares-custom (data . fns)
+  "data is expected in the form ((x1 y1)(x2 y2)...), fns must each accept 1 argument, returns list of co-efficients for powers of x in acsending order"
+  (if (< len.data len.fns) (err "cannot fit to less points than component functions"))
+  (withs (xs (map car  data)
+	  ys (map cadr data)
+	  fs (map [map _ xs] fns)
+	  A (mat-to-table (init-matrix (list len.fns len.fns) 0))
+	  B (do (prn fs) (prn ys) (map [vec-dot _ ys] fs)))
+	 (map prn (list xs ys fns fs A B))
+	 (for i 0 (- len.fns 1)
+	   (for j 0 (- len.fns 1)
+	     (= (A (list i j)) (vec-dot fs.i fs.j))))
+	 (gauss-elim A B)))
