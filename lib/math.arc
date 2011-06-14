@@ -31,7 +31,7 @@
     (n-of car.dims (init-matrix cdr.dims initval))
     (n-of car.dims initval)))
 
-(def matrix-rank (mat)
+(def matrix-order (mat)
   (if atom.mat 0
       (let rec (afn (M r)
 		 (if (atom car.M) r
@@ -77,8 +77,9 @@
 	 (rec key-val-lis))))
 
 (def matrix-minor (mat indices (o table? t))
+     "creates the minor the the element of mat with the indices specified, i.e. if the indices are (i j k ...) then it is the matrix which excludes elements in the ith row or jth column or kth depth etc"
   (if (acons mat) (zap mat-to-table mat))
-  (if (isnt len.indices (len mat!dims)) (err "number of indices provided must be equal to its rank")
+  (= indices (firstn (len mat!dims) indices))
       (let ans (mat-to-table:init-matrix (map [- _ 1] mat!dims) 0)
 	(maptable (fn (key val)
 		    (if (~acons key) nil
@@ -88,16 +89,30 @@
 	(if table? ans
 	    (table-to-mat ans)))))
 
-(def ident-matrix (rank size (o table? nil))
-  "creates an identity maxtrix of number of dimensions rank and of size size"
-  (let M (mat-to-table (zeros (n-of rank size)))
+(def det (mat)
+  "calculates the determinant of a matrix by cramer's rule: det(A)=sum_over_i(A(i,j) * det(A_minor(i,j)) * -1^(i+j)); det(scalar)=scalar"
+  (if (acons mat) (zap mat-to-table mat))
+  (if (nand (is (len mat!dims) 2) (is (car mat!dims) (cadr mat!dims)))
+      (err "can only calculate the determinant for a square matrix of order 2"))
+  (if (and (is (car  mat!dims) 1)
+	   (is (cadr mat!dims) 1))
+       (mat '(0 0))
+       (let ans 0 
+	    (for i 0 (- (car mat!dims) 1)
+		 (++ ans (* (mat (list 0 i)) 
+			    (expt -1 i) (det:matrix-minor mat (list 0 i)))))
+	    ans)))
+
+(def ident-matrix (order size (o table? nil))
+  "creates an identity maxtrix of number of dimensions order and of size size"
+  (let M (mat-to-table (zeros (n-of order size)))
        (for i 0 (- size 1)
 	 (= (M (n-of size i)) 1))
        (if table? M
 	   (table-to-mat M))))
 
 (def matrix-multiply (a b)
-  "multiplies the matrix a by the matrix b (N.B. Rank one row vectors need to be in the form ((a b c d ...)) /NOT/ (a b c d), i.e. initiated with dims=(1 n) not (n))"
+  "multiplies the matrix a by the matrix b (N.B. Order one row vectors need to be in the form ((a b c d ...)) /NOT/ (a b c d), i.e. initiated with dims=(1 n) not (n))"
   (if (isa a 'table) (zap table-to-mat a))
   (if (isa b 'table) (zap table-to-mat b))
   (with (col (fn (mat i) (map [_ i] mat))
@@ -108,7 +123,7 @@
 		       (push (apply + (map * a.rw (col b cl))) result-row))
 		  rev.result-row)
 		result-matrix))
-    rev.result-matrix));could be generalised as a recursive macro to work on arbitrary rank tensors?
+    rev.result-matrix));could be generalised as a recursive macro to work on arbitrary order tensors?
 
 (def gauss-elim (mat rhs)
  "solves the linear equations:
