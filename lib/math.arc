@@ -3,6 +3,26 @@
    phi         (/ (+ 1 (sqrt 5)) 2)
    euler-gamma 0.577215664901532860606)
 
+;;should this be in util.arc?
+(mac iterators (its . body)
+  "its is a list of (var max) tuples which are iterated over eg (iterators ((x 1)(y 3)) (pr x)(prn y)) -> 
+00
+01
+02
+03
+10
+11
+12
+13"
+  (if car.its 
+      (if (> cadar.its 0)
+	  `(for ,(caar its) 0 ,(cadar its)
+		(iterators ,(cdr its) ,@body))
+	  `(for ,(caar its) ,(cadar its) 0
+		(iterators ,(cdr its) ,@body)))
+      `(do ,@body)))
+
+
 ;matrix fns
 
 (def init-matrix (dims initval)
@@ -16,7 +36,7 @@
       (let rec (afn (M r)
 		 (if (atom car.M) r
 		     (self car.M (+ r 1))))
-	(rec mat 1))))
+	(rec mat 1))))  
 
 (def zeros dims
   (init-matrix dims 0))
@@ -56,6 +76,18 @@
 	 
 	 (rec key-val-lis))))
 
+(def matrix-minor (mat indices (o table? t))
+  (if (acons mat) (zap mat-to-table mat))
+  (if (isnt len.indices (len mat!dims)) (err "number of indices provided must be equal to its rank")
+      (let ans (mat-to-table:init-matrix (map [- _ 1] mat!dims) 0)
+	(maptable (fn (key val)
+		    (if (~acons key) nil
+			(~all t (map (fn (k i) (isnt k i)) key indices)) nil
+			(= (ans (map (fn (k i) (if (> k i) (- k 1) k)) key indices))
+			       val))) mat)
+	(if table? ans
+	    (table-to-mat ans)))))
+
 (def ident-matrix (rank size (o table? nil))
   (let M (mat-to-table (zeros (n-of rank size)))
        (for i 0 (- size 1)
@@ -75,7 +107,7 @@
 		       (push (apply + (map * a.rw (col b cl))) result-row))
 		  rev.result-row)
 		result-matrix))
-    rev.result-matrix));could be generalised as a recursive macro to work on arbitrary rank tensors? 
+    rev.result-matrix));could be generalised as a recursive macro to work on arbitrary rank tensors?
 
 (def gauss-elim (mat rhs)
  "solves the linear equations:
@@ -183,14 +215,16 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 (def integral (f)
   "returns the integral of a single argument function using Simpson's method"
   (fn (lower upper (o its 100))
+    (if (> lower upper) (err "upper must be > lower"))
     (withs (dx      (/ (- upper lower) its)
+	    dx/2    (/ dx 2)
 	    x       lower
 	    current (f x)
 	    next    (f (+ x dx))
 	    accum   0)
       (while (<= x (- upper dx))
-	     (++ accum (/ (+ (* (+ current next) 1/2 dx)
-			     (* 2 dx (f (+ x (/ dx 2)))))
+	     (++ accum (/ (+ (* (+ current next) dx/2)
+			     (* 2 dx (f (+ x dx/2))))
 			  3))
 	     (++ x dx)
 	     (= current next)
@@ -198,10 +232,10 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
       accum)))
 
 (def adaptive-integral (f)
-  (let int (memo:integral f)
+  (let inte (memo:integral f)
        (afn (lower upper (o tol 0.001))
-	    (with (a (int lower upper 2)
-		   b (int lower upper 8))
+	    (with (a (inte lower upper 2)
+		   b (inte lower upper 8))
 	       (if (and (isnt b 0) (< (abs:/ (- a b) b) tol))
 		   b
 		   (let half (+ lower (/ (- upper lower) 2))
@@ -265,6 +299,12 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
      (if no.xs (/ (+ tot x) (+ i 1))
 	 (self (+ tot x) (+ i 1) car.xs cdr.xs)))
    0 0 car.lis cdr.lis))
+
+(def geo-mean lis
+  ((afn (tot i x xs)
+     (if no.xs (expt (* tot x) (/:+ i 1))
+	 (self (* tot x) (+ i 1) car.xs cdr.xs)))
+   1 0 car.lis cdr.lis))
 
 (def std-dev lis
   (let m (apply mean lis)
