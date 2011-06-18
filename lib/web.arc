@@ -20,11 +20,9 @@
       (a line))))
 
 (def parse-server-headers (lines)
-  (let http-response (tokens car.lines)
-    (list
-      (map http-response '(0 1 2))
-      (some [aand (begins-rest "Set-Cookie:" _) parse-server-cookies.it]
-            cdr.lines))))
+  (list (firstn 3 (only.tokens car.lines))
+        (some [aand (begins-rest "Set-Cookie:" _) parse-server-cookies.it]
+              cdr.lines)))
 
 (def args->query-string (args)
   (if args
@@ -61,8 +59,8 @@
 (def get-or-post-url (url (o args) (o method "GET") (o cookie))
   (withs (method            (upcase method)
           parsed-url        (parse-url url)
-          args-query-string (args->query-string args)
-          full-args         (joinstr (list args-query-string (parsed-url 'query)) "&")
+          full-args         (let query parsed-url!query
+                              (+ "" query (and query args '&) args->query-string.args))
           request-path      (+ "/" (parsed-url 'filename)
                                (if (and (is method "GET") (> (len full-args) 0))
                                    (+ "?" full-args)))
