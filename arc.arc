@@ -1779,15 +1779,17 @@
 (defgeneric len(x)
   (if x ($.length $.ac-denil.x) 0))
 
+; (len '(1 2 3)) => 3
+; (len 'a) => 0
+; (len '(1 2 . 3)) => 3
 (defmethod len(x) cons
-  ((afn (x l)
-       (aif (and acons.x cdr.x) 
-         (self it ++.l)
-         ++.l))
-   x 0))
+  (if
+    (acons cdr.x)   (+ 1 (len cdr.x))
+    (no cdr.x)  1
+                2)) ; dotted list
 
 (defmethod len(x) sym
-  (if x 1 0))
+  0)
 
 (defmethod len(x) vec
   ($.vector-length x))
