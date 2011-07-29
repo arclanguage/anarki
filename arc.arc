@@ -1782,8 +1782,8 @@
 (defmethod len(x) cons
   ((afn (x l)
        (aif (and acons.x cdr.x) 
-	    (self it ++.l)
-	    ++.l))
+         (self it ++.l)
+         ++.l))
    x 0))
 
 (defmethod len(x) sym
@@ -1892,9 +1892,9 @@
     `(let ,first t
        (each ,var ,expr
          (if ,first 
-	         (wipe ,first)
-	         ,within)
-	       ,@body))))
+             (wipe ,first)
+             ,within)
+           ,@body))))
 
 (mac tofile (name . body)
   (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
