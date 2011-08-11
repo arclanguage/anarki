@@ -1525,10 +1525,7 @@
   (counts (flat tree) c))
 
 (def commonest (seq)
-  (with (winner nil n 0)
-    (each (k v) (counts seq)
-      (when (> v n) (= winner k n v)))
-    (list winner n)))
+  (best (compare > counts.seq) seq))
 
 (def reduce (f xs)
   (if (cddr xs)
