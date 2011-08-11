@@ -19,10 +19,7 @@
   (/ (codetree file) (codelines file))) 
 
 (def tokcount (files)
-  (ret counts (table)
-    (each f files
-      (each token (flat (readall (infile f)))
-        (++ (counts token 0))))))
+  (counts (mappend flat:readall:infile files)))
 
 (def common-tokens (files)
   (let counts (tokcount files)
