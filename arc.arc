@@ -1530,7 +1530,7 @@
   (best (compare > counts.seq) seq))
 
 (def sort-by-commonest (seq (o f idfn))
-  (let h (counts (map f seq))
+  (let h (counts:map f seq)
     (sort (compare > h:f) seq)))
 
 (def reduce (f xs)
