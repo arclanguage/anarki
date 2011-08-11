@@ -19,7 +19,7 @@
   (/ (codetree file) (codelines file))) 
 
 (def tokcount (files)
-  (counts (mappend flat:readall:infile files)))
+  (counts:mappend flat:readall:infile files))
 
 (def common-tokens (files)
   (sort (compare > cadr)
