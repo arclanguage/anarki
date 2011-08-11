@@ -19,20 +19,18 @@
   (/ (codetree file) (codelines file))) 
 
 (def tokcount (files)
-  (let counts (table)
+  (ret counts (table)
     (each f files
       (each token (flat (readall (infile f)))
-        (++ (counts token 0))))
-    counts))
+        (++ (counts token 0))))))
 
 (def common-tokens (files)
   (let counts (tokcount files)
-    (let ranking nil
+    (ret ranking nil
       (maptable (fn (k v)
                   (unless (nonop k)
                     (insort (compare > cadr) (list k v) ranking)))
-                counts)
-      ranking)))
+                counts))))
 
 (def nonop (x)
   (in x 'quote 'unquote 'quasiquote 'unquote-splicing))
