@@ -1529,6 +1529,10 @@
 (def commonest (seq)
   (best (compare > counts.seq) seq))
 
+(def sort-by-commonest (seq (o f idfn))
+  (let h (counts (map f seq))
+    (sort (compare > h:f) seq)))
+
 (def reduce (f xs)
   (if (cddr xs)
       (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
