@@ -149,6 +149,9 @@
       `(let ,(car parms) ,(cadr parms) 
          (withs ,(cddr parms) ,@body))))
 
+(mac ret (var val . body)
+  `(let ,var ,val ,@body ,var))
+
 ; Rtm prefers to overload + to do this
 
 (def join args
@@ -1515,11 +1518,10 @@
   (and ys (cons (car ys)
                 (mappend [list x _] (cdr ys)))))
 
-(def counts (seq (o c (table)))
-  (if (no seq)
-      c
-      (do (++ (c (car seq) 0))
-          (counts (cdr seq) c))))
+(def counts (seq)
+  (ret ans (table)
+    (each x seq
+      (++ (ans x 0)))))
 
 (def tree-counts (tree)
   (counts flat.tree))
@@ -1879,9 +1881,6 @@
   (if (empty xs)
       0
       (/ (count test xs) (len xs))))
-
-(mac ret (var val . body)
-  `(let ,var ,val ,@body ,var))
 
 (def butlast (x)
   (cut x 0 (- (len x) 1)))
