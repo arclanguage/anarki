@@ -1521,8 +1521,8 @@
       (do (++ (c (car seq) 0))
           (counts (cdr seq) c))))
 
-(def tree-counts (tree (o c (table)))
-  (counts (flat tree) c))
+(def tree-counts (tree)
+  (counts flat.tree))
 
 (def commonest (seq)
   (best (compare > counts.seq) seq))
