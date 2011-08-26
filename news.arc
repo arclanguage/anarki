@@ -545,7 +545,8 @@ function vote(node) {
 
   // hide arrows
   byId('up_'   + item).style.visibility = 'hidden';
-  byId('down_' + item).style.visibility = 'hidden';
+  try { byId('down_' + item).style.visibility = 'hidden'; }
+  catch(err) {} // ignore
 
   // ping server
   var ping = new Image();
@@ -1053,10 +1054,7 @@ function vote(node) {
                           (< (item-age i) downvote-time*))
                       (canvote user i 'down))
                  (do (br)
-                     (votelink i user whence 'down))
-                 ; don't understand why needed, but is, or a new
-                 ; page is generated on voting
-                 (tag (span id (+ "down_" i!id)))))
+                     (votelink i user whence 'down))))
         (author user i)
          (do (fontcolor orange (pr "*"))
              (br)
