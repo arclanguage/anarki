@@ -152,13 +152,13 @@
   (if (no n)
       (respond-err o "Post request without Content-Length.")
       (let line nil
-	(unless (begins downcase.ctype "multipart/form-data")
+        (unless (begins downcase.ctype "multipart/form-data")
           (whilet c (and (> n 0) (readc i))
             (if srv-noisy* (pr c))
-	    (-- n)
-	    (push c line)))
-	(if srv-noisy* (pr "\n\n"))
-	(respond o op (+ (parseargs (string (rev line))) args) cooks n ctype i ip))))
+            (-- n)
+            (push c line)))
+        (if srv-noisy* (pr "\n\n"))
+        (respond o op (+ (parseargs (string (rev line))) args) cooks n ctype i ip))))
 
 (= header* "HTTP/1.1 200 OK
 Content-Type: text/html; charset=utf-8
@@ -289,11 +289,11 @@ Connection: close"))
                   (and (begins downcase.s "cookie:")
                        (parsecookies s)))
                 (cdr lines))
-	  (and (is type 'post)
-	       (some (fn (s)
-		       (and (begins downcase.s "content-type: ")
-			    (cut s (len "content-type: "))))
-		     (cdr lines))))))
+          (and (is type 'post)
+               (some (fn (s)
+                       (and (begins downcase.s "content-type: ")
+                            (cut s (len "content-type: "))))
+                     (cdr lines))))))
 
 ; (parseurl "GET /p1?foo=bar&ug etc") -> (get p1 (("foo" "bar") ("ug")))
 
@@ -476,11 +476,11 @@ Connection: close"))
 (mac aform-multi (f . body)
   (w/uniq ga
     `(tag (form method 'post
-		enctype "multipart/form-data"
-		action (string fnurl* "?fnid="
-			       (fnid (fn (,ga)
-				       (prn)
-				       (,f ,ga)))))
+                enctype "multipart/form-data"
+                action (string fnurl* "?fnid="
+                               (fnid (fn (,ga)
+                                       (prn)
+                                       (,f ,ga)))))
        ,@body)))
 
 ;(defop test1 req
