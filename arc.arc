@@ -550,13 +550,6 @@
             (= (s2 i) (seq (+ start i))))
           s2)
         (firstn (- end start) (nthcdr start seq)))))
-      
-(mac whilet (var test . body)
-  (w/uniq (gf gp)
-    `((rfn ,gf (,gp)
-        (let ,var ,gp
-          (when ,var ,@body (,gf ,test))))
-      ,test)))
 
 (def last (xs)
   (if (cdr xs)
@@ -745,6 +738,14 @@
 
 (mac awhen (expr . body)
   `(let it ,expr (if it (do ,@body))))
+
+(mac whilet (var test . body)
+  (w/uniq (gf gp)
+    `((rfn ,gf (,gp)
+        (whenlet ,var ,gp
+          ,@body
+          (,gf ,test)))
+      ,test)))
 
 (mac aand args
   (if (no args)
