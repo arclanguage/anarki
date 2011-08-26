@@ -165,7 +165,7 @@
 
 (let _infile infile
   (def infile (url)
-    (if (begins (downcase url) "http://")
+    (if (begins downcase.url "http://")
       (http-get url)
       (_infile url)))
 )

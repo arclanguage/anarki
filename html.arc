@@ -433,8 +433,8 @@
 
 (defmemo valid-url (url)
   (and (len> url 10)
-       (or (begins url "http://")
-           (begins url "https://"))
+       (or (begins downcase.url "http://")
+           (begins downcase.url "https://"))
        (~find [in _ #\< #\> #\" #\'] url)))
 
 (mac fontcolor (c . body)
