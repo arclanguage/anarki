@@ -172,25 +172,23 @@
   `(let self nil
      (assign self (fn ,parms ,@body))))
 
-; Ac expands x:y:z into (compose x y z), ~x into (complement x)
+; Ac expands x:y:z into (compose x y z)
+; Can only compose functions, not macros.
+; Composes in functional position are transformed away by ac, and those can
+; handle macros.
 
-; Only used when the call to compose doesn't occur in functional position.  
-; Composes in functional position are transformed away by ac.
+(def compose fs
+  (if (no cdr.fs)
+    car.fs
+    (fn args
+      (car.fs (apply (apply compose cdr.fs) args)))))
 
-(mac compose args
-  (let g (uniq)
-    `(fn ,g
-       ,((afn (fs)
-           (if (cdr fs)
-               (list (car fs) (self (cdr fs)))
-               `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
-         args))))
+; Ac expands ~x into (complement x)
+; Can only handle functions, not macros.
+; Complement in functional position transformed away by ac, and can handle macros.
 
-; Ditto: complement in functional position optimized by ac.
-
-(mac complement (f)
-  (let g (uniq)
-    `(fn ,g (no (apply ,f ,g)))))
+(def complement (f)
+  (fn args (no (apply f args))))
 
 (def rev (xs) 
   ((afn (xs acc)
