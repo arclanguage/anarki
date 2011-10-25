@@ -500,10 +500,13 @@
        (loop (assign ,v ,gi) (> ,v ,gm) (assign ,v (- ,v 1))
          ,@body))))
 
+; could bind index instead of gensym
+
 (mac repeat (n . body)
   `(for ,(uniq) 1 ,n ,@body))
 
-; could bind index instead of gensym
+(mac forlen (var s . body)
+  `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (def walk (seq func)
   (if alist.seq
@@ -514,8 +517,8 @@
       (isa seq 'table)
         (maptable (fn (k v) (func (list k v))) seq)
       ; else
-        (for i 0 (- (len seq) 1)
-          (func (seq i)))))
+        (forlen i seq
+          (func seq.i))))
 
 (mac each (var expr . body)
   `(walk ,expr (fn (,var) ,@body)))
@@ -985,9 +988,6 @@
                (= (s i) (c (mod x nc)))
                (++ i)))))
       s)))
-
-(mac forlen (var s . body)
-  `(for ,var 0 (- (len ,s) 1) ,@body))
 
 (mac on (var s . body)
   (if (is var 'index)
