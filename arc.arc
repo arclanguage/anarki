@@ -1104,6 +1104,9 @@
                  (aif readc.str self.it))))
        it))))
 
+(def readlines ((o str (stdin)))
+  (drain:readline str))
+
 ; Don't currently use this but suspect some code could.
 
 (mac summing (sumfn . body)
