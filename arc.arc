@@ -173,22 +173,27 @@
      (assign self (fn ,parms ,@body))))
 
 ; Ac expands x:y:z into (compose x y z)
-; Can only compose functions, not macros.
 ; Composes in functional position are transformed away by ac, and those can
 ; handle macros.
+; This macro can only handle macros in some situations.
+;  (map tostring:pr '(1 2 3)) ; works
+;  (map prn:= '(x) '(3)) ; doesn't work, should assign 3 to x
 
-(def compose fs
-  (if (no cdr.fs)
-    car.fs
-    (fn args
-      (car.fs (apply (apply compose cdr.fs) args)))))
+(mac compose args
+  (let g (uniq)
+    `(fn ,g
+       ,((afn (fs)
+           (if (cdr fs)
+               (list (car fs) (self (cdr fs)))
+               `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
+         args))))
 
 ; Ac expands ~x into (complement x)
-; Can only handle functions, not macros.
 ; Complement in functional position transformed away by ac, and can handle macros.
 
-(def complement (f)
-  (fn args (no (apply f args))))
+(mac complement (f)
+  (let g (uniq)
+    `(fn ,g (no (apply ,f ,g)))))
 
 (def rev (xs) 
   ((afn (xs acc)
