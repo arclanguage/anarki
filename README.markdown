@@ -3,7 +3,7 @@ Anarki: a fork of PG's and RTM's Arc Lisp
 Anarki is a publically modifiable fork of Paul Graham's and Robert Morris's
 project to create a modern lisp for hackers. Anarki is currently forked 
 from Arc 3.1 and can run on top of the latest PLT (Racket) Scheme, instead
-of the severley out-dated mzscheme 372.
+of the severely out-dated mzscheme 372.
 
 To install:
 
@@ -15,4 +15,6 @@ To install:
 * `./arc.sh`
 
 To find out more about Arc in general, see Paul Graham's writings at
-http://www.paulgraham.com/arc.html.
+http://www.paulgraham.com/arc.html. Information about various implementations
+and gotchas is at http://sites.google.com/site/arclanguagewiki, and the arc
+forum is at http://arclanguage.org/forum

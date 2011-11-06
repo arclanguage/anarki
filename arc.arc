@@ -173,19 +173,24 @@
      (assign self (fn ,parms ,@body))))
 
 ; Ac expands x:y:z into (compose x y z)
-; Can only compose functions, not macros.
-; Composes in functional position are transformed away by ac, and those can
-; handle macros.
+; The last arg (z above) cannot be a macro unless the form is in functional
+; position.
+;
+; Composes in functional position are transformed away by ac.
 
-(def compose fs
-  (if (no cdr.fs)
-    car.fs
-    (fn args
-      (car.fs (apply (apply compose cdr.fs) args)))))
+(mac compose args
+  (let g (uniq)
+    `(fn ,g
+       ,((afn (fs)
+           (if (cdr fs)
+               (list (car fs) (self (cdr fs)))
+               `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
+         args))))
 
 ; Ac expands ~x into (complement x)
-; Can only handle functions, not macros.
-; Complement in functional position transformed away by ac, and can handle macros.
+; x cannot be a macro unless the form is in functional position.
+; Complement in functional position is transformed away by ac, and can handle
+; macros.
 
 (def complement (f)
   (fn args (no (apply f args))))
