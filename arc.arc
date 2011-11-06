@@ -173,11 +173,10 @@
      (assign self (fn ,parms ,@body))))
 
 ; Ac expands x:y:z into (compose x y z)
-; Composes in functional position are transformed away by ac, and those can
-; handle macros.
-; This macro can only handle macros in some situations.
-;  (map tostring:pr '(1 2 3)) ; works
-;  (map prn:= '(x) '(3)) ; doesn't work, should assign 3 to x
+; The last arg (z above) cannot be a macro unless the form is in functional
+; position.
+;
+; Composes in functional position are transformed away by ac.
 
 (mac compose args
   (let g (uniq)
@@ -189,11 +188,12 @@
          args))))
 
 ; Ac expands ~x into (complement x)
-; Complement in functional position transformed away by ac, and can handle macros.
+; x cannot be a macro unless the form is in functional position.
+; Complement in functional position is transformed away by ac, and can handle
+; macros.
 
-(mac complement (f)
-  (let g (uniq)
-    `(fn ,g (no (apply ,f ,g)))))
+(def complement (f)
+  (fn args (no (apply f args))))
 
 (def rev (xs) 
   ((afn (xs acc)
