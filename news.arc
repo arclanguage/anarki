@@ -402,6 +402,7 @@
      (tag head 
        (gen-css-url)
        (prn "<link rel=\"shortcut icon\" href=\"" favicon-url* "\">")
+       (prn "<meta name=\"viewport\" content=\"width=device-width\">")
        (tag script (pr votejs*))
        (tag title (pr ,title)))
      (tag body 
@@ -511,7 +512,14 @@ a:visited { color:#828282; text-decoration:none; }
 .pagebreak {page-break-before:always}
 
 pre { overflow: auto; padding: 2px; max-width:600px; }
-pre:hover {overflow:auto} "))
+pre:hover {overflow:auto} 
+
+@media (max-width: 517px) {
+  body { margin:0; }
+  body > center > table { width:100%; }
+  body > center > table > tbody  > tr:nth-child(1) > td > table td .pagetop b { display:block }
+  body > center > table > tbody  > tr:nth-child(1) > td > table td .pagetop img { display:none }
+}"))
 
 ; only need pre padding because of a bug in Mac Firefox
 
