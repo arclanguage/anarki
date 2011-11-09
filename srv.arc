@@ -256,7 +256,7 @@ Connection: close"))
 
 (def static-filetype (sym)
   (let fname (coerce sym 'string)
-    (and (~find #\/ fname)
+    (and (~findsubseq ".." fname) ; for security
          (case (downcase (last (check (tokens fname #\.) ~single)))
            "gif"  'gif
            "jpg"  'jpg
