@@ -1855,8 +1855,8 @@
   (w/uniq (gf gv)
     `(unless (bound ',var)
        (do1 (= ,var (iflet ,gf (file-exists ,file)
-                               (,load ,gf)
-                               ,init))
+                      (,load ,gf)
+                      ,init))
             (= (savers* ',var) (fn (,gv) (,save ,gv ,file)))))))
 
 (mac diskvar (var file)
