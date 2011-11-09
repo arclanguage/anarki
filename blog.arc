@@ -21,9 +21,9 @@
 (def post (id) (posts* (errsafe:int id)))
 
 (mac blogpage body
-  `(whitepage 
+  `(whitepage
      (center
-       (widtable 600 
+       (widtable 600
          (tag b (link blogtitle* "blog"))
          (br 3)
          ,@body
@@ -34,8 +34,8 @@
 (defop viewpost req (blogop post-page req))
 
 (def blogop (f req)
-  (aif (post (arg req "id")) 
-       (f (get-user req) it) 
+  (aif (post (arg req "id"))
+       (f (get-user req) it)
        (blogpage (pr "No such post."))))
 
 (def permalink (p) (string "viewpost?id=" p!id))
@@ -83,7 +83,7 @@
   (let user (get-user req)
     (blogpage
       (for i 0 4
-        (awhen (posts* (- maxid* i)) 
+        (awhen (posts* (- maxid* i))
           (display-post user it)
           (br 3))))))
 

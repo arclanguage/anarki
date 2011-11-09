@@ -4,7 +4,7 @@
 
 (= arcdir* "arc/" logdir* "arc/logs/" staticdir* "static/")
 
-(= quitsrv* nil breaksrv* nil) 
+(= quitsrv* nil breaksrv* nil)
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
@@ -37,7 +37,7 @@
 ; to handle it. also arrange to kill that thread if it
 ; has not completed in threadlife* seconds.
 
-(= threadlife* 30  requests* 0  requests/ip* (table)  
+(= threadlife* 30  requests* 0  requests/ip* (table)
    throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
 
 (def handle-request (s breaksrv)
@@ -65,12 +65,12 @@
                (force-close i o))))))
 
 ; Returns true if ip has made req-limit* requests in less than
-; req-window* seconds.  If an ip is throttled, only 1 request is 
-; allowed per req-window* seconds.  If an ip makes req-limit* 
+; req-window* seconds.  If an ip is throttled, only 1 request is
+; allowed per req-window* seconds.  If an ip makes req-limit*
 ; requests in less than dos-window* seconds, it is a treated as a DoS
 ; attack and put in ignore-ips* (for this server invocation).
 
-; To adjust this while running, adjust the req-window* time, not 
+; To adjust this while running, adjust the req-window* time, not
 ; req-limit*, because algorithm doesn't enforce decreases in the latter.
 
 (= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
@@ -89,7 +89,7 @@
   (and (only.> (requests/ip* ip) 250)
        (let now (seconds)
          (do1 (if (req-times* ip)
-                  (and (>= (qlen (req-times* ip)) 
+                  (and (>= (qlen (req-times* ip))
                            (if (throttle-ips* ip) 1 req-limit*))
                        (let dt (- now (deq (req-times* ip)))
                          (if (< dt dos-window*) (set (ignore-ips* ip)))
@@ -134,9 +134,9 @@
 
 (def log-request (type op args cooks ip t0 t1)
   (with (parsetime (- t1 t0) respondtime (- (msec) t1))
-    (srvlog 'srv ip 
-                 parsetime 
-                 respondtime 
+    (srvlog 'srv ip
+                 parsetime
+                 respondtime
                  (if (> (+ parsetime respondtime) 1000) "***" "")
                  type
                  op
@@ -190,13 +190,13 @@ Connection: close"))
   (unless (optimes* name) (= (optimes* name) (queue)))
   (enq-limit elapsed (optimes* name) 1000))
 
-; For ops that want to add their own headers.  They must thus remember 
+; For ops that want to add their own headers.  They must thus remember
 ; to prn a blank line before anything meant to be part of the page.
 
 (mac defop-raw (name parms . body)
   (w/uniq t1
-    `(= (srvops* ',name) 
-        (fn ,parms 
+    `(= (srvops* ',name)
+        (fn ,parms
           (let ,t1 (msec)
             (do1 (do ,@body)
                  (save-optime ',name (- (msec) ,t1))))))))
@@ -208,7 +208,7 @@ Connection: close"))
 (mac defop (name parm . body)
   (w/uniq gs
     `(do (wipe (redirector* ',name))
-         (defop-raw ,name (,gs ,parm) 
+         (defop-raw ,name (,gs ,parm)
            (w/stdout ,gs (prn) ,@body)))))
 
 ; Defines op as a redirector.  Its retval is new location.
@@ -313,7 +313,7 @@ Connection: close"))
        (map [tokens _ #\=] (tokens s #\&))))
 
 (def parsecookies (s)
-  (map [tokens _ #\=] 
+  (map [tokens _ #\=]
        (cdr (tokens s [or (whitec _) (is _ #\;)]))))
 
 (def arg (req key) (alref req!args key))
@@ -362,31 +362,31 @@ Connection: close"))
 ;  (tag (a href (url-for (afnid (fn (req) (prn) (pr "my fnid is " it)))))
 ;    (pr "click here")))
 
-; To be more sophisticated, instead of killing fnids, could first 
-; replace them with fns that tell the server it's harvesting too 
-; aggressively if they start to get called.  But the right thing to 
-; do is estimate what the max no of fnids can be and set the harvest 
+; To be more sophisticated, instead of killing fnids, could first
+; replace them with fns that tell the server it's harvesting too
+; aggressively if they start to get called.  But the right thing to
+; do is estimate what the max no of fnids can be and set the harvest
 ; limit there-- beyond that the only solution is to buy more memory.
 
 (def harvest-fnids ((o n 50000))  ; was 20000
-  (when (len> fns* n) 
+  (when (len> fns* n)
     (pull (fn ((id created lasts))
-            (when (> (since created) lasts)    
+            (when (> (since created) lasts)
               (wipe (fns* id))
               t))
           timed-fnids*)
     (atlet nharvest (trunc (/ n 10))
       (let (kill keep) (split (rev fnids*) nharvest)
-        (= fnids* (rev keep)) 
-        (each id kill 
+        (= fnids* (rev keep))
+        (each id kill
           (wipe (fns* id)))))))
 
 (= fnurl* "/x" rfnurl* "/r" rfnurl2* "/y" jfnurl* "/a")
 
 (= dead-msg* "\nUnknown or expired link.")
- 
+
 (defop-raw x (str req)
-  (w/stdout str 
+  (w/stdout str
     (aif (fns* (sym (arg req "fnid")))
          (it req)
          (pr dead-msg*))))
@@ -419,7 +419,7 @@ Connection: close"))
 
 (def rflink (f)
   (string rfnurl* "?fnid=" (fnid f)))
-  
+
 ; Since it's just an expr, gensym a parm for (ignored) args.
 
 (mac w/link (expr . body)
@@ -486,7 +486,7 @@ Connection: close"))
 ;(defop test1 req
 ;  (fnform (fn (req) (prn) (pr req))
 ;          (fn () (single-input "" 'foo 20 "submit"))))
- 
+
 ;(defop test2 req
 ;  (aform (fn (req) (pr req))
 ;    (single-input "" 'foo 20 "submit")))
@@ -559,7 +559,7 @@ Connection: close"))
   (when (admin (get-user req))
     (whitepage
       (sptab
-        (each ip (let leaders nil 
+        (each ip (let leaders nil
                    (maptable (fn (ip n)
                                (when (> n 100)
                                  (insort (compare > requests/ip*)
@@ -593,7 +593,7 @@ Connection: close"))
 
 (def new-bgthread (id f sec)
   (aif (bgthreads* id) (break-thread it))
-  (= (bgthreads* id) (new-thread (fn () 
+  (= (bgthreads* id) (new-thread (fn ()
                                    (while t
                                      (sleep sec)
                                      (f))))))
@@ -602,7 +602,7 @@ Connection: close"))
 
 (mac defbg (id sec . body)
   `(do (pull [caris _ ',id] pending-bgthreads*)
-       (push (list ',id (fn () ,@body) ,sec) 
+       (push (list ',id (fn () ,@body) ,sec)
              pending-bgthreads*)))
 
 

@@ -1,7 +1,7 @@
 Anarki: a fork of PG's and RTM's Arc Lisp
 
 Anarki is a publically modifiable fork of Paul Graham's and Robert Morris's
-project to create a modern lisp for hackers. Anarki is currently forked 
+project to create a modern lisp for hackers. Anarki is currently forked
 from Arc 3.1 and can run on top of the latest PLT (Racket) Scheme, instead
 of the severely out-dated mzscheme 372.
 

@@ -173,7 +173,7 @@
   " Partially applies (\"curries\") `f' to `xs'. "
   (fn ys (apply f (join xs ys))))
 
-(def const (x) 
+(def const (x)
   " Creates a fn that takes any number of arguments and returns `x'. "
   (fn _ x))
 
@@ -187,7 +187,7 @@
   (complement (apply orf fns)))
 
 (def iff funs
-  " Put simply: iff is to if as andf is to and. Specifically: 
+  " Put simply: iff is to if as andf is to and. Specifically:
 
     (iff) => idfn
     (iff fun) => fun
@@ -209,7 +209,7 @@
     1 funs.0
       (withs ((test fun . rest) funs
               restfun (apply iff rest))
-        (fn a (if (apply test a) (apply fun a) 
+        (fn a (if (apply test a) (apply fun a)
                   (apply restfun a))))))
 
 
@@ -221,14 +221,14 @@
   `(mappend (fn (,var) ,@body) ,lst))
 
 (mac ado body
-  " Anaphoric do. 
+  " Anaphoric do.
     See also [[aif]] [[awhen]] [[aand]] "
   (aif cdr.body `(let it ,car.body (ado ,@it))
        car.body))
 
 ; now that pg has renamed 'assert to 'set, we're free to use it in its more
 ; conventional sense
-(mac assert (exp (o msg (+ "Assertion failed: " 
+(mac assert (exp (o msg (+ "Assertion failed: "
                            (tostring:ppr exp (len "Assertion failed: ") t))))
   " Errors with `msg' if `exp' evaluates to nil. "
   `(unless ,exp (err ,msg)))
@@ -252,7 +252,7 @@
   `(switchlet ,(uniq) ,exp ,@cases))
 
 (mac dol (parms (test result) . body)
-  " Like the standard lisp/scheme do loop, but with redundant inner parens 
+  " Like the standard lisp/scheme do loop, but with redundant inner parens
     removed."
   (w/uniq loop-name
     (let parms (tuples parms 3)
@@ -278,14 +278,14 @@
 
 ; a 'with that works for defining recursive fns
 (mac withr/p (bindings . body)
-  " Scheme's 'letrec. 
+  " Scheme's 'letrec.
     See also [[withr]] [[where]] "
   `(let ,(map1 car bindings) nil
      ,@(map [cons 'assign _] bindings)
      ,@body))
 
 (mac withr (bindings . body)
-  " Scheme's 'letrec, with the redundant inner parens removed. 
+  " Scheme's 'letrec, with the redundant inner parens removed.
     See also [[withf]] [[letf]] [[where]] [[withr/p]] "
   `(withr/p ,pair.bindings ,@body))
 
@@ -297,7 +297,7 @@
      ,@body))
 
 (mac withf (fns . body)
-  " Defines a set `fns' of mutually recursive local fns within `body'. Each 
+  " Defines a set `fns' of mutually recursive local fns within `body'. Each
     three elements of `fn' correspond to a fn name, argument list, and body,
     so you'll need to use 'do if you want a multi-expression fn body.
     Example:
@@ -404,7 +404,7 @@
   " Convenient wrapper for applying an rfn using preexisting variables
     in `withses' as arguments. Best explained by example:
 
-      arc> (let x (range 1 3) 
+      arc> (let x (range 1 3)
              (w/rfn sum (x)
                (iflet (a . r) x (+ a (sum r)) 0)))
       6

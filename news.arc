@@ -19,8 +19,8 @@
 
 ; Structures
 
-; Could add (html) types like choice, yesno to profile fields.  But not 
-; as part of deftem, which is defstruct.  Need another mac on top of 
+; Could add (html) types like choice, yesno to profile fields.  But not
+; as part of deftem, which is defstruct.  Need another mac on top of
 ; deftem.  Should not need the type specs in user-fields.
 
 (deftem profile
@@ -41,7 +41,7 @@
   noprocrast nil
   firstview  nil
   lastview   nil
-  maxvisit   20 
+  maxvisit   20
   minaway    180
   topcolor   nil
   keys       nil
@@ -90,7 +90,7 @@
   (noisy-each 100 id (dir profdir*)
     (load-user id)))
 
-; For some reason vote files occasionally get written out in a 
+; For some reason vote files occasionally get written out in a
 ; broken way.  The nature of the errors (random missing or extra
 ; chars) suggests the bug is lower-level than anything in Arc.
 ; Which unfortunately means all lists written to disk are probably
@@ -114,9 +114,9 @@
   (or (votes* u)
       (aand (file-exists (+ votedir* u))
             (= (votes* u) (load-table it)))))
-          
+
 (def init-user (u)
-  (= (votes* u) (table) 
+  (= (votes* u) (table)
      (profs* u) (inst 'profile 'id u))
   (save-votes u)
   (save-prof u)
@@ -124,7 +124,7 @@
 
 ; Need this because can create users on the server (for other apps)
 ; without setting up places to store their state as news users.
-; See the admin op in app.arc.  So all calls to login-page from the 
+; See the admin op in app.arc.  So all calls to login-page from the
 ; news app need to call this in the after-login fn.
 
 (def ensure-news-user (u)
@@ -141,7 +141,7 @@
 
 ; Note that users will now only consider currently loaded users.
 
-(def users ((o f idfn)) 
+(def users ((o f idfn))
   (keep f (keys profs*)))
 
 (def check-key (u k)
@@ -150,11 +150,11 @@
 (def author (u i) (is u i!by))
 
 
-(= stories* nil comments* nil 
+(= stories* nil comments* nil
    items* (table) url->story* (table)
    maxid* 0 initload* 15000)
 
-; The dir expression yields stories in order of file creation time 
+; The dir expression yields stories in order of file creation time
 ; (because arc infile truncates), so could just rev the list instead of
 ; sorting, but sort anyway.
 
@@ -165,7 +165,7 @@
 
 (def load-items ()
   (system (+ "rm " storydir* "*.tmp"))
-  (pr "load items: ") 
+  (pr "load items: ")
   (with (items (table)
          ids   (sort > (map int (dir storydir*))))
     (if ids (= maxid* (car ids)))
@@ -180,7 +180,7 @@
 (def ensure-topstories ()
   (aif (errsafe (readfile1 (+ newsdir* "topstories")))
        (= ranked-stories* (map item it))
-       (do (prn "ranking stories.") 
+       (do (prn "ranking stories.")
            (flushout)
            (gen-topstories))))
 
@@ -195,8 +195,8 @@
       (register-url i it))
     i))
 
-; Note that duplicates are only prevented of items that have at some 
-; point been loaded. 
+; Note that duplicates are only prevented of items that have at some
+; point been loaded.
 
 (def register-url (i url)
   (= (url->story* (canonical-url url)) i!id))
@@ -218,13 +218,13 @@
 
 (def kids (i) (map item i!kids))
 
-; For use on external item references (from urls).  Checks id is int 
+; For use on external item references (from urls).  Checks id is int
 ; because people try e.g. item?id=363/blank.php
 
 (def safe-item (id)
   (ok-id&item (if (isa id 'string) (saferead id) id)))
 
-(def ok-id (id) 
+(def ok-id (id)
   (and (exact id) (<= 1 id maxid*)))
 
 (def arg->item (req key)
@@ -264,7 +264,7 @@
 ; Votes divided by the age in hours to the gravityth power.
 ; Would be interesting to scale gravity in a slider.
 
-(= gravity* 1.8 timebase* 120 front-threshold* 1 
+(= gravity* 1.8 timebase* 120 front-threshold* 1
    nourl-factor* .4 lightweight-factor* .3 )
 
 (def frontpage-rank (s (o scorefn realscore) (o gravity gravity*))
@@ -273,7 +273,7 @@
         (expt (/ (+ (item-age s) timebase*) 60) gravity))
      (if (no (in s!type 'story 'poll))  .5
          (blank s!url)                  nourl-factor*
-         (lightweight s)                (min lightweight-factor* 
+         (lightweight s)                (min lightweight-factor*
                                              (contro-factor s))
                                         (contro-factor s))))
 
@@ -300,8 +300,8 @@
 
 (def user-age (u) (minutes-since (uvar u created)))
 
-; Only looks at the 1000 most recent stories, which might one day be a 
-; problem if there is massive spam. 
+; Only looks at the 1000 most recent stories, which might one day be a
+; problem if there is massive spam.
 
 (def gen-topstories ()
   (= ranked-stories* (rank-stories 180 1000 (memo frontpage-rank))))
@@ -309,7 +309,7 @@
 (def save-topstories ()
   (writefile (map !id (firstn 180 ranked-stories*))
              (+ newsdir* "topstories")))
- 
+
 (def rank-stories (n consider scorefn)
   (bestn n (compare > scorefn) (latest-items metastory nil consider)))
 
@@ -318,15 +318,15 @@
 
 (def latest-items (test (o stop) (o n))
   (accum a
-    (catch 
+    (catch
       (down id maxid* 1
         (let i (item id)
-          (if (or (and stop (stop i)) (and n (<= n 0))) 
+          (if (or (and stop (stop i)) (and n (<= n 0)))
               (throw))
-          (when (test i) 
-            (a i) 
+          (when (test i)
+            (a i)
             (if n (-- n))))))))
-             
+
 ; redefined later
 
 (def metastory (i) (and i (in i!type 'story 'poll)))
@@ -337,7 +337,7 @@
 
 ; If something rose high then stopped getting votes, its score would
 ; decline but it would stay near the top.  Newly inserted stories would
-; thus get stuck in front of it. I avoid this by regularly adjusting 
+; thus get stuck in front of it. I avoid this by regularly adjusting
 ; the rank of a random top story.
 
 (defbg rerank-random 30 (rerank-random))
@@ -347,7 +347,7 @@
     (adjust-rank (ranked-stories* (rand (min 50 (len ranked-stories*)))))))
 
 (def topstories (user n (o threshold front-threshold*))
-  (retrieve n 
+  (retrieve n
             [and (>= (realscore _) threshold) (cansee user _)]
             ranked-stories*))
 
@@ -376,13 +376,13 @@
 
 (def cansee-descendant (user c)
   (or (cansee user c)
-      (some [cansee-descendant user (item _)] 
+      (some [cansee-descendant user (item _)]
             c!kids)))
-  
-(def editor (u) 
+
+(def editor (u)
   (and u (or (admin u) (> (uvar u auth) 0))))
 
-(def member (u) 
+(def member (u)
   (and u (or (admin u) (uvar u member))))
 
 
@@ -398,14 +398,14 @@
   (prn "<link rel=\"stylesheet\" type=\"text/css\" href=\"news.css\">"))
 
 (mac npage (title . body)
-  `(tag html 
-     (tag head 
+  `(tag html
+     (tag head
        (gen-css-url)
        (prn "<link rel=\"shortcut icon\" href=\"" favicon-url* "\">")
        (prn "<meta name=\"viewport\" content=\"width=device-width\">")
        (tag script (pr votejs*))
        (tag title (pr ,title)))
-     (tag body 
+     (tag body
        (center
          (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
                      bgcolor sand)
@@ -450,7 +450,7 @@
     (tr (tdcolor c))))
 
 (mac shortpage (user lid label title whence . body)
-  `(fulltop ,user ,lid ,label ,title ,whence 
+  `(fulltop ,user ,lid ,label ,title ,whence
      (trtd ,@body)))
 
 (mac minipage (label . body)
@@ -461,7 +461,7 @@
 (def msgpage (user msg (o title))
   (minipage (or title "Message")
     (spanclass admin
-      (center (if (len> msg 80) 
+      (center (if (len> msg 80)
                   (widtable 500 msg)
                   (pr msg))))
     (br2)))
@@ -482,7 +482,7 @@ input    { font-family:Courier; font-size:10pt; color:#000000; }
 input[type=\"submit\"] { font-family:Verdana; }
 textarea { font-family:Courier; font-size:10pt; color:#000000; }
 
-a:link    { color:#000000; text-decoration:none; } 
+a:link    { color:#000000; text-decoration:none; }
 a:visited { color:#828282; text-decoration:none; }
 
 .default { font-family:Verdana; font-size: 10pt; color:#828282; }
@@ -512,7 +512,7 @@ a:visited { color:#828282; text-decoration:none; }
 .pagebreak {page-break-before:always}
 
 pre { overflow: auto; padding: 2px; max-width:600px; }
-pre:hover {overflow:auto} 
+pre:hover {overflow:auto}
 
 @media (max-width: 517px) {
   body { margin:0; }
@@ -544,7 +544,7 @@ function byId(id) {
 
 function vote(node) {
   var v = node.id.split(/_/);   // {'up', '123'}
-  var item = v[1]; 
+  var item = v[1];
 
   // adjust score
   var score = byId('score_' + item);
@@ -568,7 +568,7 @@ function vote(node) {
 
 (= sand (color 246 246 239) textgray (gray 130))
 
-(def main-color (user) 
+(def main-color (user)
   (aif (and user (uvar user topcolor))
        (hex>color it)
        site-color*))
@@ -596,7 +596,7 @@ function vote(node) {
 (def gen-logo ()
   (tag (td style "width:18px;padding-right:4px")
     (tag (a href parent-url*)
-      (tag (img src logo-url* width 18 height 18 
+      (tag (img src logo-url* width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "*"))
@@ -606,9 +606,9 @@ function vote(node) {
 (= welcome-url* "welcome")
 
 (def toprow (user label)
-  (w/bars 
+  (w/bars
     (when (noob user)
-      (toplink "welcome" welcome-url* label)) 
+      (toplink "welcome" welcome-url* label))
     (toplink "new" "newest" label)
     (when user
       (toplink "threads" (threads-url user) label))
@@ -624,7 +624,7 @@ function vote(node) {
     (link name dest)))
 
 (def topright (user whence (o showkarma t))
-  (when user 
+  (when user
     (userlink user user nil)
     (when showkarma (pr  "&nbsp;(@(karma user))"))
     (pr "&nbsp;|&nbsp;"))
@@ -634,8 +634,8 @@ function vote(node) {
           (logout-user user)
           whence))
       (onlink "login"
-        (login-page 'both nil 
-                    (list (fn (u ip) 
+        (login-page 'both nil
+                    (list (fn (u ip)
                             (ensure-news-user u)
                             (newslog ip u 'top-login))
                           whence)))))
@@ -680,14 +680,14 @@ function vote(node) {
 
 (mac adop (name parms . body)
   (w/uniq g
-    `(opexpand defopa ,name ,parms 
+    `(opexpand defopa ,name ,parms
        (let ,g (string ',name)
          (shortpage user nil ,g ,g ,g
            ,@body)))))
 
 (mac edop (name parms . body)
   (w/uniq g
-    `(opexpand defope ,name ,parms 
+    `(opexpand defope ,name ,parms
        (let ,g (string ',name)
          (shortpage user nil ,g ,g ,g
            ,@body)))))
@@ -695,7 +695,7 @@ function vote(node) {
 
 ; News Admin
 
-(defopa newsadmin req 
+(defopa newsadmin req
   (let user (get-user req)
     (newslog req!ip user 'newsadmin)
     (newsadmin-page user)))
@@ -713,7 +713,7 @@ function vote(node) {
 
 (def newsadmin-page (user)
   (shortpage user nil nil "newsadmin" "newsadmin"
-    (vars-form user 
+    (vars-form user
                (nad-fields)
                (fn (name val)
                  (case name
@@ -722,7 +722,7 @@ function vote(node) {
                    comment-ignore     (todisk comment-ignore* val)
                    lightweights       (todisk lightweights* (memtable val))
                    ))
-               (fn () (newsadmin-page user))) 
+               (fn () (newsadmin-page user)))
     (br2)
     (aform (fn (req)
              (with (user (get-user req) subject (arg req "id"))
@@ -759,10 +759,10 @@ function vote(node) {
       (hook 'user user subject))))
 
 (def profile-form (user subject)
-  (let prof (profile subject) 
+  (let prof (profile subject)
     (vars-form user
                (user-fields user subject)
-               (fn (name val) 
+               (fn (name val)
                  (when (and (is name 'ignore) val (no prof!ignore))
                    (log-ignore user subject 'profile))
                  (= (prof name) val))
@@ -772,8 +772,8 @@ function vote(node) {
 (= topcolor-threshold* 250)
 
 (def user-fields (user subject)
-  (withs (e (editor user) 
-          a (admin user) 
+  (withs (e (editor user)
+          a (admin user)
           w (is user subject)
           k (and w (> (karma user) topcolor-threshold*))
           u (or a w)
@@ -804,8 +804,8 @@ function vote(node) {
 
 (def saved-link (user subject)
   (when (or (admin user) (is user subject))
-    (let n (if (len> (votes subject) 500) 
-               "many" 
+    (let n (if (len> (votes subject) 500)
+               "many"
                (len (voted-stories user subject)))
       (if (is n 0)
           ""
@@ -820,21 +820,21 @@ function vote(node) {
 
 ; Main Operators
 
-; remember to set caching to 0 when testing non-logged-in 
+; remember to set caching to 0 when testing non-logged-in
 
 (= caching* 1 perpage* 30 threads-perpage* 10 maxend* 210)
 
 ; Limiting that newscache can't take any arguments except the user.
-; To allow other arguments, would have to turn the cache from a single 
+; To allow other arguments, would have to turn the cache from a single
 ; stored value to a hash table whose keys were lists of arguments.
 
 (mac newscache (name user time . body)
   (w/uniq gc
     `(let ,gc (cache (fn () (* caching* ,time))
                      (fn () (tostring (let ,user nil ,@body))))
-       (def ,name (,user) 
-         (if ,user 
-             (do ,@body) 
+       (def ,name (,user)
+         (if ,user
+             (do ,@body)
              (pr (,gc)))))))
 
 
@@ -855,7 +855,7 @@ function vote(node) {
 
 (newsop newest () (newestpage user))
 
-; Note: dead/deleted items will persist for the remaining life of the 
+; Note: dead/deleted items will persist for the remaining life of the
 ; cached page.  If this were a prob, could make deletion clear caches.
 
 (newscache newestpage user 40
@@ -892,14 +892,14 @@ function vote(node) {
 (newsop bestcomments () (bestcpage user))
 
 (newscache bestcpage user 1000
-  (listpage user (msec) (bestcomments user maxend*) 
+  (listpage user (msec) (bestcomments user maxend*)
             "best comments" "Best Comments" "bestcomments" nil))
 
 (def bestcomments (user n)
   (bestn n (compare > realscore) (visible user comments*)))
 
 
-(newsop lists () 
+(newsop lists ()
   (longpage user (msec) nil "lists" "Lists" "lists"
     (sptab
       (row (link "best")         "Highest voted recent links.")
@@ -915,15 +915,15 @@ function vote(node) {
 
 (def saved-url (user) (+ "saved?id=" user))
 
-(newsop saved (id) 
+(newsop saved (id)
   (if (only.profile id)
-      (savedpage user id) 
+      (savedpage user id)
       (pr "No such user.")))
 
 (def savedpage (user subject)
   (if (or (is user subject) (admin user))
       (listpage user (msec)
-                (sort (compare < item-age) (voted-stories user subject)) 
+                (sort (compare < item-age) (voted-stories user subject))
                "saved" "Saved Links" (saved-url subject))
       (pr "Can't display that.")))
 
@@ -934,7 +934,7 @@ function vote(node) {
 
 ; Story Display
 
-(def display-items (user items label title whence 
+(def display-items (user items label title whence
                     (o start 0) (o end perpage*) (o number))
   (zerotable
     (let n start
@@ -947,15 +947,15 @@ function vote(node) {
           (spacerow 10)
           (tr (tag (td colspan (if number 2 1)))
               (tag (td class 'title)
-                (morelink display-items 
+                (morelink display-items
                           items label title end newend number))))))))
 
-; This code is inevitably complex because the More fn needs to know 
-; its own fnid in order to supply a correct whence arg to stuff on 
+; This code is inevitably complex because the More fn needs to know
+; its own fnid in order to supply a correct whence arg to stuff on
 ; the page it generates, like logout and delete links.
 
 (def morelink (f items label title . args)
-  (tag (a href 
+  (tag (a href
           (url-for
             (afnid (fn (req)
                      (prn)
@@ -972,7 +972,7 @@ function vote(node) {
     (tr (display-item-number i)
         (td (votelinks s user whence))
         (titleline s s!url user whence))
-    (tr (tag (td colspan (if i 2 1)))    
+    (tr (tag (td colspan (if i 2 1)))
         (tag (td class 'subtext)
           (hook 'itemline s user)
           (itemline s user)
@@ -1009,8 +1009,8 @@ function vote(node) {
                                                  kill   nil))
                                  whence)
                       (let ban (car (banned-sites* it))
-                        (tag-if ban (font color (case ban 
-                                                  ignore darkred 
+                        (tag-if ban (font color (case ban
+                                                  ignore darkred
                                                   kill   darkblue))
                           (pr it))))
                     (pr it))
@@ -1019,25 +1019,25 @@ function vote(node) {
 
 (def titlelink (s url user)
   (let toself (blank url)
-    (tag (a href (if toself 
-                      (item-url s!id) 
+    (tag (a href (if toself
+                      (item-url s!id)
                      (or (live s) (author user s) (editor user))
                       url
                       nil)
             rel  (unless (or toself (> (realscore s) follow-threshold*))
-                   'nofollow)) 
+                   'nofollow))
       (pr s!title))))
 
 (def pdflink (url)
   (awhen (vacuumize url)
-    (pr " [") 
+    (pr " [")
     (link "scribd" it)
     (pr "]")))
 
 (defmemo vacuumize (url)
   (and (or (endmatch ".pdf" url) (endmatch ".PDF" url))
        (+ "http://www.scribd.com/vacuum?url=" url)))
-      
+
 (def pseudo-text (i)
   (if i!deleted "[deleted]" "[dead]"))
 
@@ -1050,14 +1050,14 @@ function vote(node) {
 (= downvote-threshold* 200 downvote-time* 1440)
 
 (= votewid* 14)
-      
+
 (def votelinks (i user whence (o downtoo))
   (center
     (if (and (cansee user i)
              (or (no user)
                  (no ((votes user) i!id))))
          (do (votelink i user whence 'up)
-             (if (and downtoo 
+             (if (and downtoo
                       (or (admin user)
                           (< (item-age i) downvote-time*))
                       (canvote user i 'down))
@@ -1090,7 +1090,7 @@ function vote(node) {
 
 (= lowest-score* -4)
 
-; Not much stricter than whether to generate the arrow.  Further tests 
+; Not much stricter than whether to generate the arrow.  Further tests
 ; applied in vote-for.
 
 (def canvote (user i dir)
@@ -1103,8 +1103,8 @@ function vote(node) {
                 (> (karma user) downvote-threshold*)
                 (no (aand i!parent (author user (item it))))))))
 
-; Need the by argument or someone could trick logged in users into 
-; voting something up by clicking on a link.  But a bad guy doesn't 
+; Need the by argument or someone could trick logged in users into
+; voting something up by clicking on a link.  But a bad guy doesn't
 ; know how to generate an auth arg that matches each user's cookie.
 
 (newsop vote (by for dir auth whence)
@@ -1132,7 +1132,7 @@ function vote(node) {
          (pr "Can't make that vote."))))
 
 (def itemline (i user)
-  (when (cansee user i) 
+  (when (cansee user i)
     (when (news-type i) (itemscore i user))
     (byline i user)))
 
@@ -1168,7 +1168,7 @@ function vote(node) {
 (= show-threadavg* nil)
 
 (def commentlink (i user)
-  (when (cansee user i) 
+  (when (cansee user i)
     (pr bar*)
     (tag (a href (item-url i!id))
       (let n (- (visible-family user i) 1)
@@ -1183,7 +1183,7 @@ function vote(node) {
      (sum [visible-family user (item _)] i!kids)))
 
 (def threadavg (i)
-  (only.avg (map [or (uvar _ avg) 1] 
+  (only.avg (map [or (uvar _ avg) 1]
                  (rem admin (dedup (map !by (keep live (family i))))))))
 
 (= user-changetime* 120 editor-changetime* 1440)
@@ -1193,7 +1193,7 @@ function vote(node) {
 (def canedit (user i)
   (or (admin user)
       (and (~noedit* i!type)
-           (editor user) 
+           (editor user)
            (< (item-age i) editor-changetime*))
       (own-changeable-item user i)))
 
@@ -1245,7 +1245,7 @@ function vote(node) {
   (when (admin user)
     (pr bar*)
     (w/rlink (do (zap no i!dead)
-                 (if i!dead 
+                 (if i!dead
                      (do (pull 'nokill i!keys)
                          (log-kill i user))
                      (pushnew 'nokill i!keys))
@@ -1253,12 +1253,12 @@ function vote(node) {
                  whence)
       (pr "@(if i!dead 'un)kill"))))
 
-; Blast kills the submission and bans the user.  Nuke also bans the 
-; site, so that all future submitters will be ignored.  Does not ban 
+; Blast kills the submission and bans the user.  Nuke also bans the
+; site, so that all future submitters will be ignored.  Does not ban
 ; the ip address, but that will eventually get banned by maybe-ban-ip.
 
 (def blastlink (i user whence (o nuke))
-  (when (and (admin user) 
+  (when (and (admin user)
              (or (no nuke) (~empty i!url)))
     (pr bar*)
     (w/rlink (do (toggle-blast i user nuke)
@@ -1293,13 +1293,13 @@ function vote(node) {
 
 ; Undeleting stories could cause a slight inconsistency. If a story
 ; linking to x gets deleted, another submission can take its place in
-; url->story.  If the original is then undeleted, there will be two 
+; url->story.  If the original is then undeleted, there will be two
 ; stories with equal claim to be in url->story.  (The more recent will
 ; win because it happens to get loaded later.)  Not a big problem.
 
 (def del-confirm-page (user i whence)
   (minipage "Confirm"
-    (tab 
+    (tab
       ; link never used so not testable but think correct
       (display-item nil i user (flink [del-confirm-page (get-user _) i whence]))
       (spacerow 20)
@@ -1315,7 +1315,7 @@ function vote(node) {
 
 (def permalink (story user)
   (when (cansee user story)
-    (pr bar*) 
+    (pr bar*)
     (link "link" (item-url story!id))))
 
 (def logvote (ip user story)
@@ -1330,14 +1330,14 @@ function vote(node) {
 
 ; Voting
 
-; A user needs legit-threshold karma for a vote to count if there has 
+; A user needs legit-threshold karma for a vote to count if there has
 ; already been a vote from the same IP address.  A new account below both
-; new- thresholds won't affect rankings, though such votes still affect 
+; new- thresholds won't affect rankings, though such votes still affect
 ; scores unless not a legit-user.
 
 (= legit-threshold* 0 new-age-threshold* 0 new-karma-threshold* 2)
 
-(def legit-user (user) 
+(def legit-user (user)
   (or (editor user)
       (> (karma user) legit-threshold*)))
 
@@ -1355,7 +1355,7 @@ function vote(node) {
 ; big enough problem to drag in locking.
 
 (def vote-for (user i (o dir 'up))
-  (unless (or ((votes user) i!id) 
+  (unless (or ((votes user) i!id)
               (and (~live i) (isnt user i!by)))
     (withs (ip   (logins* user)
             vote (list (seconds) ip user dir i!score))
@@ -1373,7 +1373,7 @@ function vote(node) {
                   (and (isnt i!type 'pollopt)
                        (biased-voter i vote)))
         (++ i!score (case dir up 1 down -1))
-        ; canvote protects against sockpuppet downvote of comments 
+        ; canvote protects against sockpuppet downvote of comments
         (when (and (is dir 'up) (possible-sockpuppet user))
           (++ i!sockvotes))
         (metastory&adjust-rank i)
@@ -1414,7 +1414,7 @@ function vote(node) {
               prev))))
 
 ; Ugly to pluck out fourth element.  Should read votes into a vote
-; template.  They're stored slightly differently in two diff places: 
+; template.  They're stored slightly differently in two diff places:
 ; in one with the voter in the car and the other without.
 
 (def recent-votes-by (user)
@@ -1424,13 +1424,13 @@ function vote(node) {
 ; Story Submission
 
 (newsop submit ()
-  (if user 
-      (submit-page user "" "" t) 
+  (if user
+      (submit-page user "" "" t)
       (submit-login-warning "" "" t)))
 
 (def submit-login-warning ((o url) (o title) (o showtext) (o text))
   (login-page 'both "You have to be logged in to submit."
-              (fn (user ip) 
+              (fn (user ip)
                 (ensure-news-user user)
                 (newslog ip user 'submit-login)
                 (submit-page user url title showtext text))))
@@ -1460,8 +1460,8 @@ function vote(node) {
         (row "" submit-instructions*)))))
 
 (= submit-instructions*
-   "Leave url blank to submit a question for discussion. If there is 
-    no url, the text (if any) will appear at the top of the comments 
+   "Leave url blank to submit a question for discussion. If there is
+    no url, the text (if any) will appear at the top of the comments
     page. If there is a url, the text will be ignored.")
 
 ; For use by outside code like bookmarklet.
@@ -1469,7 +1469,7 @@ function vote(node) {
 ; Added a confirm step to avoid xss hacks.
 
 (newsop submitlink (u t)
-  (if user 
+  (if user
       (submit-page user u t)
       (submit-login-warning u t)))
 
@@ -1493,7 +1493,7 @@ function vote(node) {
            (item-url it!id))
        (if (no user)
             (flink [submit-login-warning url title showtext text])
-           (no (and (or (blank url) (valid-url url)) 
+           (no (and (or (blank url) (valid-url url))
                     (~blank title)))
             (flink [submit-page user url title showtext text retry*])
            (len> title title-limit*)
@@ -1543,7 +1543,7 @@ function vote(node) {
                  (if (bad-user user) 0 1)
                  (if (bad-user user) 1 10)))))
 
-; Note that by deliberate tricks, someone could submit a story with a 
+; Note that by deliberate tricks, someone could submit a story with a
 ; blank title.
 
 (diskvar scrubrules* (+ newsdir* "scrubrules"))
@@ -1553,7 +1553,7 @@ function vote(node) {
     (zap upcase (s2 0))
     s2))
 
-(def live-story-w/url (url) 
+(def live-story-w/url (url)
   (aand (url->story* (canonical-url url)) (check (item it) live)))
 
 (def parse-site (url)
@@ -1564,24 +1564,24 @@ function vote(node) {
        (let toks (parse-site (rem #\space url))
          (if (isa (saferead (car toks)) 'int)
              (tostring (prall toks "" "."))
-             (let (t1 t2 t3 . rest) toks  
+             (let (t1 t2 t3 . rest) toks
                (if (and (~in t3 nil "www")
-                        (or (mem t1 multi-tld-countries*) 
+                        (or (mem t1 multi-tld-countries*)
                             (mem t2 long-domains*)))
                    (+ t3 "." t2 "." t1)
                    (and t2 (+ t2 "." t1))))))))
 
-(= multi-tld-countries* '("uk" "jp" "au" "in" "ph" "tr" "za" "my" "nz" "br" 
+(= multi-tld-countries* '("uk" "jp" "au" "in" "ph" "tr" "za" "my" "nz" "br"
                           "mx" "th" "sg" "id" "pk" "eg" "il" "at" "pl"))
 
-(= long-domains* '("blogspot" "wordpress" "livejournal" "blogs" "typepad" 
+(= long-domains* '("blogspot" "wordpress" "livejournal" "blogs" "typepad"
                    "weebly" "posterous" "blog-city" "supersized" "dreamhosters"
                    ; "sampasite"  "multiply" "wetpaint" ; all spam, just ban
                    "eurekster" "blogsome" "edogo" "blog" "com"))
 
 (def create-story (url title text user ip)
   (newslog ip user 'create url (list title))
-  (let s (inst 'item 'type 'story 'id (new-item-id) 
+  (let s (inst 'item 'type 'story 'id (new-item-id)
                      'url url 'title title 'text text 'by user 'ip ip)
     (save-item s)
     (= (items* s!id) s)
@@ -1648,7 +1648,7 @@ function vote(node) {
     (kill i 'comment-ban)))
 
 ; An IP is banned when multiple ignored users have submitted over
-; ban-threshold* (currently loaded) dead stories from it.  
+; ban-threshold* (currently loaded) dead stories from it.
 
 ; Can consider comments too if that later starts to be a problem,
 ; but the threshold may start to be higher because then you'd be
@@ -1661,7 +1661,7 @@ function vote(node) {
                  (some [and (ignored _!by) (isnt _!by s!by)] bads))
         (set-ip-ban nil s!ip t)))))
 
-(def killallby (user) 
+(def killallby (user)
   (map [kill _ 'all] (submissions user)))
 
 ; Only called from repl.
@@ -1684,7 +1684,7 @@ function vote(node) {
   (if (and user (> (karma user) poll-threshold*))
       (newpoll-page user)
       (pr "Sorry, you need @poll-threshold* karma to create a poll.")))
-  
+
 (def newpoll-page (user (o title "Poll: ") (o text "") (o opts "") (o msg))
   (minipage "New Poll"
     (pagemessage msg)
@@ -1694,7 +1694,7 @@ function vote(node) {
                           (md-from-form (arg req "x") t)
                           (striptags (arg req "o"))
                           req!ip)
-      (tab   
+      (tab
         (row "title"   (input "t" title 50))
         (row "text"    (textarea "x" 4 50 (only.pr text)))
         (row ""        "Use blank lines to separate choices:")
@@ -1733,7 +1733,7 @@ function vote(node) {
                      'url url 'title title 'text text 'parent p!id
                      'by user 'ip ip)
     (save-item o)
-    (= (items* o!id) o) 
+    (= (items* o!id) o)
     o))
 
 (def add-pollopt-page (p user)
@@ -1763,7 +1763,7 @@ function vote(node) {
       (tag (td class 'comment)
         (tag (div style "margin-top:1px;margin-bottom:0px")
           (if (~cansee user o) (pr (pseudo-text o))
-              (~live o)        (spanclass dead 
+              (~live o)        (spanclass dead
                                  (pr (if (~blank o!title) o!title o!text)))
                                (if (and (~blank o!title) (~blank o!url))
                                    (link o!title o!url)
@@ -1821,14 +1821,14 @@ function vote(node) {
            (when (and (cansee user i) (comments-active i))
              (spacerow 10)
              (row "" (comment-form i user here))))
-      (br2) 
+      (br2)
       (when (and i!kids (commentable i))
         (tab (display-subcomments i user here))
         (br2)))))
 
 (def commentable (i) (in i!type 'story 'comment 'poll))
 
-; By default the ability to comment on an item is turned off after 
+; By default the ability to comment on an item is turned off after
 ; 45 days, but this can be overriden with commentable key.
 
 (= commentable-threshold* (* 60 24 45))
@@ -1860,9 +1860,9 @@ function vote(node) {
   (aif i!parent (superparent:item it) i))
 
 (def display-item-text (s user)
-  (when (and (cansee user s) 
+  (when (and (cansee user s)
              (in s!type 'story 'poll)
-             (blank s!url) 
+             (blank s!url)
              (~blank s!text))
     (spacerow 2)
     (row "" s!text)))
@@ -1874,7 +1874,7 @@ function vote(node) {
 
 (newsop edit (id)
   (let i (safe-item id)
-    (if (and i 
+    (if (and i
              (cansee user i)
              (editable-type i)
              (or (news-type i) (admin user) (author user i)))
@@ -1936,7 +1936,7 @@ function vote(node) {
       (br2)
       (vars-form user
                  ((fieldfn* i!type) user i)
-                 (fn (name val) 
+                 (fn (name val)
                    (unless (ignore-edit user i name val)
                      (when (and (is name 'dead) val (no i!dead))
                        (log-kill i user))
@@ -1952,7 +1952,7 @@ function vote(node) {
   (case name title (len> val title-limit*)
              dead  (and (mem 'nokill i!keys) (~admin user))))
 
- 
+
 ; Comment Submission
 
 (def comment-login-warning (parent whence (o text))
@@ -1980,7 +1980,7 @@ function vote(node) {
            (fn (req)
              (when-umatch/r user req
                (process-comment user parent (arg req "text") req!ip whence)))
-    (textarea "text" 6 60  
+    (textarea "text" 6 60
       (aif text (prn (unmarkdown it))))
     (when (and noob-comment-msg* (noob user))
       (br2)
@@ -2036,7 +2036,7 @@ function vote(node) {
   (each k (sort (compare > frontpage-rank:item) c!kids)
     (display-comment-tree (item k) user whence indent)))
 
-(def display-comment (n c user whence (o astree) (o indent 0) 
+(def display-comment (n c user whence (o astree) (o indent 0)
                                       (o showpar) (o showon))
   (tr (display-item-number n)
       (when astree (td (hspace (* indent 40))))
@@ -2053,7 +2053,7 @@ function vote(node) {
 
 (= comments-printed* 0 cc-hits* 0)
 
-(= comment-caching* t) 
+(= comment-caching* t)
 
 ; Cache comments generated for nil user that are over an hour old.
 ; Only try to cache most recent 10k items.  But this window moves,
@@ -2129,10 +2129,10 @@ function vote(node) {
               (underline (replylink c whence))
               (fontcolor sand (pr "-----"))))))))
 
-; For really deeply nested comments, caching could add another reply 
+; For really deeply nested comments, caching could add another reply
 ; delay, but that's ok.
 
-; People could beat this by going to the link url or manually entering 
+; People could beat this by going to the link url or manually entering
 ; the reply url, but deal with that if they do.
 
 (= reply-decay* 1.8)   ; delays: (0 0 1 3 7 12 18 25 33 42 52 63)
@@ -2168,7 +2168,7 @@ function vote(node) {
 
 (def threads-url (user) (+ "threads?id=" user))
 
-(newsop threads (id) 
+(newsop threads (id)
   (if id
       (threads-page user id)
       (pr "No user specified.")))
@@ -2186,7 +2186,7 @@ function vote(node) {
 
 (def display-threads (user comments label title whence
                       (o start 0) (o end threads-perpage*))
-  (tab 
+  (tab
     (each c (cut comments start end)
       (display-comment-tree c user whence 0 t))
     (when end
@@ -2199,12 +2199,12 @@ function vote(node) {
                           (morelink display-threads
                                     comments label title end newend))))))))))
 
-(def submissions (user (o limit)) 
+(def submissions (user (o limit))
   (map item (firstn limit (uvar user submitted))))
 
 (def comments (user (o limit))
   (map item (retrieve limit acomment:item (uvar user submitted))))
-  
+
 (def subcomment (c)
   (some [and (acomment _) (is _!by c!by) (no _!deleted)]
         (ancestors c)))
@@ -2216,9 +2216,9 @@ function vote(node) {
 ; Submitted
 
 (def submitted-url (user) (+ "submitted?id=" user))
-       
-(newsop submitted (id) 
-  (if id 
+
+(newsop submitted (id)
+  (if id
       (submitted-page user id)
       (pr "No user specified.")))
 
@@ -2240,7 +2240,7 @@ function vote(node) {
 
 (newsop rss () (rsspage nil))
 
-(newscache rsspage user 90 
+(newscache rsspage user 90
   (rss-stories (retrieve perpage* live ranked-stories*)))
 
 (def rss-stories (stories)
@@ -2292,9 +2292,9 @@ function vote(node) {
 
 (defbg update-avg 45
   (unless (or (empty profs*) (no stories*))
-    (update-avg (rand-user [and (only.> (car (uvar _ submitted)) 
+    (update-avg (rand-user [and (only.> (car (uvar _ submitted))
                                         (- maxid* initload*))
-                                (len> (uvar _ submitted) 
+                                (len> (uvar _ submitted)
                                       update-avg-threshold*)]))))
 
 (def update-avg (user)
@@ -2304,7 +2304,7 @@ function vote(node) {
 (def rand-user ((o test idfn))
   (evtil (rand-key profs*) test))
 
-; Ignore the most recent 5 comments since they may still be gaining votes.  
+; Ignore the most recent 5 comments since they may still be gaining votes.
 ; Also ignore the highest-scoring comment, since possibly a fluff outlier.
 
 (def comment-score (user)
@@ -2315,8 +2315,8 @@ function vote(node) {
 
 ; Comment Analysis
 
-; Instead of a separate active op, should probably display this info 
-; implicitly by e.g. changing color of commentlink or by showing the 
+; Instead of a separate active op, should probably display this info
+; implicitly by e.g. changing color of commentlink or by showing the
 ; no of comments since that user last looked.
 
 (newsop active () (active-page user))
@@ -2350,11 +2350,11 @@ function vote(node) {
 
 (= formatdoc-url* "formatdoc")
 
-(= formatdoc* 
+(= formatdoc*
 "Blank lines separate paragraphs.
-<p> Text after a blank line that is indented by two or more spaces is 
+<p> Text after a blank line that is indented by two or more spaces is
 reproduced verbatim.  (This is intended for code.)
-<p> Text surrounded by asterisks is italicized, if the character after the 
+<p> Text surrounded by asterisks is italicized, if the character after the
 first asterisk isn't whitespace.
 <p> Urls become links, except in the text field of a submission.<br><br>")
 
@@ -2376,7 +2376,7 @@ first asterisk isn't whitespace.
                      (uvar user minaway))
               (reset-procrast user)
               t)))))
-                
+
 (def reset-procrast (user)
   (= (uvar user lastview) (= (uvar user firstview) (seconds)))
   (save-prof user))
@@ -2386,12 +2386,12 @@ first asterisk isn't whitespace.
                         (minutes-since (uvar user lastview)))))
     (pr "<b>Get back to work!</b>")
     (para "Sorry, you can't see this page.  Based on the anti-procrastination
-           parameters you set in your profile, you'll be able to use the site 
+           parameters you set in your profile, you'll be able to use the site
            again in " (plural m "minute") ".")
     (para "(If you got this message after submitting something, don't worry,
            the submission was processed.)")
-    (para "To change your anti-procrastination settings, go to your profile 
-           by clicking on your username.  If <tt>noprocrast</tt> is set to 
+    (para "To change your anti-procrastination settings, go to your profile
+           by clicking on your username.  If <tt>noprocrast</tt> is set to
            <tt>yes</tt>, you'll be limited to sessions of <tt>maxvisit</tt>
            minutes, with <tt>minaway</tt> minutes between them.")
     (para)
@@ -2412,7 +2412,7 @@ first asterisk isn't whitespace.
         (blank (uvar user email))
          (do (pr "Before you do this, please add your email address to your ")
              (underlink "profile" (user-url user))
-             (pr ". Otherwise you could lose your account if you mistype 
+             (pr ". Otherwise you could lose your account if you mistype
                   your new password.")))
     (br2)
     (uform user req (try-resetpw user (arg req "p"))
@@ -2420,7 +2420,7 @@ first asterisk isn't whitespace.
 
 (def try-resetpw (user newpw)
   (if (len< newpw 4)
-      (resetpw-page user "Passwords should be a least 4 characters long.  
+      (resetpw-page user "Passwords should be a least 4 characters long.
                           Please choose another.")
       (do (set-pw user newpw)
           (newspage user))))
@@ -2445,12 +2445,12 @@ first asterisk isn't whitespace.
                      (scrub-page user scrubrules* "Changes saved."))
                  (scrub-page user rules "To and from should be same length.")))
       (pr "From: ")
-      (tag (textarea name 'from 
+      (tag (textarea name 'from
                      cols (apply max 20 (map len (map car rules)))
                      rows (+ (len rules) 3))
         (apply pr #\newline (intersperse #\newline (map car rules))))
       (pr " To: ")
-      (tag (textarea name 'to 
+      (tag (textarea name 'to
                      cols (apply max 20 (map len (map cadr rules)))
                      rows (+ (len rules) 3))
         (apply pr #\newline (intersperse #\newline (map cadr rules))))
@@ -2461,7 +2461,7 @@ first asterisk isn't whitespace.
 ; Abuse Analysis
 
 (adop badsites ()
-  (sptab 
+  (sptab
     (row "Dead" "Days" "Site" "O" "K" "I" "Users")
     (each (site deads) (with (banned (banned-site-items)
                               pairs  (killedsites))
@@ -2505,7 +2505,7 @@ first asterisk isn't whitespace.
            (awhen (and i!dead (check (sitename i!url) banned-sites*))
              (push i (_ it)))]))
 
-; Would be nice to auto unban ips whose most recent submission is > n 
+; Would be nice to auto unban ips whose most recent submission is > n
 ; days old, but hard to do because of lazy loading.  Would have to keep
 ; a table of most recent submission per ip, and only enforce bannnedness
 ; if < n days ago.
@@ -2521,8 +2521,8 @@ first asterisk isn't whitespace.
                                "badips")
                     (fontcolor (if banned darkred) (pr ip)))))
             (tdr (when (or (goods ip) (bads ip))
-                   (pr (round (days-since 
-                                (max (aif (car (goods ip)) it!time 0) 
+                   (pr (round (days-since
+                                (max (aif (car (goods ip)) it!time 0)
                                      (aif (car (bads  ip)) it!time 0)))))))
             (tdr (onlink (len (bads ip))
                          (listpage user (msec) (bads ip)
@@ -2531,7 +2531,7 @@ first asterisk isn't whitespace.
                          (listpage user (msec) (goods ip)
                                    nil (+ "live from " ip) "badips")))
             (td (each u (subs ip)
-                  (userlink user u nil) 
+                  (userlink user u nil)
                   (pr " "))))))))
 
 (defcache badips 300
@@ -2547,7 +2547,7 @@ first asterisk isn't whitespace.
 (def sorted-badips (bads goods)
   (withs (ips  (let ips (rem [len< (bads _) 2] (keys bads))
                 (+ ips (rem [mem _ ips] (keys banned-ips*))))
-          subs (table 
+          subs (table
                  [each ip ips
                    (= (_ ip) (dedup (map !by (+ (bads ip) (goods ip)))))]))
     (list subs
@@ -2566,7 +2566,7 @@ first asterisk isn't whitespace.
 (edop flagged ()
   (display-selected-items user [retrieve maxend* flagged _] "flagged"))
 
-(def flagged (i) 
+(def flagged (i)
   (and (live i)
        (~mem 'nokill i!keys)
        (len> i!flags many-flags*)))
@@ -2616,7 +2616,7 @@ first asterisk isn't whitespace.
 
 (defop topcolors req
   (minipage "Custom Colors"
-    (tab 
+    (tab
       (each c (dedup (map downcase (trues [uvar _ topcolor] (users))))
         (tr (td c) (tdcolor (hex>color c) (hspace 30)))))))
 
