@@ -227,7 +227,12 @@
 ; Import Scheme's regular expressions
 (= re $.regexp)
 (def re-match (rx s) ($.regexp-match rx s))
-(= pre-match re-match)
+(def pre-match (px s)
+     ($.regexp-match
+       (if $.string?.px $.pregexp.px
+	   $.bytes?.px	$.byte-pregexp.px
+	   		px)
+       s))
 (= re-match? [no:no:re-match _1 _2])
 (= re-pos $.regexp-match-positions)
 (= re-subst $.regexp-replace)
