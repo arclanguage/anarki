@@ -24,7 +24,7 @@
        (defarc arc-name scheme-name)))
     ((defarc arc-name scheme-name)
      (define (scheme-name . args)
-       
+
        ; The following 'parameterize has been added. See the note at
        ; 'arc-exec, below.
        ;
@@ -432,7 +432,7 @@
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
                      ((ac-defined-var? a) `(,(ac-global-name a) zz))
-                     
+
                      ; The following has been changed from
                      ; 'namespace-set-variable-value! to 'set!. See
                      ; the note at 'arc-exec, below.
@@ -487,7 +487,7 @@
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
           ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
-                
+
                 ; The following has been changed from using
                 ; 'namespace-variable-value to using 'arc-eval. See
                 ; the note at 'arc-exec, below.
@@ -507,7 +507,7 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-      
+
       ; The following has been changed from using
       ; 'namespace-variable-value to using 'bound? and 'arc-eval. See
       ; the note at 'arc-exec, below.
@@ -927,8 +927,8 @@
 
 (xdef writebytes (lambda (bs . args)
                    (write-bytes (list->bytes (ac-denil bs))
-                                (if (pair? args) 
-                                    (car args) 
+                                (if (pair? args)
+                                    (car args)
                                     (current-output-port)))
                    bs))
 
@@ -1218,7 +1218,7 @@
               (when interactive?
                 (arc-write (ac-denil val))
                 (newline))
-              
+
               ; The following 'parameterize has been added. See the
               ; note at 'arc-exec, above.
               ;

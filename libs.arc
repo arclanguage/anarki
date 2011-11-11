@@ -3,8 +3,6 @@
             "html.arc"
             "srv.arc"
             "app.arc"
-            "http.arc"
-            "dispatch.arc"
             "prompt.arc"))
 
 ; We define 'require here, rather than in a file in load/ so that things in

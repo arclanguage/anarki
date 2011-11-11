@@ -1,8 +1,8 @@
-; HTML Utils. 
+; HTML Utils.
 
 
 (def color (r g b)
-  (with (c (table) 
+  (with (c (table)
          f (fn (x) (if (< x 0) 0 (> x 255) 255 x)))
     (= (c 'r) (f r) (c 'g) (f g) (c 'b) (f b))
     c))
@@ -19,7 +19,7 @@
 
 (defmemo gray (n) (color n n n))
 
-(= white    (gray 255) 
+(= white    (gray 255)
    black    (gray 0)
    linkblue (color 0 0 190)
    orange   (color 255 102 0)
@@ -44,7 +44,7 @@
 (defmemo hexrep (col)
   (+ (hexreps (col 'r)) (hexreps (col 'g)) (hexreps (col 'b))))
 
-(def opcolor (key val) 
+(def opcolor (key val)
   (w/uniq gv
     `(whenlet ,gv ,val
        (pr ,(string " " key "=#") (hexrep ,gv)))))
@@ -73,10 +73,10 @@
 ; need to escape more?  =?
 
 (def pr-escaped (x)
-  (each c x 
-    (pr (case c #\<  "&#60;"  
-                #\>  "&#62;"  
-                #\"  "&#34;"  
+  (each c x
+    (pr (case c #\<  "&#60;"
+                #\>  "&#62;"
+                #\"  "&#34;"
                 #\&  "&#38;"
                 c))))
 
@@ -164,12 +164,12 @@
 
 
 (mac gentag args (start-tag args))
-     
+
 (mac tag (spec . body)
   `(do ,(start-tag spec)
        ,@body
        ,(end-tag spec)))
-     
+
 (mac tag-if (test spec . body)
   `(if ,test
        (tag ,spec ,@body)
@@ -192,13 +192,13 @@
 (def end-tag (spec)
   `(pr ,(string "</" (carif spec) ">")))
 
-(def literal (x) 
+(def literal (x)
   (case (type x)
     sym   (in x nil t)
     cons  (caris x 'quote)
           t))
 
-; Returns a list whose elements are either strings, which can 
+; Returns a list whose elements are either strings, which can
 ; simply be printed out, or expressions, which when evaluated
 ; generate output.
 
@@ -206,10 +206,10 @@
   (if (no options)
       '()
       (let ((opt val) . rest) options
-        (let meth (if (in opt 'style 'class) 
-	     	       opstring 
+        (let meth (if (in opt 'style 'class)
+	     	       opstring
 		      (is opt 'id)
-		       opsym 
+		       opsym
 		      (opmeth spec opt))
           (if meth
               (if val
@@ -221,11 +221,11 @@
               (cons (opstring opt val) (tag-options spec rest)))))))
 
 (def precomputable-tagopt (val)
-  (and (literal val) 
+  (and (literal val)
        (no (and (is (type val) 'string) (find #\@ val)))))
 
-(def br ((o n 1)) 
-  (repeat n (pr "<br>")) 
+(def br ((o n 1))
+  (repeat n (pr "<br>"))
   (prn))
 
 (def br2 () (prn "<br><br>"))
@@ -236,7 +236,7 @@
 (mac tr        body         `(tag tr ,@body))
 
 (let pratoms (fn (body)
-               (if (or (no body) 
+               (if (or (no body)
                        (all [and (acons _) (isnt (car _) 'quote)]
                             body))
                    body
@@ -253,7 +253,7 @@
 
 (mac prrow args
   (w/uniq g
-    `(tr ,@(map (fn (a) 
+    `(tr ,@(map (fn (a)
                   `(let ,g ,a
                      (if (number ,g)
                          (tdr (pr ,g))
@@ -262,7 +262,7 @@
 
 (mac prbold body `(tag b (pr ,@body)))
 
-(def para args 
+(def para args
   (gentag p)
   (when args (apply pr args)))
 
@@ -273,7 +273,7 @@
         (pr i)))))
 
 (mac whitepage body
-  `(tag html 
+  `(tag html
      (tag (body bgcolor white alink linkblue) ,@body)))
 
 (def errpage args (whitepage (apply prn args)))
@@ -288,7 +288,7 @@
 (def vspace (n)    (gentag img src (blank-url) height n width 0))
 (def vhspace (h w) (gentag img src (blank-url) height h width w))
 
-(mac new-hspace (n)    
+(mac new-hspace (n)
   (if (number n)
       `(pr ,(string "<span style=\"padding-left:" n "px\" />"))
       `(pr "<span style=\"padding-left:" ,n "px\" />")))
@@ -348,11 +348,11 @@
                        (if (isa ,gl 'cons)
                            (td (textarea ',name (car ,gl) (cadr ,gl)
                                  (let ,gt ,text (if ,gt (pr ,gt)))))
-                           (td (gentag input type ',(if (is label 'password) 
-                                                    'password 
+                           (td (gentag input type ',(if (is label 'password)
+                                                    'password
                                                     'text)
-                                         name ',name 
-                                         size ,len 
+                                         name ',name
+                                         size ,len
                                          value ,text)))))))
             (tuples args 4))))
 
@@ -363,14 +363,14 @@
   (submit btext))
 
 (mac cdata body
-  `(do (pr "<![CDATA[") 
+  `(do (pr "<![CDATA[")
        ,@body
        (pr "]]>")))
 
 (def eschtml (str)
-  (tostring 
+  (tostring
     (each c str
-      (pr (case c #\<  "&#60;" 
+      (pr (case c #\<  "&#60;"
                   #\>  "&#62;"
                   #\"  "&#34;"
                   #\'  "&#39;"
@@ -378,9 +378,9 @@
                         c)))))
 
 (def esc-tags (str)
-  (tostring 
+  (tostring
     (each c str
-      (pr (case c #\<  "&#60;" 
+      (pr (case c #\<  "&#60;"
                   #\>  "&#62;"
                   #\&  "&#38;"
                         c)))))
@@ -388,7 +388,7 @@
 (def nbsp () (pr "&nbsp;"))
 
 (def link (text (o dest text) (o color))
-  (tag (a href dest) 
+  (tag (a href dest)
     (tag-if color (font color color)
       (pr text))))
 

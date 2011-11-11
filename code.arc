@@ -16,7 +16,7 @@
   (treewise + (fn (x) 1) (readall (infile file))))
 
 (def code-density (file)
-  (/ (codetree file) (codelines file))) 
+  (/ (codetree file) (codelines file)))
 
 (def tokcount (files)
   (counts:mappend flat:readall:infile files))

@@ -9,20 +9,20 @@
 ; the Content-Type and then look for it.  Here's some
 ; sample output:
 ;
-; ... headers ... 
+; ... headers ...
 ; Content-Type: multipart/form-data; boundary=----WebKitFormBoundarysVQ7sAKHmOlv
 ; Content-Length: 200
 ; ... more headers ...
 ;
-; ------WebKitFormBoundarysVQ7sAKHmOlv 
-; Content-Disposition: form-data; name="name"; filename="test.txt" 
-; Content-Type: text/plain 
-; 
+; ------WebKitFormBoundarysVQ7sAKHmOlv
+; Content-Disposition: form-data; name="name"; filename="test.txt"
+; Content-Type: text/plain
+;
 ; A small
 ; 3 line
 ; test file.
-; 
-; ------WebKitFormBoundarysVQ7sAKHmOlv-- 
+;
+; ------WebKitFormBoundarysVQ7sAKHmOlv--
 ;
 ; Note that the final boundary an extra "--" at the beginning and
 ; at the end.

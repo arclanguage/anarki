@@ -363,7 +363,7 @@
           (map racket-stx
             '(#%top set! #%app #%datum quote define-syntax))
         embed [$.list app (cons datum (fn () _))])
-  
+
   (def rns-get (var (o rns current-rns))
     " Gets a variable from a Racket namespace by evaluating it in
       Racket. Actually, it's sent through Racket's 'expand-to-top-form
@@ -379,24 +379,24 @@
                           (no $.identifier-binding.expanded))
             ($.cons top expanded)
             expanded)))))
-  
+
   (def ns-get (var (o ns current-ns))
     " Gets a variable from a namespace by evaluating it in Racket.
       Actually, it's sent through Racket's 'expand-to-top-form so that
       we can use the core #%top form if necessary rather than relying
       on the namespace itself to have one. "
     (rns-get global-arcracket.var ns-arcracket.ns))
-  
+
   (def rns-set (var val (o rns current-rns))
     " Sets a variable in a Racket namespace using Racket's 'set!. "
     (let (var rns) (rep:rns-var var rns)
       (w/current-rns rns ($.arc-exec:$.list set var embed.val)))
     val)
-  
+
   (def ns-set (var val (o ns current-ns))
     " Sets a variable in a namespace using Racket's 'set!. "
     (rns-set global-arcracket.var val ns-arcracket.ns))
-  
+
   (def rns-ownspace-set (var val (o rns current-rns))
     " Sets a top-level variable in a Racket namespace without changing
       the corresponding identifier mapping to point to that
@@ -404,24 +404,24 @@
     (let (var rns) (rep:rns-var var rns)
       (($ namespace-set-variable-value!) var val scheme-f rnsify.rns))
     val)
-  
+
   (def ns-ownspace-set (var val (o ns current-ns))
     " Sets a top-level variable in a namespace without changing the
       corresponding identifier mapping to point to that variable. "
     (rns-ownspace-set global-arcracket.var val ns-arcracket.ns))
-  
+
   (def rns-set-own (var val (o rns current-rns))
     " Sets a top-level variable in a Racket namespace and changes the
       corresponding identifier mapping to point to that variable. "
     (let (var rns) (rep:rns-var var rns)
       (($ namespace-set-variable-value!) var val scheme-t rnsify.rns))
     val)
-  
+
   (def ns-set-own (var val (o ns current-ns))
     " Sets a top-level variable in a namespace and changes the
       corresponding identifier mapping to point to that variable. "
     (rns-set-own global-arcracket.var val ns-arcracket.ns))
-  
+
   (def rns-set-renamer (observing-var
                         canonical-var (o canonical-rns current-rns))
     " Changes an identifier mapping in a Racket namespace to point to
@@ -432,14 +432,14 @@
         (w/current-rns observing-rns
           ($.arc-exec:$.list
             define-syntax observing-var embed.transformer)))))
-  
+
   (def ns-set-renamer (observing-var
                        canonical-var (o canonical-ns current-ns))
     " Changes an identifier mapping in a namespace to point to a
       rename transformer. "
     (rns-set-renamer global-arcracket.observing-var
       global-arcracket.canonical-var ns-arcracket.canonical-ns))
-  
+
   (def rns-set-modecule (var modecule (o rns current-rns))
     (withs ((var rns) (rep:rns-var var rns)
             (mod modecule-var) rep.modecule
@@ -448,7 +448,7 @@
         ($.namespace-require:$.list 'rename
           path var global-arcracket.modecule-var)))
     modecule)
-  
+
   (def ns-set-modecule (var modecule (o ns current-ns))
     (rns-set-modecule global-arcracket.var modecule ns-arcracket.ns))
   )

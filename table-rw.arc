@@ -30,7 +30,7 @@
     (scheme.display " " s)
     (write v s))
   (scheme.display "}" s))
- 
+
 (def print-cdr (f x s)
   (if (no x)
        (scheme.display ")" s)

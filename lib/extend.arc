@@ -8,7 +8,7 @@
 ;    and I don't have time to debug them.
 ; 2009-08-20: Michael Arntzenius <daekharel@gmail.com>
 ;  + reloading the file will no longer wipe the extensions table.
-;  + refactored 'extend macro into a function 'extend-add, a function 
+;  + refactored 'extend macro into a function 'extend-add, a function
 ;    'extend-fn, a macro 'extend-ensure, and a macro 'extend.
 ;  + remove unnecessary let in 'extend-wrap's afn
 ;  + add 'extend-pull fn, 'unextend macro

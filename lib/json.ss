@@ -50,7 +50,7 @@
      (scheme:write json port)]
    [(symbol? json)
      (scheme:write (symbol->string json) port)]
-    [else (error 'json "bad json value: ~v" json)]))     
+    [else (error 'json "bad json value: ~v" json)]))
 
 ; arc data handlers
 
@@ -73,7 +73,7 @@
         (eq? x 'null)))
 
 (define (arc-boolean? x)
-  (or (eq? x 'true) 
+  (or (eq? x 'true)
       (eq? x 'false)
       (eq? x #t)
       (eq? x #f)))

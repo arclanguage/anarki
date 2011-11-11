@@ -13,8 +13,8 @@
 
 (def rand-mat dims
   (= dims (flat dims))
-  (if       
-   (no (cdr dims)) 
+  (if
+   (no (cdr dims))
         (n-of (car dims) (rand))
    (cdr dims)
         (n-of (car dims) (rand-mat (cdr dims))))
