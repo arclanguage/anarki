@@ -164,6 +164,10 @@
 Content-Type: text/html; charset=utf-8
 Connection: close")
 
+(= err-header* "HTTP/1.1 404 Not Found
+Content-Type: text/html; charset=utf-8
+Connection: close")
+
 (= type-header* (table))
 
 (def gen-type-header (ctype)
@@ -271,7 +275,7 @@ Connection: close"))
 
 (def respond-err (str msg . args)
   (w/stdout str
-    (prn header*)
+    (prn err-header*)
     (prn)
     (apply pr msg args)))
 
