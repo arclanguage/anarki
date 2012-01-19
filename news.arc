@@ -2252,7 +2252,7 @@ function vote(node) {
       (each s stories
         (tag item
           (let comurl (+ site-url* (item-url s!id))
-            (tag title    (pr (eschtml s!title)))
+            (tag title    (pr (eschtml s!title) " (" (sitename s!url) ")"))
             (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
             (tag comments (pr comurl))
             (tag description
