@@ -1,7 +1,7 @@
 ; Pretty-Printing.  Spun off 4 Aug 06.
 
 ; todo: indentation of long ifs; quasiquote, unquote, unquote-splicing
-           
+
 (= bodops* (fill-table (table)
    '(let 2 with 1 while 1 def 2 fn 1 rfn 2 afn 1
      when 1 unless 1 after 1 whilet 2 for 3 each 2 whenlet 2 awhen 1
@@ -11,7 +11,7 @@
 (= oneline* 35) ; print exprs less than this long on one line
 
 ; If returns nil, can assume it didn't have to break expr.
-  
+
 (def ppr (expr (o col 0) (o noindent nil))
   (if (or (atom expr) (dotted expr))
        (do (unless noindent (sp col))
@@ -43,7 +43,7 @@
          (nthcdr (+ n 1) expr)))
   (rpar)
   t)
-             
+
 (def ppr-call (expr col noindent)
   (lpar)
   (let carstr (tostring (write (car expr)))
@@ -56,7 +56,7 @@
                       (no broke)))
             t)
         (do (rpar) t))))
-       
+
 (def pprest (exprs col (o oneline t))
   (if (and oneline
            (all (fn (e)
@@ -68,12 +68,12 @@
       (do (when exprs
             (each e exprs (prn) (ppr e col)))
           (rpar))))
-                
+
 (def write-spaced (xs)
   (when xs
     (write (car xs))
     (each x (cdr xs) (pr " ") (write x))))
-  
+
 (def sp ((o n 1)) (repeat n (pr " ")))
 (def lpar () (pr "("))
 (def rpar () (pr ")"))

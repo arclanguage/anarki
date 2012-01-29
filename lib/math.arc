@@ -5,7 +5,7 @@
 
 ;;should this be in util.arc?
 (mac iterators (its . body)
-  "its is a list of (var max) tuples which are iterated over eg (iterators ((x 1)(y 3)) (pr x)(prn y)) -> 
+  "its is a list of (var max) tuples which are iterated over eg (iterators ((x 1)(y 3)) (pr x)(prn y)) ->
 00
 01
 02
@@ -14,7 +14,7 @@
 11
 12
 13"
-  (if car.its 
+  (if car.its
       (if (> cadar.its 0)
 	  `(for ,(caar its) 0 ,(cadar its)
 		(iterators ,(cdr its) ,@body))
@@ -36,7 +36,7 @@
       (let rec (afn (M r)
 		 (if (atom car.M) r
 		     (self car.M (+ r 1))))
-	(rec mat 1))))  
+	(rec mat 1))))
 
 (def zeros dims
   (init-matrix dims 0))
@@ -46,7 +46,7 @@
 
 (mac elt (mat pos)
   "access the element of the matix given by co-ords listed in pos"
-  (if (cdr pos) 
+  (if (cdr pos)
       `(elt (,mat ,(last pos)) ,(butlast pos))
       `(,mat ,(car pos))))
 
@@ -73,7 +73,7 @@
 		   (map (fn (tp) (self:map [cons (butlast car._) cdr._] tp))            ;
 			    (tuples (sort (fn (x y) (< (last car.x) (last car.y))) lis) ; if there is more than one index: collect into tuples of the rightmost index and list the answers of rec on each tuple
 				    (len:keep [is (last car._) 0] lis)))))              ;
-	 
+
 	 (rec key-val-lis))))
 
 (def matrix-minor (mat indices (o table? t))
@@ -97,9 +97,9 @@
   (if (and (is (car  mat!dims) 1)
 	   (is (cadr mat!dims) 1))
        (mat '(0 0))
-       (let ans 0 
+       (let ans 0
 	    (for i 0 (- (car mat!dims) 1)
-		 (++ ans (* (mat (list 0 i)) 
+		 (++ ans (* (mat (list 0 i))
 			    (expt -1 i) (det:matrix-minor mat (list 0 i)))))
 	    ans)))
 
@@ -133,7 +133,7 @@ mat_10*x_0 + mat_11*x_1 ... mat_1n*x_n = rhs_1
 ...
 mat_n0*x_0 + mat_n1*x_1 ... mat_nn*x_n = rhs_n
 
-using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)" 
+using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)"
   (zap flat rhs)
   (if (acons mat) (zap mat-to-table mat)) ;assumes if using list-of-lists representation of matrices you arent worried about efficiency and so wont mind inline conversion
   (withs (MAX 0
@@ -144,7 +144,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
       (let M (copy mat)
 	   (for i 0 (- N 1)
 		(= (M (list N i)) rhs.i))
-	   ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients 
+	   ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients
 	   (loop (= i 0) (< i N) (++ i)
 	      (= MAX i)
 	      (loop (= j (+ i 1)) (< j N) (++ j)
@@ -256,7 +256,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 		   b
 		   (let half (+ lower (/ (- upper lower) 2))
 			(+ (self lower half tol) (self half upper tol))))))))
- 
+
 
 
 ; vector fns
@@ -274,11 +274,11 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 	     (map (fn (x y) (+ x y)) v1 v2))
        v- (fn (v1 v2)
 	     (map (fn (x y) (- x y)) v1 v2)))
-  
+
   (def vec+ (v1 . args)
     (if no.args v1
 	(reduce v+ (cons v1 args))))
-  
+
   (def vec- (v1 . args)
     (if no.args (map [- _] v1)
 	(v- v1 (apply vec+ args))))
@@ -294,7 +294,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
      (if no.xs sqrt.tot
 	 (self (+ tot (expt car.xs 2)) cdr.xs)))
    0 args))
-    
+
 (def vec-norm (vec)
   (vec-scale vec (/:apply quad-add vec)))
 
@@ -330,15 +330,15 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 
 (def gauss-random (sigma (o mu 0))
   "gausian distributed random with width sigma around mu"
-  (withs (u (rand) 
-	  v (* 1.7156 (- (rand) 0.5)) 
+  (withs (u (rand)
+	  v (* 1.7156 (- (rand) 0.5))
 	  x (- u 0.449871)
 	  y (+ abs.v 0.386595)
 	  q (+ (* x x) (* y (- (* 0.196 y) (* 0.25472 x)))))
 	(while (and (> q 0.27597)
 		    (or (> q 0.27846) (> (* v v) (* -4 log.u u u))))
-	  (= u (rand) 
-	     v (* 1.7156 (- (rand) 0.5)) 
+	  (= u (rand)
+	     v (* 1.7156 (- (rand) 0.5))
 	     x (- u 0.449871)
 	     y (+ abs.v 0.386595)
 	     q (+ (* x x) (* y (- (* 0.196 y) (* 0.25472 x))))))
@@ -395,7 +395,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 (def Jn-bessel (n (o terms 100))
   "gives a fn for the nth bessel function of the first kind evaluated at x"
   (fn (x)
-    (with (i 0 
+    (with (i 0
 	   tot 0)
       (while (< i terms)
 	     (++ tot (/ (* (expt -1 i) (expt (/ x 2) (+ n i i)))
@@ -415,8 +415,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 (def In-bessel (n (o terms 100))
   "gives a function for the nth modified bessel function of the first kind"
   (let J(Jn-bessel n terms)
-     (fn (x) 
-	 (* (expt -i n) 
+     (fn (x)
+	 (* (expt -i n)
 	    (J:* i x) terms))))
 
 (def Kn-bessel (n (o terms 100))
@@ -490,7 +490,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 
 (def poisson-dist (lambda)
   "returns a function for the probability of k discrete, uncorrelated events occuring in a time where the mean expected events is lambda"
-  (fn (k) 
+  (fn (k)
       (if (or (< k 0) (no:isa k 'int)) (err "k in poisson dist must be a non-negative integer"))
       (* (/ (expt lambda k) fact.k) (e^ (- lambda)))))
 

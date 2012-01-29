@@ -74,13 +74,13 @@
 
 (def pyustr (s)
   (lcode (prpyustr s)))
-      
+
 (def lstr (x)
   ((case lang*
      perl   plstr
      python pyustr)
    x))
-     
+
 (def prpllist (lst)
   (pr #\[)
   (between x lst (pr ",") (prpl x))
@@ -160,7 +160,7 @@
         python 50002))
 
 (def open-lang-control-socket ()
-  (thread 
+  (thread
    (let s (open-socket lang-control-port*)
      (xloop ()
        (socket-accept s)
@@ -281,7 +281,7 @@ sub eval2arc {
 }
 ”)))
 
-   
+
 (= python2arc* (tostring (w/lang 'python “
 from sys import exc_info, stderr
 import traceback
@@ -324,7 +324,7 @@ def arcstr(x):
     if isinstance(x, str):
         return arcval(strarcstr(x))
     elif isinstance(x, unicode):
-        return arcval(ustrarcstr(x))    
+        return arcval(ustrarcstr(x))
     else:
         return arcval(strarcstr(repr(x)))
 
@@ -339,7 +339,7 @@ def arclist(x):
 
 def toarclist(x):
     return "(" + " ".join(map(toarc, x)) + ")"
-    
+
 def toarctab(x):
     return ("{" +
             " ".join(map(lambda (k, v): toarc(k) + " " + toarc(v),
@@ -537,7 +537,7 @@ reactor.run()
      (postform (string "http://localhost:" lang-listen-port*.lang "/")
                `((code ,program))
                (fn (r i) (read i))))))
-                   
+
 (def launch-lang (lang)
   (atomic-lock launch-locks*.lang
     (unless lang-launched*.lang
@@ -563,7 +563,7 @@ reactor.run()
 (mac langex (lang . body)
   `(do (w/lang ',lang ,@body)
        (prn)))
-  
+
 (def lang-check-error (lang program result)
   (when (and (isa result 'table) (result lang-error-key*))
     (disp (string "\n" lang " error:\n") (stderr))
@@ -577,7 +577,7 @@ reactor.run()
   (lang-check-error lang program
     (let s (fromstring (tostring ((lang-subprocess-code* lang) program))
              (pipe-from lang-command*.lang))
-      (after (read s) (close s)))))  
+      (after (read s) (close s)))))
 
 (def singlethread (lang program)
   (launch-lang lang)

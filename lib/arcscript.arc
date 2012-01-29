@@ -16,8 +16,8 @@
 		    (= lowercase (no lowercase))
 		    (posmatch (string c) "!?#@%+*/=:<>")
 		    (pr ('("bang" "what" "hash" "at" "percent" "plus" "star" "slash" "equals" "colon" "lessthan" "greaterthan") it))
-		    (do 
-		      (pr (if (and lowercase (no all-uppercase)) 
+		    (do
+		      (pr (if (and lowercase (no all-uppercase))
 			      (downcase c)
 			      (upcase c)))
 		      (= lowercase t)))))))
@@ -106,7 +106,7 @@
 		(js:?)
 		(= *= /= %= += -= <<= >>= >>>= &= ^= \|=)
 		(comma))
-    (map 
+    (map
       (fn (op)
 	(= (precedence-table op) i))
       level)
@@ -284,7 +284,7 @@
 
 ; XXX was macrolet
 (mac def-unary-ops ops
-  `(do 
+  `(do
      ,@(map
 	 (fn (op)
 	   (with (op (if (acons op) (car op) op)

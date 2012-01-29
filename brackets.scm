@@ -1,12 +1,12 @@
 ; From Eli Barzilay, eli@barzilay.org
 
-;> (require "brackets.scm") 
-;> (use-bracket-readtable) 
-;> ([+ _ 1] 10) 
+;> (require "brackets.scm")
+;> (use-bracket-readtable)
+;> ([+ _ 1] 10)
 ;11
 
 (module brackets mzscheme
-  
+
 ; main reader function for []s
 ; recursive read starts with default readtable's [ parser,
 ; but nested reads still use the curent readtable:
@@ -14,21 +14,21 @@
 (define (read-square-brackets ch port src line col pos)
   `(make-br-fn
      ,(read/recursive port #\[ #f)))
-  
+
 ; a readtable that is just like the builtin except for []s
 
 (define bracket-readtable
   (make-readtable #f #\[ 'terminating-macro read-square-brackets))
-  
+
 ; call this to set the global readtable
 
 (provide use-bracket-readtable)
 
 (define (use-bracket-readtable)
   (current-readtable bracket-readtable))
-  
+
 ; these two implement the required functionality for #reader
-    
+
 ;(define (*read inp)
 ;  (parameterize ((current-readtable bracket-readtable))
 ;    (read inp)))

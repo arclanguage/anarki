@@ -2,7 +2,7 @@
 
 (= appdir* "arc/apps/")
 
-(defop prompt req 
+(defop prompt req
   (let user (get-user req)
     (if (admin user)
         (prompt-page user)
@@ -33,17 +33,17 @@
                     (prompt-page user "Bad name."))))
        (tab (row "name:" (input "app") (submit "create app"))))))
 
-(def app-path (user app) 
+(def app-path (user app)
   (and user app (+ appdir* user "/" app)))
 
 (def read-app (user app)
-  (aand (app-path user app) 
+  (aand (app-path user app)
         (file-exists it)
         (readfile it)))
 
 (def write-app (user app exprs)
   (awhen (app-path user app)
-    (w/outfile o it 
+    (w/outfile o it
       (each e exprs (write e o)))))
 
 (def rem-app (user app)
@@ -70,9 +70,9 @@
       (br2)
       (buts 'cmd "save" "cancel"))))
 
-(def pprcode (exprs) 
+(def pprcode (exprs)
   (each e exprs
-    (ppr e) 
+    (ppr e)
     (pr "\n\n")))
 
 (def view-app (user app)
@@ -83,7 +83,7 @@
 
 (def run-app (user app)
   (let exprs (read-app user app)
-    (if exprs 
+    (if exprs
         (on-err (fn (c) (pr "Error: " (details c)))
           (fn () (map eval exprs)))
         (prompt-page user "Error: No application " app " for user " user))))
@@ -100,14 +100,14 @@
     (repl (readall (or (arg req "expr") "")) "repl")))
 
 (def repl (exprs url)
-    (each expr exprs 
+    (each expr exprs
       (on-err (fn (c) (push (list expr c t) repl-history*))
-              (fn () 
+              (fn ()
                 (= that (eval expr) thatexpr expr)
                 (push (list expr that) repl-history*))))
     (form url
       (textarea "expr" 8 60)
-      (sp) 
+      (sp)
       (submit))
     (tag xmp
       (each (expr val err) (firstn 20 repl-history*)
