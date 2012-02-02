@@ -1389,9 +1389,7 @@
   (w/infile i file (temread tem i)))
 
 (def temloadall (tem file)
-  (map (fn (pairs) (templatize tem pairs))
-       (w/infile in file (readall in))))
-
+  (w/infile i file (drain:temread tem i)))
 
 (def number (n) (in (type n) 'int 'num))
 
