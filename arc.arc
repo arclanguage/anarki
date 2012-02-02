@@ -1391,6 +1391,15 @@
 (def temloadall (tem file)
   (w/infile i file (drain:temread tem i)))
 
+(def temstore(tem val file)
+  (let fields (coerce val 'list)
+    (each (k v) (if acons.tem
+                  tem
+                  templates*.tem)
+      (if (~assoc k fields)
+        (push (list k nil) fields)))
+    (writefile fields file)))
+
 (def number (n) (in (type n) 'int 'num))
 
 (def since (t1) (- (seconds) t1))
