@@ -1371,7 +1371,9 @@
 ; To write something to be read by temread, (write (tablist x))
 
 (def temread (tem (o str (stdin)))
-  (templatize tem (read str)))
+  (let x (read str 'eof)
+    (if (~is 'eof x)
+      (templatize tem x))))
 
 ; Converts alist to inst; ugly; maybe should make this part of coerce.
 ; Note: discards fields not defined by the template.
