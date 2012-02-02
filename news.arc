@@ -132,7 +132,7 @@
 
 (def save-votes (u) (save-table (votes* u) (+ votedir* u)))
 
-(def save-prof  (u) (save-table (profs* u) (+ profdir* u)))
+(def save-prof  (u) (temstore 'profile (profs* u) (+ profdir* u)))
 
 (mac uvar (u k) `((profile ,u) ',k))
 
@@ -232,7 +232,7 @@
 
 (def live (i) (nor i!dead i!deleted))
 
-(def save-item (i) (save-table i (+ storydir* i!id)))
+(def save-item (i) (temstore 'item i (+ storydir* i!id)))
 
 (def kill (i how)
   (unless i!dead
