@@ -8,4 +8,4 @@ elif [ "$(type rlwrap)" ]; then
     rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
 fi
 
-$rl racket -f as.scm $@
+$rl racket -f $arc_dir/as.scm $@
