@@ -28,26 +28,30 @@
 (def temloadall (tem file)
   (w/infile i file (drain:temread tem i)))
 
-(def temstore(tem val file)
-  (let fields (coerce val 'cons)
-    (each (k v) (if acons.tem
-                  tem
-                  templates*.tem)
-      (if (~assoc k fields)
-        (push (list k nil) fields)))
-    (writefile fields file)))
+(def temstore (tem val file)
+  (writefile (temlist tem val) file))
 
 (def temread (tem (o str (stdin)))
   (let x (read str 'eof)
     (if (~is 'eof x)
-      (templatize tem x))))
+      (listtem tem x))))
 
-; Converts alist to inst; ugly; maybe should make this part of coerce.
-; Note: discards fields not defined by the template.
+(def temwrite (tem val (o o (stdout)))
+  (write (temlist tem val) o))
 
-(def templatize (tem raw)
+; like coerce, but requires a template and ignores unknown fields
+(def listtem (tem raw)
   (with (x (inst tem) fields (if (acons tem) tem (templates* tem)))
     (each (k v) raw
       (when (assoc k fields)
         (= (x k) v)))
     x))
+
+; like tablist, but include nil fields
+(def temlist (tem val)
+  (ret fields (coerce val 'cons)
+    (each (k v) (if acons.tem
+                  tem
+                  templates*.tem)
+      (if (~assoc k fields)
+        (push (list k nil) fields)))))
