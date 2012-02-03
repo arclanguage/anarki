@@ -54,7 +54,6 @@
   (write (temlist tem val) o))
 
 ; coerce alist to a specific template
-; ignores unknown fields
 (def listtem (tem fields)
   (apply inst tem (apply + fields)))
 
