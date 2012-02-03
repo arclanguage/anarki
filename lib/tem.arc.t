@@ -23,6 +23,10 @@
   '((field1 nil))
   (temlist 'foo (inst 'foo 'field1 nil)))
 
+(test-iso "listtem DOES NOT ignore unknown fields"
+  (inst 'foo 'new-field 34)
+  (listtem 'foo '((new-field 34))))
+
 (test-iso "temlist and listtem are converses"
   (inst 'foo 'field1 34)
   (listtem 'foo (temlist 'foo (inst 'foo 'field1 34))))
