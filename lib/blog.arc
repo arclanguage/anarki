@@ -1,7 +1,7 @@
 ; Blog tool example.  20 Jan 08, rev 21 May 09.
 
 ; To run:
-; arc> (load "blog.arc")
+; arc> (load "lib/blog.arc")
 ; arc> (bsv)
 ; go to http://localhost:8080/blog
 
@@ -91,5 +91,3 @@
   (ensure-dir postdir*)
   (load-posts)
   (asv))
-
-

@@ -1,5 +1,3 @@
-(require "lib/arctap.arc")
-
 (test-iso "split-by works"
   '("abc" "d")
   (split-by "#" "abc#d"))

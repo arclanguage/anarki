@@ -1,4 +1,3 @@
-(require "lib/util.arc")
 (require "lib/thread-cell.arc")
 
 (mac with* (parms . body)

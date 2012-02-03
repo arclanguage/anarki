@@ -1,6 +1,6 @@
 ; originally from http://awwx.ws/binary1.arc
 
-(load "lib/scheme.arc")
+(require "lib/scheme.arc")
 
 (extend type (x) (scheme.bytes? x)
   'binary)

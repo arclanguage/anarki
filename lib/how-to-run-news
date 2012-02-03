@@ -1,18 +1,6 @@
-To run News:
+To run News, at the arc prompt:
 
-tar xvf arc3.1.tar
-
-cd arc3.1
-
-mkdir arc
-
-echo "myname" > arc/admins
-
-mzscheme -f as.scm
-
-at the arc prompt:
-
-(load "news.arc")
+(load "lib/news.arc")
 
 (nsv)
 

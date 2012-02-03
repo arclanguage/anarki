@@ -1,10 +1,8 @@
 ; originally from http://awwx.ws/lang2.arc
 
-(load "table-rw.arc")
-(load "lib/template.arc")
-(load "lib/template.arc")
-(load "lib/re.arc")
-(load "lib/lock.arc")
+(require "lib/template.arc")
+(require "lib/re.arc")
+(require "lib/lock.arc")
 
 (implicit lang*)
 

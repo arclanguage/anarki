@@ -1,9 +1,8 @@
 ; taken from http://awwx.ws/table-rw3.arc with slight modifications
 ; - Mark Huetsch
 
-(load "lib/scheme.arc")
-(load "lib/util.arc")
-(load "lib/skipwhite.arc")
+(require "lib/scheme.arc")
+(require "lib/skipwhite.arc")
 
 (def parse-table-items (port (o acc (table)))
   (scheme.skip-whitespace port)

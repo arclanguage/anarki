@@ -6,8 +6,7 @@
                        (ar-init-socket
                          (lambda () (ssl-connect host port))))))
 
-(load "lib/re.arc")
-(load "lib/util.arc")
+(require "lib/re.arc")
 
 (def parse-server-cookies (s)
   (map [map trim _]

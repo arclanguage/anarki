@@ -1,20 +1,7 @@
-Anarki: a fork of PG's and RTM's Arc Lisp
+Anarki: a publicly modifiable fork of PG's and RTM's Arc Lisp (http://www.paulgraham.com/arc.html)
 
-Anarki is a publically modifiable fork of Paul Graham's and Robert Morris's
-project to create a modern lisp for hackers. Anarki is currently forked
-from Arc 3.1 and can run on top of the latest PLT (Racket) Scheme, instead
-of the severely out-dated mzscheme 372.
+To run, install Racket from http://racket-lang.org, then run arc.sh
 
-To install:
+If you run into trouble: http://sites.google.com/site/arclanguagewiki
 
-* `git clone git://git.racket-lang.org/plt`
-* Follow the install instructions in `$plt-install-dir/src/README`
-* Add `$plt-install-dir/bin/mzscheme` to your `$PATH`
-* `git clone git@github.com:nex3/arc.git`
-* `cd arc`
-* `./arc.sh`
-
-To find out more about Arc in general, see Paul Graham's writings at
-http://www.paulgraham.com/arc.html. Information about various implementations
-and gotchas is at http://sites.google.com/site/arclanguagewiki, and the arc
-forum is at http://arclanguage.org/forum
+To run the HN server: lib/how-to-run-news

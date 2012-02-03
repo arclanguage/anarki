@@ -1,8 +1,6 @@
 ; I haven't thought deeply enough about the proper semantics here, so please
 ; don't rely on this library. - rntz <daekharel@gmail.com> (2010-01-01)
 
-(require "lib/util.arc")
-
 ; simpler than point and robust against changes in it, given that 'point
 ; indicates that the form it produces must only be used as an escape procedure.
 (mac lcc (var . body)
