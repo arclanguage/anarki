@@ -14,13 +14,27 @@
                           (pair fields)))
              (templates* ',name))))
 
-(def inst (tem . args)
-  (let x (table)
-    (each (k v) (if (acons tem) tem (templates* tem))
-      (unless (no v) (= (x k) (v))))
-    (each (k v) (pair args)
-      (= (x k) v))
-    x))
+; (tagged 'tem (tem-type fields nils))
+(def inst (tem-type . args)
+  (annotate 'tem (list tem-type
+                       (coerce pair.args 'table)
+                       (memtable (map car (keep no:cadr pair.args))))))
+
+(extend sref (tem v k) (isa tem 'tem)
+  (sref rep.tem.1 v k)
+  (if v
+    (wipe rep.tem.2.k)
+    (set rep.tem.2.k)))
+
+(defcall tem (tem k)
+  (or rep.tem.1.k
+      (if (no rep.tem.2.k)
+        ((alref (templates* rep.tem.0) k)))))
+
+(defmethod iso(a b) tem
+  (and (isa a 'tem)
+       (isa b 'tem)
+       (iso rep.a rep.b)))
 
 (def temload (tem file)
   (w/infile i file (temread tem i)))
@@ -32,24 +46,21 @@
   (writefile (temlist tem val) file))
 
 (def temread (tem (o str (stdin)))
-  (let x (read str 'eof)
-    (if (~is 'eof x)
-      (listtem tem x))))
+  (let fields (read str 'eof)
+    (if (~is 'eof fields)
+      (listtem tem fields))))
 
 (def temwrite (tem val (o o (stdout)))
   (write (temlist tem val) o))
 
-; like coerce, but requires a template and ignores unknown fields
-(def listtem (tem raw)
-  (with (x (inst tem) fields (if (acons tem) tem (templates* tem)))
-    (each (k v) raw
-      (when (assoc k fields)
-        (= (x k) v)))
-    x))
+; coerce alist to a specific template
+; ignores unknown fields
+(def listtem (tem fields)
+  (apply inst tem (apply + fields)))
 
 ; like tablist, but include nil fields
 (def temlist (tem val)
-  (ret fields (coerce val 'cons)
+  (ret fields (coerce rep.val.1 'cons)
     (each (k v) (if acons.tem
                   tem
                   templates*.tem)

@@ -23,10 +23,6 @@
   '((field1 nil))
   (temlist 'foo (inst 'foo 'field1 nil)))
 
-(test-iso "listtem ignores unknown fields"
-  (inst 'foo)
-  (listtem 'foo '((new-field 34))))
-
 (test-iso "temlist and listtem are converses"
   (inst 'foo 'field1 34)
   (listtem 'foo (temlist 'foo (inst 'foo 'field1 34))))
@@ -37,3 +33,24 @@
                   (temwrite 'foo (inst 'foo 'field1 34) o)
                   (inside o))
     (temread 'foo i)))
+
+(test-iso "temread and temwrite are converses - 2"
+  (inst 'foo 'field1 nil)
+  (w/instring i (w/outstring o
+                  (temwrite 'foo (inst 'foo 'field1 nil) o)
+                  (inside o))
+    (temread 'foo i)))
+
+(test-iso "nil in file overwrites default"
+  nil
+  (w/instring i (w/outstring o
+                  (temwrite 'foo (inst 'foo 'field1 nil) o)
+                  (inside o))
+    ((temread 'foo i) 'field1)))
+
+(test-iso "templates can distinguish explicit defaults from implicit defaults"
+  (obj field1 'default)
+  (let tem (inst 'foo)
+    (= tem!field1 34)
+    (= tem!field1 'default) ; explicit set
+    rep.tem.1))
