@@ -1785,10 +1785,13 @@
     `(defcoerce fn ,type-name (,fnobj)
        (fn ,args (apply (fn ,parms ,@body) ,fnobj ,args)))))
 
-(defcoerce list table (h)
+(defcoerce cons table (h)
   (tablist h))
 
-(defcoerce table list (al)
+(defcoerce table sym (x) ; only for nil
+  (table))
+
+(defcoerce table cons (al)
   (listtab al))
 
 (= hooks* (table))
