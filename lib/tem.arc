@@ -29,7 +29,7 @@
   (w/infile i file (drain:temread tem i)))
 
 (def temstore(tem val file)
-  (let fields (coerce val 'list)
+  (let fields (coerce val 'cons)
     (each (k v) (if acons.tem
                   tem
                   templates*.tem)
