@@ -1,4 +1,5 @@
 (map load '("strings.arc"
+            "lib/extend.arc"
             "lib/tem.arc"
             "code.arc"
             "html.arc"

@@ -50,9 +50,6 @@
 ; 'arc-exec in ac.scm for more details about how this helps.
 
 
-(require "lib/extend.arc")
-
-
 (extend type (x) $.namespace?.x
   'rns)
 

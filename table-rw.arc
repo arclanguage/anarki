@@ -1,7 +1,6 @@
 ; taken from http://awwx.ws/table-rw3.arc with slight modifications
 ; - Mark Huetsch
 
-(load "lib/extend.arc")
 (load "lib/scheme.arc")
 (load "lib/util.arc")
 (load "lib/skipwhite.arc")

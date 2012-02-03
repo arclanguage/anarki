@@ -1,6 +1,5 @@
 (require "lib/util.arc")
 (require "lib/math.arc")
-(require "lib/extend.arc")
 
 ; statistics. 10 Oct 2010.
 ; Ali Moeeny
