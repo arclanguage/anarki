@@ -126,9 +126,9 @@
 (def ppr-main (x (o col 0) (o noindent nil))
   " Recursive main body of the ppr function. "
   (aif (or atom.x dotted.x)		;just print the expression if it's an atom or dotted list
-       (do (unless noindent sp.col)
-	   print.x
-	   nil)
+         (do (unless noindent sp.col)
+             print.x
+             nil)
        (is car.x 'make-br-fn)		;if the expression is a br-fn, print the brackets and then the contents
          (ppr-sub
 	   (pr "[")
