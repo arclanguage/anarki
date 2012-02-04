@@ -3,9 +3,7 @@
 ; Ross Angle (rocketnia) 2011
 
 
-(unless bound!symize (= symize sym:string))
 (require "lib/ns.arc")
-(require "lib/arctap.arc")
 
 
 ; Namespace tests

@@ -15,7 +15,7 @@
            (prn "1.." num)))
 
 (mac def-test-fn(fn-name)
-  `(def ,(symize "test-" fn-name) (msg expected got)
+  `(def ,(sym:string "test-" fn-name) (msg expected got)
      (with (verdict (ok (,fn-name expected got) msg))
        (if verdict
          t

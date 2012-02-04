@@ -1,7 +1,5 @@
 ; originally from http://awwx.ws/template5.arc
 
-(load "lib/util.arc")
-
 (implicit guillemet pr)
 
 ; turn adjacent characters into a string

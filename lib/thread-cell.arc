@@ -1,6 +1,3 @@
-(require "lib/util.arc")
-(require "lib/extend.arc")
-
 (def thread-cell ((o init-val))
   " Creates a thread-local storage cell with initial value `init-val'.
     Mutating a cell in one thread does not affect its value in others.
