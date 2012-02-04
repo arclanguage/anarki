@@ -25,6 +25,6 @@
 (mac make-br-fn (body)
   (withs (astab (counts:-mbf-argsyms body)
           args  (awhen astab!__ (wipe astab!__) '__))
-    (each s (sort > (if (or args keys.astab) keys.astab '(_)))
+    (each s (sort > keys.astab)
       (push s args))
     `(fn ,args ,body)))
