@@ -885,11 +885,18 @@
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
 ; encapsulate eof management
+(def ifread-fn (port then else)
+  (withs (eof list.nil          ; a unique value
+          val (read port eof))
+   (if (is eof val)
+     (else)
+     then.val)))
+
+(mac ifread (var port then (o else))
+  `(ifread-fn ,port (fn (,var) ,then) (fn () ,else)))
+
 (mac reading (var port . body)
-  (w/uniq eof
-    `(let ,var (read ,port ',eof)
-       (if (~is ',eof ,var)
-         ,@body))))
+  `(ifread ,var ,port (do ,@body)))
 
 ; inconsistency between names of readfile[1] and writefile
 
