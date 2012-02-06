@@ -884,6 +884,13 @@
 (def read ((o x (stdin)) (o eof nil))
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
+; encapsulate eof management
+(mac reading (var port . body)
+  (w/uniq eof
+    `(let ,var (read ,port ',eof)
+       (if (~is ',eof ,var)
+         ,@body))))
+
 ; inconsistency between names of readfile[1] and writefile
 
 (def readfile (name) (w/infile s name (drain (read s))))

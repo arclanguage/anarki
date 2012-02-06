@@ -46,9 +46,8 @@
   (writefile (temlist tem val) file))
 
 (def temread (tem (o str (stdin)))
-  (let fields (read str 'eof)
-    (if (~is 'eof fields)
-      (listtem tem fields))))
+  (reading fields str
+    (listtem tem fields)))
 
 (def temwrite (tem val (o o (stdout)))
   (write (temlist tem val) o))
