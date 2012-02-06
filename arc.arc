@@ -893,7 +893,7 @@
 
 ; inconsistency between names of readfile[1] and writefile
 
-(def readfile (name) (w/infile s name (drain (read s))))
+(def readfile (name) (w/infile s name (drain:read s)))
 
 (def readfile1 (name) (w/infile s name (read s)))
 
