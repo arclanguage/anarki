@@ -1,5 +1,5 @@
-; re started by Mark Huetsch
-; some of this code is lifted (with slight modifications) from Andrew Wilson's site (http://awwx.ws/re2.arc)
+; by Mark Huetsch
+; some code lifted (with slight modifications) from http://awwx.ws/re2.arc
 
 (def re-match-pat (pat str)
   (ac-niltree ($.regexp-match ($.pregexp pat) str)))

@@ -1,5 +1,4 @@
-; by twilightsentry <twilightsentry@gmail.com>
-; refactored from arc.arc into load/declare.arc by Michael Arntzenius <daekharel@gmail.com>
+; by twilightsentry@gmail.com
 
 (= declare-fns* (table))
 

@@ -1,14 +1,10 @@
-; place in own library to abide by the LGPL
-;
-; skip-whitespace is copied from
-; http://download.plt-scheme.org/doc/352/html/mzscheme/mzscheme-Z-H-11.html#node_sec_11.2.8
-; which has the following licence:
-;
 ; Copyright ©1995-2006 Matthew Flatt
 ;
-; Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Library General Public License, Version 2 published by the Free Software Foundation.
+; Permission is granted to copy, distribute and/or modify this document under
+; the terms of the GNU Library General Public License, Version 2 published by
+; the Free Software Foundation.
 ;
-; [ ] in source changed to ( ) to avoid conflict with brackets.scm
+; http://download.plt-scheme.org/doc/352/html/mzscheme/mzscheme-Z-H-11.html#node_sec_11.2.8
 
 ($:define (skip-whitespace port)
   ;; Skips whitespace characters, sensitive to the current

@@ -226,8 +226,6 @@
   (aif cdr.body `(let it ,car.body (ado ,@it))
        car.body))
 
-; now that pg has renamed 'assert to 'set, we're free to use it in its more
-; conventional sense
 (mac assert (exp (o msg (+ "Assertion failed: "
                            (tostring:ppr exp (len "Assertion failed: ") t))))
   " Errors with `msg' if `exp' evaluates to nil. "

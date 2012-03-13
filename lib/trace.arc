@@ -1,5 +1,4 @@
-; written by fallintothis
-; stolen from from http://bitbucket.org/fallintothis/trace/src/tip/trace.arc
+; from http://bitbucket.org/fallintothis/trace/src/tip/trace.arc
 
 ; function & macro tracing
 
