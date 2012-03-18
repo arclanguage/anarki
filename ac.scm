@@ -942,7 +942,7 @@
       (flush-output port)))
   'nil)
 
-(defarc write (arc-write . args) (printwith write args))
+(xdef swrite (lambda args (printwith write args)))
 (xdef disp  (lambda args (printwith display args)))
 
 ; sread = scheme read. eventually replace by writing read
@@ -1216,7 +1216,7 @@
             'done
             (let ((val (arc-eval expr)))
               (when interactive?
-                (arc-write (ac-denil val))
+                (write (ac-denil val))
                 (newline))
 
               ; The following 'parameterize has been added. See the

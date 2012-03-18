@@ -8,7 +8,7 @@
 ; add sigs of ops defined in ac.scm
 ; get hold of error types within arc
 ; does macex have to be defined in scheme instead of using def below?
-; write disp, read, write in arc
+; write disp in arc
 ; could I get all of macros up into arc.arc?
 ; warn when shadow a global name
 ; some simple regexp/parsing plan
@@ -1807,6 +1807,56 @@
 
 (defcoerce table cons (al)
   (listtab al))
+
+
+
+(defgeneric serialize (x)
+  x)
+
+(defmethod serialize (x) string
+  x)
+
+(defmethod serialize (x) cons
+  (map serialize x))
+
+(defmethod serialize (x) table
+  (list 'table
+    (accum a
+      (maptable (fn (k v)
+                  (a (list k serialize.v)))
+                x))))
+
+; can't use defgeneric; everything is likely a list when serialized
+(or= vtables*!unserialize (table))
+(def unserialize (x)
+  (aif (vtables*!unserialize type*.x)   (it x)
+    (acons x)   (cons (unserialize car.x)
+                      (unserialize cdr.x))
+                x))
+
+(def type* (x)
+  (if (and (pair? x)
+           (isa car.x 'sym))
+    car.x
+    type.x))
+
+(def pair? (l)
+  (and (acons l)
+       (acons:cdr l)
+       (~acons:cddr l)))
+
+(defmethod unserialize (x) table
+  (w/table h
+    (map (fn ((k v)) (= h.k unserialize.v))
+         cadr.x)))
+
+(def read ((o x (stdin)) (o eof nil))
+  (if (isa x 'string)
+    (readstring1 x eof)
+    (unserialize:sread x eof)))
+
+(def write (x (o port (stdout)))
+  (swrite serialize.x port))
 
 (= hooks* (table))
 
