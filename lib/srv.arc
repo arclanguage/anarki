@@ -157,24 +157,24 @@
             (if srv-noisy* (pr c))
             (-- n)
             (push c line)))
-        (if srv-noisy* (pr "\n\n"))
+        (if srv-noisy* (pr "\r\n\r\n"))
         (respond o op (+ (parseargs (string (rev line))) args) cooks n ctype i ip))))
 
-(= header* "HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
+(= header* "HTTP/1.1 200 OK\r
+Content-Type: text/html; charset=utf-8\r
 Connection: close")
 
-(= err-header* "HTTP/1.1 404 Not Found
-Content-Type: text/html; charset=utf-8
+(= err-header* "HTTP/1.1 404 Not Found\r
+Content-Type: text/html; charset=utf-8\r
 Connection: close")
 
 (= type-header* (table))
 
 (def gen-type-header (ctype)
-  (+ "HTTP/1.0 200 OK
+  (+ "HTTP/1.0 200 OK\r
 Content-Type: "
      ctype
-     "
+     "\r
 Connection: close"))
 
 (map (fn ((k v)) (= (type-header* k) (gen-type-header v)))
