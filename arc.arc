@@ -898,11 +898,37 @@
 (mac reading (var port . body)
   `(ifread ,var ,port (do ,@body)))
 
-; inconsistency between names of readfile[1] and writefile
+(mac fromfile (f . body)
+  (w/uniq gf
+    `(w/infile ,gf ,f
+       (w/stdin ,gf
+         ,@body))))
 
-(def readfile (name) (w/infile s name (drain:read s)))
+(mac tofile (f . body)
+  (w/uniq (gf gs)
+    `(let ,gs (+ ,f "." rand-string.6)
+       (w/outfile ,gf ,gs
+         (w/stdout ,gf
+           ,@body))
+       (mvfile ,gs ,f))))
 
-(def readfile1 (name) (w/infile s name (read s)))
+(mac ontofile (f . body)
+  (w/uniq gf
+    `(w/appendfile ,gf ,f
+       (w/stdout ,gf
+         ,@body))))
+
+(def readfile (name)
+  (fromfile name
+    (drain:read)))
+
+(def readfile1 (name)
+  (fromfile name
+    (read)))
+
+(def writefile (val name)
+  (tofile name
+    (write val)))
 
 (def readall (src (o eof nil))
   ((afn (i)
@@ -918,12 +944,6 @@
 
 (def filechars (name)
   (w/infile s name (allchars s)))
-
-(def writefile (val file)
-  (let tmpfile (+ file ".tmp")
-    (w/outfile o tmpfile (write val o))
-    (mvfile tmpfile file))
-  val)
 
 (= ac-denil       ($ ac-denil))
 (= ac-global-name ($ ac-global-name))
@@ -1924,15 +1944,6 @@
              (wipe ,first)
              ,within)
            ,@body))))
-
-(mac tofile (name . body)
-  (w/uniq str `(w/outfile ,str ,name (w/stdout ,str ,@body))))
-
-(mac ontofile (name . body)
-  (w/uniq str `(w/appendfile ,str ,name (w/stdout ,str ,@body))))
-
-(mac fromfile (name . body)
-  (w/uniq str `(w/infile ,str ,name (w/stdin ,str ,@body))))
 
 (def cars (xs) (map car xs))
 (def cdrs (xs) (map cdr xs))
