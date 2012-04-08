@@ -906,7 +906,7 @@
 
 (mac tofile (f . body)
   (w/uniq (gf gs)
-    `(let ,gs (+ ,f "." rand-string.6)
+    `(let ,gs (mktemp ,f)
        (w/outfile ,gf ,gs
          (w/stdout ,gf
            ,@body))
@@ -1717,6 +1717,9 @@
   (ac-niltree:$:thread-try-receive))
 (def thread-rewind-receive args
   (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
+
+(def mktemp((o prefix "arc"))
+  ($ (path->string (make-temporary-file (string-append prefix ".~a")))))
 
 (mac trav (x . fs)
   (w/uniq g
