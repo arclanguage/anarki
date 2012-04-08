@@ -1428,14 +1428,16 @@ function vote(node) {
       (submit-page user "" "" t)
       (submit-login-warning "" "" t)))
 
-(def submit-login-warning ((o url) (o title) (o showtext) (o text))
+(def submit-login-warning ((o url) (o title) (o showtext) (o text)
+                           (o req)) ; unused
   (login-page 'both "You have to be logged in to submit."
               (fn (user ip)
                 (ensure-news-user user)
                 (newslog ip user 'submit-login)
                 (submit-page user url title showtext text))))
 
-(def submit-page (user (o url) (o title) (o showtext) (o text "") (o msg))
+(def submit-page (user (o url) (o title) (o showtext) (o text "") (o msg)
+                       (o req)) ; unused
   (minipage "Submit"
     (pagemessage msg)
     (urform user req
@@ -1492,14 +1494,14 @@ function vote(node) {
        (do (vote-for user it)
            (item-url it!id))
        (if (no user)
-            (flink [submit-login-warning url title showtext text])
+            (flink [submit-login-warning url title showtext text _])
            (no (and (or (blank url) (valid-url url))
                     (~blank title)))
-            (flink [submit-page user url title showtext text retry*])
+            (flink [submit-page user url title showtext text retry* _])
            (len> title title-limit*)
-            (flink [submit-page user url title showtext text toolong*])
+            (flink [submit-page user url title showtext text toolong* _])
            (and (blank url) (blank text))
-            (flink [submit-page user url title showtext text bothblank*])
+            (flink [submit-page user url title showtext text bothblank* _])
            (let site (sitename url)
              (or (big-spamsites* site) (recent-spam site)))
             (flink [msgpage user spammage*])
@@ -1685,7 +1687,8 @@ function vote(node) {
       (newpoll-page user)
       (pr "Sorry, you need @poll-threshold* karma to create a poll.")))
 
-(def newpoll-page (user (o title "Poll: ") (o text "") (o opts "") (o msg))
+(def newpoll-page (user (o title "Poll: ") (o text "") (o opts "") (o msg)
+                        (o req)) ; unused
   (minipage "New Poll"
     (pagemessage msg)
     (urform user req
