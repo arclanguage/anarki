@@ -1493,6 +1493,8 @@ function vote(node) {
   (aif (and (~blank url) (live-story-w/url url))
        (do (vote-for user it)
            (item-url it!id))
+       ; NOTE: Here in Anarki, [...] without _ is nullary, so we're
+       ; using (fn (_) (...)) instead.
        (if (no user)
             (flink [submit-login-warning url title showtext text _])
            (no (and (or (blank url) (valid-url url))
@@ -1504,9 +1506,9 @@ function vote(node) {
             (flink [submit-page user url title showtext text bothblank* _])
            (let site (sitename url)
              (or (big-spamsites* site) (recent-spam site)))
-            (flink [msgpage user spammage*])
+            (flink:fn (_) (msgpage user spammage*))
            (oversubmitting user ip 'story url)
-            (flink [msgpage user toofast*])
+            (flink:fn (_) (msgpage user toofast*))
            (let s (create-story url (process-title title) text user ip)
              (story-ban-test user s ip url)
              (when (ignored user) (kill s 'ignored))
@@ -1707,12 +1709,14 @@ function vote(node) {
 (= fewopts* "A poll must have at least two options.")
 
 (def process-poll (user title text opts ip)
+  ; NOTE: Here in Anarki, [...] without _ is nullary, so we're using
+  ; (fn (_) (...)) instead.
   (if (or (blank title) (blank opts))
-       (flink [newpoll-page user title text opts retry*])
+       (flink:fn (_) (newpoll-page user title text opts retry*))
       (len> title title-limit*)
-       (flink [newpoll-page user title text opts toolong*])
+       (flink:fn (_) (newpoll-page user title text opts toolong*))
       (len< (paras opts) 2)
-       (flink [newpoll-page user title text opts fewopts*])
+       (flink:fn (_) (newpoll-page user title text opts fewopts*))
       (atlet p (create-poll (multisubst scrubrules* title) text opts user ip)
         (ip-ban-test p ip)
         (when (ignored user) (kill p 'ignored))
@@ -1998,12 +2002,14 @@ function vote(node) {
 ; the vals coming in from any form, e.g. in aform.
 
 (def process-comment (user parent text ip whence)
+  ; NOTE: Here in Anarki, [...] without _ is nullary, so we're using
+  ; (fn (_) (...)) instead.
   (if (no user)
-       (flink [comment-login-warning parent whence text])
+       (flink:fn (_) (comment-login-warning parent whence text))
       (empty text)
        (flink [addcomment-page parent (get-user _) whence text retry*])
       (oversubmitting user ip 'comment)
-       (flink [msgpage user toofast*])
+       (flink:fn (_) (msgpage user toofast*))
        (atlet c (create-comment parent (md-from-form text) user ip)
          (comment-ban-test user c ip text comment-kill* comment-ignore*)
          (if (bad-user user) (kill c 'ignored/karma))
