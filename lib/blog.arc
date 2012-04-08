@@ -16,7 +16,7 @@
     (= maxid*      (max maxid* id)
        (posts* id) (temload 'post (string postdir* id)))))
 
-(def save-post (p) (save-table p (string postdir* p!id)))
+(def save-post (p) (temstore 'post p (string postdir* p!id)))
 
 (def post (id) (posts* (errsafe:int id)))
 
