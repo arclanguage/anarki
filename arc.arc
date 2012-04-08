@@ -1567,7 +1567,7 @@
   (= current-load-file* file)
   (after (w/infile f file
            (w/uniq eof
-             (whiler e (read f eof) eof
+             (whiler e (sread f eof) eof
                (eval e))))
     (= current-load-file* (pop load-file-stack*))))
 
