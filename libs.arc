@@ -10,6 +10,7 @@
             "lib/html.arc"
             "lib/srv.arc"
             "lib/app.arc"
+            "lib/news.arc"
 
             ; helpers for the repl
             "lib/arctap.arc"
