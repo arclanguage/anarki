@@ -1035,14 +1035,14 @@
             (car args)
             list)))))
 
-; the 2050 means http requests currently capped at 2 meg
 ; http://list.cs.brown.edu/pipermail/plt-scheme/2005-August/009414.html
+(define upload-limit* (* 30 1000 1000))
 
 (xdef socket-accept (lambda (s)
                       (ar-init-socket
                         (lambda () (tcp-accept s))
                         (lambda (in out)
-                          (list (make-limited-input-port in 100000 #t)
+                          (list (make-limited-input-port in upload-limit* #t)
                                 out
                                 (let-values (((us them) (tcp-addresses out)))
                                   them))))))
