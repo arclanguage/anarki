@@ -151,14 +151,17 @@
   (if srv-noisy* (pr "Post Contents: "))
   (if (no n)
       (respond-err o "Post request without Content-Length.")
-      (let line nil
-        (unless (begins downcase.ctype "multipart/form-data")
-          (whilet c (and (> n 0) (readc i))
-            (if srv-noisy* (pr c))
-            (-- n)
-            (push c line)))
+      (let body nil
+        (whilet c (and (> n 0) (readc i))
+          (if srv-noisy* (pr c))
+          (-- n)
+          (push c body))
+        (zap string:rev body)
         (if srv-noisy* (pr "\r\n\r\n"))
-        (respond o op (+ (parseargs (string (rev line))) args) cooks n ctype i ip))))
+        (respond o op (+ args
+                         (if (~begins downcase.ctype "multipart/form-data")
+                           parseargs.body))
+                 cooks n ctype i ip))))
 
 (= header* "HTTP/1.1 200 OK\r
 Content-Type: text/html; charset=utf-8\r
