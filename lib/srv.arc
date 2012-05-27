@@ -313,12 +313,12 @@ Connection: close"))
 ; I don't urldecode field names or anything in cookies; correct?
 
 (def parseargs (s)
-  (map (fn ((k v)) (list k (urldecode v)))
+  (map (fn ((k v)) (list k urldecode.v))
        (map [tokens _ #\=] (tokens s #\&))))
 
 (def parsecookies (s)
   (map [tokens _ #\=]
-       (cdr (tokens s [or (whitec _) (is _ #\;)]))))
+       (cdr (tokens s [or whitec._ (is _ #\;)]))))
 
 (def arg (req key) (alref req!args key))
 
@@ -399,20 +399,20 @@ Connection: close"))
 
 (defopr-raw y (str req)
   (aif (fns* (sym (arg req "fnid")))
-       (w/stdout str (it req))
-       "deadlink"))
+    (w/stdout str (it req))
+    "deadlink"))
 
 ; For asynchronous calls; discards the page.  Would be better to tell
 ; the fn not to generate it.
 
 (defop-raw a (str req)
   (aif (fns* (sym (arg req "fnid")))
-       (tostring (it req))))
+    (tostring (it req))))
 
 (defopr r req
   (aif (fns* (sym (arg req "fnid")))
-       (it req)
-       "deadlink"))
+    (it req)
+    "deadlink"))
 
 (defop deadlink req
   (pr dead-msg*))
