@@ -258,8 +258,58 @@ Connection: close"))
         (if srv-noisy* (pr "\r\n\r\n"))
         (respond o op (+ args
                          (if (~begins downcase.ctype "multipart/form-data")
-                           parseargs.body))
+                           parseargs.body
+                           (parse-multipart-args multipart-boundary.ctype body)))
                  cooks n ctype i ip))))
+
+(def parse-multipart-args(boundary body)
+  (let indices (find-all boundary body)
+    (accum yield
+      (each (index new-index) (zip indices cdr.indices)
+        (yield:parse-multipart-part body
+                                    (+ index len.boundary)
+                                    new-index)))))
+
+; a multipart boundary ends at start and starts at end
+(def parse-multipart-part(body start end)
+  (= start (+ start 2)) ; skip first CRLF
+  (= end (- end 2)) ; lose the final CRLF before next boundary
+  ; Require a name header.
+  ; "The boundary must be followed immediately either by another CRLF and the
+  ; header fields for the next part, or by two CRLFs, in which case there are no
+  ; header fields for the next part.."
+  ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
+  (whenlet headers (parse-mime-header:rest-of-line body start)
+    (list (unstring:alref headers "name")
+          (past-2-crlfs body start end))))
+
+; parse lines of the form a=b; c=d; e=f; ..
+; segments without '=' are passed through as single-elem lists
+(def parse-mime-header(line)
+  (map [tokens _ #\=]
+       (tokens line (orf whitec (testify #\;)))))
+
+(def multipart-boundary(s)
+  (let delim "boundary="
+    (+ "--" (cut s (+ (findsubseq delim s)
+                      len.delim)))))
+
+(def find-all(pat seq (o index 0))
+  (whenlet new-index (findsubseq pat seq index)
+    (cons new-index (find-all pat seq (+ 1 new-index)))))
+
+(def rest-of-line(s (o n 0))
+  (cut s n (posmatch "\n" s n)))
+
+(def past-2-crlfs(s n (o end))
+  (cut s (+ 3 (posmatch "\n" s n))
+       end))
+
+; "\"abc\"" => "abc"
+(def unstring(s)
+  (if (iso #\" s.0)
+    (cut s 1 -1)
+    s))
 
 (def static-filetype (sym)
   (let fname (coerce sym 'string)
