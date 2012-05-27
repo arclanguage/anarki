@@ -391,9 +391,11 @@ Connection: close"))
 
 (defop-raw x (str req)
   (w/stdout str
-    (aif (fns* (sym (arg req "fnid")))
-         (it req)
-         (pr dead-msg*))))
+    (aif (arg req "fnid")
+      (aif (fns* sym.it)
+        (it req)
+        (pr dead-msg*))
+      (pr "\nno fnid"))))
 
 (defopr-raw y (str req)
   (aif (fns* (sym (arg req "fnid")))
