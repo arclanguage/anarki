@@ -242,20 +242,12 @@ Connection: close"))
                      (writeb b str))))
              (respond-err str unknown-msg*))))))
 
-; Could ignore return chars (which come from textarea fields) here by
-; (unless (is c #\return) (push c line))
-
 (def handle-post (i o op args n cooks ctype ip)
   (if srv-noisy* (pr "Post Contents: "))
   (if (no n)
     (respond-err o "Post request without Content-Length.")
-    (let body nil
-      (whilet c (and (> n 0) (readc i))
-        (if srv-noisy* (pr c))
-        (-- n)
-        (push c body))
-      (zap string:rev body)
-      (if srv-noisy* (pr "\r\n\r\n"))
+    (let body (string:readchars n i)
+      (if srv-noisy* (pr body "\r\n\r\n"))
       (respond o op (+ args
                        (if (~begins downcase.ctype "multipart/form-data")
                          parseargs.body
