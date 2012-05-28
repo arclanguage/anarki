@@ -271,7 +271,7 @@ Connection: close"))
   ; header fields for the next part, or by two CRLFs, in which case there are no
   ; header fields for the next part.."
   ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
-  (whenlet headers (parse-mime-header:rest-of-line body start)
+  (whenlet headers (parse-mime-header:until-2-crlfs body start)
     (list (unstring:alref headers "name")
           (past-2-crlfs body start end))))
 
@@ -290,11 +290,11 @@ Connection: close"))
   (whenlet new-index (findsubseq pat seq index)
     (cons new-index (find-all pat seq (+ 1 new-index)))))
 
-(def rest-of-line(s (o n 0))
-  (cut s n (posmatch "\n" s n)))
+(def until-2-crlfs(s (o n 0))
+  (cut s n (posmatch "\r\n\r\n" s n)))
 
 (def past-2-crlfs(s n (o end))
-  (cut s (+ 3 (posmatch "\n" s n))
+  (cut s (+ 4 (posmatch "\r\n\r\n" s n))
        end))
 
 ; "\"abc\"" => "abc"
