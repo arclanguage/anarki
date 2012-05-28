@@ -248,19 +248,19 @@ Connection: close"))
 (def handle-post (i o op args n cooks ctype ip)
   (if srv-noisy* (pr "Post Contents: "))
   (if (no n)
-      (respond-err o "Post request without Content-Length.")
-      (let body nil
-        (whilet c (and (> n 0) (readc i))
-          (if srv-noisy* (pr c))
-          (-- n)
-          (push c body))
-        (zap string:rev body)
-        (if srv-noisy* (pr "\r\n\r\n"))
-        (respond o op (+ args
-                         (if (~begins downcase.ctype "multipart/form-data")
-                           parseargs.body
-                           (parse-multipart-args multipart-boundary.ctype body)))
-                 cooks n ctype i ip))))
+    (respond-err o "Post request without Content-Length.")
+    (let body nil
+      (whilet c (and (> n 0) (readc i))
+        (if srv-noisy* (pr c))
+        (-- n)
+        (push c body))
+      (zap string:rev body)
+      (if srv-noisy* (pr "\r\n\r\n"))
+      (respond o op (+ args
+                       (if (~begins downcase.ctype "multipart/form-data")
+                         parseargs.body
+                         (parse-multipart-args multipart-boundary.ctype body)))
+               cooks n ctype i ip))))
 
 (def parse-multipart-args(boundary body)
   (let indices (find-all boundary body)
