@@ -279,7 +279,7 @@ Connection: close"))
 ; segments without '=' are passed through as single-elem lists
 (def parse-mime-header(line)
   (map [tokens _ #\=]
-       (tokens line (orf whitec (testify #\;)))))
+       (tokens downcase.line (orf whitec (testify #\;)))))
 
 (def multipart-boundary(s)
   (let delim "boundary="
