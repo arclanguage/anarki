@@ -534,6 +534,13 @@ Connection: close"))
                                        (,f ,ga)))))
        ,@body)))
 
+(mac form-multi (action . body)
+  (w/uniq ga
+    `(tag (form method 'post
+                enctype "multipart/form-data"
+                action ,action)
+       ,@body)))
+
 ;(defop test1 req
 ;  (fnform (fn (req) (prn) (pr req))
 ;          (fn () (single-input "" 'foo 20 "submit"))))
