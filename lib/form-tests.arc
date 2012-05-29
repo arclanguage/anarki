@@ -12,7 +12,14 @@
   (prn "<br>Content-Length: " req!clen)
   (prn "<br> ... more headers ...")
   (prn "<br><br>x: " (arg req "x"))
-  (prn "<hr>file contents<pre>" (arg req "name")) "</pre>")
+  (tag hr)
+  (tag h3
+    (prn "properties"))
+  (each (k v) (alref req!args "name")
+    (if (~iso k "contents")
+      (prn k ": " v)))
+  (tag pre
+    (prn:arg req "name")))
 
 (defop form_target req
   (form-action req))

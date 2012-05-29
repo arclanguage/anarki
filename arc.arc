@@ -812,6 +812,12 @@
     `(let ,gx ,x
        (if (,test ,gx) ,gx ,alt))))
 
+(mac acheck (x test (o alt))
+  `(let it ,x
+     (if (,test it)
+       it
+       ,alt)))
+
 (def pos (test seq (o start 0))
   (let f (testify test)
     (if (alist seq)

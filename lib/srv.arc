@@ -273,7 +273,11 @@ Connection: close"))
   ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
   (whenlet headers (parse-mime-header:until-2-crlfs body start)
     (list (unstring:alref headers "name")
-          (past-2-crlfs body start end))))
+          (w/table result
+            (= (result "contents") (past-2-crlfs body start end))
+            (each (property val) headers
+              (if (~iso "name" property)
+                (= result.property val)))))))
 
 ; parse lines of the form a=b; c=d; e=f; ..
 ; segments without '=' are passed through as single-elem lists
@@ -365,7 +369,15 @@ Connection: close"))
   (map [tokens _ #\=]
        (cdr (tokens s [or whitec._ (is _ #\;)]))))
 
-(def arg (req key) (alref req!args key))
+(def arg (req key)
+  (acheck (alref req!args key) [~isa _ 'table]
+    ; deref multipart params by default
+    (it "contents")))
+
+(def multipart-metadata(req arg key)
+  (let val (alref req!args arg)
+    (if (isa val 'table)
+      val.key)))
 
 ; *** Warning: does not currently urlencode args, so if need to do
 ; that replace v with (urlencode v).
