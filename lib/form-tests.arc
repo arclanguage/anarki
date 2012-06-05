@@ -6,6 +6,7 @@
 ;   ready to serve port 8080
 ;
 ; Now test at http://localhost:8080/form-tests.
+; Test with both text and binary files.
 (def form-action (req)
   (prn " ... headers ...")
   (prn "<br>Content-Type: " req!ctype)
