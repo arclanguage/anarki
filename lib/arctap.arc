@@ -20,8 +20,8 @@
        (if verdict
          t
          (do
-           (ero "expected" expected)
-           (ero "got" got)
+           (ero "expected: " expected)
+           (ero "got: " got)
            nil)))))
 
 (def-test-fn is)

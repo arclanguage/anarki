@@ -700,23 +700,6 @@
       `(atwiths ,(+ binds (list gop op) (mix gargs args))
          (,setter (,gop ,val ,@gargs))))))
 
-; Can't simply mod pr to print strings represented as lists of chars,
-; because empty string will get printed as nil.  Would need to rep strings
-; as lists of chars annotated with 'string, and modify car and cdr to get
-; the rep of these.  That would also require hacking the reader.
-
-(def pr args
-  (map1 disp args)
-  (car args))
-
-(def prt args
-  (map1 [if _ (disp _)] args)
-  (car args))
-
-(def prn args
-  (do1 (apply pr args)
-       (pr #\newline))) ; writec doesn't implicitly flush
-
 (mac wipe args
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
 
@@ -950,6 +933,27 @@
 
 (def filechars (name)
   (w/infile s name (allchars s)))
+
+; Can't simply mod pr to print strings represented as lists of chars,
+; because empty string will get printed as nil.  Would need to rep strings
+; as lists of chars annotated with 'string, and modify car and cdr to get
+; the rep of these.  That would also require hacking the reader.
+
+(def pr args
+  (map1 disp args)
+  (car args))
+
+(def prt args
+  (map1 [if _ (disp _)] args)
+  (car args))
+
+(def prn args
+  (do1 (apply pr args)
+       (pr #\newline))) ; writec doesn't implicitly flush
+
+(def ero args
+  (w/stdout (stderr)
+    (apply prn args)))
 
 (= ac-denil       ($ ac-denil))
 (= ac-global-name ($ ac-global-name))
@@ -1582,14 +1586,6 @@
 
 (mac w/table (var . body)
   `(let ,var (table) ,@body ,var))
-
-(def ero args
-  (w/stdout (stderr)
-    (each a args
-      (write a)
-      (writec #\space))
-    (writec #\newline))
-  (car args))
 
 (def queue () (annotate 'queue (list nil nil 0)))
 
