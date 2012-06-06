@@ -1376,7 +1376,7 @@
     `(let ,t1 (msec)
        (do1 ,expr
             (let ,t2 (msec)
-              (prn "time: " (- ,t2 ,t1) " msec."))))))
+              (ero "time: " (- ,t2 ,t1) " msec."))))))
 
 (mac jtime (expr)
   `(do1 'ok (time ,expr)))
