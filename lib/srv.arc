@@ -243,16 +243,19 @@ Connection: close"))
              (respond-err str unknown-msg*))))))
 
 (def handle-post (in out op args clen cooks ctype ip)
-  (if srv-noisy* (pr "Post Contents: "))
   (if (no clen)
     (respond-err out "Post request without Content-Length.")
     (let body (string:readchars clen in)
-      (if srv-noisy* (pr body "\r\n\r\n"))
       (respond out op (+ args
                          (if (~begins downcase.ctype "multipart/form-data")
                            parseargs.body
                            (parse-multipart-args multipart-boundary.ctype body)))
                cooks clen ctype in ip))))
+
+(def multipart-boundary(s)
+  (let delim "boundary="
+    (+ "--" (cut s (+ (findsubseq delim s)
+                      len.delim)))))
 
 (def parse-multipart-args(boundary body)
   (let indices (find-all boundary body)
@@ -284,11 +287,6 @@ Connection: close"))
 (def parse-mime-header(line)
   (map [tokens _ #\=]
        (tokens downcase.line (orf whitec (testify #\;)))))
-
-(def multipart-boundary(s)
-  (let delim "boundary="
-    (+ "--" (cut s (+ (findsubseq delim s)
-                      len.delim)))))
 
 (def find-all(pat seq (o index 0))
   (whenlet new-index (findsubseq pat seq index)
