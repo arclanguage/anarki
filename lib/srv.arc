@@ -46,7 +46,7 @@
       (errsafe (handle-request-1 s))))
 
 (def handle-request-1 (s)
-  (with ((i o ip) (socket-accept s)
+  (with ((in out ip) (socket-accept s)
          th1 nil th2 nil)
     (++ requests*)
     (let ip-wrapper (fn args
@@ -54,15 +54,15 @@
                         (= ip car.args)
                         ip))
       (= th1 (thread
-               (after (handle-request-thread i o ip-wrapper)
-                      (close i o)
+               (after (handle-request-thread in out ip-wrapper)
+                      (close in out)
                       (kill-thread th2))))
       (= th2 (thread
                (sleep threadlife*)
                (unless (dead th1)
                  (prn "srv thread took too long for " ip))
                (kill-thread th1)
-               (force-close i o))))))
+               (force-close in out))))))
 
 ; Returns true if ip has made req-limit* requests in less than
 ; req-window* seconds.  If an ip is throttled, only 1 request is
@@ -107,21 +107,21 @@
         (ip-wrapper))))
 
 (wipe show-requests*)
-(def handle-request-thread (i o ip-wrapper)
+(def handle-request-thread (in out ip-wrapper)
   (with (nls 0 lines nil line nil responded nil t0 (msec))
     (after
-      (whilet c (unless responded (readc i))
+      (whilet c (unless responded (readc in))
         (if srv-noisy* (pr c))
         (if (is c #\newline)
             (if (is (++ nls) 2)
-                (let (type op args n cooks ctype) (parseheader (rev lines))
+                (let (type op args clen cooks ctype) (parseheader (rev lines))
                   (if show-requests* (prn lines))
                   (unless (abusive-ip (proxy-ip ip-wrapper lines))
                     (let t1 (msec)
                       (case type
-                        get  (respond o op args cooks 0 i "" (ip-wrapper))
-                        post (handle-post i o op args n cooks ctype (ip-wrapper))
-                             (respond-err o "Unknown request: " (car lines)))
+                        get  (respond out op args cooks 0 in "" (ip-wrapper))
+                        post (handle-post in out op args clen cooks ctype (ip-wrapper))
+                             (respond-err out "Unknown request: " (car lines)))
                       (log-request type op args cooks (ip-wrapper) t0 t1)))
                   (set responded))
                 (do (push (string (rev line)) lines)
@@ -129,7 +129,7 @@
             (unless (is c #\return)
               (push c line)
               (= nls 0))))
-      (close i o)))
+      (close in out)))
   (harvest-fnids))
 
 (def log-request (type op args cooks ip t0 t1)
@@ -242,17 +242,17 @@ Connection: close"))
                      (writeb b str))))
              (respond-err str unknown-msg*))))))
 
-(def handle-post (i o op args n cooks ctype ip)
+(def handle-post (in out op args clen cooks ctype ip)
   (if srv-noisy* (pr "Post Contents: "))
-  (if (no n)
-    (respond-err o "Post request without Content-Length.")
-    (let body (string:readchars n i)
+  (if (no clen)
+    (respond-err out "Post request without Content-Length.")
+    (let body (string:readchars clen in)
       (if srv-noisy* (pr body "\r\n\r\n"))
-      (respond o op (+ args
-                       (if (~begins downcase.ctype "multipart/form-data")
-                         parseargs.body
-                         (parse-multipart-args multipart-boundary.ctype body)))
-               cooks n ctype i ip))))
+      (respond out op (+ args
+                         (if (~begins downcase.ctype "multipart/form-data")
+                           parseargs.body
+                           (parse-multipart-args multipart-boundary.ctype body)))
+               cooks clen ctype in ip))))
 
 (def parse-multipart-args(boundary body)
   (let indices (find-all boundary body)
