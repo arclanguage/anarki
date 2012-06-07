@@ -247,8 +247,8 @@ Connection: close"))
     (respond-err out "Post request without Content-Length.")
     (respond out op (+ args
                        (if (~begins downcase.ctype "multipart/form-data")
-                         (parseargs:string:readchars clen in)
-                         (parse-multipart-args multipart-boundary.ctype in)))
+                         (parseargs:string:readchars clen in) ; ascii
+                         (parse-multipart-args multipart-boundary.ctype in))) ; maybe non-ascii
              cooks clen ctype in ip)))
 
 (def multipart-boundary(s)
@@ -261,8 +261,7 @@ Connection: close"))
   (accum yield
     (until (multipart-end boundary in)
       (withs (headers   scan-headers.in
-              ; only place that may contain multi-byte chars
-              body  (scan-body boundary in))
+              body  (scan-body boundary in)) ; only part that may contain non-ascii
         (when headers
           (yield:parse-multipart-part headers body))))))
 
