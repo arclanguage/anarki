@@ -895,7 +895,7 @@
 
 (mac tofile (f . body)
   (w/uniq (gf gs)
-    `(let ,gs (mktemp ,f)
+    `(let ,gs (mktemp:basename ,f)
        (w/outfile ,gf ,gs
          (w/stdout ,gf
            ,@body))
@@ -1037,6 +1037,9 @@
                (= (s i) (c (mod x nc)))
                (++ i)))))
       s)))
+
+(def basename(s)
+  (last:tokens s #\/))
 
 (mac on (var s . body)
   (if (is var 'index)
