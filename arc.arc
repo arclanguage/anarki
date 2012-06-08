@@ -152,6 +152,13 @@
 (mac ret (var val . body)
   `(let ,var ,val ,@body ,var))
 
+(mac w/uniq (names . body)
+  (if (acons names)
+      `(with ,(apply + nil (map1 (fn (n) (list n '(uniq)))
+                             names))
+         ,@body)
+      `(let ,names (uniq) ,@body)))
+
 ; Rtm prefers to overload + to do this
 
 (def join args
@@ -179,7 +186,7 @@
 ; Composes in functional position are transformed away by ac.
 
 (mac compose args
-  (let g (uniq)
+  (w/uniq g
     `(fn ,g
        ,((afn (fs)
            (if (cdr fs)
@@ -203,13 +210,6 @@
    xs nil))
 
 (def isnt (x y) (no (is x y)))
-
-(mac w/uniq (names . body)
-  (if (acons names)
-      `(with ,(apply + nil (map1 (fn (n) (list n '(uniq)))
-                             names))
-         ,@body)
-      `(let ,names (uniq) ,@body)))
 
 (mac or args
   (and args
