@@ -324,8 +324,7 @@ Connection: close"))
           'string))
 
 (def all-ascii?(l)
-  (and (isa l 'cons)
-       (errsafe:all [<= 0 _ 127] l)))
+  (errsafe:all [<= 0 _ 127] l))
 
 ; "\"abc\"" => "abc"
 (def unstring(s)
