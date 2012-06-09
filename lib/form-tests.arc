@@ -48,6 +48,19 @@
     (submit "submit"))
 
   (tag h3
+    (prn "fnid multipart form -- text files only (binary files might hang)"))
+  (aform-multi (fn(req)
+                 (= ((alref req!args "name") "contents")
+                    (bytes-string ((alref req!args "name") "contents")))
+                 (form-action req))
+    (gentag input type 'file name 'name)
+    (br)
+    (prn 'x)
+    (gentag input name 'x)
+    (br)
+    (submit "submit"))
+
+  (tag h3
     (prn "static multipart form"))
   (form-multi "form_target"
     (gentag input type 'file name 'name)
