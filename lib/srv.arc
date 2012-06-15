@@ -296,7 +296,9 @@ Connection: close"))
     (list unstring.it
           (w/table multipart-arg
             (= (multipart-arg "contents")
-               (check bytes-string.body all-ascii? body))
+               (if (all-ascii? body)
+                 bytes-string.body
+                 body))
             (each (property val) headers
               (unless (iso "name" property)
                 (= multipart-arg.property val)))))))
