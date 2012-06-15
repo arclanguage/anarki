@@ -42,9 +42,15 @@
 
 ; returns all but the suffix; corrupts the suffix list
 (def splice(l)
-  (when rep.l!suffix
-    (wipe (cdr rep.l!suffix))
-    rep.l!contents))
+  (if
+    rep.l!suffix
+      (do
+        (wipe (cdr rep.l!suffix))
+        rep.l!contents)
+    (is rep.l!suffix-len (len rep.l!contents))
+      (do
+        (wipe (cdr rep.l!contents))
+        rep.l!contents)))
 
 (defgeneric suffix (n l)
   (let max len.l

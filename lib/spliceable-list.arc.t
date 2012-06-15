@@ -18,12 +18,7 @@
 (append l list.3)
 (test-iso "suffix 3" '(2 3) suffix.l)
 (test-iso "splicing a list without a suffix works"
-  nil
-  splice.l)
-
-(= l (spliceable-list 2 '(1 2 3)))
-(test-iso "splicing a list about to get a suffix currently returns nothing"
-  nil ; should be '(1)
+  '(1)
   splice.l)
 
 (= l (spliceable-list 2 '(1 2 3)))
