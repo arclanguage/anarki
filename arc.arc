@@ -244,11 +244,6 @@
         (when ,gp ,@body (,gf ,test)))
       ,test)))
 
-(def empty (seq)
-  (or (no seq)
-      (and (or (is (type seq) 'string) (is (type seq) 'table))
-           (is (len seq) 0))))
-
 (def reclist (f xs)
   (and xs (or (f xs) (reclist f (cdr xs)))))
 
@@ -1774,6 +1769,14 @@
 
 (defmethod len(x) table
   ($.hash-table-count x))
+
+; most types need define just len
+(defgeneric empty(seq)
+  (iso 0 len.seq))
+
+; optimization: empty list (nil) is of type sym
+(defmethod empty(x) cons
+  nil)
 
 ; User-definable calling for given types via coerce* extension
 (def set-coercer (to from fun)
