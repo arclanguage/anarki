@@ -313,11 +313,11 @@ Connection: close"))
 ; pat is read from input but dropped from result
 ; all chars in pat must be 1-byte
 (def scan-past(pat in)
-  (= pat (map int (rev:coerce pat 'cons)))
-  (let buffer nil
-    (until (iso pat (firstn len.pat buffer))
-      (push readb.in buffer))
-    (rev:nthcdr len.pat buffer)))
+  (= pat (map int (coerce pat 'cons)))
+  (let buffer (spliceable-list len.pat)
+    (until (iso pat suffix.buffer)
+      (append buffer (list readb.in)))
+    splice.buffer))
 
 ; convert list of bytes to string
 (def bytes-string(l)

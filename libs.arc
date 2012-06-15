@@ -2,6 +2,7 @@
             "lib/extend.arc"
             "lib/strings.arc"
             "lib/queue.arc"
+            "lib/spliceable-list.arc"
             "lib/tem.arc"
             "lib/util.arc"
             "lib/declare.arc"
