@@ -24,9 +24,9 @@
   (zap lastcdr rep.l!last)
   (if rep.l!suffix
     (zap [nthcdr len.tail _] rep.l!suffix)
-    (= rep.l!suffix
-       (suffix rep.l!suffix-len
-               rep.l!contents))))
+    ; no suffix yet; do we have enough elems to start?
+    (if (is rep.l!suffix-len (len rep.l!contents))
+      (= rep.l!suffix rep.l!contents))))
 
 (defcoerce cons spliceable-list (l)
   rep.l!contents)
@@ -42,19 +42,14 @@
 
 ; returns all but the suffix; corrupts the suffix list
 (def splice(l)
-  (if
-    rep.l!suffix
-      (do
-        (wipe (cdr rep.l!suffix))
-        rep.l!contents)
-    (is rep.l!suffix-len (len rep.l!contents))
-      (do
-        (wipe (cdr rep.l!contents))
-        rep.l!contents)))
+  (when rep.l!suffix
+    (wipe (cdr rep.l!suffix))
+    rep.l!contents))
 
+; return last n elems of l -- as long as there are at least that many
 (defgeneric suffix (n l)
   (let max len.l
-    (if (> max n)
+    (if (>= max n)
       (nthcdr (- max n) l))))
 
 (defmethod suffix (l) spliceable-list
