@@ -53,8 +53,8 @@
       (nthcdr (- max n) l))))
 
 (defmethod suffix (l) spliceable-list
-  (aif rep.l!suffix
-    cdr.it
-    (if (iso rep.l!suffix-len (len rep.l!contents))
-      (cdr rep.l!contents)
-      rep.l!contents)))
+  (aif
+    rep.l!suffix
+      cdr.it
+    (iso (len rep.l!contents) (- rep.l!suffix-len 1))
+      rep.l!contents))

@@ -7,10 +7,14 @@
   (rep:spliceable-list 2 '(1)))
 
 (= l (spliceable-list 2 '(1)))
-(test-iso "suffix 1" '(1) suffix.l)
+(test-iso "suffix returns nothing if list is too short"
+  nil
+  suffix.l)
 
 (append l list.2)
-(test-iso "suffix 2" '(1 2) suffix.l)
+(test-iso "suffix returns list if just long enough"
+  '(1 2)
+  suffix.l)
 (test-iso "appending to spliceable-list works"
   (obj contents '(1 2)  last list.2   suffix nil  suffix-len 3)
   rep.l)
