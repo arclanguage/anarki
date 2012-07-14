@@ -1066,7 +1066,7 @@
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
 (def most (f seq)
-  (unless (no seq)
+  (if seq
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
         (let score (f elt)
