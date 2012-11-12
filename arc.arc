@@ -80,12 +80,11 @@
 
 ; (def list args args)
 
-(def copylist (xs)
-  (if (no xs)
-      nil
-      (cons (car xs) (copylist (cdr xs)))))
-
-(def list args (copylist args))
+(def list args
+  (if no.args
+    nil
+    (cons car.args
+          (apply list cdr.args))))
 
 (def idfn (x) x)
 
@@ -1254,22 +1253,26 @@
 (def write-table (h (o o (stdout)))
   (write (tablist h) o))
 
+(def copylist (xs)
+  (if acons.xs
+      (cons (copylist car.xs)
+            (copylist cdr.xs))
+      xs))
+
 (def copy (x . args)
-  (let x2 (case (type x)
-            sym    x
-            cons   (copylist x) ; (apply (fn args args) x)
-            string (let new (newstring (len x))
-                     (forlen i x
-                       (= (new i) (x i)))
-                     new)
-            table  (let new (table)
-                     (each (k v) x
-                       (= (new k) v))
-                     new)
-                   (err "Can't copy " x))
-    (map (fn ((k v)) (= (x2 k) v))
-         (pair args))
-    x2))
+  (ret ans (case type.x
+             sym    x
+             cons   copylist.x
+             string (let new (newstring len.x)
+                      (forlen i x
+                        (= new.i x.i))
+                      new)
+             table  (ret new (table)
+                      (each (k v) x
+                        (= new.k copy.v)))
+                    (err "Can't copy " x))
+    (map (fn ((k v)) (= ans.k v))
+         pair.args)))
 
 (def shr (n m)
   (shl n (- m)))
