@@ -1253,16 +1253,11 @@
 (def write-table (h (o o (stdout)))
   (write (tablist h) o))
 
-(def copylist (xs)
-  (if acons.xs
-      (cons (copylist car.xs)
-            (copylist cdr.xs))
-      xs))
-
 (def copy (x . args)
   (ret ans (case type.x
              sym    x
-             cons   copylist.x
+             cons   (cons (copy car.x)
+                          (copy cdr.x))
              string (let new (newstring len.x)
                       (forlen i x
                         (= new.i x.i))
