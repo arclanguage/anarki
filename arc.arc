@@ -254,7 +254,7 @@
    start))
 
 (def testify (x)
-  (if (isa x 'fn) x [is _ x]))
+  (if (isa x 'fn) x [iso _ x]))
 
 ; Like keep, seems like some shouldn't testify.  But find should,
 ; and all probably should.
