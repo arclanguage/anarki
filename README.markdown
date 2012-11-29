@@ -2,11 +2,11 @@ Anarki: a publicly modifiable fork of PG's and RTM's Arc Lisp (http://www.paulgr
 
 To run, install Racket from http://racket-lang.org, then:
 
-  $ git clone http://github.com/nex3/arc
-  $ cd arc
-  $ ./arc.sh
-  arc> :a
-  $
+    $ git clone http://github.com/nex3/arc
+    $ cd arc
+    $ ./arc.sh
+    arc> :a
+    $
 
 If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://arclanguage.org/forum
 
