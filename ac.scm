@@ -256,7 +256,7 @@
   (list 'quasiquote (ac-qqx args
                       (lambda (x) (list 'unquote (ac x env)))
                       (lambda (x) (list 'unquote-splicing
-                                    (list 'ar-nil-terminate (ac x env)))))))
+                                    (list 'ar-denil-last (ac x env)))))))
 
 ; process the argument of a quasiquote. keep track of
 ; depth of nesting. handle unquote only at top level (level = 1).
@@ -573,14 +573,14 @@
 ; Arc primitives written in Scheme should look like:
 
 ; (xdef foo (lambda (lst)
-;           (ac-niltree (scheme-foo (ar-nil-terminate lst)))))
+;           (ac-niltree (scheme-foo (ar-denil-last lst)))))
 
 ; That is, Arc lists are NIL-terminated. When calling a Scheme
-; function that treats an argument as a list, call ar-nil-terminate
-; to change NIL to '(). When returning any data created by Scheme
+; function that treats an argument as a list, call ar-denil-last
+; to change terminal NIL to '(). When returning any data created by Scheme
 ; to Arc, call ac-niltree to turn all '() into NIL.
 ; (hash-table-get doesn't use its argument as a list, so it doesn't
-; need ar-nil-terminate).
+; need ar-denil-last).
 
 (define (ac-niltree x)
   (cond ((pair? x)   (cons (ac-niltree (car x)) (ac-niltree (cdr x))))
@@ -680,10 +680,10 @@
 
 ; replace the nil at the end of a list with a '()
 
-(define (ar-nil-terminate l)
+(define (ar-denil-last l)
   (if (or (eqv? l '()) (eqv? l 'nil))
       '()
-      (cons (car l) (ar-nil-terminate (cdr l)))))
+      (cons (car l) (ar-denil-last (cdr l)))))
 
 ; turn the arguments to Arc apply into a list.
 ; if you call (apply fn 1 2 '(3 4))
@@ -695,7 +695,7 @@
 
 (define (ar-apply-args args)
   (cond ((null? args) '())
-        ((null? (cdr args)) (ar-nil-terminate (car args)))
+        ((null? (cdr args)) (ar-denil-last (car args)))
         (#t (cons (car args) (ar-apply-args (cdr args))))))
 
 
@@ -765,7 +765,7 @@
                          (map (lambda (a) (ar-coerce a 'string))
                               args)))
                  ((arc-list? (car args))
-                  (ac-niltree (apply append (map ar-nil-terminate args))))
+                  (ac-niltree (apply append (map ar-denil-last args))))
                  (#t (apply + args)))))
 
 (define (char-or-string? x) (or (string? x) (char? x)))
@@ -774,7 +774,7 @@
   (cond ((char-or-string? x)
          (string-append (ar-coerce x 'string) (ar-coerce y 'string)))
         ((and (arc-list? x) (arc-list? y))
-         (ac-niltree (append (ar-nil-terminate x) (ar-nil-terminate y))))
+         (ac-niltree (append (ar-denil-last x) (ar-denil-last y))))
         (#t (+ x y))))
 
 (xdef - -)
@@ -809,7 +809,7 @@
 (xdef len (lambda (x)
              (cond ((string? x) (string-length x))
                    ((hash-table? x) (hash-table-count x))
-                   (#t (length (ar-nil-terminate x))))))
+                   (#t (length (ar-denil-last x))))))
 
 (define (ar-tagged? x)
   (and (vector? x) (eq? (vector-ref x 0) 'tagged)))
@@ -981,7 +981,7 @@
             (char   ,string)
             (cons   ,(lambda (l) (apply string-append
                                         (map (lambda (y) (ar-coerce y 'string))
-                                             (ar-nil-terminate l)))))
+                                             (ar-denil-last l)))))
             (sym    ,(lambda (x) (if (eqv? x 'nil) "" (symbol->string x)))))
 
    (sym     (string ,string->symbol)
