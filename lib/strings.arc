@@ -257,6 +257,12 @@
   (if (empty str) str
       (+ (upcase (str 0)) (cut str 1))))
 
+(def chomp (s)
+  (if (iso (s (- len.s 1))
+           #\newline)
+    (cut s 0 (- len.s 1))
+    s))
+
 (load "help/strings.arc")
 
 ; http://www.eki.ee/letter/chardata.cgi?HTML4=1

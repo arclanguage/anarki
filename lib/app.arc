@@ -218,11 +218,10 @@
 ; believe there's no way to just send the chars.
 
 (def shash (str)
-  (let fname (+ "/tmp/shash" (rand-string 10))
+  (let fname (mktemp "shash")
     (w/outfile f fname (disp str f))
-    (let res (tostring (system (+ "openssl dgst -sha1 <" fname)))
-      (do1 (cut res 0 (- (len res) 1))
-           (rmfile fname)))))
+    (after (chomp:tostring:system:+ "openssl dgst -sha512 <" fname)
+      (rmfile fname))))
 
 (= dc-usernames* (table))
 
