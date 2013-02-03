@@ -510,21 +510,23 @@
 ; balancing a previous open delimiter.
 
 (def urlend (s i (o indelim))
-  (let c (s i)
+  (let c s.i
     (if (atend i s)
-         (if ((orf punc whitec opendelim) c)
-              i
-             (closedelim c)
-              (if indelim (+ i 1) i)
-             (+ i 1))
-        (if (or (whitec c)
-                (and (punc c) (whitec (s (+ i 1))))
-                (and ((orf whitec punc) (s (+ i 1)))
-                     (or (opendelim c)
-                         (and (closedelim c) (no indelim)))))
+      (if (or punc.c whitec.c opendelim.c)
             i
-            (urlend s (+ i 1) (or (opendelim c)
-                                  (and indelim (no (closedelim c)))))))))
+          (closedelim c)
+            (if indelim (+ i 1) i)
+          'else
+            (+ i 1))
+      (let nextc (s (+ i 1))
+        (if (or whitec.c
+                (and punc.c whitec.nextc)
+                (and (or whitec.nextc punc.nextc)
+                     (or opendelim.c
+                         (and closedelim.c no.indelim))))
+          i
+          (urlend s (+ i 1) (or (opendelim c)
+                                (and indelim (~closedelim c)))))))))
 
 (def opendelim (c)  (in c #\< #\( #\[ #\{))
 
