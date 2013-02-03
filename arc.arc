@@ -1128,18 +1128,22 @@
            (apply >= (cdr args)))))
 
 (def whitec (c)
-  (in c #\space #\newline #\tab #\return))
+  ($.char-whitespace? c))
 
-(def nonwhite (c) (no (whitec c)))
+(def nonwhite (c)
+  (~whitec c))
 
-(def letter (c) (or (<= #\a c #\z) (<= #\A c #\Z)))
+(def letter (c)
+  ($.char-alphabetic? c))
 
-(def digit (c) (<= #\0 c #\9))
+(def digit (c)
+  ($.char-numeric? c))
 
-(def alphadig (c) (or (letter c) (digit c)))
+(def alphadig (c)
+  (or letter.c digit.c))
 
 (def punc (c)
-  (in c #\. #\, #\; #\: #\! #\?))
+  ($.char-punctuation? c))
 
 ; a version of readline that accepts both lf and crlf endings
 ; adapted from Andrew Wilcox's code (http://awwx.ws/readline) by Michael
