@@ -18,6 +18,10 @@
   "<a href=\"http://foo.com\" rel=\"nofollow\">http...</a>"
   (markdown "http://foo.com" 4))
 
+(test-contains "markdown handles urls with punctuation"
+  "https://en.wikipedia.org/wiki/Sherlock_Holmes_(1984_TV_series)"
+  (markdown "https://en.wikipedia.org/wiki/Sherlock_Holmes_(1984_TV_series)"))
+
 (test-contains "markdown segments paragraphs"
   "abc<p>def"
   (markdown "abc\n\ndef"))

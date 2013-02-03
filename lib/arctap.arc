@@ -26,6 +26,8 @@
 
 (def-test-fn is)
 (def-test-fn iso)
-(def-test-fn smatch)
+(def-test-fn contains)
 
 (= is-deeply test-iso)
+
+(= contains findsubseq)

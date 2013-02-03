@@ -512,10 +512,10 @@
 (def urlend (s i (o indelim))
   (let c s.i
     (if (atend i s)
-      (if (or punc.c whitec.c opendelim.c)
-            i
-          (closedelim c)
+      (if (closedelim c)
             (if indelim (+ i 1) i)
+          (or punc.c whitec.c opendelim.c)
+            i
           'else
             (+ i 1))
       (let nextc (s (+ i 1))
