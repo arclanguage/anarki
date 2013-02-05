@@ -1260,6 +1260,8 @@
 (def copy (x . args)
   (ret ans (case type.x
              sym    x
+             int    x
+             num    x
              cons   (cons (copy car.x)
                           (copy cdr.x))
              string (let new (newstring len.x)
