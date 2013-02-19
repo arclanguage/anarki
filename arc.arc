@@ -1012,6 +1012,8 @@
 
 (def int (x (o b 10)) (coerce x 'int b))
 
+(def real (x) (+ 0.0 x))
+
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
      ,@(let key -1
