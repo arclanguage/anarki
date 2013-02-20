@@ -939,12 +939,7 @@
 ; the rep of these.  That would also require hacking the reader.
 
 (def pr args
-  (if cdr.args
-        (map1 pr args)
-      (isa car.args 'num)
-        (disp:real car.args)
-      'else
-        (disp car.args))
+  (map1 disp args)
   (car args))
 
 (def prt args
