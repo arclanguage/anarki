@@ -1012,7 +1012,7 @@
 
 (def int (x (o b 10)) (coerce x 'int b))
 
-(def real (x) (+ 0.0 x))
+(def real (x) ($.exact->inexact x))
 
 (mac rand-choice exprs
   `(case (rand ,(len exprs))
