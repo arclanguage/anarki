@@ -222,8 +222,8 @@
                  (cdr source)
                  '()
                  (let ((rec (if (null? token)
-                            acc
-                            (cons (reverse token) acc))))
+                              acc
+                              (cons (reverse token) acc))))
                    (if keepsep?
                        (cons (car source) rec)
                        rec))
