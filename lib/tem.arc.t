@@ -1,6 +1,7 @@
 (deftem foo field1 'default)
 (= f inst!foo)
 
+(prn "WARNING: template tests are a mess")
 (test-iso "templates pick up defaults"
   'default
   f!field1)
@@ -70,3 +71,9 @@
     (= tem!field1 34)
     (= tem!field1 'default) ; explicit set
     rep.tem.1))
+
+(deftem 'foo field1 (seconds))
+(test-is "template expressions work"
+  nil
+  (let f (inst 'foo)
+    (~iso f f)))

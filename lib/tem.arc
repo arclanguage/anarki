@@ -17,19 +17,18 @@
 ; (tagged 'tem (tem-type fields nils))
 (def inst (tem-type . args)
   (annotate 'tem (list tem-type
-                       (coerce pair.args 'table)
-                       (memtable (map car (keep no:cadr pair.args))))))
+                       (w/table x
+                         (each (k v) (if acons.tem-type tem-type templates*.tem-type)
+                           (unless no.v
+                             (= x.k (v))))
+                         (each (k v) pair.args
+                           (= x.k v))))))
 
 (extend sref (tem v k) (isa tem 'tem)
-  (sref rep.tem.1 v k)
-  (if v
-    (wipe rep.tem.2.k)
-    (set rep.tem.2.k)))
+  (sref rep.tem.1 v k))
 
 (defcall tem (tem k)
-  (or rep.tem.1.k
-      (if (no rep.tem.2.k)
-        ((alref (templates* rep.tem.0) k)))))
+  rep.tem.1.k)
 
 (defmethod iso(a b) tem
   (and (isa a 'tem)
@@ -54,14 +53,9 @@
 
 ; coerce alist to a specific template
 (def listtem (tem fields)
-  (apply inst tem (apply + fields)))
+  (apply inst tem (if fields
+                    (apply + fields))))
 
 ; like tablist, but include explicitly-set nil fields
 (def temlist (tem val)
-  (ret fields (coerce rep.val.1 'cons)
-    (iflet nil-fields (coerce rep.val.2 'cons)
-      (each (k v) (if acons.tem
-                    tem
-                    templates*.tem)
-        (if (assoc k nil-fields)
-          (push (list k nil) fields))))))
+  (coerce rep.val.1 'cons))
