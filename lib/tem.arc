@@ -63,9 +63,5 @@
 ; like tablist, but include explicitly-set nil fields
 (def temlist (tem val)
   (ret fields (coerce rep.val.1 'cons)
-    (iflet nil-fields (coerce rep.val.2 'cons)
-      (each (k v) (if acons.tem
-                    tem
-                    templates*.tem)
-        (if (assoc k nil-fields)
-          (push (list k nil) fields))))))
+    (each nil-field (coerce rep.val.2 'cons)
+      (push (list car.nil-field nil) fields))))

@@ -35,8 +35,8 @@
   '((field1 default))
   (normalize:temlist 'foo (inst 'foo 'field1 'default)))
 
-(test-iso "temlist skips unknown nil fields"
-  '((field1 default) (new-field2 3))
+(test-iso "temlist includes unknown nil fields"
+  '((field1 default) (new-field1 nil) (new-field2 3))
   (normalize:temlist 'foo (inst 'foo 'new-field1 nil 'new-field2 3)))
 
 (test-iso "listtem DOES NOT ignore unknown fields"
