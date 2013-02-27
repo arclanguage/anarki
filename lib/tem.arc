@@ -33,7 +33,7 @@
 (defcall tem (tem k)
   (or rep.tem.1.k
       (if (no rep.tem.2.k)
-        ((alref (templates* rep.tem.0) k)))))
+        (aif (alref (templates* rep.tem.0) k) (it)))))
 
 (defmethod iso(a b) tem
   (and (isa a 'tem)

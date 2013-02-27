@@ -14,6 +14,11 @@
   34
   f!field1)
 
+(deftem foo2)
+(test-iso "reading empty templates works"
+  nil
+  inst!foo2!field1)
+
 (= f!field1 nil)
 (test-iso "assigning templates to nil works"
   nil
