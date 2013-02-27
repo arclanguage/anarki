@@ -72,8 +72,8 @@
     (= tem!field1 'default) ; explicit set
     rep.tem.1))
 
-(deftem 'foo field1 (seconds))
-(test-is "template expressions work"
-  nil
-  (let f (inst 'foo)
-    (~iso f f)))
+(deftem foo field1 (seconds))
+(let f (inst 'foo)
+  (test-is "template expressions work"
+    f!field1
+    (do sleep.2 f!field1)))
