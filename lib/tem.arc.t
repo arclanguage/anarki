@@ -43,6 +43,10 @@
   (inst 'foo 'new-field 34)
   (listtem 'foo '((new-field 34))))
 
+(test-iso "listtem handles nil"
+  (inst 'foo)
+  (listtem 'foo nil))
+
 (test-iso "temlist and listtem are converses"
   (inst 'foo 'field1 34)
   (listtem 'foo (temlist 'foo (inst 'foo 'field1 34))))

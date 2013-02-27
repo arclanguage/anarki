@@ -58,7 +58,7 @@
 
 ; coerce alist to a specific template
 (def listtem (tem fields)
-  (apply inst tem (apply + fields)))
+  (apply inst tem (if fields (apply + fields))))
 
 ; like tablist, but include explicitly-set nil fields
 (def temlist (tem val)
