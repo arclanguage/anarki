@@ -17,7 +17,11 @@
 ; (tagged 'tem (tem-type fields nils))
 (def inst (tem-type . args)
   (annotate 'tem (list tem-type
-                       (coerce pair.args 'table)
+                       (let default-vals (map (fn((k v))
+                                           (list k (v)))
+                                         templates*.tem-type)
+                         (coerce (+ default-vals pair.args)
+                                 'table))
                        (memtable (map car (keep no:cadr pair.args))))))
 
 (extend sref (tem v k) (isa tem 'tem)
