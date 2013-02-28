@@ -35,6 +35,10 @@
       (if (no rep.tem.2.k)
         (aif (alref (templates* rep.tem.0) k) (it)))))
 
+(extend copy (x . args)   ($.vector? x)
+  ; tagged type
+  ($.vector-map copy x))
+
 (defmethod iso(a b) tem
   (and (isa a 'tem)
        (isa b 'tem)

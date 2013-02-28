@@ -24,6 +24,10 @@
   nil
   f!field1)
 
+(test-iso "copying templates works"
+  f
+  copy.f)
+
 (test-iso "temlist works"
   '((field1 34))
   (normalize:temlist 'foo (inst 'foo 'field1 34)))
