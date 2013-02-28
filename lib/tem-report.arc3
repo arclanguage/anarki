@@ -1,0 +1,10 @@
+after writing to file and reading back:
+  if default was absent and inst field was absent => read back nil
+  if default was absent and inst field was nil => read back nil
+  if default was absent and inst field was 2 => read back nil
+  if default was nil and inst field was absent => read back nil
+  if default was nil and inst field was nil => read back nil
+  if default was nil and inst field was 2 => read back 2
+  if default was 1 and inst field was absent => read back 1
+  if default was 1 and inst field was nil => read back 1
+  if default was 1 and inst field was 2 => read back 2
