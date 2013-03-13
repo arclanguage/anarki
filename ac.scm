@@ -974,8 +974,7 @@
             (string ,(lambda (s) (lambda (i) (string-ref s i))))
             (table  ,(lambda (h) (case-lambda
                                   ((k) (hash-table-get h k 'nil))
-                                  ((k d) (hash-table-get h k d)))))
-            (mac    ,ar-rep))
+                                  ((k d) (hash-table-get h k d))))))
 
    (string  (int    ,number->string)
             (num    ,number->string)
