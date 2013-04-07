@@ -7,11 +7,11 @@
 
 (declare 'atstrings t)
 
-(= this-site*    "Cool Stuff"
+(= this-site*    "搜罗万象"
    site-url*     "http://appsallin1.com/forum"
-   parent-url*   "http://appsallin1.com"
+   parent-url*   "/"
    favicon-url*  ""
-   site-desc*    "What this site is about."               ; for rss feed
+   site-desc*    "搜罗一切有意义的事情，设计，最潮的技术，赚钱相关的信息。。。"; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
    prefer-url*   t)
@@ -600,12 +600,12 @@ function vote(node) {
 (def toprow (user label)
   (w/bars
     (when (noob user)
-      (toplink "welcome" welcome-url* label))
-    (toplink "new" "newest" label)
+      (toplink "欢迎" welcome-url* label))
+    (toplink "最新" "newest" label)
     (when user
-      (toplink "threads" (threads-url user) label))
-    (toplink "comments" "newcomments" label)
-    (toplink "leaders"  "leaders"     label)
+      (toplink "话题" (threads-url user) label))
+    (toplink "最新留言" "newcomments" label)
+    (toplink "本站之星"  "leaders"     label)
     (hook 'toprow user label)
     (link "submit")
     (unless (mem label toplabels*)
@@ -621,11 +621,11 @@ function vote(node) {
     (when showkarma (pr  "&nbsp;(@(karma user))"))
     (pr "&nbsp;|&nbsp;"))
   (if user
-      (rlinkf 'logout (req)
+      (rlinkf '注销 (req)
         (when-umatch/r user req
           (logout-user user)
           whence))
-      (onlink "login"
+      (onlink "登录"
         (login-page 'both nil
                     (list (fn (u ip)
                             (ensure-news-user u)
@@ -807,7 +807,7 @@ function vote(node) {
   (tostring (underlink "reset password" "resetpw")))
 
 (newsop welcome ()
-  (pr "Welcome to " this-site* ", " user "!"))
+  (pr "欢饮来到" this-site* ", " user "!"))
 
 
 ; Main Operators
@@ -851,7 +851,7 @@ function vote(node) {
 ; cached page.  If this were a prob, could make deletion clear caches.
 
 (newscache newestpage user 40
-  (listpage user (msec) (newstories user maxend*) "new" "New Links" "newest"))
+  (listpage user (msec) (newstories user maxend*) "new" "最新" "newest"))
 
 (def newstories (user n)
   (retrieve n [cansee user _] stories*))
@@ -1424,7 +1424,7 @@ function vote(node) {
 
 (def submit-page (user (o url) (o title) (o showtext) (o text "") (o msg)
                        (o req)) ; unused
-  (minipage "Submit"
+  (minipage "提交"
     (pagemessage msg)
     (urform user req
             (process-story (get-user req)
@@ -1434,15 +1434,15 @@ function vote(node) {
                            (and showtext (md-from-form (arg req "x") t))
                            req!ip)
       (tab
-        (row "title"  (input "t" title 50))
+        (row "标题"  (input "t" title 50))
         (if prefer-url*
-            (do (row "url" (input "u" url 50))
+            (do (row "网页地址" (input "u" url 50))
                 (when showtext
-                  (row "" "<b>or</b>")
-                  (row "text" (textarea "x" 4 50 (only.pr text)))))
-            (do (row "text" (textarea "x" 4 50 (only.pr text)))
-                (row "" "<b>or</b>")
-                (row "url" (input "u" url 50))))
+                  (row "" "<b>或</b>")
+                  (row "文" (textarea "x" 4 50 (only.pr text)))))
+            (do (row "文本" (textarea "x" 4 50 (only.pr text)))
+                (row "" "<b>或</b>")
+                (row "网页地址" (input "u" url 50))))
         (row "" (submit))
         (spacerow 20)
         (row "" submit-instructions*)))))
@@ -1977,7 +1977,7 @@ function vote(node) {
       (br2)
       (spanclass subtext (pr noob-comment-msg*)))
     (br2)
-    (submit (if (acomment parent) "reply" "add comment"))))
+    (submit (if (acomment parent) "回复" "留言"))))
 
 (= comment-threshold* -20)
 
@@ -2168,7 +2168,7 @@ function vote(node) {
 
 (def threads-page (user subject)
   (if (profile subject)
-      (withs (title (+ subject "'s comments")
+      (withs (title (+ subject "的留言")
               label (if (is user subject) "threads" title)
               here  (threads-url subject))
         (longpage user (msec) nil label title here
@@ -2259,7 +2259,7 @@ function vote(node) {
 (= nleaders* 20)
 
 (newscache leaderspage user 1000
-  (longpage user (msec) nil "leaders" "Leaders" "leaders"
+  (longpage user (msec) nil "leaders" "本站之星" "leaders"
     (sptab
       (let i 0
         (each u (firstn nleaders* (leading-users))
@@ -2333,7 +2333,7 @@ function vote(node) {
 
 (newscache newcomments-page user 60
   (listpage user (msec) (visible user (firstn maxend* comments*))
-            "comments" "New Comments" "newcomments" nil))
+            "comments" "最新留言" "newcomments" nil))
 
 
 ; Doc
