@@ -1,15 +1,15 @@
 ; News.  2 Sep 06.
 
-; to run news: (nsv), then go to http://localhost:8080
+; to run news: (nsv), then go to http://localhost:8088
 ; put usernames of admins, separated by whitespace, in arc/admins
 
 ; bug: somehow (+ votedir* nil) is getting evaluated.
 
 (declare 'atstrings t)
 
-(= this-site*    "My Forum"
-   site-url*     "http://news.yourdomain.com/"
-   parent-url*   "http://www.yourdomain.com"
+(= this-site*    "Cool Stuff"
+   site-url*     "http://appsallin1.com/forum"
+   parent-url*   "http://appsallin1.com"
    favicon-url*  ""
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
@@ -79,7 +79,7 @@
 
 (= initload-users* nil)
 
-(def nsv ((o port 8080))
+(def nsv ((o port 8088))
   (map ensure-dir (list arcdir* newsdir* storydir* votedir* profdir*))
   (unless stories* (load-items))
   (if (and initload-users* (empty profs*)) (load-users))
