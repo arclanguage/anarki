@@ -24,8 +24,7 @@
 ;     e.g. _1, _2, _3, or _a, _b, _c, etc.
 ;   treats __ as the rest arg
 (mac make-br-fn (body)
-  (let args (rem '__ (dedup:sort > -mbf-argsyms.body))
-    (if args
-      (= (cdr lastcons.args) '__)
-      (= args '__))
+  (let args '__
+    (each arg (dedup:sort > -mbf-argsyms.body)
+      (pushnew arg args))
     `(fn ,args ,body)))
