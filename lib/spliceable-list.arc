@@ -3,7 +3,7 @@
 (def spliceable-list (n (o init))
   ++.n
   (annotate 'spliceable-list (obj contents init
-                                  last lastcdr.init
+                                  last lastcons.init
                                   suffix-len n
                                   suffix (suffix n init))))
 
@@ -14,14 +14,14 @@
   (empty rep.l!contents))
 
 (defgeneric append(a b)
-  (= (cdr lastcdr.a) b))
+  (= (cdr lastcons.a) b))
 
 (defmethod append(l tail) spliceable-list
   (if empty.l
     (= rep.l!contents tail
        rep.l!last rep.tail)
     (= (cdr rep.l!last) tail))
-  (zap lastcdr rep.l!last)
+  (zap lastcons rep.l!last)
   (if rep.l!suffix
     (zap [nthcdr len.tail _] rep.l!suffix)
     ; no suffix yet; do we have enough elems to start?

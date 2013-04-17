@@ -328,9 +328,9 @@
       (> n 0) (nthcdr (- n 1) (cdr xs))
               xs))
 
-(def lastcdr (xs)
+(def lastcons (xs)
   (if cdr.xs
-    (lastcdr cdr.xs)
+    (lastcons cdr.xs)
     xs))
 
 ; Generalization of pair: (tuples x) = (pair x)
