@@ -61,3 +61,15 @@
 (test-iso "mem works on improper lists - 2"
   6
   (mem 6 '(2 4 5 . 6)))
+
+(test-iso "some works on improper lists"
+  t
+  (some odd '(2 4 5 . 6)))
+
+(test-iso "some works on improper lists - 2"
+  t
+  (some 6 '(2 4 5 . 6)))
+
+(test-iso "some works on improper lists - 3"
+  nil
+  (some 7 '(2 4 5 . 6)))

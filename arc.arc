@@ -256,14 +256,16 @@
 (def testify (x)
   (if (isa x 'fn) x [iso _ x]))
 
+(def carif (x) (if (atom x) x (car x)))
+
 ; Like keep, seems like some shouldn't testify.  But find should,
 ; and all probably should.
 
 (def some (test seq)
   (let f (testify test)
-    (if (alist seq)
-      (reclist f:car seq)
-      (recstring f:seq seq))))
+    (if (isa seq 'string)
+      (recstring f:seq seq)
+      (reclist f:carif seq))))
 
 (def all (test seq)
   (~some (complement (testify test)) seq))
@@ -1183,8 +1185,6 @@
       (base tree)
       (f (treewise f base (car tree))
          (treewise f base (cdr tree)))))
-
-(def carif (x) (if (atom x) x (car x)))
 
 ; Could prob be generalized beyond printing.
 
