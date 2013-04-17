@@ -652,16 +652,14 @@
       (cons x xs)))
 
 (mac pushnew (x place . args)
-  (w/uniq gx
-    (let (binds val setter) (setforms place)
-      `(atwiths ,(+ (list gx x) binds)
-         (,setter (adjoin ,gx ,val ,@args))))))
+  (let (binds val setter) (setforms place)
+    `(atwiths ,binds
+       (,setter (adjoin ,x ,val ,@args)))))
 
 (mac pull (test place)
-  (w/uniq g
-    (let (binds val setter) (setforms place)
-      `(atwiths ,(+ (list g test) binds)
-         (,setter (rem ,g ,val))))))
+  (let (binds val setter) (setforms place)
+    `(atwiths ,binds
+       (,setter (rem ,test ,val)))))
 
 (mac togglemem (x place . args)
   (w/uniq gx
