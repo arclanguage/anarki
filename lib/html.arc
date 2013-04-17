@@ -348,7 +348,7 @@
                        (if (isa ,gl 'cons)
                            (td (textarea ',name (car ,gl) (cadr ,gl)
                                  (let ,gt ,text (if ,gt (pr ,gt)))))
-                           (td (gentag input type ',(if (is label '密码)
+                           (td (gentag input type ',(if (is label 'password)
                                                     'password
                                                     'text)
                                          name ',name

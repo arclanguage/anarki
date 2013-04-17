@@ -151,11 +151,11 @@
   (whitepage
     (pagemessage msg)
     (when (in switch 'login 'both)
-      (login-form "登录" switch login-handler afterward)
+      (login-form "Login" switch login-handler afterward)
       (hook 'login-form afterward)
       (br2))
     (when (in switch 'register 'both)
-      (login-form "创建账户" switch create-handler afterward))))
+      (login-form "Create Account" switch create-handler afterward))))
 
 (def login-form (label switch handler afterward)
   (prbold label)
@@ -198,8 +198,8 @@
   (prn "Set-Cookie: user=" cook "; expires=Sun, 17-Jan-2038 19:14:07 GMT"))
 
 (def pwfields ((o label "login"))
-  (inputs u 用户名  20 nil
-          p 密码 20 nil)
+  (inputs u username 20 nil
+          p password 20 nil)
   (br)
   (submit label))
 
