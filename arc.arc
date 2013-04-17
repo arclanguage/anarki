@@ -262,8 +262,8 @@
 (def some (test seq)
   (let f (testify test)
     (if (alist seq)
-        (reclist f:car seq)
-        (recstring f:seq seq))))
+      (reclist f:car seq)
+      (recstring f:seq seq))))
 
 (def all (test seq)
   (~some (complement (testify test)) seq))
