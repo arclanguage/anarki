@@ -270,7 +270,7 @@
 
 (def mem (test seq)
   (let f (testify test)
-    (reclist [if (f:car _) _] seq)))
+    (reclist [if (f:carif _) _] seq)))
 
 (def find (test seq)
   (let f (testify test)

@@ -49,3 +49,15 @@
 (test-iso "find works on improper lists - 3"
   nil
   (find 'd '(a b . c)))
+
+(test-iso "mem works"
+  '(6 7)
+  (mem 6 '(2 4 5 6 7)))
+
+(test-iso "mem works on improper lists"
+  '(6 . 7)
+  (mem 6 '(2 4 5 6 . 7)))
+
+(test-iso "mem works on improper lists - 2"
+  6
+  (mem 6 '(2 4 5 . 6)))
