@@ -20,9 +20,12 @@
                        (rem sym old))))
 
 ; better make-br-fn
+;   treats any symbols starting with '_' as args, ordered alphabetically
+;     e.g. _1, _2, _3, or _a, _b, _c, etc.
+;   treats __ as the rest arg
 (mac make-br-fn (body)
-  (withs (astab (counts:-mbf-argsyms body)
-          args  (do (wipe astab!__) '__))
-    (each s (sort > keys.astab)
-      (push s args))
+  (let args (rem '__ (dedup:sort > -mbf-argsyms.body))
+    (if args
+      (= (cdr lastcons.args) '__)
+      (= args '__))
     `(fn ,args ,body)))
