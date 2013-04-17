@@ -73,3 +73,13 @@
 (test-iso "some works on improper lists - 3"
   nil
   (some 7 '(2 4 5 . 6)))
+
+(test-iso "pushnew works on improper lists"
+  '(2 . 3)
+  (ret x 3
+    (pushnew 2 x)))
+
+(test-iso "pushnew works on improper lists - 2"
+  3
+  (ret x 3
+    (pushnew 3 x)))
