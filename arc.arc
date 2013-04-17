@@ -244,7 +244,7 @@
       ,test)))
 
 (def reclist (f xs)
-  (and xs (or (f xs) (reclist f (cdr xs)))))
+  (and xs (or (f xs) (if (acons xs) (reclist f (cdr xs))))))
 
 (def recstring (test s (o start 0))
   ((afn (i)
@@ -275,7 +275,7 @@
 (def find (test seq)
   (let f (testify test)
     (if (alist seq)
-        (reclist   [if (f:car _) (car _)] seq)
+        (reclist   [if (f:carif _) (carif _)] seq)
         (recstring [if (f:seq _) (seq _)] seq))))
 
 (def isa (x y) (is (type x) y))

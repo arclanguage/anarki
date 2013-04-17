@@ -37,3 +37,15 @@
 (test-iso "find works on strings - 2"
   nil
   (find #\d "abc"))
+
+(test-iso "find works on improper lists"
+  'a
+  (find 'a '(a b . c)))
+
+(test-iso "find works on improper lists - 2"
+  'c
+  (find 'c '(a b . c)))
+
+(test-iso "find works on improper lists - 3"
+  nil
+  (find 'd '(a b . c)))
