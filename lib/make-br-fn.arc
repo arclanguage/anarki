@@ -22,7 +22,7 @@
 ; better make-br-fn
 (mac make-br-fn (body)
   (withs (astab (counts:-mbf-argsyms body)
-          args  (awhen astab!__ (wipe astab!__) '__))
+          args  (do (wipe astab!__) '__))
     (each s (sort > keys.astab)
       (push s args))
     `(fn ,args ,body)))
