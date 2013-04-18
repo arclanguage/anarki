@@ -83,3 +83,8 @@
   3
   (ret x 3
     (pushnew 3 x)))
+
+(test-iso "pushnew works with nil"
+  '(nil 3)
+  (ret x '(3)
+    (pushnew nil x)))
