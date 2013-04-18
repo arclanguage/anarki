@@ -648,8 +648,8 @@
 
 (def adjoin (x xs (o test iso))
   (if (some [test x _] xs)
-      xs
-      (cons x xs)))
+    xs
+    (cons x xs)))
 
 (mac pushnew (x place . args)
   (let (binds val setter) (setforms place)

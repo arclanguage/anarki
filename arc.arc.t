@@ -22,7 +22,7 @@
   34
   (find even '(34)))
 
-(test-iso "find handles arbitrary predicate - 4"
+(test-iso "find handles arbitrary predicate - 5"
   nil
   (find even '(35)))
 
