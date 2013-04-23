@@ -294,10 +294,10 @@
         Please choose another."
       (username-taken user)
        "That username is taken. Please choose another."
-      (or (no pw) (< (len pw) 4))
+      (or (no pw) (len< pw 4))
        "Passwords should be a least 4 characters long.  Please
         choose another."
-      (or (no email) (< len.email 6))
+      (or (no email) (len< email 6))
        "Please provide an email, in case you need your password emailed to you."
        nil))
 
