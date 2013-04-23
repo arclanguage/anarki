@@ -7,6 +7,7 @@
 ; A user is simply a string: "pg". Use /whoami to test user cookie.
 
 (= hpwfile*   "arc/hpw"
+   emailfile* "arc/emails"
    oidfile*   "arc/openids"
    adminfile* "arc/admins"
    cookfile*  "arc/cooks")
@@ -17,6 +18,7 @@
 
 (def load-userinfo ()
   (= hpasswords*   (safe-load-table hpwfile*)
+     emails*       (safe-load-table emailfile*)
      openids*      (safe-load-table oidfile*)
      admins*       (map string (errsafe (readfile adminfile*)))
      cookie->user* (safe-load-table cookfile*))
@@ -93,12 +95,14 @@
     (br2)
     (aform (fn (req)
              (when-umatch user req
-               (with (u (arg req "u") p (arg req "p"))
-                 (if (or (no u) (no p) (is u "") (is p ""))
+               (with (u (arg req "u")
+                      p (arg req "p")
+                      e (arg req "e"))
+                 (if (or (no u) (no p) (is u "") (is p "") (no e))
                       (pr "Bad data.")
                      (user-exists u)
                       (admin-page user "User already exists: " u)
-                      (do (create-acct u p)
+                      (do (create-acct u p e)
                           (admin-page user))))))
       (pwfields "create (server) account"))))
 
@@ -120,9 +124,10 @@
   (wipe (cookie->user* (user->cookie* user)) (user->cookie* user))
   (save-table cookie->user* cookfile*))
 
-(def create-acct (user pw)
+(def create-acct (user pw email)
   (set (dc-usernames* (downcase user)))
-  (set-pw user pw))
+  (set-pw user pw)
+  (set-email user email))
 
 (def disable-acct (user)
   (set-pw user (rand-string 20))
@@ -131,6 +136,10 @@
 (def set-pw (user pw)
   (= (hpasswords* user) (and pw (shash pw)))
   (save-table hpasswords* hpwfile*))
+
+(def set-email (user email)
+  (= emails*.user email)
+  (save-table emails* emailfile*))
 
 (def hello-page (user ip)
   (whitepage (prs "hello" user "at" ip)))
@@ -170,15 +179,22 @@
   (prbold "Create Account")
   (br2)
   (fnform (fn (req) (signup-handler req afterward))
-          (fn () (pwfields "signup"))
+          (fn ()
+            (inputs u username 20 nil
+                    p password 20 nil
+                    e email 20 nil)
+            (br)
+            (submit "signup"))
           (acons afterward)))
 
 (def signup-handler (req afterward)
   (logout-user (get-user req))
-  (with (user (arg req "u") pw (arg req "p"))
-    (aif (bad-newacct user pw)
+  (with (user   (arg req "u")
+         pw     (arg req "p")
+         email  (arg req "e"))
+    (aif (bad-newacct user pw email)
       (failed-login it afterward)
-      (do (create-acct user pw)
+      (do (create-acct user pw email)
           (login user req!ip (cook-user user) afterward)))))
 
 (def login (user ip cookie afterward)
@@ -234,7 +250,7 @@
       (set (dc-usernames* (downcase k)))))
   (dc-usernames* (downcase user)))
 
-(def bad-newacct (user pw)
+(def bad-newacct (user pw email)
   (if (no (goodname user 2 15))
        "Usernames can only contain letters, digits, dashes and
         underscores, and should be between 2 and 15 characters long.
@@ -244,6 +260,8 @@
       (or (no pw) (< (len pw) 4))
        "Passwords should be a least 4 characters long.  Please
         choose another."
+      (or (no email) (< len.email 6))
+       "Please provide an email, in case you need your password emailed to you."
        nil))
 
 (def goodname (str (o min 1) (o max nil))
