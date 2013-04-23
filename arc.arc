@@ -738,7 +738,7 @@
 
 (mac aand args
   (if (no args)
-      't
+       t
       (no (cdr args))
        (car args)
       `(let it ,(car args) (and it (aand ,@(cdr args))))))
