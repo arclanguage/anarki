@@ -35,17 +35,18 @@
 (assign safeset (annotate 'mac
                   (fn (var val)
                     `(do (if (bound ',var)
-                             (do (disp "*** redefining " (stderr))
-                                 (disp ',var (stderr))
-                                 (disp #\newline (stderr))))
+                           (do (disp "*** redefining " (stderr))
+                               (disp ',var (stderr))
+                               (disp #\newline (stderr))))
                          (assign ,var ,val)))))
 
 (sref sig '(var val) 'safeset)
 (sref source-file* current-load-file* 'safeset)
 
 (assign docify-body (fn (body)
-                      (if (if (is (type car.body) 'string) cdr.body) body
-                          (cons nil body))))
+                      (if (if (is (type car.body) 'string) cdr.body)
+                        body
+                        (cons nil body))))
 
 (sref sig '(body) 'docify-body)
 (sref source-file* current-load-file* 'docify-body)
@@ -92,8 +93,8 @@
 
 (def map1 (f xs)
   (if (no xs)
-      nil
-      (cons (f (car xs)) (map1 f (cdr xs)))))
+    nil
+    (cons (f (car xs)) (map1 f (cdr xs)))))
 
 (def pair (xs (o f list))
   (if (no xs)
@@ -120,10 +121,10 @@
 
 (mac and args
   (if args
-      (if (cdr args)
-          `(if ,(car args) (and ,@(cdr args)))
-          (car args))
-      't))
+    (if (cdr args)
+        `(if ,(car args) (and ,@(cdr args)))
+        (car args))
+    t))
 
 (def assoc (key al)
   (if (atom al)
@@ -144,29 +145,29 @@
 
 (mac withs (parms . body)
   (if (no parms)
-      `(do ,@body)
-      `(let ,(car parms) ,(cadr parms)
-         (withs ,(cddr parms) ,@body))))
+    `(do ,@body)
+    `(let ,(car parms) ,(cadr parms)
+       (withs ,(cddr parms) ,@body))))
 
 (mac ret (var val . body)
   `(let ,var ,val ,@body ,var))
 
 (mac w/uniq (names . body)
   (if (acons names)
-      `(with ,(apply + nil (map1 (fn (n) `(,n (uniq ',n)))
-                             names))
-         ,@body)
-      `(let ,names (uniq ',names) ,@body)))
+    `(with ,(apply + nil (map1 (fn (n) `(,n (uniq ',n)))
+                           names))
+       ,@body)
+    `(let ,names (uniq ',names) ,@body)))
 
 ; Rtm prefers to overload + to do this
 
 (def join args
   (if (no args)
-      nil
-      (let a (car args)
-        (if (no a)
-            (apply join (cdr args))
-            (cons (car a) (apply join (cdr a) (cdr args)))))))
+    nil
+    (let a (car args)
+      (if (no a)
+        (apply join (cdr args))
+        (cons (car a) (apply join (cdr a) (cdr args)))))))
 
 ; Need rfn for use in macro expansions.
 
@@ -189,8 +190,8 @@
     `(fn ,g
        ,((afn (fs)
            (if (cdr fs)
-               (list (car fs) (self (cdr fs)))
-               `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
+             (list (car fs) (self (cdr fs)))
+             `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
          args))))
 
 ; Ac expands ~x into (complement x)
@@ -204,8 +205,8 @@
 (def rev (xs)
   ((afn (xs acc)
      (if (no xs)
-         acc
-         (self (cdr xs) (cons (car xs) acc))))
+       acc
+       (self (cdr xs) (cons (car xs) acc))))
    xs nil))
 
 (def isnt (x y) (no (is x y)))
@@ -277,8 +278,8 @@
 (def find (test seq)
   (let f (testify test)
     (if (alist seq)
-        (reclist   [if (f:carif _) (carif _)] seq)
-        (recstring [if (f:seq _) (seq _)] seq))))
+      (reclist   [if (f:carif _) (carif _)] seq)
+      (recstring [if (f:seq _) (seq _)] seq))))
 
 (def isa (x y) (is (type x) y))
 
@@ -309,8 +310,8 @@
        (map1 f (car seqs))
       ((afn (seqs)
         (if (some no seqs)
-            nil
-            (cons (apply f (map1 car seqs))
+          nil
+          (cons (apply f (map1 car seqs))
                   (self (map1 cdr seqs)))))
        seqs)))
 
@@ -339,9 +340,9 @@
 
 (def tuples (xs (o n 2))
   (if (no xs)
-      nil
-      (cons (firstn n xs)
-            (tuples (nthcdr n xs) n))))
+    nil
+    (cons (firstn n xs)
+          (tuples (nthcdr n xs) n))))
 
 ; If ok to do with =, why not with def?  But see if use it.
 
@@ -552,26 +553,26 @@
                (< end 0)  (+ (len seq) end)
                           end)
     (if (isa seq 'string)
-        (let s2 (newstring (- end start))
-          (for i 0 (- end start 1)
-            (= (s2 i) (seq (+ start i))))
-          s2)
-        (firstn (- end start) (nthcdr start seq)))))
+      (let s2 (newstring (- end start))
+        (for i 0 (- end start 1)
+          (= (s2 i) (seq (+ start i))))
+        s2)
+      (firstn (- end start) (nthcdr start seq)))))
 
 (def last (xs)
   (if (cdr xs)
-      (last (cdr xs))
-      (car xs)))
+    (last (cdr xs))
+    (car xs)))
 
 (def rem (test seq)
   (let f (testify test)
     (if (alist seq)
-        ((afn (s)
-           (if (no s)       nil
-               (f (car s))  (self (cdr s))
-                            (cons (car s) (self (cdr s)))))
-          seq)
-        (coerce (rem test (coerce seq 'cons)) 'string))))
+      ((afn (s)
+         (if (no s)       nil
+             (f (car s))  (self (cdr s))
+                          (cons (car s) (self (cdr s)))))
+        seq)
+      (coerce (rem test (coerce seq 'cons)) 'string))))
 
 ; Seems like keep doesn't need to testify-- would be better to
 ; be able to use tables as fns.  But rem does need to, because
@@ -588,8 +589,8 @@
   (and xs
       (let fx (f (car xs))
         (if fx
-            (cons fx (trues f (cdr xs)))
-            (trues f (cdr xs))))))
+          (cons fx (trues f (cdr xs)))
+          (trues f (cdr xs))))))
 
 (mac do1 args
   (w/uniq g
@@ -603,10 +604,10 @@
 (mac caselet (var expr . args)
   (let ex (afn (args)
             (if (no (cdr args))
-                (car args)
-                `(if (is ,var ',(car args))
-                     ,(cadr args)
-                     ,(self (cddr args)))))
+              (car args)
+              `(if (is ,var ',(car args))
+                 ,(cadr args)
+                 ,(self (cddr args)))))
     `(let ,var ,expr ,(ex args))))
 
 (mac case (expr . args)
@@ -666,24 +667,24 @@
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ (list gx x) binds)
          (,setter (if (mem ,gx ,val)
-                      (rem ,gx ,val)
-                      (adjoin ,gx ,val ,@args)))))))
+                    (rem ,gx ,val)
+                    (adjoin ,gx ,val ,@args)))))))
 
 (mac ++ (place (o i 1))
   (if (isa place 'sym)
-      `(= ,place (+ ,place ,i))
-      (w/uniq gi
-        (let (binds val setter) (setforms place)
-          `(atwiths ,(+ binds (list gi i))
-             (,setter (+ ,val ,gi)))))))
+    `(= ,place (+ ,place ,i))
+    (w/uniq gi
+      (let (binds val setter) (setforms place)
+        `(atwiths ,(+ binds (list gi i))
+           (,setter (+ ,val ,gi)))))))
 
 (mac -- (place (o i 1))
   (if (isa place 'sym)
-      `(= ,place (- ,place ,i))
-      (w/uniq gi
-        (let (binds val setter) (setforms place)
-          `(atwiths ,(+ binds (list gi i))
-             (,setter (- ,val ,gi)))))))
+    `(= ,place (- ,place ,i))
+    (w/uniq gi
+      (let (binds val setter) (setforms place)
+        `(atwiths ,(+ binds (list gi i))
+           (,setter (- ,val ,gi)))))))
 
 ; E.g. (++ x) equiv to (zap + x 1)
 
@@ -692,9 +693,9 @@
          gargs  (map [uniq] args)
          mix    (afn seqs
                   (if (some no seqs)
-                      nil
-                      (+ (map car seqs)
-                         (apply self (map cdr seqs))))))
+                    nil
+                    (+ (map car seqs)
+                       (apply self (map cdr seqs))))))
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ binds (list gop op) (mix gargs args))
          (,setter (,gop ,val ,@gargs))))))
@@ -756,8 +757,8 @@
        (while (no ,gdone)
          (let ,gres ,expr
            (if (is ,gres ,eof)
-               (= ,gdone t)
-               (push ,gres ,gacc))))
+             (= ,gdone t)
+             (push ,gres ,gacc))))
        (rev ,gacc))))
 
 ; For the common C idiom while x = snarfdata != stopval.
@@ -771,11 +772,11 @@
 
 ;(def macex (e)
 ;  (if (atom e)
-;      e
-;      (let op (and (atom (car e)) (eval (car e)))
-;        (if (isa op 'mac)
-;            (apply (rep op) (cdr e))
-;            e))))
+;    e
+;    (let op (and (atom (car e)) (eval (car e)))
+;      (if (isa op 'mac)
+;        (apply (rep op) (cdr e))
+;        e))))
 
 (def consif (x y) (if x (cons x y) y))
 
@@ -803,7 +804,7 @@
 (def pos (test seq (o start 0))
   (let f (testify test)
     (if (alist seq)
-        ((afn (seq n)
+      ((afn (seq n)
            (if (no seq)
                 nil
                (f (car seq))
@@ -811,7 +812,7 @@
                (self (cdr seq) (+ n 1))))
          (nthcdr start seq)
          start)
-        (recstring [if (f (seq _)) _] seq start))))
+      (recstring [if (f (seq _)) _] seq start))))
 
 (def even (n) (is (mod n 2) 0))
 
@@ -927,8 +928,8 @@
   ((afn (i)
     (let x (read i eof)
       (if (is x eof)
-          nil
-          (cons x (self i)))))
+        nil
+        (cons x (self i)))))
    (if (isa src 'string) (instring src) src)))
 
 (def allchars (str)
@@ -1049,20 +1050,20 @@
 
 (mac on (var s . body)
   (if (is var 'index)
-      (err "Can't use index as first arg to on.")
-      (w/uniq gs
-        `(let ,gs ,s
-           (forlen index ,gs
-             (let ,var (,gs index)
-               ,@body))))))
+    (err "Can't use index as first arg to on.")
+    (w/uniq gs
+      `(let ,gs ,s
+         (forlen index ,gs
+           (let ,var (,gs index)
+             ,@body))))))
 
 (def best (f seq)
   (if (no seq)
-      nil
-      (let wins (car seq)
-        (each elt (cdr seq)
-          (if (f elt wins) (= wins elt)))
-        wins)))
+    nil
+    (let wins (car seq)
+      (each elt (cdr seq)
+        (if (f elt wins) (= wins elt)))
+      wins)))
 
 (def max args (best > args))
 (def min args (best < args))
@@ -1185,9 +1186,9 @@
 
 (def treewise (f base tree)
   (if (atom tree)
-      (base tree)
-      (f (treewise f base (car tree))
-         (treewise f base (cdr tree)))))
+    (base tree)
+    (f (treewise f base (car tree))
+       (treewise f base (cdr tree)))))
 
 ; Could prob be generalized beyond printing.
 
@@ -1216,9 +1217,9 @@
 
 (def dotted (x)
   (if (atom x)
-      nil
-      (and (cdr x) (or (atom (cdr x))
-                       (dotted (cdr x))))))
+    nil
+    (and (cdr x) (or (atom (cdr x))
+                     (dotted (cdr x))))))
 
 (def fill-table (table data)
   (each (k v) (pair data) (= (table k) v))
@@ -1300,8 +1301,8 @@
 (def roundup (n)
   (withs (base (trunc n) rem (abs (- n base)))
     (if (>= rem 1/2)
-        ((if (> n 0) + -) base 1)
-        base)))
+      ((if (> n 0) + -) base 1)
+      base)))
 
 (def nearest (n quantum)
   (* (roundup (/ n quantum)) quantum))
@@ -1316,8 +1317,8 @@
 
 (def sort (test seq)
   (if (alist seq)
-      (mergesort test (copy seq))
-      (coerce (mergesort test (coerce seq 'cons)) (type seq))))
+    (mergesort test (copy seq))
+    (coerce (mergesort test (coerce seq 'cons)) (type seq))))
 
 ; Destructive stable merge-sort, adapted from slib and improved
 ; by Eli Barzilay for MzLib; re-written in Arc.
@@ -1451,8 +1452,8 @@
 
 (def ellipsize (str (o limit 80))
   (if (<= (len str) limit)
-      str
-      (+ (cut str 0 limit) "...")))
+    str
+    (+ (cut str 0 limit) "...")))
 
 (def rand-elt (seq)
   (seq (rand (len seq))))
@@ -1551,13 +1552,13 @@
 
 (def reduce (f xs)
   (if (cddr xs)
-      (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
-      (apply f xs)))
+    (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
+    (apply f xs)))
 
 (def rreduce (f xs)
   (if (cddr xs)
-      (f (car xs) (rreduce f (cdr xs)))
-      (apply f xs)))
+    (f (car xs) (rreduce f (cdr xs)))
+    (apply f xs)))
 
 (let argsym (uniq)
 
@@ -1627,8 +1628,8 @@
   (let downc (fn (c)
                (let n (coerce c 'int)
                  (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
-                     (coerce (+ n 32) 'char)
-                     c)))
+                   (coerce (+ n 32) 'char)
+                   c)))
     (case (type x)
       string (map downc x)
       char   (downc x)
@@ -1639,8 +1640,8 @@
   (let upc (fn (c)
              (let n (coerce c 'int)
                (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
-                   (coerce (- n 32) 'char)
-                   c)))
+                 (coerce (- n 32) 'char)
+                 c)))
     (case (type x)
       string (map upc x)
       char   (upc x)
@@ -1654,8 +1655,8 @@
 
 (def range (start end)
   (if (> start end)
-      nil
-      (cons start (range (inc start) end))))
+    nil
+    (cons start (range (inc start) end))))
 
 (def mismatch (s1 s2)
   (catch
@@ -1677,9 +1678,9 @@
                     `(let ,out (tostring ,e)
                        (unless (is ,out "")
                          (if ,needbars
-                             (pr bar* ,out)
-                             (do (set ,needbars)
-                                 (pr ,out))))))
+                           (pr bar* ,out)
+                           (do (set ,needbars)
+                               (pr ,out))))))
                   body)))))
 
 (def len< (x n) (< (len x) n))
@@ -1913,17 +1914,17 @@
 
 (def rand-key (h)
   (if (empty h)
-      nil
-      (let n (rand (len h))
-        (catch
-          (each (k v) h
-            (when (is (-- n) -1)
-              (throw k)))))))
+    nil
+    (let n (rand (len h))
+      (catch
+        (each (k v) h
+          (when (is (-- n) -1)
+            (throw k)))))))
 
 (def ratio (test xs)
   (if (empty xs)
-      0
-      (/ (count test xs) (len xs))))
+    0
+    (/ (count test xs) (len xs))))
 
 (def butlast (x)
   (cut x 0 (- (len x) 1)))
@@ -1933,9 +1934,9 @@
     `(let ,first t
        (each ,var ,expr
          (if ,first
-             (wipe ,first)
-             ,within)
-           ,@body))))
+           (wipe ,first)
+           ,within)
+         ,@body))))
 
 (def cars (xs) (map car xs))
 (def cdrs (xs) (map cdr xs))

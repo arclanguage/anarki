@@ -5,8 +5,8 @@
 (defop prompt req
   (let user (get-user req)
     (if (admin user)
-        (prompt-page user)
-        (pr "Sorry."))))
+      (prompt-page user)
+      (pr "Sorry."))))
 
 (def prompt-page (user . msg)
   (ensure-dir appdir*)
@@ -29,8 +29,8 @@
     (aform (fn (req)
              (when-umatch user req
                (aif (goodname (arg req "app"))
-                    (edit-app user it)
-                    (prompt-page user "Bad name."))))
+                 (edit-app user it)
+                 (prompt-page user "Bad name."))))
        (tab (row "name:" (input "app") (submit "create app"))))))
 
 (def app-path (user app)
@@ -49,9 +49,9 @@
 (def rem-app (user app)
   (let file (app-path user app)
     (if (file-exists file)
-        (do (rmfile (app-path user app))
-            (prompt-page user "Program " app " deleted."))
-        (prompt-page user "No such app."))))
+      (do (rmfile (app-path user app))
+          (prompt-page user "Program " app " deleted."))
+      (prompt-page user "No such app."))))
 
 (def edit-app (user app)
   (whitepage
@@ -60,11 +60,11 @@
     (aform (fn (req)
              (let u2 (get-user req)
                (if (is u2 user)
-                   (do (when (is (arg req "cmd") "save")
-                         (write-app user app (readall (arg req "exprs"))))
-                       (prompt-page user))
-                   (login-page nil
-                               (fn (u ip) (prompt-page u))))))
+                 (do (when (is (arg req "cmd") "save")
+                       (write-app user app (readall (arg req "exprs"))))
+                     (prompt-page user))
+                 (login-page nil
+                             (fn (u ip) (prompt-page u))))))
       (textarea "exprs" 10 82
         (pprcode (read-app user app)))
       (br2)
@@ -84,16 +84,16 @@
 (def run-app (user app)
   (let exprs (read-app user app)
     (if exprs
-        (on-err (fn (c) (pr "Error: " (details c)))
-          (fn () (map eval exprs)))
-        (prompt-page user "Error: No application " app " for user " user))))
+      (on-err (fn (c) (pr "Error: " (details c)))
+        (fn () (map eval exprs)))
+      (prompt-page user "Error: No application " app " for user " user))))
 
 (wipe repl-history*)
 
 (defop repl req
   (if (admin (get-user req))
-      (replpage req)
-      (pr "Sorry.")))
+    (replpage req)
+    (pr "Sorry.")))
 
 (def replpage (req)
   (whitepage

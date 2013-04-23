@@ -34,16 +34,16 @@
 
 (mac when-umatch (user req . body)
   `(if (is ,user (get-user ,req))
-       (do ,@body)
-       (mismatch-message)))
+     (do ,@body)
+     (mismatch-message)))
 
 (def mismatch-message ()
   (prn "Dead link: users don't match."))
 
 (mac when-umatch/r (user req . body)
   `(if (is ,user (get-user ,req))
-       (do ,@body)
-       "mismatch"))
+     (do ,@body)
+     "mismatch"))
 
 (defop mismatch req (mismatch-message))
 
@@ -73,9 +73,9 @@
 
 (def admin-gate (u)
   (if (admin u)
-      (admin-page u)
-      (login-page nil
-                  (fn (u ip)  (admin-gate u)))))
+    (admin-page u)
+    (login-page nil
+                (fn (u ip)  (admin-gate u)))))
 
 (def admin (u) (and u (mem u admins*)))
 
@@ -163,8 +163,8 @@
 (def login-handler (req afterward)
   (logout-user (get-user req))
   (aif (good-login (arg req "u") (arg req "p") req!ip)
-       (login it req!ip (user->cookie* it) afterward)
-       (failed-login "Bad login." afterward)))
+    (login it req!ip (user->cookie* it) afterward)
+    (failed-login "Bad login." afterward)))
 
 (def signup-form (afterward)
   (prbold "Create Account")
@@ -177,25 +177,25 @@
   (logout-user (get-user req))
   (with (user (arg req "u") pw (arg req "p"))
     (aif (bad-newacct user pw)
-         (failed-login it afterward)
-         (do (create-acct user pw)
-             (login user req!ip (cook-user user) afterward)))))
+      (failed-login it afterward)
+      (do (create-acct user pw)
+          (login user req!ip (cook-user user) afterward)))))
 
 (def login (user ip cookie afterward)
   (= (logins* user) ip)
   (prcookie cookie)
   (if (acons afterward)
-      (let (f url) afterward
-        (f user ip)
-        url)
-      (do (prn)
-          (afterward user ip))))
+    (let (f url) afterward
+      (f user ip)
+      url)
+    (do (prn)
+        (afterward user ip))))
 
 (def failed-login (msg afterward)
   (if (acons afterward)
-      (flink (fn ignore (login-page msg afterward)))
-      (do (prn)
-          (login-page msg afterward))))
+    (flink (fn ignore (login-page msg afterward)))
+    (do (prn)
+        (login-page msg afterward))))
 
 (def prcookie (cook)
   (prn "Set-Cookie: user=" cook "; expires=Sun, 17-Jan-2038 19:14:07 GMT"))
@@ -211,11 +211,11 @@
 (def good-login (user pw ip)
   (let record (list (seconds) ip user)
     (if (and user pw (aand (shash pw) (is it (hpasswords* user))))
-        (do (unless (user->cookie* user) (cook-user user))
-            (enq-limit record good-logins*)
-            user)
-        (do (enq-limit record bad-logins*)
-            nil))))
+      (do (unless (user->cookie* user) (cook-user user))
+          (enq-limit record good-logins*)
+          user)
+      (do (enq-limit record bad-logins*)
+          nil))))
 
 ; Create a file in case people have quote chars in their pws.  I can't
 ; believe there's no way to just send the chars.
@@ -257,17 +257,16 @@
 
 (defop logout req
   (aif (get-user req)
-       (do (logout-user it)
-           (pr "Logged out."))
-       (pr "You were not logged in.")))
+    (do (logout-user it)
+        (pr "Logged out."))
+    (pr "You were not logged in.")))
 
 (defop whoami req
   (aif (get-user req)
-       (prs it 'at req!ip)
-       (do (pr "You are not logged in. ")
-           (w/link (login-page) (pr "Log in"))
-           (pr "."))))
-
+    (prs it 'at req!ip)
+    (do (pr "You are not logged in. ")
+        (w/link (login-page) (pr "Log in"))
+        (pr "."))))
 
 (= formwid* 60 bigformwid* 80 numwid* 16 formatdoc-url* nil)
 
@@ -398,24 +397,24 @@
 (def vars-form (user fields f done (o button "update") (o lasts))
   (taform lasts
           (if (all [no (_ 4)] fields)
-              (fn (req))
-              (fn (req)
-                (when-umatch user req
-                  (each (k v) req!args
-                    (let name (sym k)
-                      (awhen (find [is (cadr _) name] fields)
-                        ; added sho to fix bug
-                        (let (typ id val sho mod) it
-                          (when (and mod v)
-                            (let newval (readvar typ v fail*)
-                              (unless (is newval fail*)
-                                (f name newval))))))))
-                  (done))))
-     (tab
-       (showvars fields))
-     (unless (all [no (_ 4)] fields)  ; no modifiable fields
-       (br)
-       (submit button))))
+            (fn (req))
+            (fn (req)
+              (when-umatch user req
+                (each (k v) req!args
+                  (let name (sym k)
+                    (awhen (find [is (cadr _) name] fields)
+                      ; added sho to fix bug
+                      (let (typ id val sho mod) it
+                        (when (and mod v)
+                          (let newval (readvar typ v fail*)
+                            (unless (is newval fail*)
+                              (f name newval))))))))
+                (done))))
+   (tab
+     (showvars fields))
+   (unless (all [no (_ 4)] fields)  ; no modifiable fields
+     (br)
+     (submit button))))
 
 (def showvars (fields (o liveurls))
   (each (typ id val view mod question) fields
@@ -424,8 +423,8 @@
         (tr (td (prn question))))
       (tr (unless question (tag (td valign 'top)  (pr id ":")))
           (td (if mod
-                  (varfield typ id val)
-                  (varline  typ id val liveurls))))
+                (varfield typ id val)
+                (varline  typ id val liveurls))))
       (prn))))
 
 ; http://daringfireball.net/projects/markdown/syntax
@@ -467,8 +466,8 @@
   (let c (s i)
     (if (nonwhite c)
          (if (and (> newlines 1) (> spaces 1))
-             (list i spaces)
-             nil)
+           (list i spaces)
+           nil)
         (atend i s)
          nil
         (is c #\newline)
@@ -480,24 +479,24 @@
 (def parabreak (s i (o newlines 0))
   (let c (s i)
     (if (or (nonwhite c) (atend i s))
-        (if (> newlines 1) i nil)
-        (parabreak s (+ i 1) (+ newlines (if (is c #\newline) 1 0))))))
+      (if (> newlines 1) i nil)
+      (parabreak s (+ i 1) (+ newlines (if (is c #\newline) 1 0))))))
 
 ; Returns the indices of the next paragraph break in s, if any.
 
 (def next-parabreak (s i)
   (unless (atend i s)
     (aif (parabreak s i)
-         (list i it)
-         (next-parabreak s (+ i 1)))))
+      (list i it)
+      (next-parabreak s (+ i 1)))))
 
 (def paras (s (o i 0))
   (if (atend i s)
-      nil
-      (iflet (endthis startnext) (next-parabreak s i)
-        (cons (cut s i endthis)
-              (paras s startnext))
-        (list (trim (cut s i) 'end)))))
+    nil
+    (iflet (endthis startnext) (next-parabreak s i)
+      (cons (cut s i endthis)
+            (paras s startnext))
+      (list (trim (cut s i) 'end)))))
 
 
 ; Returns the index of the first char not part of the url beginning
@@ -558,11 +557,11 @@
           (litmatch "<a href=" s i)
            (let endurl (posmatch [in _ #\> #\space] s (+ i 9))
              (if endurl
-                 (do (pr (cut s (+ i 9) (- endurl 1)))
-                     (= i (aif (posmatch "</a>" s endurl)
-                               (+ it 3)
-                               endurl)))
-                 (writec (s i))))
+               (do (pr (cut s (+ i 9) (- endurl 1)))
+                   (= i (aif (posmatch "</a>" s endurl)
+                             (+ it 3)
+                             endurl)))
+               (writec (s i))))
           (litmatch "<pre><code>" s i)
            (awhen (findsubseq "</code></pre>" s (+ i 12))
              (pr (cut s (+ i 11) it))
@@ -589,8 +588,8 @@
            cleanlabel  (downcase (rem ~alphadig label)))
       (+ (* (if (is h 12)
                  (if (in cleanlabel "am" "midnight")
-                     0
-                     12)
+                   0
+                   12)
                 (is cleanlabel "am")
                  h
                  (+ h 12))
@@ -624,8 +623,8 @@
 (def parse-date (s)
   (let nums (date-nums s)
     (if (valid-date nums)
-        nums
-        (err (string "Invalid date: " s)))))
+      nums
+      (err (string "Invalid date: " s)))))
 
 (def date-nums (s)
   (with ((ynow mnow dnow) (date)
@@ -667,8 +666,8 @@
 (mac defopl (name parm . body)
   `(defop ,name ,parm
      (if (get-user ,parm)
-         (do ,@body)
-         (login-page "You need to be logged in to do that."
-                     (list (fn (u ip))
-                           (string ',name (reassemble-args ,parm)))))))
+       (do ,@body)
+       (login-page "You need to be logged in to do that."
+                   (list (fn (u ip))
+                         (string ',name (reassemble-args ,parm)))))))
 

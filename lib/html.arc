@@ -172,22 +172,22 @@
 
 (mac tag-if (test spec . body)
   `(if ,test
-       (tag ,spec ,@body)
-       (do ,@body)))
+     (tag ,spec ,@body)
+     (do ,@body)))
 
 (def start-tag (spec)
   (if (atom spec)
-      `(pr ,(string "<" spec ">"))
-      (let opts (tag-options (car spec) (pair (cdr spec)))
-        (if (all [isa _ 'string] opts)
-            `(pr ,(string "<" (car spec) (apply string opts) ">"))
-            `(do (pr ,(string "<" (car spec)))
-                 ,@(map (fn (opt)
-                          (if (isa opt 'string)
-                              `(pr ,opt)
-                              opt))
-                        opts)
-                 (pr ">"))))))
+    `(pr ,(string "<" spec ">"))
+    (let opts (tag-options (car spec) (pair (cdr spec)))
+      (if (all [isa _ 'string] opts)
+        `(pr ,(string "<" (car spec) (apply string opts) ">"))
+        `(do (pr ,(string "<" (car spec)))
+             ,@(map (fn (opt)
+                      (if (isa opt 'string)
+                        `(pr ,opt)
+                        opt))
+                    opts)
+             (pr ">"))))))
 
 (def end-tag (spec)
   `(pr ,(string "</" (carif spec) ">")))
@@ -204,21 +204,21 @@
 
 (def tag-options (spec options)
   (if (no options)
-      '()
-      (let ((opt val) . rest) options
-        (let meth (if (in opt 'style 'class)
-	     	       opstring
-		      (is opt 'id)
-		       opsym
-		      (opmeth spec opt))
-          (if meth
-              (if val
-                  (cons (if (precomputable-tagopt val)
-                            (tostring (eval (meth opt val)))
-                            (meth opt val))
-                        (tag-options spec rest))
+    '()
+    (let ((opt val) . rest) options
+      (let meth (if (in opt 'style 'class)
+             opstring
+        (is opt 'id)
+         opsym
+        (opmeth spec opt))
+        (if meth
+          (if val
+            (cons (if (precomputable-tagopt val)
+                    (tostring (eval (meth opt val)))
+                    (meth opt val))
                   (tag-options spec rest))
-              (cons (opstring opt val) (tag-options spec rest)))))))
+            (tag-options spec rest))
+          (cons (opstring opt val) (tag-options spec rest)))))))
 
 (def precomputable-tagopt (val)
   (and (literal val)
@@ -239,8 +239,8 @@
                (if (or (no body)
                        (all [and (acons _) (isnt (car _) 'quote)]
                             body))
-                   body
-                   `((pr ,@body))))
+                 body
+                 `((pr ,@body))))
 
   (mac td       body         `(tag td ,@(pratoms body)))
   (mac trtd     body         `(tr (td ,@(pratoms body))))
@@ -256,8 +256,8 @@
     `(tr ,@(map (fn (a)
                   `(let ,g ,a
                      (if (number ,g)
-                         (tdr (pr ,g))
-                         (td (pr ,g)))))
+                       (tdr (pr ,g))
+                       (td (pr ,g)))))
                  args))))
 
 (mac prbold body `(tag b (pr ,@body)))
@@ -290,8 +290,8 @@
 
 (mac new-hspace (n)
   (if (number n)
-      `(pr ,(string "<span style=\"padding-left:" n "px\" />"))
-      `(pr "<span style=\"padding-left:" ,n "px\" />")))
+    `(pr ,(string "<span style=\"padding-left:" n "px\" />"))
+    `(pr "<span style=\"padding-left:" ,n "px\" />")))
 
 ;(def spacerow (h) (tr (td (vspace h))))
 
@@ -321,11 +321,11 @@
 
 (def buts (name . texts)
   (if (no texts)
-      (but)
-      (do (but (car texts) name)
-          (each text (cdr texts)
-            (pr " ")
-            (but text name)))))
+    (but)
+    (do (but (car texts) name)
+        (each text (cdr texts)
+          (pr " ")
+          (but text name)))))
 
 (mac spanrow (n . body)
   `(tr (tag (td colspan ,n) ,@body)))
@@ -346,14 +346,14 @@
                 `(let ,gl ,len
                    (tr (td (pr ',label ":"))
                        (if (isa ,gl 'cons)
-                           (td (textarea ',name (car ,gl) (cadr ,gl)
-                                 (let ,gt ,text (if ,gt (pr ,gt)))))
-                           (td (gentag input type ',(if (is label 'password)
-                                                    'password
-                                                    'text)
-                                         name ',name
-                                         size ,len
-                                         value ,text)))))))
+                         (td (textarea ',name (car ,gl) (cadr ,gl)
+                               (let ,gt ,text (if ,gt (pr ,gt)))))
+                         (td (gentag input type ',(if (is label 'password)
+                                                  'password
+                                                  'text)
+                                       name ',name
+                                       size ,len
+                                       value ,text)))))))
             (tuples args 4))))
 
 (def single-input (label name chars btext (o pwd))
@@ -441,5 +441,5 @@
   (w/uniq g
     `(let ,g ,c
        (if ,g
-           (tag (font color ,g) ,@body)
-           (do ,@body)))))
+         (tag (font color ,g) ,@body)
+         (do ,@body)))))
