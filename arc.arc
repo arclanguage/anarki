@@ -1940,6 +1940,16 @@
 
 (wipe current-load-file*)
 
+(def load-just (file name)
+  (w/infile f file
+    (w/uniq eof
+      (whiler e (read f eof) eof
+        (if (is e.1 name)
+          (eval e))))))
+
+(def l (f)
+  (load (+ string.f ".arc")))
+
 (load "help/arc.arc")
 
 ; any logical reason I can't say (push x (if foo y z)) ?
