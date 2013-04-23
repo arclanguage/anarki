@@ -99,10 +99,10 @@
 (def pair (xs (o f list))
   (if (no xs)
        nil
-      (no (cdr xs))
-       (list (list (car xs)))
-      (cons (f (car xs) (cadr xs))
-            (pair (cddr xs) f))))
+      (no cdr.xs)
+       (list (list car.xs))
+      (cons (f car.xs cadr.xs)
+            (pair cddr.xs f))))
 
 (assign mac (annotate 'mac
               (fn (name parms . body)
