@@ -867,6 +867,11 @@
    `(w/instring ,gv ,str
       (w/stdin ,gv ,@body))))
 
+(mac pipe-to(dest . body)
+  `(fromstring
+     (tostring ,@body)
+     ,dest))
+
 (def readstring1 (s (o eof nil)) (w/instring i s (read i eof)))
 
 (def read ((o x (stdin)) (o eof nil))
