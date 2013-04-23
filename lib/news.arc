@@ -626,7 +626,7 @@ function vote(node) {
           (logout-user user)
           whence))
       (onlink "login"
-        (login-page 'both nil
+        (login-page nil
                     (list (fn (u ip)
                             (ensure-news-user u)
                             (newslog ip u 'top-login))
@@ -642,7 +642,7 @@ function vote(node) {
   `(defop ,name ,parm
      (if (,test (get-user ,parm))
          (do ,@body)
-         (login-page 'both (+ "Please log in" ,msg ".")
+         (login-page (+ "Please log in" ,msg ".")
                      (list (fn (u ip) (ensure-news-user u))
                            (string ',name (reassemble-args ,parm)))))))
 
@@ -1108,7 +1108,7 @@ function vote(node) {
         (and by (or (isnt by user) (isnt (sym auth) (user->cookie* user))))
          (pr "User mismatch.")
         (no user)
-         (login-page 'both "You have to be logged in to vote."
+         (login-page "You have to be logged in to vote."
                      (list (fn (u ip)
                              (ensure-news-user u)
                              (newslog ip u 'vote-login)
@@ -1416,7 +1416,7 @@ function vote(node) {
 
 (def submit-login-warning ((o url) (o title) (o showtext) (o text)
                            (o req)) ; unused
-  (login-page 'both "You have to be logged in to submit."
+  (login-page "You have to be logged in to submit."
               (fn (user ip)
                 (ensure-news-user user)
                 (newslog ip user 'submit-login)
@@ -1947,7 +1947,7 @@ function vote(node) {
 ; Comment Submission
 
 (def comment-login-warning (parent whence (o text))
-  (login-page 'both "You have to be logged in to comment."
+  (login-page "You have to be logged in to comment."
               (fn (u ip)
                 (ensure-news-user u)
                 (newslog ip u 'comment-login)
@@ -2143,7 +2143,7 @@ function vote(node) {
     (if (only.comments-active i)
         (if user
             (addcomment-page i user whence)
-            (login-page 'both "You have to be logged in to comment."
+            (login-page "You have to be logged in to comment."
                         (fn (u ip)
                           (ensure-news-user u)
                           (newslog ip u 'comment-login)

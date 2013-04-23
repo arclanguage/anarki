@@ -63,7 +63,7 @@
                    (do (when (is (arg req "cmd") "save")
                          (write-app user app (readall (arg req "exprs"))))
                        (prompt-page user))
-                   (login-page 'both nil
+                   (login-page nil
                                (fn (u ip) (prompt-page u))))))
       (textarea "exprs" 10 82
         (pprcode (read-app user app)))

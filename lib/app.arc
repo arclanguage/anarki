@@ -74,7 +74,7 @@
 (def admin-gate (u)
   (if (admin u)
       (admin-page u)
-      (login-page 'login nil
+      (login-page nil
                   (fn (u ip)  (admin-gate u)))))
 
 (def admin (u) (and u (mem u admins*)))
@@ -135,9 +135,7 @@
 (def hello-page (user ip)
   (whitepage (prs "hello" user "at" ip)))
 
-(defop login req (login-page 'login))
-
-; switch is one of: register, login, both
+(defop login req (login-page))
 
 ; afterward is either a function on the newly created username and
 ; ip address, in which case it is called to generate the next page
@@ -147,41 +145,39 @@
 ; classic example of something that should just "return" a val
 ; via a continuation rather than going to a new page.
 
-(def login-page (switch (o msg nil) (o afterward hello-page))
+(def login-page ((o msg nil) (o afterward hello-page))
   (whitepage
     (pagemessage msg)
-    (when (in switch 'login 'both)
-      (login-form switch afterward)
-      (hook 'login-form afterward)
-      (br2))
-    (when (in switch 'register 'both)
-      (signup-form switch afterward))))
+    (login-form afterward)
+    (hook 'login-form afterward)
+    (br2)
+    (signup-form afterward)))
 
-(def login-form (switch afterward)
+(def login-form (afterward)
   (prbold "Login")
   (br2)
-  (fnform (fn (req) (login-handler req switch afterward))
+  (fnform (fn (req) (login-handler req afterward))
           (fn () (pwfields))
           (acons afterward)))
 
-(def login-handler (req switch afterward)
+(def login-handler (req afterward)
   (logout-user (get-user req))
   (aif (good-login (arg req "u") (arg req "p") req!ip)
        (login it req!ip (user->cookie* it) afterward)
-       (failed-login switch "Bad login." afterward)))
+       (failed-login "Bad login." afterward)))
 
-(def signup-form (switch afterward)
+(def signup-form (afterward)
   (prbold "Create Account")
   (br2)
-  (fnform (fn (req) (signup-handler req switch afterward))
+  (fnform (fn (req) (signup-handler req afterward))
           (fn () (pwfields "signup"))
           (acons afterward)))
 
-(def signup-handler (req switch afterward)
+(def signup-handler (req afterward)
   (logout-user (get-user req))
   (with (user (arg req "u") pw (arg req "p"))
     (aif (bad-newacct user pw)
-         (failed-login switch it afterward)
+         (failed-login it afterward)
          (do (create-acct user pw)
              (login user req!ip (cook-user user) afterward)))))
 
@@ -195,11 +191,11 @@
       (do (prn)
           (afterward user ip))))
 
-(def failed-login (switch msg afterward)
+(def failed-login (msg afterward)
   (if (acons afterward)
-      (flink (fn ignore (login-page switch msg afterward)))
+      (flink (fn ignore (login-page msg afterward)))
       (do (prn)
-          (login-page switch msg afterward))))
+          (login-page msg afterward))))
 
 (def prcookie (cook)
   (prn "Set-Cookie: user=" cook "; expires=Sun, 17-Jan-2038 19:14:07 GMT"))
@@ -269,7 +265,7 @@
   (aif (get-user req)
        (prs it 'at req!ip)
        (do (pr "You are not logged in. ")
-           (w/link (login-page 'both) (pr "Log in"))
+           (w/link (login-page) (pr "Log in"))
            (pr "."))))
 
 
@@ -672,8 +668,7 @@
   `(defop ,name ,parm
      (if (get-user ,parm)
          (do ,@body)
-         (login-page 'both
-                     "You need to be logged in to do that."
+         (login-page "You need to be logged in to do that."
                      (list (fn (u ip))
                            (string ',name (reassemble-args ,parm)))))))
 
