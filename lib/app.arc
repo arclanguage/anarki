@@ -166,7 +166,10 @@
   (prbold "Login")
   (br2)
   (fnform (fn (req) (login-handler req afterward))
-          (fn () (pwfields))
+          (fn ()
+            (pwfields)
+            (br2)
+            (tag div (link "Forgot your password?" "/forgotpw")))
           (acons afterward)))
 
 (def login-handler (req afterward)
@@ -221,6 +224,40 @@
           p password 20 nil)
   (br)
   (submit label))
+
+(defop forgotpw req
+  (prbold "What's your username?")
+  (aform (fn (req)
+           (let user (arg req "u")
+             (iflet email emails*.user
+               (do (email-forgotpw-link user email)
+                   (pr "We've emailed you a link. Please click on it within the next few minutes to reset your password.")
+                   (br2)
+                   (pr "If you don't see it, check your spam folder."))
+               (pr "You didn't provide a valid email. Please create a fresh account."))))
+    (input "u" "" 20)
+    (submit "I've forgotten my password. Help!")))
+
+(def email-forgotpw-link (user email)
+  (pipe-to (system "sendmail -t")
+    (prn "To: " email)
+    (prn "Subject: reset your password")
+    (prn "From: " (emails* admins*.0))
+    (prn)
+    (prn "To reset your password, go here:")
+    (prn site-url* (flink (fn ignore
+                            (forgotpw-reset-page user))))))
+
+(def forgotpw-reset-page (user (o msg))
+  (if msg (pr msg))
+  (aform (fn (req)
+           (let newpw (arg req "p")
+             (if (len< newpw 4)
+               (forgotpw-reset-page user "Passwords should be at least 4 characters. Please choose another.")
+               (do (set-pw user newpw)
+                   (prn "Password changed.")
+                   (link "Try logging in now." "/")))))
+    (single-input "New password: " 'p 20 "update" t)))
 
 (= good-logins* (queue) bad-logins* (queue))
 
