@@ -113,11 +113,9 @@
     (save-table cookie->user* cookfile*)
     id))
 
-; Unique-ids are only unique per server invocation.
-
 (def new-user-cookie ()
-  (let id (unique-id)
-    (if (cookie->user* id) (new-user-cookie) id)))
+  ; watch for collisions across server invocations
+  (check (unique-id) ~cookie->user* (new-user-cookie)))
 
 (def logout-user (user)
   (wipe (logins* user))
