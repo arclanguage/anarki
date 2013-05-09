@@ -168,6 +168,21 @@ Connection: close"))
        (png       "image/png")
        (text/html "text/html; charset=utf-8")))
 
+(def static-filetype (sym)
+  (let fname (coerce sym 'string)
+    (and (~findsubseq ".." fname) ; for security
+         (case (downcase (last (check (tokens fname #\.) ~single)))
+           "gif"  'gif
+           "jpg"  'jpg
+           "jpeg" 'jpg
+           "png"  'png
+           "css"  'text/html
+           "txt"  'text/html
+           "htm"  'text/html
+           "html" 'text/html
+           "arc"  'text/html
+           ))))
+
 (= rdheader* "HTTP/1.0 302 Moved")
 
 (= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
@@ -334,21 +349,6 @@ Connection: close"))
   (if (iso #\" s.0)
     (cut s 1 -1)
     s))
-
-(def static-filetype (sym)
-  (let fname (coerce sym 'string)
-    (and (~findsubseq ".." fname) ; for security
-         (case (downcase (last (check (tokens fname #\.) ~single)))
-           "gif"  'gif
-           "jpg"  'jpg
-           "jpeg" 'jpg
-           "png"  'png
-           "css"  'text/html
-           "txt"  'text/html
-           "htm"  'text/html
-           "html" 'text/html
-           "arc"  'text/html
-           ))))
 
 (def respond-err (str msg . args)
   (w/stdout str
