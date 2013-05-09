@@ -956,6 +956,10 @@
   (do1 (apply pr args)
        (pr #\newline))) ; writec doesn't implicitly flush
 
+(def prrn args  ; print with \r\n at the end
+  (do1 (apply pr args)
+       (pr #\return #\newline)))
+
 (def ero args
   (w/stdout (stderr)
     (apply prn args)))

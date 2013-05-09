@@ -68,10 +68,6 @@
   (each (n v) hds  (prrn n ": " v))
   (prrn))
 
-(def prrn args  ; print with \r\n at the end
-  (map1 disp args)
-  (prn #\return))
-
 ; we call "head" the top part of an HTTP message,
 ; i.e: the status or request line plus the headers
 
