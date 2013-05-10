@@ -153,29 +153,14 @@ Connection: close")
 Content-Type: text/html; charset=utf-8\r
 Connection: close")
 
-(= type-header* (table))
-
-(def gen-type-header (ctype)
-  (+ "HTTP/1.0 200 OK\r
-Content-Type: "
-     ctype
-     "\r
-Connection: close"))
-
-(map (fn ((k v)) (= (type-header* k) (gen-type-header v)))
-     '((gif       "image/gif")
-       (jpg       "image/jpeg")
-       (png       "image/png")
-       (text/html "text/html; charset=utf-8")))
-
 (def static-filetype (sym)
   (let fname (coerce sym 'string)
     (and (~findsubseq ".." fname) ; for security
          (case (downcase (last (check (tokens fname #\.) ~single)))
-           "gif"  'gif
-           "jpg"  'jpg
-           "jpeg" 'jpg
-           "png"  'png
+           "gif"  'image/gif
+           "jpg"  'image/jpg
+           "jpeg" 'image/jpg
+           "png"  'image/png
            "css"  'text/html
            "txt"  'text/html
            "htm"  'text/html
@@ -249,7 +234,12 @@ Connection: close"))
               (f str req))))
       (let filetype (static-filetype op)
         (aif (and filetype (file-exists (string staticdir* op)))
-          (do (prrn (type-header* filetype))
+          (do (prrn "HTTP/1.0 200 OK")
+              (prrn "Content-Type: " filetype
+                   (if (litmatch "text" filetype)
+                     "; charset=utf-8"
+                     ""))
+              (prrn "Connection: close")
               (awhen static-max-age*
                 (prrn "Cache-Control: max-age=" it))
               (prrn)
