@@ -205,17 +205,17 @@
     (let (f url) afterward
       (f user ip)
       url)
-    (do (prn)
+    (do (prrn)
         (afterward user ip))))
 
 (def failed-login (msg afterward)
   (if (acons afterward)
     (flink (fn ignore (login-page msg afterward)))
-    (do (prn)
+    (do (prrn)
         (login-page msg afterward))))
 
 (def prcookie (cook)
-  (prn "Set-Cookie: user=" cook "; expires=Sun, 17-Jan-2038 19:14:07 GMT"))
+  (prrn "Set-Cookie: user=" cook "; expires=Sun, 17-Jan-2038 19:14:07 GMT"))
 
 (def pwfields ((o label "login"))
   (inputs u username 20 nil

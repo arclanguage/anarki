@@ -950,7 +950,7 @@ function vote(node) {
   (tag (a href
           (url-for
             (afnid (fn (req)
-                     (prn)
+                     (prrn)
                      (with (url  (url-for it)     ; it bound by afnid
                             user (get-user req))
                        (newslog req!ip user 'more label)
