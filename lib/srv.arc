@@ -161,11 +161,12 @@ Connection: close")
            "jpg"  'image/jpg
            "jpeg" 'image/jpg
            "png"  'image/png
-           "css"  'text/html
-           "txt"  'text/html
+           "css"  'text/plain
+           "js"   'text/javascript
+           "txt"  'text/plain
            "htm"  'text/html
            "html" 'text/html
-           "arc"  'text/html
+           "arc"  'text/plain
            ))))
 
 (= rdheader* "HTTP/1.0 302 Moved")
