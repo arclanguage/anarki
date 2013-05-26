@@ -1948,8 +1948,6 @@
 (mac mapeach (var lst . body)
   `(map (fn (,var) ,@body) ,lst))
 
-(wipe current-load-file*)
-
 (def load-just (file name)
   (w/infile f file
     (w/uniq eof
@@ -1959,6 +1957,8 @@
 
 (def l (f)
   (load (+ string.f ".arc")))
+
+(wipe current-load-file*)
 
 (load "help/arc.arc")
 
