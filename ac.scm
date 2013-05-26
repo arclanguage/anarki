@@ -74,7 +74,7 @@
                                  (codestring s)))
               env)
           (unescape-ats s))
-      (string-copy s)))          ; avoid immutable strings
+      s))
 
 (defarc ac-literal (literal? x)
   (or (boolean? x)
