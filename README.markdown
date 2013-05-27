@@ -1,4 +1,7 @@
-Anarki: a publicly modifiable fork of PG's and RTM's Arc Lisp (http://www.paulgraham.com/arc.html)
+Anarki: a publicly modifiable 'wiki-like' fork of PG's and RTM's Arc Lisp (http://www.paulgraham.com/arc.html)
+
+The intention is to be extremely permissive in accepting patches. For commit
+privileges, just submit your first pull request or ask on http://arclanguage.org/forum.
 
 To run, install Racket from http://racket-lang.org, then:
 
