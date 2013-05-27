@@ -73,8 +73,8 @@
                                        x))
                                  (codestring s)))
               env)
-          (unescape-ats s))
-      s))
+          (list string-copy (unescape-ats s)))
+      (list string-copy s)))
 
 (defarc ac-literal (literal? x)
   (or (boolean? x)
