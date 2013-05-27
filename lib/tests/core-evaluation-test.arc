@@ -145,20 +145,14 @@
     ((fn (s) s.1) "foo")
     #\o)
 
-;?   ("everything at once, in functional position"
-;?     ((fn (x p) (tostring (pr:odd&~x.p 7) (pr:odd&~x.p 8) (pr:odd&~x.p 9))) (fn (n) (fn (p) (is (mod p n) 0))) 3)
-;?     "tnilnil")
-;? 
-;?   ("everything at once, as argument"
-;?     ((fn (y p) (tostring:map pr:odd&~y.p '(7 8 9))) (fn (n) (fn (p) (is (mod p n) 0))) 3)
-;?     "tnilnil")
-;? 
-;?   ("everything at once, as argument"
-;?     ((fn (y p) (tostring:map pr:~y.p '(7 8 9))) (fn (n) (fn (p) (is (mod p n) 0))) 3)
-;?     "ttnil")
-;? 
-;?   ("everything at once, as argument"
-;?     ((fn (y p) (tostring:map odd&pr '(7 8 9))) (fn (n) (fn (p) (is (mod p n) 0))) 3)
-;?     "79")
+  ("everything at once, in functional position"
+    (let x (fn(n) (fn(p) (is (mod n p) 0)))
+      (~odd&x.9 3))
+    nil)
+
+  ("everything at once, as argument"
+    (let x (fn(n) (fn(p) (is (mod n p) 0)))
+      (map ~odd&x.9 '(3 4 5)))  ; contrived 'not a factor of 9' function
+    (nil t t))
 
     ))
