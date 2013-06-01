@@ -5,7 +5,7 @@ privileges, just submit your first pull request or ask on http://arclanguage.org
 
 To run, install Racket from http://racket-lang.org, then:
 
-    $ git clone http://github.com/nex3/arc
+    $ git clone http://github.com/arclanguage/anarki
     $ cd arc
     $ ./arc.sh
     arc> :a
