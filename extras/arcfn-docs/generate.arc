@@ -1,3 +1,5 @@
+(declare 'atstrings nil)
+
 (system "rm -rf html")
 (ensure-dir "html")
 (load "template.arc")
