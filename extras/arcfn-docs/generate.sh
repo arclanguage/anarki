@@ -1,1 +1,1 @@
-hack arc3.1/html generate.arc
+racket -f ../../as.scm generate.arc
