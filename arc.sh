@@ -1,6 +1,6 @@
 #!/bin/sh
 
-arc_dir=$(dirname "$(readlink "$0")")
+arc_dir=$(dirname "$(readlink -f "$0")")
 
 if [ "$1" = "--no-rl" ]; then
     shift
