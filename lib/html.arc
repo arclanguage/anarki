@@ -207,10 +207,11 @@
     '()
     (let ((opt val) . rest) options
       (let meth (if (in opt 'style 'class)
-             opstring
-        (is opt 'id)
-         opsym
-        (opmeth spec opt))
+                      opstring
+                    (is opt 'id)
+                      opsym
+                    'else
+                      (opmeth spec opt))
         (if meth
           (if val
             (cons (if (precomputable-tagopt val)
