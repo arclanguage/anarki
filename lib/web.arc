@@ -5,6 +5,7 @@
 ($ (xdef ssl-connect (lambda (host port)
                        (ar-init-socket
                          (lambda () (ssl-connect host port))))))
+; todo move this to ac.scm
 
 (require "lib/re.arc")
 
@@ -23,24 +24,31 @@
         (some [aand (begins-rest "Set-Cookie:" _) parse-server-cookies.it]
               cdr.lines)))
 
-(def args->query-string (args)
-  (if args
-    (let equals-list (map [joinstr _ "="] (pair (map [coerce _ 'string] args)))
-      (joinstr equals-list "&"))
-    ""))
+(def to-query-str (arglist)
+  (if arglist
+    (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] arglist)))
+             "&")))
+
+(def build-query (url-argstr arglist)
+  (+ "" url-argstr (and url-argstr arglist '&) (to-query-str arglist)))
 
 (def parse-url (url)
-  (withs ((resource url)    (split-by "://" (ensure-resource:strip-after url "#"))
+  (withs ((resource url)    (split-by "://" (ensure-resource (strip-after url "#")))
           (host+port path+query)  (split-by "/" url)
-          (host portstr)    (split-by ":" host+port)
+          (host port)    (split-by ":" host+port)
           (path query)      (split-by "?" path+query))
     (obj resource resource
          host     host
-         port     (or (only.int portstr) default-port.resource)
+         port     (select-port port resource)
          filename path
          query    query)))
 
-; TODO: only handles https for now
+(def select-port (portstr resource)
+  (if (nonblank portstr)
+    (only (int portstr)) ; todo learn why "only" is necessary
+    (default-port resource)))
+
+; support additional URI schemes?
 (def default-port(resource)
   (if (is resource "https")
     443
@@ -54,47 +62,92 @@
          (car joined-list))
        ";")))
 
-; TODO this isn't very pretty
-(def get-or-post-url (url (o args) (o method "GET") (o cookie))
-  (withs (method            (upcase method)
-          parsed-url        (parse-url url)
-          full-args         (let query parsed-url!query
-                              (+ "" query (and query args '&) args->query-string.args))
-          request-path      (+ "/" (parsed-url 'filename)
-                               (if (and (is method "GET") (> (len full-args) 0))
-                                   (+ "?" full-args)))
-          header-components (list (+ method " " request-path " HTTP/1.0")
-                                  (+ "Host: " (parsed-url 'host))
-                                  "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2"))
-    (when (is method "POST")
-      (pushend (+ "Content-Length: "
-                  (len (utf-8-bytes full-args)))
-               header-components)
-      (pushend "Content-Type: application/x-www-form-urlencoded"
-               header-components))
-    (when cookie
-      (push (encode-cookie cookie) header-components))
-    (withs (header          (reduce [+ _1 "\r\n" _2] header-components)
-            body            (if (is method "POST") (+ full-args "\r\n"))
-            request-message (+ header "\r\n\r\n" body))
-      (let (in out) (if (is "https" (parsed-url 'resource))
-                      (ssl-connect (parsed-url 'host) (parsed-url 'port))
-                      (socket-connect (parsed-url 'host) (parsed-url 'port)))
-        (disp request-message out)
-        (with (header (parse-server-headers (read-headers in))
-               body   (tostring (whilet line (readline in) (prn line))))
-          (close in out)
-          (list header body))))))
+(= protocol* "HTTP/1.0"
+   useragent* (+ "User-Agent: Mozilla/5.0 " 
+                 "(Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) "
+                 "Gecko/20090729 "
+                 "Firefox/3.5.2")
+   content-type* "Content-Type: application/x-www-form-urlencoded")
+
+(def cookie-header (cookie)
+  (if cookie
+    (encode-cookie cookie)))
+
+(def entity-header (method query)
+  (if (is method "POST")
+    (list (+ "Content-Length: " (len (utf-8-bytes query)))
+          content-type*)))
+
+(def request-header (host)
+  (list (+ "Host: " host) useragent*))
+
+(def first-req-line (method filename query)
+  (+ method " " (build-uri filename method query) " " protocol*))
+
+(def req-header (filename host query method cookie)
+  (reduce +
+    (intersperse "\r\n" ; should i use #\return #\newline ?
+                 (flat 
+                   (list 
+                     (first-req-line method filename query)) 
+                     (request-header host)
+                     (entity-header method query) 
+                     (cookie-header cookie)))))
+
+(def req-body (query method)
+  (if (and (is method "POST") (nonblank query))
+    (+ query "\r\n")))
+
+(def build-uri (filename method (o query ""))
+  (+ "/" filename (and ; evals to last expr if all t
+                    (is method "GET")
+                    (nonblank query)
+                    (+ "?" query))))
+
+(def get-i-o (resource host port)
+  (if (is "https" resource)
+    (ssl-connect host port)
+    (socket-connect host port)))
+
+(def sendreq (resource host port req)
+  (let (in out) (get-i-o resource
+                       host
+                       port)
+    (disp req out)
+    (with (header (parse-server-headers (read-headers in))
+           body   (tostring (whilet line (readline in) (prn line))))
+      (close in out)
+      (list header body))))
+
+; todo refactor. http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
+; todo add json
+(def mkreq (url (o arglist) (o method "GET") (o cookie))
+  (withs (parsed-url (parse-url url)
+          full-query (build-query parsed-url!query
+                                  arglist)
+          method     (upcase method)
+          header     (req-header parsed-url!filename
+                                 parsed-url!host
+                                 full-query
+                                 method
+                                 cookie)
+          body       (req-body full-query method)
+          request    (+ header
+                        "\r\n\r\n"
+                        body)
+          response   (sendreq parsed-url!resource
+                              parsed-url!host
+                              parsed-url!port
+                              request))
+    (list (car response) (cdr response))))
 
 (def get-url (url)
-  ((get-or-post-url url) 1))
+  ((mkreq url) 1))
 
 (def post-url (url args)
-  ((get-or-post-url url args "POST") 1))
+  ((mkreq url args "POST") 1))
 
-
-
-(def split-by(delim s)
+(def split-by(delim s) ;isn't this available elsewhere?
   (iflet idx (posmatch delim s)
     (list (cut s 0 idx) (cut s (+ idx len.delim)))
     (list s nil)))
@@ -107,8 +160,6 @@
     url
     (+ "http://" url)))
 
-
-
 (def google (q)
   (get-url (+ "www.google.com/search?q=" (urlencode q))))
 
@@ -116,11 +167,11 @@
 (mac w/browser body
   `(withs (cookies* (table)
                     get-url
-                    (fn (url) (let (parsed-header html) (get-or-post-url url '() "GET" cookies*)
+                    (fn (url) (let (parsed-header html) (mkreq url '() "GET" cookies*)
                                 (= cookies* (fill-table cookies* (flat (parsed-header 1))))
                                 html))
                     post-url
-                    (fn (url args) (let (parsed-header html) (get-or-post-url url args "POST" cookies*)
+                    (fn (url args) (let (parsed-header html) (mkreq url args "POST" cookies*)
                                      (= cookies* (fill-table cookies* (flat (parsed-header 1))))
                                      html)))
      (do ,@body)))
