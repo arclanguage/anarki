@@ -1,39 +1,67 @@
-(test-iso "split-by works"
-  '("abc" "d")
-  (split-by "#" "abc#d"))
+; written by Mark Heutsch and Brian J Rubinton
 
-(test-iso "strip-after works"
-  "abc"
-  (strip-after "abc#d" "#"))
+(require "lib/unit-test.arc")
+(require "lib/web.arc")
 
-(test-iso "strip-after works when delimiter is absent"
-  "abc"
-  (strip-after "abc" "#"))
+(register-test
+  '(suite "web.arc"
+    (suite "parse url"
+      ("test default resource"
+        ((parse-url "www.google.com") 'resource)
+        "http")
 
-(test-iso "parse-url works"
-  (obj resource "http" host "example.com" port 80 filename "foo")
-  (parse-url "http://example.com/foo"))
+      ("test anchor is ignored"
+        ((parse-url "www.google.com#anchor") 'host)
+        "www.google.com")
 
-(test-iso "parse-url detects port"
-  (obj resource "http" host "example.com" port 81 filename "foo")
-  (parse-url "http://example.com:81/foo"))
+      ("test path nesting is retained"
+        ((parse-url "www.nytimes.com/global/asia/china/") 'path)
+        "global/asia/china/")
 
-(test-iso "parse-url detects nested directories"
-  (obj resource "http" host "example.com" port 81 filename "foo/bar")
-  (parse-url "http://example.com:81/foo/bar"))
+      ("test url's port is retained"
+        ((parse-url "localhost:8080") 'port)
+        8080)
+    
+      ("test default url port"
+        ((parse-url "www.google.com") 'port)
+        80)
 
-(test-iso "parse-url gives https the right port"
-  (obj resource "https" host "example.com" port 443 filename "foo/bar")
-  (parse-url "https://example.com/foo/bar"))
+      ("test query is retained"
+        ((parse-url "www.google.com/search?a=1&b=2&c=3") 'query)
+        "a=1&b=2&c=3"))
 
-(test-iso "parse-url makes url http by default"
-  (obj resource "http" host "example.com" port 81 filename "foo/bar")
-  (parse-url "example.com:81/foo/bar"))
+    (suite "build request"
+      ("test arglist argstr combination"
+        (build-query "a=1&b=2&c=3" '(d 4 e 5 f 6))
+        "a=1&b=2&c=3&d=4&e=5&f=6")
 
-(test-iso "parse-url ignores anchor"
-  (obj resource "http" host "example.com" port 80 filename "foo")
-  (parse-url "http://example.com/foo#anchor"))
+      ("test arglist only"
+        (build-query "" '(d 4 e 5 f 6))
+        "d=4&e=5&f=6")
+      
+      (suite "build header"
+        ("test GET request uri"
+          (build-uri ___)
+          ___)
+    
+        ("test POST request uri"
+          ()
+          )
+        
+        ("test cookie encoding"
+          (___ ___)
+          ___))
+      (suite "build body" 
+        ("test GET request body"
+          ()
+          )
 
-(test-iso "parse-url handles query string"
-  (obj resource "http" host "example.com" port 80 filename "foo" query "bar=blah")
-  (parse-url "http://example.com/foo?bar=blah#anchor"))
+        ("test POST request body"
+          ()
+          )))
+
+    (suite "send request")
+    
+    (suite "parse response")))
+      
+(run-all-tests)
