@@ -1,11 +1,5 @@
-; written by Mark Huetsch
+; written by Mark Huetsch and Brian J Rubinton
 ; same license as Arc
-
-($ (require openssl))
-($ (xdef ssl-connect (lambda (host port)
-                       (ar-init-socket
-                         (lambda () (ssl-connect host port))))))
-; todo move this to ac.scm
 
 (require "lib/re.arc")
 
@@ -33,10 +27,10 @@
   (+ "" url-argstr (and url-argstr arglist '&) (to-query-str arglist)))
 
 (def parse-url (url)
-  (withs ((resource url)    (split-by "://" (ensure-resource (strip-after url "#")))
-          (host+port path+query)  (split-by "/" url)
-          (host port)    (split-by ":" host+port)
-          (path query)      (split-by "?" path+query))
+  (withs ((resource url) (split-by "://" (ensure-resource (strip-after url "#")))
+          (hp pq)        (split-by "/" url)
+          (host port)    (split-by ":" hp)
+          (path query)   (split-by "?" pq))
     (obj resource resource
          host     host
          port     (select-port port resource)
@@ -48,12 +42,12 @@
     (only (int portstr)) ; todo learn why "only" is necessary
     (default-port resource)))
 
-; support additional URI schemes?
 (def default-port(resource)
   (if (is resource "https")
     443
     80))
 
+; todo learn how these cookies work
 (def encode-cookie (o)
   (let joined-list (map [joinstr _ #\=] (tablist o))
     (+ "Cookie: "
@@ -62,7 +56,7 @@
          (car joined-list))
        ";")))
 
-(= protocol* "HTTP/1.0"
+(= protocol* "HTTP/1.0" ; todo why not 1.1???
    useragent* (+ "User-Agent: Mozilla/5.0 " 
                  "(Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) "
                  "Gecko/20090729 "
@@ -70,8 +64,7 @@
    content-type* "Content-Type: application/x-www-form-urlencoded")
 
 (def cookie-header (cookie)
-  (if cookie
-    (encode-cookie cookie)))
+  (if cookie (encode-cookie cookie)))
 
 (def entity-header (method query)
   (if (is method "POST")
@@ -86,17 +79,16 @@
 
 (def req-header (filename host query method cookie)
   (reduce +
-    (intersperse "\r\n" ; should i use #\return #\newline ?
-                 (flat 
-                   (list 
-                     (first-req-line method filename query)) 
-                     (request-header host)
-                     (entity-header method query) 
-                     (cookie-header cookie)))))
+    (intersperse (string #\return #\newline)
+                 (flat:list 
+                   (first-req-line method filename query)
+                   (request-header host)
+                   (entity-header  method query) 
+                   (cookie-header  cookie)))))
 
 (def req-body (query method)
   (if (and (is method "POST") (nonblank query))
-    (+ query "\r\n")))
+    (+ query (string #\return #\newline))))
 
 (def build-uri (filename method (o query ""))
   (+ "/" filename (and ; evals to last expr if all t
@@ -109,31 +101,31 @@
     (ssl-connect host port)
     (socket-connect host port)))
 
+; todo refactor.
 (def sendreq (resource host port req)
-  (let (in out) (get-i-o resource
-                       host
-                       port)
-    (disp req out)
-    (with (header (parse-server-headers (read-headers in))
-           body   (tostring (whilet line (readline in) (prn line))))
-      (close in out)
+  (let (i o) (get-i-o resource
+                      host
+                      port)
+    (disp req o)
+    (with (header (parse-server-headers (read-headers i))
+           body   (tostring (whilet line (readline i) (prn line))))
+      (close i o)
       (list header body))))
 
-; todo refactor. http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
 ; todo add json
 (def mkreq (url (o arglist) (o method "GET") (o cookie))
   (withs (parsed-url (parse-url url)
           full-query (build-query parsed-url!query
                                   arglist)
           method     (upcase method)
-          header     (req-header parsed-url!filename
-                                 parsed-url!host
-                                 full-query
-                                 method
-                                 cookie)
+          header     (req-header  parsed-url!filename
+                                  parsed-url!host
+                                  full-query
+                                  method
+                                  cookie)
           body       (req-body full-query method)
           request    (+ header
-                        "\r\n\r\n"
+                        (string #\return #\newline #\return #\newline))
                         body)
           response   (sendreq parsed-url!resource
                               parsed-url!host
@@ -167,11 +159,11 @@
 (mac w/browser body
   `(withs (cookies* (table)
                     get-url
-                    (fn (url) (let (parsed-header html) (mkreq url '() "GET" cookies*)
+                    (fn (url) (let (parsed-header html) (get-or-post-url url '() "GET" cookies*)
                                 (= cookies* (fill-table cookies* (flat (parsed-header 1))))
                                 html))
                     post-url
-                    (fn (url args) (let (parsed-header html) (mkreq url args "POST" cookies*)
+                    (fn (url args) (let (parsed-header html) (get-or-post-url url args "POST" cookies*)
                                      (= cookies* (fill-table cookies* (flat (parsed-header 1))))
                                      html)))
      (do ,@body)))
