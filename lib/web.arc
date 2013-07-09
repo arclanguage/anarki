@@ -16,10 +16,10 @@
 ; 4) parse response
 ; 5) return header lines and body
 ; TODO fix vocab -- arglist is really querylist
-(def mkreq (url (o arglist) (o method "GET") (o cookie))
+(def mkreq (url (o querylist) (o method "GET") (o cookie))
   (withs (parsed-url (parse-url url)
           full-query (build-query parsed-url!query
-                                  arglist)
+                                  querylist)
           method     (upcase method)
           header     (req-header  parsed-url!path
                                   parsed-url!host
@@ -72,16 +72,16 @@
     443
     80))
 
-(def build-query (url-argstr arglist)
-  (+ url-argstr
-     (and (nonblank url-argstr)
-          arglist
+(def build-query (querystr querylist)
+  (+ querystr
+     (and (nonblank querystr)
+          querylist
           '&) 
-     (to-query-str arglist)))
+     (to-query-str querylist)))
 
-(def to-query-str (arglist)
-  (if arglist
-    (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] arglist)))
+(def to-query-str (querylist)
+  (if querylist
+    (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] querylist)))
              "&")))
 
 (def req-header (path host query method cookie)
@@ -129,31 +129,25 @@
     (string #\return #\newline)
     (string #\return #\newline (str-rn (- l 1)))))
 
-; TODO refactor using a macro
-(def perform-i-o (resource host port request)
-  (let (i o) (get-i-o resource host port)
-    (disp request o)
-    (let response (read-response i)
-      (close i o)
-      response)))
-;  (w/io (get-i-o resource host port)
-;        request
-;        read-response))
+(mac w/io (io request func)
+  (w/uniq (i o response)
+    `(let (,i ,o) ,io
+      (disp ,request ,o)
+      (let ,response (,func ,i)
+        (close ,i ,o)
+        ,response))))
 
-; TODO create unique vars for i o response
-;(mac w/io (io request func)
-;  `(let (i o) (do ,io)
-;    (disp ,request o)
-;    (let response (,func i)
-;      (close i o)
-;      response)))
+(def perform-i-o (resource host port send-request)
+  (w/io (get-i-o resource host port)
+        send-request
+        receive-response))
 
 (def get-i-o (resource host port)
   (if (is resource "https")
     (ssl-connect host port)
     (socket-connect host port)))
 
-(def read-response ((o s (stdin)))
+(def receive-response ((o s (stdin)))
   (list (read-header s) (read-body s)))
 
 ; Read each line from port until a blank line is reached.
