@@ -71,7 +71,7 @@
     80))
 
 (def build-query (querystr querylist)
-  (+ querystr
+  (string querystr
      (and (nonblank querystr)
           querylist
           '&) 
