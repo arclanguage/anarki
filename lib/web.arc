@@ -12,11 +12,9 @@
 
 ; 1) prepare header lines and body
 ; 2) build request
-; 3) perform-i-o (send request & receive response)
-; 4) parse response
-; 5) return header lines and body
-; TODO fix vocab -- arglist is really querylist
-(def mkreq (url (o querylist) (o method "GET") (o cookie))
+; 3) perform-io (send request & receive response)
+; 4) return header lines and body
+(def mkreq (url (o querylist) (o method "GET") (o cookies))
   (withs (parsed-url (parse-url url)
           full-query (build-query parsed-url!query
                                   querylist)
@@ -25,12 +23,12 @@
                                   parsed-url!host
                                   full-query
                                   method
-                                  cookie)
+                                  cookies)
           body       (req-body full-query method)
           request    (+ header
                         (str-rn 2)
                         body)
-          response   (perform-i-o parsed-url!resource
+          response   (perform-io  parsed-url!resource
                                   parsed-url!host
                                   parsed-url!port
                                   request))
@@ -84,14 +82,14 @@
     (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] querylist)))
              "&")))
 
-(def req-header (path host query method cookie)
+(def req-header (path host query method cookies)
   (reduce +
     (intersperse (str-rn)
                  (flat:list 
                    (first-req-line method path query)
                    (request-header host)
                    (entity-header  method query) 
-                   (cookie-header  cookie)))))
+                   (cookie-header  cookies)))))
 
 (def first-req-line (method path query)
   (+ method " " (build-uri path method query) " " protocol*))
@@ -109,11 +107,11 @@
     (list (+ "Content-Length: " (len (utf-8-bytes query)))
           content-type*)))
 
-(def cookie-header (cookie)
-  (if cookie (encode-cookie cookie)))
+(def cookie-header (cookies)
+  (if cookies (encode-cookies cookies)))
 
-(def encode-cookie (o)
-  (let joined-list (map [joinstr _ #\=] (tablist o))
+(def encode-cookies (cookielist)
+  (let joined-list (map [joinstr _ #\=] (pair cookielist))
     (+ "Cookie: "
        (if (len> joined-list 1)
          (reduce [+ _1 "; " _2] joined-list)
@@ -124,10 +122,10 @@
   (if (and (is method "POST") (nonblank query))
     (+ query (str-rn))))
 
-(def str-rn ((o l 1))
-  (if (<= l 1)
+(def str-rn ((o n 1))
+  (if (<= n 1)
     (string #\return #\newline)
-    (string #\return #\newline (str-rn (- l 1)))))
+    (string #\return #\newline (str-rn (- n 1)))))
 
 (mac w/io (io request func)
   (w/uniq (i o response)
@@ -137,12 +135,16 @@
         (close ,i ,o)
         ,response))))
 
-(def perform-i-o (resource host port send-request)
-  (w/io (get-i-o resource host port)
+; TODO bad code smell -- resource host port passed in then immediately sent out
+; write a macro that defines w/io for a given pair of io ports
+; w/io can then be used within that closure without knowledge of the particular ports used,
+; or the data needed to open such ports (i.e. resource host port)
+(def perform-io (resource host port send-request)
+  (w/io (get-io resource host port)
         send-request
         receive-response))
 
-(def get-i-o (resource host port)
+(def get-io (resource host port)
   (if (is resource "https")
     (ssl-connect host port)
     (socket-connect host port)))
@@ -163,14 +165,14 @@
       (pr line))))
 
 ; Convenience functions.
-; These ignore the response header: (car (mkreq url))
+; Note: these ignore the response header: (car (mkreq url))
 (def get-url (url)
   (cdr (mkreq url)))
 
 (def post-url (url args)
   (cdr (mkreq url args "POST")))
 
-; TODO functions to parse/tokenize header lines
+; TODO write functions to parse/tokenize header lines
 
 (def google (q)
   (get-url (+ "www.google.com/search?q=" (urlencode q))))

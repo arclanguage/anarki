@@ -1,4 +1,4 @@
-; written by Mark Heutsch and Brian J Rubinton
+; written by Brian J Rubinton
 
 (require "lib/unit-test.arc")
 (require "lib/web.arc")
@@ -39,29 +39,16 @@
         (build-query "" '(d 4 e 5 f 6))
         "d=4&e=5&f=6")
       
-      (suite "build header"
-        ("test GET request uri"
-          (build-uri ___)
-          ___)
-    
-        ("test POST request uri"
-          ()
-          )
-        
-        ("test cookie encoding"
-          (___ ___)
-          ___))
-      (suite "build body" 
-        ("test GET request body"
-          ()
-          )
+      ("test cookie encoding"
+        (encode-cookies (list "name" "value" 
+                             "name2" "value2"
+                             "Expires" "Wed, 09 Jun 2021"))
+        "Cookie: name=value; name2=value2; Expires=Wed, 09 Jun 2021;"))
 
-        ("test POST request body"
-          ()
-          )))
-
-    (suite "send request")
-    
-    (suite "parse response")))
+    (suite "send request"
+      ; integration test w/ google
+      ("ping google.com"
+        (car:car (mkreq "www.google.com"))
+        "HTTP/1.0 200 OK"))))
       
 (run-all-tests)
