@@ -1,5 +1,6 @@
 ; written by Mark Huetsch and Brian J Rubinton
 ; same license as Arc
+;
 
 (require "lib/re.arc")
 
@@ -10,29 +11,28 @@
                  "Firefox/3.5.2")
    content-type* "Content-Type: application/x-www-form-urlencoded")
 
-; 1) prepare header lines and body
-; 2) build request
-; 3) perform-io (send request & receive response)
-; 4) return header lines and body
+
+; TODO would it be more idiomatic to define (mac defreq ...)?
+; user would create a request function
+; so, ((defreq google ___)), then (google ___) would work
+(mac defreq ...)
+
+(mac w/io (io request func)
+  (w/uniq (i o response)
+    `(let (,i ,o) ,io
+      (disp ,request ,o)
+      (let ,response (,func ,i)
+        (close ,i ,o)
+        ,response))))
+
 (def mkreq (url (o querylist) (o method "GET") (o cookies))
-  (withs (parsed-url (parse-url url)
-          full-query (build-query parsed-url!query
-                                  querylist)
-          method     (upcase method)
-          header     (req-header  parsed-url!path
-                                  parsed-url!host
-                                  full-query
-                                  method
-                                  cookies)
-          body       (req-body full-query method)
-          request    (+ header
-                        (str-rn 2)
-                        body)
-          response   (perform-io  parsed-url!resource
-                                  parsed-url!host
-                                  parsed-url!port
-                                  request))
-    response))
+  (let url (parse-url url)
+    (w/io (get-io   url!resource url!host url!port)
+          (buildreq url!host url!port url!path
+                    (build-query url!query querylist)
+                    (upcase method)
+                    cookies)
+          receive-response)))
 
 (def parse-url (url)
   (withs ((resource url) (split-at "://" (ensure-resource (strip-after "#" url)))
@@ -82,6 +82,7 @@
     (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] querylist)))
              "&")))
 
+; TODO rename req-header or request-header
 (def req-header (path host query method cookies)
   (reduce +
     (intersperse (str-rn)
@@ -122,27 +123,16 @@
   (if (and (is method "POST") (nonblank query))
     (+ query (str-rn))))
 
+; TODO should this be memoized via defmemo?
+(def buildreq (host port path query method cookies)
+  (+ (req-header path host query method cookies)
+     (str-rn 2)
+     (req-body query method)))
+
 (def str-rn ((o n 1))
   (if (<= n 1)
     (string #\return #\newline)
     (string #\return #\newline (str-rn (- n 1)))))
-
-(mac w/io (io request func)
-  (w/uniq (i o response)
-    `(let (,i ,o) ,io
-      (disp ,request ,o)
-      (let ,response (,func ,i)
-        (close ,i ,o)
-        ,response))))
-
-; TODO bad code smell -- resource host port passed in then immediately sent out
-; write a macro that defines w/io for a given pair of io ports
-; w/io can then be used within that closure without knowledge of the particular ports used,
-; or the data needed to open such ports (i.e. resource host port)
-(def perform-io (resource host port send-request)
-  (w/io (get-io resource host port)
-        send-request
-        receive-response))
 
 (def get-io (resource host port)
   (if (is resource "https")
@@ -173,7 +163,6 @@
   (cdr (mkreq url args "POST")))
 
 ; TODO write functions to parse/tokenize header lines
-
 (def google (q)
   (get-url (+ "www.google.com/search?q=" (urlencode q))))
 
