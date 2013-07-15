@@ -1,21 +1,25 @@
 ; written by Mark Huetsch and Brian J Rubinton
 ; same license as Arc
 ;
+; Primary interface:
+;   1)  mkreq - Build request, send request, receive response as (list header body).
+;   2) defreq - Create named http request function wrappers for mkreq.
+;             - Intended for multi-use http requests.
+;             - Additional url parameters can be passed into wrapper for each request.
+;             - example: see (defreq google ...)
 
 (require "lib/re.arc")
 
 (= protocol* "HTTP/1.0"
-   useragent* (+ "User-Agent: Mozilla/5.0 " 
-                 "(Windows; U; Windows NT 5.1; uk; rv:1.9.1.2) "
-                 "Gecko/20090729 "
-                 "Firefox/3.5.2")
+   useragent* "Web.arc/1.0"
    content-type* "Content-Type: application/x-www-form-urlencoded")
-
 
 ; TODO would it be more idiomatic to define (mac defreq ...)?
 ; user would create a request function
 ; so, ((defreq google ___)), then (google ___) would work
-(mac defreq ...)
+(mac defreq (name url querylist method cookies)
+  `(def ,name (o param)
+    (mkreq ,url (list ,querylist ,param) method cookies)))
 
 (mac w/io (io request func)
   (w/uniq (i o response)
@@ -29,11 +33,13 @@
   (let url (parse-url url)
     (w/io (get-io   url!resource url!host url!port)
           (buildreq url!host url!port url!path
-                    (build-query url!query querylist)
+                    (build-query url!query
+                                 querylist)
                     (upcase method)
                     cookies)
           receive-response)))
 
+; TODO refactor to return list of 5 items in this order? is that easier to read/use?
 (def parse-url (url)
   (withs ((resource url) (split-at "://" (ensure-resource (strip-after "#" url)))
           (hp pq)        (split-at "/" url)
@@ -46,9 +52,7 @@
          query    query)))
 
 (def ensure-resource (url)
-  (if (posmatch "://" url)
-    url
-    (+ "http://" url)))
+  (if (posmatch "://" url) url (+ "http://" url)))
 
 (def strip-after (delim s)
   (car (split-at delim s)))
@@ -66,9 +70,7 @@
     (default-port resource)))
 
 (def default-port (resource)
-  (if (is resource "https")
-    443
-    80))
+  (if (is resource "https") 443 80))
 
 (def build-query (querystr querylist)
   (string querystr
@@ -77,9 +79,10 @@
           '&) 
      (to-query-str querylist)))
 
+; TODO should this urlencode all the items in querylist?
 (def to-query-str (querylist)
   (if querylist
-    (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] querylist)))
+    (joinstr (map [joinstr _ "="] (pair (map [urlencode:coerce _ 'string] querylist)))
              "&")))
 
 ; TODO rename req-header or request-header
