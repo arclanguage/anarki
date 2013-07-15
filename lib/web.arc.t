@@ -34,6 +34,10 @@
       ("test conversion of querylist to a string"
         (to-query-str '(a 1 b 2 c 3))
         "a=1&b=2&c=3")
+    
+      ("test querylist handles non-urlsafe inputs"
+        (odd 2)
+        t)
 
       ("test arglist argstr combination"
         (build-query "a=1&b=2&c=3" '(d 4 e 5 f 6))
@@ -52,7 +56,7 @@
     (suite "send request"
       ; integration test w/ google
       ("ping google.com"
-        (car:car (mkreq "www.google.com"))
+        (caar (mkreq "www.google.com"))
         "HTTP/1.0 200 OK"))))
       
 (run-all-tests)
