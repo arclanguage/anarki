@@ -7,6 +7,8 @@
 ;             - Intended for multi-use http requests.
 ;             - Url query parameters can be passed into wrapper for each request.
 ;             - example: see (defreq google '(q "bagels new york city"))
+;   3)  mkuri - Construct a uri from url and query list.
+;             - Only compatible with GET requests.
 
 (require "lib/re.arc")
 
@@ -35,6 +37,13 @@
 (mac defreq (name url (o querylist) (o method "GET") (o cookies))
   `(def ,name ((o param))
     (mkreq ,url (join ,querylist param) ,method ,cookies)))
+
+(def mkuri (url (o querylist))
+  (let url (parse-url url)
+    (+ url!resource "://"
+       url!host ":"
+       url!port
+       (build-uri url!path "GET" (build-query url!query querylist)))))
 
 (def parse-url (url)
   (withs ((resource url) (split-at "://" (ensure-resource (strip-after "#" url)))
