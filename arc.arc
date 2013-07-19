@@ -1834,7 +1834,8 @@
   x)
 
 (defmethod serialize (x) cons
-  (map serialize x))
+  (cons (serialize (car x))
+        (serialize (cdr x))))
 
 (defmethod serialize (x) table
   (list 'table
