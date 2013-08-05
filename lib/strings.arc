@@ -74,13 +74,19 @@
               (++ i 2))
           (writec c)))))
 
+; should behave just like javascript's encodeURI
 (def urlencode (s)
   (tostring
-    (each c (utf-8-bytes s)
-      (writec #\%)
-      (let i (int c)
-        (if (< i 16) (writec #\0))
-        (pr (coerce i 'string 16))))))
+    (each i (utf-8-bytes s)
+      (let c (coerce i 'char)
+        (if (and (< i 128) (~whitec c) (~is c #\%))
+          (writec c)
+          (urlencode-char i))))))
+
+(def urlencode-char (i)
+  (writec #\%)
+  (if (< i 16) (writec #\0))
+  (pr (coerce i 'string 16)))
 
 (mac litmatch (pat string (o start 0))
   (w/uniq (gstring gstart)
