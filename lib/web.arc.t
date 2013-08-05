@@ -36,8 +36,8 @@
         "a=1&b=2&c=3")
     
       ("test querylist handles non-urlsafe inputs"
-        (odd 2)
-        t)
+        (to-query-str '(a " "))
+        "a=%20")
 
       ("test arglist argstr combination"
         (build-query "a=1&b=2&c=3" '(d 4 e 5 f 6))
