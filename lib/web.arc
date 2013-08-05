@@ -86,7 +86,10 @@
 
 (def to-query-str (querylist)
   (if querylist
-    (joinstr (map [joinstr _ "="] (pair (map [coerce _ 'string] querylist)))
+    (joinstr (map [joinstr _ "="]
+                  (map (fn((k v))
+                         (list k urlencode.v))
+                       (pair:map [coerce _ 'string] querylist)))
              "&")))
 
 (def build-header (host path query method cookies)
