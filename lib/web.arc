@@ -81,7 +81,7 @@
   (string querystr
           (and (nonblank querystr)
                querylist
-               '&) 
+               '&)
           (to-query-str querylist)))
 
 (def to-query-str (querylist)
@@ -92,10 +92,10 @@
 (def build-header (host path query method cookies)
   (reduce +
     (intersperse (str-rn)
-                 (flat:list 
+                 (flat:list
                    (first-req-line method path query)
                    (request-header host)
-                   (entity-header  method query) 
+                   (entity-header  method query)
                    (cookie-header  cookies)))))
 
 (def first-req-line (method path query)
@@ -155,7 +155,7 @@
 
 (def read-body ((o s (stdin)))
   " Read remaining lines from port. "
-  (tostring 
+  (tostring
     (whilet line (readline s)
       (pr line))))
 
