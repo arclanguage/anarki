@@ -3,6 +3,7 @@
 (module ac mzscheme
 
 (provide (all-defined))
+(require openssl)
 (require (lib "port.ss"))
 (require (lib "process.ss"))
 (require (lib "pretty.ss"))
@@ -1052,6 +1053,10 @@
 (xdef socket-connect (lambda (host port)
                        (ar-init-socket
                          (lambda () (tcp-connect host port)))))
+
+(xdef ssl-connect (lambda (host port)
+                    (ar-init-socket
+                      (lambda () (ssl-connect host port)))))
 
 ; allow Arc to give up root privileges after it
 ; calls open-socket. thanks, Eli!
