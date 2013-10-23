@@ -45,7 +45,7 @@
          (write-json value port))
      (display "]" port)]
    [(arc-boolean? json)
-     (scheme:write (if (eq? json 'true) 'true 'false)  port)]
+     (scheme:write (if (eq? json 'false) 'false 'true) port)]
    [(or (char? json)(string? json)(number? json)(integer? json)(arc-nil? json))
      (scheme:write json port)]
    [(symbol? json)
