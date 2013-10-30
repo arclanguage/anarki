@@ -1434,7 +1434,7 @@
 (xdef ssyntax (lambda (x) (tnil (ssyntax? x))))
 
 (xdef ssexpand (lambda (x)
-                  (if (ssyntax? x) (expand-ssyntax x) x)))
+                  (if (symbol? x) (expand-ssyntax x) x)))
 
 (xdef quit exit)
 
