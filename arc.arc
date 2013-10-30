@@ -1188,12 +1188,6 @@
     (each x xs (++ n (f x)))
     n))
 
-(def treewise (f base tree)
-  (if (atom tree)
-    (base tree)
-    (f (treewise f base (car tree))
-       (treewise f base (cdr tree)))))
-
 ; Could prob be generalized beyond printing.
 
 (def prall (elts (o init "") (o sep ", "))
@@ -1204,6 +1198,12 @@
 
 (def prs args
   (prall args "" #\space))
+
+(def treewise (f base tree)
+  (if (atom tree)
+    (base tree)
+    (f (treewise f base (car tree))
+       (treewise f base (cdr tree)))))
 
 (def tree-subst (old new tree)
   (if (is tree old)
