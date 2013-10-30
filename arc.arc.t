@@ -88,3 +88,16 @@
   '(nil 3)
   (ret x '(3)
     (pushnew nil x)))
+
+(test-iso "-> works"
+  1
+  (-> list.1 car))
+
+(test-iso "-> works with _ exprs"
+  4
+  (-> 3 (+ _ 1)))
+
+(test-iso "-> works with _ exprs - 2"
+  5
+  (let a (obj 1 (obj "abc" (obj 3 (obj 4 5))))
+    (-> (a.1 "abc") _.3.4)))

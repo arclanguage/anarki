@@ -202,6 +202,15 @@
 (def complement (f)
   (fn args (no (apply f args))))
 
+(mac -> (x f)
+  `((functionize ,f) ,x))
+
+; selectively support _ for anonymous functions without needing []
+(mac functionize (expr)
+  (if (treemem '_ ssexpand.expr)
+    `(fn(_) ,expr)
+    expr))
+
 (def rev (xs)
   ((afn (xs acc)
      (if (no xs)
@@ -686,8 +695,8 @@
         `(atwiths ,(+ binds (list gi i))
            (,setter (- ,val ,gi)))))))
 
-; E.g. (++ x) equiv to (zap + x 1)
-
+; (++ x) equiv to (zap + x 1)
+;        or to (zap (+ _ 1) x)
 (mac zap (op place . args)
   (with (gop    (uniq)
          gargs  (map [uniq] args)
@@ -697,7 +706,7 @@
                     (+ (map car seqs)
                        (apply self (map cdr seqs))))))
     (let (binds val setter) (setforms place)
-      `(atwiths ,(+ binds (list gop op) (mix gargs args))
+      `(atwiths ,(+ binds (list gop `(functionize ,op)) (mix gargs args))
          (,setter (,gop ,val ,@gargs))))))
 
 (mac wipe args
@@ -1218,6 +1227,13 @@
   (unless (atom tree)
     (ontree f (car tree))
     (ontree f (cdr tree))))
+
+; like mem, but looks recursively inside sub-lists as well
+(def treemem (x l)
+  (if (~acons l)
+    (iso x l)
+    (or (treemem x car.l)
+        (treemem x cdr.l))))
 
 (def dotted (x)
   (if (atom x)
