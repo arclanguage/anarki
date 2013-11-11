@@ -76,15 +76,12 @@
 
 (= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
 
-(wipe show-abuse*)
 (def abusive-ip (ip)
   (++ (requests/ip* ip 0))
-  (if show-abuse*
-    (if (ignore-ips* ip)
-      (prn ip " ignored")
-      (prn ip " " (if (abusive-ip-core ip) "" "not ") "abusive (" requests/ip*.ip ")")))
-  (and (or (ignore-ips* ip) (abusive-ip-core ip))
-       (++ (spurned* ip 0))))
+  (when (or (ignore-ips* ip) (abusive-ip-core ip))
+    (when (~spurned* ip)
+      (prn "throttling abusive ip " ip))
+    (++ (spurned* ip 0))))
 
 (def abusive-ip-core (ip)
   (and (only.> (requests/ip* ip) 250)
