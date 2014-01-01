@@ -29,9 +29,10 @@
 
 (defmacro mac (name args . body)
   (let uniqs (table)
-    `(defmacro ,name ,args ,@(tree-subst auto
-                                         [or= uniqs._ (uniq _)]
-                                         body))))
+    `(defmacro ,name ,args
+       ,@(tree-subst auto
+                     [or= uniqs._ (uniq _)]
+                     body))))
 
 (def auto (exp)
   "Tests whether an expression should be autogensymed"
