@@ -178,7 +178,6 @@
 (mac afn (parms . body)
   `(let self nil
      (assign self (fn ,parms ,@body))))
-     
 
 ; Ac expands x:y:z into (compose x y z)
 ; The last arg (z above) cannot be a macro unless the form is in functional
