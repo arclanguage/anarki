@@ -22,6 +22,23 @@
 ; Try and keep track of what is whose in sections with unknown licenses
 ; ("ripoffs").
 
+; redefinition of mac so it is similar to clojure's autogensym
+; you can just append '@' to a symbol and that symbol will be replaced with a uniq
+; all of the symbols that are the same will be replaced with the same uniq
+(= defmacro mac)
+
+(defmacro mac (name args . body)
+  (let uniqs (table)
+    `(defmacro ,name ,args ,@(treewise cons
+				       [if (auto _)
+					   (or= uniqs._ (uniq _))
+					   _]
+				       body))))
+
+(def auto (exp)
+  "Tests whether an expression should be autogensymed"
+  (and exp (atom exp) (endmatch "@" (string exp)))) 
+
 
 ; miscellaneous
 
