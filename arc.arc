@@ -188,6 +188,9 @@
                                     (atom exp) exp
                                     t          (map self exp)))  
                               body))))
+                              
+(def auto (exp)
+    (and (atom exp) (endmatch "@" (string exp))))                              
 
 ; Ac expands x:y:z into (compose x y z)
 ; The last arg (z above) cannot be a macro unless the form is in functional
