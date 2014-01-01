@@ -97,3 +97,11 @@
 (test-iso "mac without gensyms does capture variables"
   8  ; probably not what you want
   (let y 3 (foo-bad y)))
+
+(test-iso "tree-subst can take functions"
+  '(2 2 2 (4 2 . 6) . 2)
+  (tree-subst atom&odd 2 '(1 2 3 (4 5 . 6) . 7)))
+
+(test-iso "tree-subst can take functions - 2"
+  '(2 2 4 (4 6 . 6) . 8)
+  (tree-subst atom&odd [+ _ 1] '(1 2 3 (4 5 . 6) . 7)))

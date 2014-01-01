@@ -1206,8 +1206,8 @@
        (treewise f base (cdr tree)))))
 
 (def tree-subst (old new tree)
-  (if (is tree old)
-       new
+  (if (testify.old tree)
+       (if (isa new 'fn) (new tree) new)
       (atom tree)
        tree
       (cons (tree-subst old new (car tree))
