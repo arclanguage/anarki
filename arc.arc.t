@@ -88,3 +88,12 @@
   '(nil 3)
   (ret x '(3)
     (pushnew nil x)))
+
+(mac foo (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
+(mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
+(test-iso "mac gensyms don't capture variables"
+  7
+  (let y@ 3 (foo y@)))
+(test-iso "mac without gensyms does capture variables"
+  8  ; probably not what you want
+  (let y 3 (foo-bad y)))
