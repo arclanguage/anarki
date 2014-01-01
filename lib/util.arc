@@ -30,14 +30,14 @@
 (defmacro mac (name args . body)
   (let uniqs (table)
     `(defmacro ,name ,args ,@(treewise cons
-				       [if (auto _)
-					   (or= uniqs._ (uniq _))
-					   _]
-				       body))))
+                                       [if (auto _)
+                                           (or= uniqs._ (uniq _))
+                                           _]
+                                       body))))
 
 (def auto (exp)
   "Tests whether an expression should be autogensymed"
-  (and exp (atom exp) (endmatch "@" (string exp)))) 
+  (and exp (atom exp) (endmatch "@" (string exp))))
 
 
 ; miscellaneous
@@ -170,8 +170,8 @@
 (mac poprand (lst)
   (w/uniq g1
     `(if ,lst
-	 (let ,g1 (rand-pos ,lst)
-	   (popnth ,lst ,g1)))))
+         (let ,g1 (rand-pos ,lst)
+           (popnth ,lst ,g1)))))
 
 
 ; combinators
