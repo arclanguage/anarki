@@ -15,7 +15,7 @@
             "lib/news.arc"
 
             ; helpers for the repl
-            "lib/arctap.arc"
+            "lib/test.arc"
             "lib/ppr.arc"
             "lib/help.arc"
           ))
