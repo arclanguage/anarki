@@ -1,3 +1,48 @@
+(test "ssyntax?"
+  (not ($.ssyntax? 'car)))
+
+(test "ssyntax? . infix"
+  ($.ssyntax? 'car.body))
+
+(test-iso "expand-ssyntax . infix"
+  '(car body)
+  ($.expand-ssyntax 'car.body))
+
+(test "ssyntax? ! prefix"
+  ($.ssyntax? '!a))
+
+(test-iso "expand-ssyntax ! prefix"
+  '(get 'a)
+  ($.expand-ssyntax '!a))
+
+(test "ssyntax? ! infix"
+  ($.ssyntax? 'car!body))
+
+(test-iso "expand-ssyntax ! infix"
+  '(car 'body)
+  ($.expand-ssyntax 'car!body))
+
+(test "ssyntax? : infix"
+  ($.ssyntax? 'f:g))
+
+(test-iso "expand-ssyntax : infix"
+  '(compose f g)
+  ($.expand-ssyntax 'f:g))
+
+(test "ssyntax? ~ prefix"
+  ($.ssyntax? '~f))
+
+(test-iso "expand-ssyntax ~ prefix"
+  '(complement f)
+  ($.expand-ssyntax '~f))
+
+(test "ssyntax? & infix"
+  ($.ssyntax? 'f&g))
+
+(test-iso "expand-ssyntax & infix"
+  '(andf f g)
+  ($.expand-ssyntax 'f&g))
+
 (test-iso "find works on lists"
   #\b
   (find #\b '(#\a #\b #\c)))
