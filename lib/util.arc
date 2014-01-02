@@ -26,18 +26,18 @@
 ; you can just append '@' to a symbol and that symbol will be replaced with a uniq
 ; all of the symbols that are the same will be replaced with the same uniq
 (= defmacro mac)
-(= defmacro! mac!)
+(= redefmacro remac)
 
-(defmacro! mac (name args . body)
+(redefmacro mac (name args . body)
   (let uniqs (table)
     `(defmacro ,name ,args
        ,@(tree-subst auto
                      [or= uniqs._ (uniq _)]
                      body))))
 
-(defmacro! mac! (name args . body)
+(redefmacro mac! (name args . body)
   (let uniqs (table)
-    `(defmacro! ,name ,args
+    `(redefmacro ,name ,args
        ,@(tree-subst auto
                      [or= uniqs._ (uniq _)]
                      body))))

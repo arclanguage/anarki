@@ -61,7 +61,7 @@
                          (safeset ,name (fn ,parms ,@body))))
                    (docify-body body)))))
 
-(assign def! (annotate 'mac
+(assign redef (annotate 'mac
                 (fn (name parms . body)
                   ((fn ((doc . body))
                      `(do (sref sig ',parms ',name)
@@ -124,15 +124,15 @@
                         (safeset ,name (annotate 'mac (fn ,parms ,@body)))))
                   (docify-body body)))))
 
-(assign mac! (annotate 'mac
-               (fn (name parms . body)
-                 ((fn ((doc . body))
-                    `(do (sref sig ',parms ',name)
-                         (sref help* ',doc ',name)
-                         (sref source-file* current-load-file* ',name)
-                         (sref source* '(mac ,name ,parms ,@body) ',name)
-                         (assign ,name (annotate 'mac (fn ,parms ,@body)))))  ; don't warn on redef
-                   (docify-body body)))))
+(assign remac (annotate 'mac
+                (fn (name parms . body)
+                  ((fn ((doc . body))
+                     `(do (sref sig ',parms ',name)
+                          (sref help* ',doc ',name)
+                          (sref source-file* current-load-file* ',name)
+                          (sref source* '(mac ,name ,parms ,@body) ',name)
+                          (assign ,name (annotate 'mac (fn ,parms ,@body)))))  ; don't warn on redef
+                    (docify-body body)))))
 
 (sref sig '(name parms . body) 'mac)
 (sref source-file* current-load-file* 'mac)
@@ -1000,13 +1000,10 @@
 (= scheme-f (read "#f"))
 (= scheme-t (read "#t"))
 
-(= redef =)
-
 (= defined-variables* (table))
 
-(redef ac-defined-var?
-  (fn (name)
-    (if defined-variables*.name scheme-t scheme-f)))
+(redef ac-defined-var? (name)
+  (if defined-variables*.name scheme-t scheme-f))
 
 (mac defvar (name impl)
   `(do (ac-set-global ',name ,impl)
@@ -1889,7 +1886,7 @@
     (map (fn ((k v)) (= h.k unserialize.v))
          cadr.x)))
 
-(def! read ((o x (stdin)) (o eof nil))
+(redef read ((o x (stdin)) (o eof nil))
   (if (isa x 'string)
     (readstring1 x eof)
     (unserialize:sread x eof)))

@@ -1,18 +1,12 @@
 (test "ssyntax?"
   (not ($.ssyntax? 'car)))
 
-(test "ssyntax? . prefix"
-  (not ($.ssyntax? '.a)))
-
 (test "ssyntax? . infix"
   ($.ssyntax? 'car.body))
 
 (test-iso "expand-ssyntax . infix"
   '(car body)
   ($.expand-ssyntax 'car.body))
-
-(test "ssyntax? . postfix"
-  (not ($.ssyntax? 'a.)))
 
 (test "ssyntax? ! prefix"
   ($.ssyntax? '!a))
@@ -28,21 +22,12 @@
   '(car 'body)
   ($.expand-ssyntax 'car!body))
 
-(test "ssyntax? ! postfix"
-  (not ($.ssyntax? 'a!)))
-
-(test "ssyntax? : prefix"
-  (not ($.ssyntax? ':f)))
-
 (test "ssyntax? : infix"
   ($.ssyntax? 'f:g))
 
 (test-iso "expand-ssyntax : infix"
   '(compose f g)
   ($.expand-ssyntax 'f:g))
-
-(test "ssyntax? : postfix"
-  (not ($.ssyntax? 'f:)))
 
 (test "ssyntax? ~ prefix"
   ($.ssyntax? '~f))
@@ -51,24 +36,12 @@
   '(complement f)
   ($.expand-ssyntax '~f))
 
-(test "ssyntax? ~ infix"
-  (not ($.ssyntax? 'f~g)))
-
-(test "ssyntax? ~ postfix"
-  (not ($.ssyntax? 'f~)))
-
-(test "ssyntax? & prefix"
-  (not ($.ssyntax? '&f)))
-
 (test "ssyntax? & infix"
   ($.ssyntax? 'f&g))
 
 (test-iso "expand-ssyntax & infix"
   '(andf f g)
   ($.expand-ssyntax 'f&g))
-
-(test "ssyntax? & postfix"
-  (not ($.ssyntax? 'f&)))
 
 (test-iso "find works on lists"
   #\b
