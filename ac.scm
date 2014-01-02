@@ -84,21 +84,6 @@
       (number? x)
       (eq? x '())))
 
-(define (ssyntax? x)
-  (and (symbol? x)
-       (not (or (eqv? x '+) (eqv? x '++) (eqv? x '_)))
-       (let ((name (symbol->string x)))
-         (has-ssyntax-char? name (- (string-length name) 1)))))
-
-(define (has-ssyntax-char? string i)
-  (and (>= i 0)
-       (or (let ((c (string-ref string i)))
-             (or (eqv? c #\:) (eqv? c #\~)
-                 (eqv? c #\&)
-                 ;(eqv? c #\_)
-                 (eqv? c #\.)  (eqv? c #\!)))
-           (has-ssyntax-char? string (- i 1)))))
-
 (define (read-from-string str)
   (let ((port (open-input-string str)))
     (let ((val (read port)))
@@ -113,11 +98,22 @@
 ; ~foo&bar prob should mean (andf (complement foo) bar), not
 ; (complement (andf foo bar)).
 
+; !arg in prefix = [_ 'arg]
+; f!arg in infix = (f ' arg)
+; arg! in postfix = arg!
+
+(define (ssyntax? sym)
+  (and (symbol? sym)
+       (not (or (eqv? sym '+) (eqv? sym '++) (eqv? sym '_)))
+       (or (infix? #\: sym) (prefix? #\~ sym)
+           (infix? #\. sym) (infix? #\! sym) (prefix? #\! sym)
+           (infix? #\& sym))))
+
 (define (expand-ssyntax sym)
-  ((cond ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
-         ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
-         ((insym? #\& sym) expand-and)
-     ;   ((insym? #\_ sym) expand-curry)
+  ((cond ((or (infix? #\: sym) (prefix? #\~ sym))  expand-compose)
+         ((or (infix? #\. sym) (infix? #\! sym) (prefix? #\! sym))  expand-sexpr)
+         ((infix? #\& sym)  expand-and)
+     ;   ((infix? #\_ sym)  expand-curry)
          (#t (error "Unknown ssyntax" sym)))
    sym))
 
@@ -207,7 +203,24 @@
                    (err "Bad ssyntax" orig)
                    (chars->value (car toks))))))))
 
-(define (insym? char sym) (member char (symbol->chars sym)))
+(define (symhas? char sym)
+  (member char (symbol->chars sym)))
+
+(define (prefix? char sym)
+  (eq? char (car (symbol->chars sym))))
+
+(define (infix? char sym)
+  (let* ((orig (symbol->chars sym))
+         (rest (member char orig)))
+    (if (and rest (not (null? (cdr rest))) (not (eq? rest orig)))
+      rest
+      #f)))
+
+(define (postfix? char sym)
+  (let* ((rest (member char (symbol->chars sym))))
+    (if (and rest (null? (cdr rest)))
+      rest
+      #f)))
 
 (define (symbol->chars x) (string->list (symbol->string x)))
 
