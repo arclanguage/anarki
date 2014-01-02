@@ -154,3 +154,21 @@
 (test-iso "tree-subst can replace subtrees"
   '((3 4) (5 6))
   (tree-subst '(1 2) '(3 4) '((1 2) (5 6))))
+
+(test-iso "map works with one list"
+  '(2 4 6)
+  (map [* _ 2] '(1 2 3)))
+
+(test-iso "map works with multiple lists"
+  '(1 4 9)
+  (map (fn(a b) (* a b))  '(1 2 3) '(1 2 3)))
+
+(test-iso "map works with one string"
+  "mno"
+  (map (obj #\a #\m #\b #\n #\c #\o)
+       "abc"))
+
+(test-iso "map works with multiple strings"
+  "dahe"
+  (map (fn (a b) (min a b))
+       "dave" "john"))
