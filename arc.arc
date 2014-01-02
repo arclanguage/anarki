@@ -61,6 +61,16 @@
                          (safeset ,name (fn ,parms ,@body))))
                    (docify-body body)))))
 
+(assign def! (annotate 'mac
+                (fn (name parms . body)
+                  ((fn ((doc . body))
+                     `(do (sref sig ',parms ',name)
+                          (sref help* ',doc ',name)
+                          (sref source-file* current-load-file* ',name)
+                          (sref source* '(def ,name ,parms ,@body) ',name)
+                          (assign ,name (fn ,parms ,@body))))  ; don't warn on redef
+                    (docify-body body)))))
+
 (sref sig '(name parms . body) 'def)
 (sref source-file* current-load-file* 'def)
 
@@ -113,6 +123,16 @@
                         (sref source* '(mac ,name ,parms ,@body) ',name)
                         (safeset ,name (annotate 'mac (fn ,parms ,@body)))))
                   (docify-body body)))))
+
+(assign mac! (annotate 'mac
+               (fn (name parms . body)
+                 ((fn ((doc . body))
+                    `(do (sref sig ',parms ',name)
+                         (sref help* ',doc ',name)
+                         (sref source-file* current-load-file* ',name)
+                         (sref source* '(mac ,name ,parms ,@body) ',name)
+                         (assign ,name (annotate 'mac (fn ,parms ,@body)))))  ; don't warn on redef
+                   (docify-body body)))))
 
 (sref sig '(name parms . body) 'mac)
 (sref source-file* current-load-file* 'mac)
@@ -1869,7 +1889,7 @@
     (map (fn ((k v)) (= h.k unserialize.v))
          cadr.x)))
 
-(def read ((o x (stdin)) (o eof nil))
+(def! read ((o x (stdin)) (o eof nil))
   (if (isa x 'string)
     (readstring1 x eof)
     (unserialize:sread x eof)))
