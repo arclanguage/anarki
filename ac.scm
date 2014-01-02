@@ -202,10 +202,10 @@
         (#t
          (list (build-sexpr (cddr toks) orig)
                (if (eqv? (cadr toks) #\!)
-                   (list 'quote (chars->value (car toks)))
-                   (if (or (eqv? (car toks) #\.) (eqv? (car toks) #\!))
-                       (err "Bad ssyntax" orig)
-                       (chars->value (car toks))))))))
+                 (list 'quote (chars->value (car toks)))
+                 (if (or (eqv? (car toks) #\.) (eqv? (car toks) #\!))
+                   (err "Bad ssyntax" orig)
+                   (chars->value (car toks))))))))
 
 (define (insym? char sym) (member char (symbol->chars sym)))
 
