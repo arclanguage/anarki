@@ -105,3 +105,7 @@
 (test-iso "tree-subst can take functions - 2"
   '(2 2 4 (4 6 . 6) . 8)
   (tree-subst atom&odd [+ _ 1] '(1 2 3 (4 5 . 6) . 7)))
+
+(test-iso "tree-subst can replace subtrees"
+  '((3 4) (5 6))
+  (tree-subst '(1 2) '(3 4) '((1 2) (5 6))))
