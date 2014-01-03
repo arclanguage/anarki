@@ -1560,9 +1560,6 @@
     (each x seq
       (++ (ans x 0)))))
 
-(def tree-counts (tree)
-  (counts flat.tree))
-
 (def commonest (seq)
   (best (compare > counts.seq) seq))
 

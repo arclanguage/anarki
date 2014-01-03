@@ -33,3 +33,6 @@
       base
       (f (reduce f base (leaves car.x))
          (reduce f base (leaves cdr.x))))))
+
+(def counts (seq)  (isa seq 'leaves)
+  (counts:flat rep.seq))
