@@ -18,3 +18,10 @@
       (f x)
       (do (walk (leaves car.x) f)
           (walk (leaves cdr.x) f)))))
+
+(defmethod reduce (f base seq) (isa seq 'leaves)
+  (let x rep.seq
+    (if (atom x)
+      base
+      (f (reduce f base (leaves car.x))
+         (reduce f base (leaves cdr.x))))))

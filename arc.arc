@@ -1227,12 +1227,6 @@
 (def prs args
   (prall args "" #\space))
 
-(def treewise (f base tree)
-  (if (atom tree)
-    (base tree)
-    (f (treewise f base (car tree))
-       (treewise f base (cdr tree)))))
-
 (def tree-subst (old new tree)
   (if (testify.old tree)
        (if (isa new 'fn) (new tree) new)

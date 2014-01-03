@@ -13,7 +13,7 @@
   (len (flat (readall (infile file)))))
 
 (def codetree (file)
-  (treewise + (fn (x) 1) (readall (infile file))))
+  (reduce + 1 (leaves (readall infile.file))))
 
 (def code-density (file)
   (/ (codetree file) (codelines file)))
