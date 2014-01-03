@@ -1737,24 +1737,17 @@
 (mac defgeneric(name args . body)
   (w/uniq allargs
     `(do
-      (or= (vtables* ',name) (table))
+      (sref vtables* (table) ',name)  ; = relies on map, which we'll later redef
       (def ,name ,allargs
         (aif (aand (vtables* ',name) (it (type:car ,allargs)))
           (apply it ,allargs)
-          (aif (pickles* (type:car ,allargs))
-            (apply ,name (map it ,allargs))
-            (let ,args ,allargs
-              ,@body)))))))
+          (let ,args ,allargs
+            ,@body))))))
 
 (mac defmethod(name args type . body)
   `(= ((vtables* ',name) ',type)
       (fn ,args
         ,@body)))
-
-(= pickles* (table))
-(mac pickle(type f)
-  `(= (pickles* ',type)
-      ,f))
 
 ($:namespace-undefine-variable! '_iso)
 ; Could take n args, but have never once needed that.
