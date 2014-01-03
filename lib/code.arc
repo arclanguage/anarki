@@ -50,3 +50,13 @@
 ;(top40 (space-eaters allfiles*))
 
 (mac flatlen args `(len (flat ',args)))
+
+(def code (x)
+  (annotate 'code x))
+
+(defextend walk (seq f) (isa seq 'code)
+  (let x rep.seq
+    (f x)
+    (if (acons x)
+      (each elem x
+        (walk code.elem f)))))
