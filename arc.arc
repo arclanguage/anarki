@@ -323,25 +323,24 @@
 ;      (cons (apply f (map car seqs))
 ;            (apply map f (map cdr seqs)))))
 
-
 (def map (f . seqs)
-  (if (some [isa _ 'string] seqs)
-       (withs (n   (apply min (map len seqs))
-               new (newstring n))
-         ((afn (i)
-            (if (is i n)
-                new
-                (do (sref new (apply f (map [_ i] seqs)) i)
-                    (self (+ i 1)))))
-          0))
-      (no (cdr seqs))
-       (map1 f (car seqs))
-      ((afn (seqs)
-        (if (some no seqs)
-          nil
-          (cons (apply f (map1 car seqs))
-                  (self (map1 cdr seqs)))))
-       seqs)))
+  (if (no cdr.seqs)
+    (map1 f car.seqs)
+    ((afn (seqs)
+       (if (~some no seqs)
+         (cons (apply f (map1 car seqs))
+               (self (map1 cdr seqs)))))
+     seqs)))
+
+(defmethod map (f . seqs) (some [isa _ 'string] seqs)
+  (withs (n  (apply min (map1 len seqs))
+          new  (newstring n))
+    ((afn (i)
+       (if (is i n)
+         new
+         (do (sref new (apply f (map1 [_ i] seqs)) i)
+             (self (+ i 1)))))
+     0)))
 
 (def mappend (f . args)
   (apply + nil (apply map f args)))
