@@ -47,7 +47,7 @@
     rep.l!contents))
 
 ; return last n elems of l -- as long as there are at least that many
-(defgeneric suffix (n l)
+(def suffix (n l)
   (let max len.l
     (if (>= max n)
       (nthcdr (- max n) l))))

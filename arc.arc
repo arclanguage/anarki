@@ -179,6 +179,15 @@
        ,@body)
     `(let ,names (uniq ',names) ,@body)))
 
+(mac defmethod (name args pred . body)
+  (w/uniq (old allargs)
+    `(let ,old ,name
+       (redef ,name ,allargs
+         (let ,args ,allargs
+           (if ,pred
+             (do ,@body)
+             (apply ,old ,allargs)))))))
+
 ; Rtm prefers to overload + to do this
 
 (def join args
@@ -244,7 +253,6 @@
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
 
-; bootstrapping version; overloaded later as a generic function
 (def iso (x y)
   (or (is x y)
       (and (acons x)
@@ -1733,28 +1741,6 @@
     `(atwiths ,binds
        (or ,val (,setter ,expr)))))
 
-(= defgeneric def)
-
-(mac defmethod (name args pred . body)
-  (w/uniq (old allargs)
-    `(let ,old ,name
-       (redef ,name ,allargs
-         (let ,args ,allargs
-           (if ,pred
-             (do ,@body)
-             (apply ,old ,allargs)))))))
-
-($:namespace-undefine-variable! '_iso)
-; Could take n args, but have never once needed that.
-(defgeneric iso (x y)
-  (is x y))
-
-(defmethod iso (x y) (isa x 'cons)
-  (and (acons x)
-       (acons y)
-       (iso car.x car.y)
-       (iso cdr.x cdr.y)))
-
 (defmethod iso (x y) (isa x 'table)
   (and (isa x 'table)
        (isa y 'table)
@@ -1764,13 +1750,6 @@
            (iso y.k v))
          tablist.x)))
 
-($:namespace-undefine-variable! '_len)
-(defgeneric len (x)
-  (if x ($.length $.ac-denil.x) 0))
-
-; (len '(1 2 3)) => 3
-; (len 'a) => 0
-; (len '(1 2 . 3)) => 3
 (defmethod len (x) (isa x 'cons)
   (if
     (acons cdr.x)   (+ 1 (len cdr.x))
@@ -1790,10 +1769,10 @@
   ($.hash-table-count x))
 
 ; most types need define just len
-(defgeneric empty (seq)
+(def empty (seq)
   (iso 0 len.seq))
 
-; optimization: empty list (nil) is of type sym
+; optimization: empty list nil is of type sym
 (defmethod empty (x) (isa x 'cons)
   nil)
 
@@ -1827,7 +1806,7 @@
 
 
 
-(defgeneric serialize (x)
+(def serialize (x)
   x)
 
 (defmethod serialize (x) (isa x 'string)
@@ -1844,7 +1823,7 @@
                   (a (list k serialize.v)))
                 x))))
 
-(defgeneric unserialize (x)
+(def unserialize (x)
   (if (acons x)
     (cons (unserialize car.x)
           (unserialize cdr.x))
