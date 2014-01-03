@@ -17,7 +17,7 @@
 ; (tagged 'tem (tem-type fields nils))
 (def inst (tem-type . args)
   (annotate 'tem (list tem-type
-                       (let default-vals (map (fn((k v))
+                       (let default-vals (map (fn ((k v))
                                            (list k (v)))
                                          templates*.tem-type)
                          (coerce (+ default-vals pair.args)
@@ -39,7 +39,7 @@
   ; tagged type
   ($.vector-map copy x))
 
-(defmethod iso(a b) (isa a 'tem)
+(defmethod iso (a b) (isa a 'tem)
   (and (isa a 'tem)
        (isa b 'tem)
        (iso rep.a rep.b)))
@@ -70,9 +70,9 @@
     (each nil-field (coerce rep.val.2 'cons)
       (push (list car.nil-field nil) fields))))
 
-(def tem-report()
+(def tem-report ()
   (prn "after writing to file and reading back:")
-  (let value (fn(template init)
+  (let value (fn (template init)
                (if (~is template 'absent)
                  (deftem foo field template)
                  (deftem foo))

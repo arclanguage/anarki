@@ -1,5 +1,5 @@
 ($:namespace-undefine-variable! '_walk)
-(defgeneric walk (seq f)
+(def walk (seq f)
   ((afn (l)
      (when acons.l
        (f car.l)

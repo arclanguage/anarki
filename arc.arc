@@ -888,7 +888,7 @@
    `(w/instring ,gv ,str
       (w/stdin ,gv ,@body))))
 
-(mac pipe-to(dest . body)
+(mac pipe-to (dest . body)
   `(fromstring
      (tostring ,@body)
      ,dest))
@@ -1018,15 +1018,15 @@
   `(do (wipe (defined-variables* ',name))
        (ac-set-global ',name nil)))
 
-(mac parameterize(var val . body)
+(mac parameterize (var val . body)
   (w/uniq f
-    `(let ,f (fn() ,@body)
+    `(let ,f (fn () ,@body)
        (parameterize-sub ,var ,val ,f))))
 
-(def thread-cell(var (o inherit))
+(def thread-cell (var (o inherit))
   ($:make-thread-cell ,var ,(if inherit scheme-t scheme-f)))
 
-(mac thread-local(name val)
+(mac thread-local (name val)
   (w/uniq storage
     `(defvar ,name
        (let ,storage (thread-cell ,val)
@@ -1066,7 +1066,7 @@
                (++ i)))))
       s)))
 
-(def basename(s)
+(def basename (s)
   (last:tokens s #\/))
 
 (mac on (var s . body)
@@ -1704,21 +1704,21 @@
 
 (mac thread body
   `(new-thread (fn () ,@body)))
-(def kill-thread(th)
+(def kill-thread (th)
   (atomic ($:kill-thread th)))
-(def break-thread(th)
+(def break-thread (th)
   (atomic ($:break-thread th)))
 
-(def thread-send(thd v)
+(def thread-send (thd v)
   (ac-niltree:$:thread-send thd v))
-(def thread-receive()
+(def thread-receive ()
   (ac-niltree:$:thread-receive))
-(def thread-try-receive()
+(def thread-try-receive ()
   (ac-niltree:$:thread-try-receive))
 (def thread-rewind-receive args
   (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
 
-(def mktemp((o prefix "arc"))
+(def mktemp ((o prefix "arc"))
   ($ (path->string (make-temporary-file (string-append prefix ".~a")))))
 
 (mac trav (x . fs)
@@ -1735,7 +1735,7 @@
 
 (= defgeneric def)
 
-(mac defmethod(name args pred . body)
+(mac defmethod (name args pred . body)
   (w/uniq (old allargs)
     `(let ,old ,name
        (redef ,name ,allargs
@@ -1746,55 +1746,55 @@
 
 ($:namespace-undefine-variable! '_iso)
 ; Could take n args, but have never once needed that.
-(defgeneric iso(x y)
+(defgeneric iso (x y)
   (is x y))
 
-(defmethod iso(x y) (isa x 'cons)
+(defmethod iso (x y) (isa x 'cons)
   (and (acons x)
        (acons y)
        (iso car.x car.y)
        (iso cdr.x cdr.y)))
 
-(defmethod iso(x y) (isa x 'table)
+(defmethod iso (x y) (isa x 'table)
   (and (isa x 'table)
        (isa y 'table)
        (is (len keys.x) (len keys.y))
        (all
-         (fn((k v))
+         (fn ((k v))
            (iso y.k v))
          tablist.x)))
 
 ($:namespace-undefine-variable! '_len)
-(defgeneric len(x)
+(defgeneric len (x)
   (if x ($.length $.ac-denil.x) 0))
 
 ; (len '(1 2 3)) => 3
 ; (len 'a) => 0
 ; (len '(1 2 . 3)) => 3
-(defmethod len(x) (isa x 'cons)
+(defmethod len (x) (isa x 'cons)
   (if
     (acons cdr.x)   (+ 1 (len cdr.x))
     (no cdr.x)  1
                 2)) ; dotted list
 
-(defmethod len(x) (isa x 'sym)
+(defmethod len (x) (isa x 'sym)
   0)
 
-(defmethod len(x) (isa x 'vector)
+(defmethod len (x) (isa x 'vector)
   ($.vector-length x))
 
-(defmethod len(x) (isa x 'string)
+(defmethod len (x) (isa x 'string)
   ($.string-length x))
 
-(defmethod len(x) (isa x 'table)
+(defmethod len (x) (isa x 'table)
   ($.hash-table-count x))
 
 ; most types need define just len
-(defgeneric empty(seq)
+(defgeneric empty (seq)
   (iso 0 len.seq))
 
 ; optimization: empty list (nil) is of type sym
-(defmethod empty(x) (isa x 'cons)
+(defmethod empty (x) (isa x 'cons)
   nil)
 
 ; User-definable calling for given types via coerce* extension

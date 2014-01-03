@@ -7,16 +7,16 @@
                                   suffix-len n
                                   suffix (suffix n init))))
 
-(defmethod len(l) (isa l 'spliceable-list)
+(defmethod len (l) (isa l 'spliceable-list)
   (len rep.l!contents))
 
-(defmethod empty(l) (isa l 'spliceable-list)
+(defmethod empty (l) (isa l 'spliceable-list)
   (empty rep.l!contents))
 
-(defgeneric append(a b)
+(def append (a b)
   (= (cdr lastcons.a) b))
 
-(defmethod append(l tail) (isa l 'spliceable-list)
+(defmethod append (l tail) (isa l 'spliceable-list)
   (if empty.l
     (= rep.l!contents tail
        rep.l!last rep.tail)
@@ -41,7 +41,7 @@
   (sref rep.l!contents v i))
 
 ; returns all but the suffix; corrupts the suffix list
-(def splice(l)
+(def splice (l)
   (when rep.l!suffix
     (wipe (cdr rep.l!suffix))
     rep.l!contents))

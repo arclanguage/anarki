@@ -3,7 +3,7 @@
     (ero "ok - " msg)
     (ero "not ok - " msg)))
 
-(mac def-test-fn(fn-name)
+(mac def-test-fn (fn-name)
   `(def ,(sym:string "test-" fn-name) (msg expected got)
      (iflet verdict (,fn-name expected got)
        (ero "ok - " msg)

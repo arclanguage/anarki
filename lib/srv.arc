@@ -97,9 +97,9 @@
               (enq now (req-times* ip))))))
 
 (let proxy-header "X-Forwarded-For: "
-  (def strip-header(s)
+  (def strip-header (s)
     (subst "" proxy-header s))
-  (def proxy-ip(ip-wrapper lines)
+  (def proxy-ip (ip-wrapper lines)
     (aif (only.strip-header (car:keep [headmatch proxy-header _] lines))
       (ip-wrapper it)
       (ip-wrapper))))
@@ -255,12 +255,12 @@ Connection: close")
                          (parse-multipart-args multipart-boundary.ctype in))) ; maybe non-ascii
              cooks clen ctype in ip)))
 
-(def multipart-boundary(s)
+(def multipart-boundary (s)
   (let delim "boundary="
     (+ "--" (cut s (+ (findsubseq delim s)
                       len.delim)))))
 
-(def parse-multipart-args(boundary in)
+(def parse-multipart-args (boundary in)
   (scan-past boundary in) ; skip prelude
   (accum yield
     (until (multipart-end boundary in)
@@ -273,7 +273,7 @@ Connection: close")
 ; further parts follow."
 ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
 ; We've already read the boundary itself.
-(def multipart-end(boundary in)
+(def multipart-end (boundary in)
   (aif peekc.in
     (and (is #\- it) readc.in
          (or (is #\- peekc.in)
@@ -282,20 +282,20 @@ Connection: close")
              (ero "malformed multipart input; boundary followed by just one '-'. Is it the final part or isn't it?")))
     (ero "malformed multipart input; request didn't have a final boundary")))
 
-(def scan-headers(in)
+(def scan-headers (in)
   ; "The boundary must be followed immediately either by another CRLF and the
   ; header fields for the next part, or by two CRLFs, in which case there are no
   ; header fields for the next part.."
   ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
   (parse-mime-header:bytes-string:scan-past "\r\n\r\n" in))
 
-(def scan-body(boundary in)
+(def scan-body (boundary in)
   ; "The CRLF preceding the encapsulation line is considered part of the
   ; boundary.."
   ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
   (scan-past (+ "\r\n" boundary) in))
 
-(def parse-multipart-part(headers body)
+(def parse-multipart-part (headers body)
   (awhen (and headers (alref headers "name"))
     (list unstring.it
           (w/table multipart-arg
@@ -309,14 +309,14 @@ Connection: close")
 
 ; parse lines of the form a=b; c=d; e=f; ..
 ; segments without '=' are passed through as single-elem lists
-(def parse-mime-header(line)
+(def parse-mime-header (line)
   (map [tokens _ #\=]
        (tokens downcase.line (orf whitec (testify #\;)))))
 
 ; return list of bytes until pat is encountered
 ; pat is read from input but dropped from result
 ; all chars in pat must be 1-byte
-(def scan-past(pat in)
+(def scan-past (pat in)
   (= pat (map int (coerce pat 'cons)))
   (let buffer (spliceable-list len.pat)
     (until (iso pat suffix.buffer)
@@ -324,16 +324,16 @@ Connection: close")
     splice.buffer))
 
 ; convert list of bytes to string
-(def bytes-string(l)
+(def bytes-string (l)
   (coerce (map [coerce _ 'char]
                l)
           'string))
 
-(def all-ascii?(l)
+(def all-ascii? (l)
   (errsafe:all [<= 0 _ 127] l))
 
 ; "\"abc\"" => "abc"
-(def unstring(s)
+(def unstring (s)
   (if (iso #\" s.0)
     (cut s 1 -1)
     s))
@@ -389,7 +389,7 @@ Connection: close")
     ; deref multipart params by default
     (it "contents")))
 
-(def multipart-metadata(req arg key)
+(def multipart-metadata (req arg key)
   (let val (alref req!args arg)
     (if (isa val 'table)
       val.key)))

@@ -145,10 +145,10 @@
  (defcall vector (vec i val)
     (= rep.vec.i val))
 
-(defgeneric norm (x))
+(def norm (x))
 
 (extend cos args (all [isa _ 'vector] args)
-        (cosv (rep:car args) (rep:cadr args)))
+  (cosv (rep:car args) (rep:cadr args)))
 
 (defmethod norm (arg) (isa arg 'vector)
            ; todo, should take optional argument and make euclidean default, many types of norms

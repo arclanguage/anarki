@@ -87,7 +87,7 @@
 (def to-query-str (querylist)
   (if querylist
     (joinstr (map [joinstr _ "="]
-                  (map (fn((k v))
+                  (map (fn ((k v))
                          (list k urlencode.v))
                        (pair:map [coerce _ 'string] querylist)))
              "&")))
