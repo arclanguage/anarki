@@ -44,6 +44,24 @@
   ($.expand-ssyntax 'f&g))
 
 
+(test "copy works on lists"
+  (withs (old  '(1 2 3)
+          new  copy.old)
+    (and (iso old new)
+         (~is old new))))
+
+(test "copy works on strings"
+  (withs (old  "abc"
+          new  copy.old)
+    (and (iso old new)
+         (not ($.eq? old new)))))  ; ugly that string copies are 'is' each other
+
+(test "copy works on tables"
+  (withs (old  (obj a 1 b 2)
+          new  copy.old)
+    (and (iso old new)
+         (~is old new))))
+
 (test-iso "len works on lists"
   3
   (len '(1 2 3)))

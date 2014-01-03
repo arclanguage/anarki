@@ -1283,23 +1283,23 @@
 (def write-table (h (o o (stdout)))
   (write (tablist h) o))
 
-(def copy (x . args)
-  (ret ans (case type.x
-             sym    x
-             int    x
-             num    x
-             cons   (cons (copy car.x)
-                          (copy cdr.x))
-             string (let new (newstring len.x)
-                      (forlen i x
-                        (= new.i x.i))
-                      new)
-             table  (ret new (table)
-                      (each (k v) x
-                        (= new.k copy.v)))
-                    (err "Can't copy " x))
-    (map (fn ((k v)) (= ans.k v))
-         pair.args)))
+(def copy (x)
+  (if (atom x)
+    x
+    (cons (copy car.x)
+          (copy cdr.x))))
+
+(defextend copy (x) (isa x 'string)
+  (ret new (newstring len.x)
+    (forlen i x
+      (= new.i x.i))))
+
+(defextend copy (x . args) (isa x 'table)
+  (ret new (table)
+    (each (k v) x
+      (= new.k copy.v))
+    (each (k v) pair.args
+      (= new.k v))))
 
 (def shr (n m)
   (shl n (- m)))
