@@ -489,7 +489,7 @@
   `(make-ns ,@(mappend [do `(',_.0 ,_.1)] pair.binds)))
 
 (def rns-keys (rns)
-  (copylist:$.namespace-mapped-symbols rnsify.rns))
+  (copy:$.namespace-mapped-symbols rnsify.rns))
 
 (def ns-keys (ns)
   (safely-map-global-racketarc:rns-keys ns-arcracket.ns))
