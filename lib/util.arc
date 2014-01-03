@@ -31,16 +31,16 @@
 (redefmacro mac (name args . body)
   (let uniqs (table)
     `(defmacro ,name ,args
-       ,@(tree-subst auto
-                     [or= uniqs._ (uniq _)]
-                     body))))
+       ,@(subst auto
+                [or= uniqs._ uniq._]
+                tree.body))))
 
 (redefmacro mac! (name args . body)
   (let uniqs (table)
     `(redefmacro ,name ,args
-       ,@(tree-subst auto
-                     [or= uniqs._ (uniq _)]
-                     body))))
+       ,@(subst auto
+                [or= uniqs._ uniq._]
+                tree.body))))
 
 (def auto (exp)
   "Tests whether an expression should be autogensymed"

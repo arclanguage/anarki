@@ -16,4 +16,16 @@
        "abc%c3%bcd")
 ))
 
+(register-test
+  '(suite "subst"
+     ("substitutes one occurrence of single char"
+       (subst "a" "m" "abc")
+       "mbc")
+     ("substitutes all occurrences of single char"
+       (subst "a" "m" "abcabd")
+       "mbcmbd")
+     ("substitutes all occurrences of multi-char pattern"
+       (subst "ab" "m" "abcabd")
+       "mcmd")))
+
 (run-all-tests)

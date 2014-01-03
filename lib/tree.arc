@@ -9,6 +9,14 @@
       (walk (tree car.x) f)
       (walk (tree cdr.x) f))))
 
+(defextend map (f seq) (isa seq 'tree)
+  (withs (old rep.seq
+          new f.old)
+    (if (or atom.old (~is old new))
+      new
+      (cons (map f (tree car.old))
+            (map f (tree cdr.old))))))
+
 (def leaves (x)
   (annotate 'leaves x))
 

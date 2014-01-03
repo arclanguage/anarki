@@ -342,8 +342,16 @@
              (self (+ i 1)))))
      0)))
 
+; common uses of map
 (def mappend (f . args)
   (apply + nil (apply map f args)))
+
+(def subst (old new seq)
+  (map (fn (_)
+         (if (testify.old _)
+           (if (isa new 'fn) new._ new)
+           _))
+       seq))
 
 (def firstn (n xs)
   (if (no n)            xs
@@ -1226,14 +1234,6 @@
 
 (def prs args
   (prall args "" #\space))
-
-(def tree-subst (old new tree)
-  (if (testify.old tree)
-       (if (isa new 'fn) (new tree) new)
-      (atom tree)
-       tree
-      (cons (tree-subst old new (car tree))
-            (tree-subst old new (cdr tree)))))
 
 (def dotted (x)
   (if (atom x)

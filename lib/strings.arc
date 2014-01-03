@@ -137,14 +137,14 @@
   (unless (len> pat (- (len seq) start))
     (headmatch pat seq start)))
 
-(def subst (new old seq)
-  (let boundary (+ (- (len seq) (len old)) 1)
-    (tostring
-      (forlen i seq
-        (if (and (< i boundary) (headmatch old seq i))
-            (do (++ i (- (len old) 1))
-                (pr new))
-            (pr (seq i)))))))
+(defextend subst (old new seq) (isa seq 'string)
+  (tostring
+    (forlen i seq
+      (if (and (< i (- len.seq len.old -1))
+               (headmatch old seq i))
+        (do (++ i (- len.old 1))
+            (pr new))
+        (pr seq.i)))))
 
 (def multisubst (pairs seq)
   (tostring

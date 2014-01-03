@@ -3,10 +3,10 @@
             "lib/queue.arc"
             "lib/spliceable-list.arc"
             "lib/tem.arc"
+            "lib/tree.arc"
             "lib/util.arc"
             "lib/declare.arc"
             "lib/make-br-fn.arc"
-            "lib/tree.arc"
 
             ; webserver stuff
             "lib/html.arc"

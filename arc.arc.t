@@ -165,27 +165,6 @@
   (ret x '(3)
     (pushnew nil x)))
 
-(mac foo (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
-(mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
-(test-iso "mac gensyms don't capture variables"
-  7
-  (let y@ 3 (foo y@)))
-(test-iso "mac without gensyms does capture variables"
-  8  ; probably not what you want
-  (let y 3 (foo-bad y)))
-
-(test-iso "tree-subst can take functions"
-  '(2 2 2 (4 2 . 6) . 2)
-  (tree-subst atom&odd 2 '(1 2 3 (4 5 . 6) . 7)))
-
-(test-iso "tree-subst can take functions - 2"
-  '(2 2 4 (4 6 . 6) . 8)
-  (tree-subst atom&odd [+ _ 1] '(1 2 3 (4 5 . 6) . 7)))
-
-(test-iso "tree-subst can replace subtrees"
-  '((3 4) (5 6))
-  (tree-subst '(1 2) '(3 4) '((1 2) (5 6))))
-
 (test-iso "map works with one list"
   '(2 4 6)
   (map [* _ 2] '(1 2 3)))
@@ -204,6 +183,22 @@
   (map (fn (a b) (min a b))
        "dave" "john"))
 
+(test-iso "subst works on lists"
+  '(2 2 3)
+  (subst 1 2 '(1 2 3)))
+
+(test-iso "subst can take functions"
+  '(2 2 2 (4 2 . 6) . 2)
+  (rep:subst atom&odd 2 (tree '(1 2 3 (4 5 . 6) . 7))))
+
+(test-iso "subst can take functions - 2"
+  '(2 2 4 (4 6 . 6) . 8)
+  (rep:subst atom&odd [+ _ 1] (tree '(1 2 3 (4 5 . 6) . 7))))
+
+(test-iso "subst can replace subtrees"
+  '((3 4) (5 6))
+  (rep:subst '(1 2) '(3 4) (tree '((1 2) (5 6)))))
+
 (test-iso "serialize works on tables"
   '(tagged table ((b 2) (a 1)))
   (serialize (obj a 1 b 2)))
@@ -212,3 +207,12 @@
   (test-iso "unserialize undoes serialize"
     h
     (unserialize:serialize h)))
+
+(mac foo (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
+(mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
+(test-iso "mac gensyms don't capture variables"
+  7
+  (let y@ 3 (foo y@)))
+(test-iso "mac without gensyms does capture variables"
+  8  ; probably not what you want
+  (let y 3 (foo-bad y)))
