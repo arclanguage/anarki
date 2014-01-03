@@ -325,12 +325,10 @@
 
 (def map (f . seqs)
   (if (no cdr.seqs)
-    (map1 f car.seqs)
-    ((afn (seqs)
-       (if (~some no seqs)
-         (cons (apply f (map1 car seqs))
-               (self (map1 cdr seqs)))))
-     seqs)))
+        (map1 f car.seqs)
+      (all idfn seqs)
+        (cons (apply f (map1 car seqs))
+              (apply map f (map1 cdr seqs)))))
 
 (defextend map (f . seqs) (some [isa _ 'string] seqs)
   (withs (n  (apply min (map1 len seqs))
