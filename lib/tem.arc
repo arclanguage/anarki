@@ -39,7 +39,7 @@
   ; tagged type
   ($.vector-map copy x))
 
-(defmethod iso(a b) tem
+(defmethod iso(a b) (isa a 'tem)
   (and (isa a 'tem)
        (isa b 'tem)
        (iso rep.a rep.b)))

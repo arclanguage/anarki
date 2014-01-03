@@ -18,7 +18,7 @@
 
 (def qlen (q) (rep.q 2))
 
-(defmethod len(x) queue
+(defmethod len(x) (isa x 'queue)
   (qlen x))
 
 (def qlist (q) (car rep.q))

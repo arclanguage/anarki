@@ -6,12 +6,12 @@
        (self cdr.l)))
    seq))
 
-(defmethod walk (seq f) table
+(defmethod walk (seq f) (isa seq table)
   (maptable (fn (k v)
               (f (list k v)))
             seq))
 
-(defmethod walk (seq f) string
+(defmethod walk (seq f) (isa seq string)
   (forlen i seq
     (f seq.i)))
 
@@ -19,7 +19,7 @@
 (def tree (x)
   (annotate 'tree x))
 
-(defmethod walk (seq f) tree
+(defmethod walk (seq f) (isa seq tree)
   (let x rep.seq
     (f x)
     (unless (atom x)
@@ -29,7 +29,7 @@
 (def leaves (x)
   (annotate 'leaves x))
 
-(defmethod walk (seq f) leaves
+(defmethod walk (seq f) (isa seq leaves)
   (let x rep.seq
     (if (atom x)
       (f x)

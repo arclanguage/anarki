@@ -150,6 +150,6 @@
 (extend cos args (all [isa _ 'vector] args)
         (cosv (rep:car args) (rep:cadr args)))
 
-(defmethod norm (arg) vector
+(defmethod norm (arg) (isa arg 'vector)
            ; todo, should take optional argument and make euclidean default, many types of norms
            (lenv rep.arg))

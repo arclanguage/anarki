@@ -43,6 +43,19 @@
   '(andf f g)
   ($.expand-ssyntax 'f&g))
 
+
+(test-iso "len works on lists"
+  3
+  (len '(1 2 3)))
+
+(test-iso "len of syms is 0"
+  0
+  (len 'a))
+
+(test-iso "len works on improper lists"
+  3
+  (len '(1 2 . 3)))
+
 (test-iso "find works on lists"
   #\b
   (find #\b '(#\a #\b #\c)))
@@ -172,3 +185,12 @@
   "dahe"
   (map (fn (a b) (min a b))
        "dave" "john"))
+
+(test-iso "serialize works on tables"
+  '(tagged table ((b 2) (a 1)))
+  (serialize (obj a 1 b 2)))
+
+(let h (obj a 1 b 2)
+  (test-iso "unserialize undoes serialize"
+    h
+    (unserialize:serialize h)))

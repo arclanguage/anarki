@@ -1733,34 +1733,29 @@
     `(atwiths ,binds
        (or ,val (,setter ,expr)))))
 
-(= vtables* (table))
-(mac defgeneric(name args . body)
-  (w/uniq allargs
-    `(do
-      (sref vtables* (table) ',name)  ; = relies on map, which we'll later redef
-      (def ,name ,allargs
-        (aif (aand (vtables* ',name) (it (type:car ,allargs)))
-          (apply it ,allargs)
-          (let ,args ,allargs
-            ,@body))))))
+(= defgeneric def)
 
-(mac defmethod(name args type . body)
-  `(= ((vtables* ',name) ',type)
-      (fn ,args
-        ,@body)))
+(mac defmethod(name args pred . body)
+  (w/uniq (old allargs)
+    `(let ,old ,name
+       (redef ,name ,allargs
+         (let ,args ,allargs
+           (if ,pred
+             (do ,@body)
+             (apply ,old ,allargs)))))))
 
 ($:namespace-undefine-variable! '_iso)
 ; Could take n args, but have never once needed that.
 (defgeneric iso(x y)
   (is x y))
 
-(defmethod iso(x y) cons
+(defmethod iso(x y) (isa x 'cons)
   (and (acons x)
        (acons y)
        (iso car.x car.y)
        (iso cdr.x cdr.y)))
 
-(defmethod iso(x y) table
+(defmethod iso(x y) (isa x 'table)
   (and (isa x 'table)
        (isa y 'table)
        (is (len keys.x) (len keys.y))
@@ -1776,22 +1771,22 @@
 ; (len '(1 2 3)) => 3
 ; (len 'a) => 0
 ; (len '(1 2 . 3)) => 3
-(defmethod len(x) cons
+(defmethod len(x) (isa x 'cons)
   (if
     (acons cdr.x)   (+ 1 (len cdr.x))
     (no cdr.x)  1
                 2)) ; dotted list
 
-(defmethod len(x) sym
+(defmethod len(x) (isa x 'sym)
   0)
 
-(defmethod len(x) vec
+(defmethod len(x) (isa x 'vector)
   ($.vector-length x))
 
-(defmethod len(x) string
+(defmethod len(x) (isa x 'string)
   ($.string-length x))
 
-(defmethod len(x) table
+(defmethod len(x) (isa x 'table)
   ($.hash-table-count x))
 
 ; most types need define just len
@@ -1799,7 +1794,7 @@
   (iso 0 len.seq))
 
 ; optimization: empty list (nil) is of type sym
-(defmethod empty(x) cons
+(defmethod empty(x) (isa x 'cons)
   nil)
 
 ; User-definable calling for given types via coerce* extension
@@ -1835,43 +1830,47 @@
 (defgeneric serialize (x)
   x)
 
-(defmethod serialize (x) string
+(defmethod serialize (x) (isa x 'string)
   x)
 
-(defmethod serialize (x) cons
+(defmethod serialize (x) (isa x 'cons)
   (cons (serialize (car x))
         (serialize (cdr x))))
 
-(defmethod serialize (x) table
-  (list 'table
+(defmethod serialize (x) (isa x 'table)
+  (list 'tagged 'table
     (accum a
       (maptable (fn (k v)
                   (a (list k serialize.v)))
                 x))))
 
-; can't use defgeneric; everything is likely a list when serialized
-(or= vtables*!unserialize (table))
-(def unserialize (x)
-  (aif (vtables*!unserialize type*.x)   (it x)
-    (acons x)   (cons (unserialize car.x)
-                      (unserialize cdr.x))
-                x))
+(defgeneric unserialize (x)
+  (if (acons x)
+    (cons (unserialize car.x)
+          (unserialize cdr.x))
+    x))
 
 (def type* (x)
-  (if (and (pair? x)
-           (isa car.x 'sym))
-    car.x
-    type.x))
+  (or (and (acons x)
+           (is 'tagged car.x)
+           (is 3 len.x)
+           x.1)
+      type.x))
 
-(def pair? (l)
-  (and (acons l)
-       (acons:cdr l)
-       (~acons:cddr l)))
+(def isa* (x a)
+  (is a type*.x))
 
-(defmethod unserialize (x) table
+(def rep* (x)
+  (or (and (acons x)
+           (is 'tagged car.x)
+           (is 3 len.x)
+           x.2)
+      (rep x)))
+
+(defmethod unserialize (x) (isa* x 'table)  ; (tagged table ((k1 v1) (k2 v2) ..))
   (w/table h
     (map (fn ((k v)) (= h.k unserialize.v))
-         cadr.x)))
+         rep*.x)))
 
 (redef read ((o x (stdin)) (o eof nil))
   (if (isa x 'string)
