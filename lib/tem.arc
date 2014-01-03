@@ -24,7 +24,7 @@
                                  'table))
                        (memtable (map car (keep no:cadr pair.args))))))
 
-(extend sref (tem v k) (isa tem 'tem)
+(defextend sref (tem v k) (isa tem 'tem)
   (sref rep.tem.1 v k)
   (if v
     (wipe rep.tem.2.k)
@@ -35,11 +35,11 @@
       (if (no rep.tem.2.k)
         (aif (alref (templates* rep.tem.0) k) (it)))))
 
-(extend copy (x . args)   ($.vector? x)
+(defextend copy (x . args)   ($.vector? x)
   ; tagged type
   ($.vector-map copy x))
 
-(defmethod iso (a b) (isa a 'tem)
+(defextend iso (a b) (isa a 'tem)
   (and (isa a 'tem)
        (isa b 'tem)
        (iso rep.a rep.b)))

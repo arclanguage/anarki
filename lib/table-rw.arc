@@ -18,7 +18,7 @@
 ; need the errsafe on type tests because (type x) croaks on
 ; non-Arc types
 
-(extend ac-literal (x) (errsafe:isa x 'table)
+(defextend ac-literal (x) (errsafe:isa x 'table)
   scheme-t)
 
 (def print-table (f x s)

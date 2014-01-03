@@ -2,7 +2,7 @@
 (def tree (x)
   (annotate 'tree x))
 
-(defmethod walk (seq f) (isa seq 'tree)
+(defextend walk (seq f) (isa seq 'tree)
   (let x rep.seq
     (f x)
     (unless (atom x)
@@ -12,14 +12,14 @@
 (def leaves (x)
   (annotate 'leaves x))
 
-(defmethod walk (seq f) (isa seq 'leaves)
+(defextend walk (seq f) (isa seq 'leaves)
   (let x rep.seq
     (if (atom x)
       (f x)
       (do (walk (leaves car.x) f)
           (walk (leaves cdr.x) f)))))
 
-(defmethod reduce (f base seq) (isa seq 'leaves)
+(defextend reduce (f base seq) (isa seq 'leaves)
   (let x rep.seq
     (if (atom x)
       base

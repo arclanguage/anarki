@@ -1,5 +1,4 @@
 (map load '("lib/require.arc"
-            "lib/extend.arc"
             "lib/strings.arc"
             "lib/queue.arc"
             "lib/spliceable-list.arc"

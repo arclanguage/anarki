@@ -50,10 +50,10 @@
 ; 'arc-exec in ac.scm for more details about how this helps.
 
 
-(extend type (x) $.namespace?.x
+(defextend type (x) $.namespace?.x
   'rns)
 
-(extend type (x) $.namespace-anchor?.x
+(defextend type (x) $.namespace-anchor?.x
   'anchor)
 
 
@@ -96,13 +96,13 @@
 (def rnsify (x)
   (err:+ "Can't rnsify " (tostring write.x)))
 
-(extend rnsify (x) (isa x 'rns)
+(defextend rnsify (x) (isa x 'rns)
   x)
 
 (def nsify (x)
   (err:+ "Can't nsify " (tostring write.x)))
 
-(extend nsify (x) (isa x 'ns)
+(defextend nsify (x) (isa x 'ns)
   x)
 
 
@@ -135,7 +135,7 @@
 (def anchor-empty-rns ((o anchor main-ns-anchor*))
   $.namespace-anchor->empty-namespace.anchor)
 
-(extend rnsify (x) (isa x 'anchor)
+(defextend rnsify (x) (isa x 'anchor)
   anchor-rns.x)
 
 (def anchor-ns ((o anchor main-ns-anchor*))
@@ -144,7 +144,7 @@
 (def anchor-empty-ns ((o anchor main-ns-anchor*))
   (ns-racketarc anchor-empty-rns.anchor))
 
-(extend nsify (x) (isa x 'anchor)
+(defextend nsify (x) (isa x 'anchor)
   (ns-racketarc rnsify.x))
 
 
@@ -196,13 +196,13 @@
 (def rmodulify (x)
   (err:+ "Can't rmodulify " (tostring write.x) "."))
 
-(extend rmodulify (x) (isa x 'rmodule)
+(defextend rmodulify (x) (isa x 'rmodule)
   x)
 
 (def modulify (x)
   (err:+ "Can't modulify " (tostring write.x) "."))
 
-(extend modulify (x) (isa x 'module)
+(defextend modulify (x) (isa x 'module)
   x)
 
 (def module-racketarc (rmodule)
@@ -299,11 +299,11 @@
                rmodule-keys.rmodule)))))
 
 
-(extend rnsify (x) (isa x 'rmodule)
+(defextend rnsify (x) (isa x 'rmodule)
   (let (rns path) (rep instantiate-rmodule.x)
     (w/current-rns rns $.module->namespace.path)))
 
-(extend nsify (x) (isa x 'module)
+(defextend nsify (x) (isa x 'module)
   (ns-racketarc:rnsify module-arcracket.x))
 
 
@@ -456,10 +456,10 @@
 (defcall ns (self var)
   (ns-get var self))
 
-(extend sref (self val . args) (and (isa self 'rns) single.args)
+(defextend sref (self val . args) (and (isa self 'rns) single.args)
   (rns-set car.args val self))
 
-(extend sref (self val . args) (and (isa self 'ns) single.args)
+(defextend sref (self val . args) (and (isa self 'ns) single.args)
   (ns-set car.args val self))
 
 (defcall rmodule (self var)
@@ -468,10 +468,10 @@
 (defcall module (self var)
   (ns-get var self))
 
-(extend sref (self val . args) (and (isa self 'rmodule) single.args)
+(defextend sref (self val . args) (and (isa self 'rmodule) single.args)
   (rns-set car.args val self))
 
-(extend sref (self val . args) (and (isa self 'module) single.args)
+(defextend sref (self val . args) (and (isa self 'module) single.args)
   (ns-set car.args val self))
 
 

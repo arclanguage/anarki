@@ -179,7 +179,7 @@
        ,@body)
     `(let ,names (uniq ',names) ,@body)))
 
-(mac defmethod (name args pred . body)
+(mac defextend (name args pred . body)
   (w/uniq (old allargs)
     `(let ,old ,name
        (redef ,name ,allargs
@@ -332,7 +332,7 @@
                (self (map1 cdr seqs)))))
      seqs)))
 
-(defmethod map (f . seqs) (some [isa _ 'string] seqs)
+(defextend map (f . seqs) (some [isa _ 'string] seqs)
   (withs (n  (apply min (map1 len seqs))
           new  (newstring n))
     ((afn (i)
@@ -552,12 +552,12 @@
 (mac each (var expr . body)
   `(walk ,expr (fn (,var) ,@body)))
 
-(defmethod walk (seq f) (isa seq 'table)
+(defextend walk (seq f) (isa seq 'table)
   (maptable (fn (k v)
               (f (list k v)))
             seq))
 
-(defmethod walk (seq f) (isa seq 'string)
+(defextend walk (seq f) (isa seq 'string)
   (forlen i seq
     (f seq.i)))
 
@@ -1738,7 +1738,7 @@
     `(atwiths ,binds
        (or ,val (,setter ,expr)))))
 
-(defmethod iso (x y) (isa x 'table)
+(defextend iso (x y) (isa x 'table)
   (and (isa x 'table)
        (isa y 'table)
        (is (len keys.x) (len keys.y))
@@ -1747,22 +1747,22 @@
            (iso y.k v))
          tablist.x)))
 
-(defmethod len (x) (isa x 'cons)
+(defextend len (x) (isa x 'cons)
   (if
     (acons cdr.x)   (+ 1 (len cdr.x))
     (no cdr.x)  1
                 2)) ; dotted list
 
-(defmethod len (x) (isa x 'sym)
+(defextend len (x) (isa x 'sym)
   0)
 
-(defmethod len (x) (isa x 'vector)
+(defextend len (x) (isa x 'vector)
   ($.vector-length x))
 
-(defmethod len (x) (isa x 'string)
+(defextend len (x) (isa x 'string)
   ($.string-length x))
 
-(defmethod len (x) (isa x 'table)
+(defextend len (x) (isa x 'table)
   ($.hash-table-count x))
 
 ; most types need define just len
@@ -1770,7 +1770,7 @@
   (iso 0 len.seq))
 
 ; optimization: empty list nil is of type sym
-(defmethod empty (x) (isa x 'cons)
+(defextend empty (x) (isa x 'cons)
   nil)
 
 ; User-definable calling for given types via coerce* extension
@@ -1806,14 +1806,14 @@
 (def serialize (x)
   x)
 
-(defmethod serialize (x) (isa x 'string)
+(defextend serialize (x) (isa x 'string)
   x)
 
-(defmethod serialize (x) (isa x 'cons)
+(defextend serialize (x) (isa x 'cons)
   (cons (serialize (car x))
         (serialize (cdr x))))
 
-(defmethod serialize (x) (isa x 'table)
+(defextend serialize (x) (isa x 'table)
   (list 'tagged 'table
     (accum a
       (maptable (fn (k v)
@@ -1843,7 +1843,7 @@
            x.2)
       (rep x)))
 
-(defmethod unserialize (x) (isa* x 'table)  ; (tagged table ((k1 v1) (k2 v2) ..))
+(defextend unserialize (x) (isa* x 'table)  ; (tagged table ((k1 v1) (k2 v2) ..))
   (w/table h
     (map (fn ((k v)) (= h.k unserialize.v))
          rep*.x)))

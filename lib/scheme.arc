@@ -1,4 +1,4 @@
-(extend ac (s env) (and (errsafe:acons s) (is (car s) 'scheme))
+(defextend ac (s env) (and (errsafe:acons s) (is (car s) 'scheme))
   `(begin ,@(cdr s)))
 
 (= ac-denil       scheme.ac-denil)

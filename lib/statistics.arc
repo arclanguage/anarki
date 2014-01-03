@@ -126,17 +126,17 @@
 (def vec lst
   (annotate 'vector lst))
 
-(extend + args (all [isa _ 'vector] args)
-        (apply +v (map rep args)))
+(defextend + args (all [isa _ 'vector] args)
+  (apply +v (map rep args)))
 
-;(extend + (v i) (and (isa v 'vector) (mem type.i '(num int)))
-;        (map [+ _ i] rep.v))
+;(defextend + (v i) (and (isa v 'vector) (mem type.i '(num int)))
+;  (map [+ _ i] rep.v))
 
-;(extend - (v i) (and (isa v 'vector) (mem type.i '(num int)))
-;        (map [- _ i] rep.v))
+;(defextend - (v i) (and (isa v 'vector) (mem type.i '(num int)))
+;  (map [- _ i] rep.v))
 
-(extend - args (all [isa _ 'vector] args)
-        (apply -v (map rep args)))
+(defextend - args (all [isa _ 'vector] args)
+  (apply -v (map rep args)))
 
 (defcall vector (vec i)
   rep.vec.i)
@@ -147,9 +147,9 @@
 
 (def norm (x))
 
-(extend cos args (all [isa _ 'vector] args)
+(defextend cos args (all [isa _ 'vector] args)
   (cosv (rep:car args) (rep:cadr args)))
 
-(defmethod norm (arg) (isa arg 'vector)
-           ; todo, should take optional argument and make euclidean default, many types of norms
-           (lenv rep.arg))
+(defextend norm (arg) (isa arg 'vector)
+  ; todo, should take optional argument and make euclidean default, many types of norms
+  (lenv rep.arg))
