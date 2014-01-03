@@ -552,12 +552,12 @@
 (mac each (var expr . body)
   `(walk ,expr (fn (,var) ,@body)))
 
-(defmethod walk (seq f) (isa seq table)
+(defmethod walk (seq f) (isa seq 'table)
   (maptable (fn (k v)
               (f (list k v)))
             seq))
 
-(defmethod walk (seq f) (isa seq string)
+(defmethod walk (seq f) (isa seq 'string)
   (forlen i seq
     (f seq.i)))
 
