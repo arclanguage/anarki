@@ -172,7 +172,3 @@
   "dahe"
   (map (fn (a b) (min a b))
        "dave" "john"))
-
-(test-iso "ontree works"
-  '((1 2 3 4) 1 (2 3 4) 2 (3 4) 3 (4) 4 nil)
-  (accum acc (ontree acc '(1 2 3 4))))

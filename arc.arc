@@ -1230,12 +1230,6 @@
       (cons (tree-subst old new (car tree))
             (tree-subst old new (cdr tree)))))
 
-(def ontree (f tree)
-  (f tree)
-  (unless (atom tree)
-    (ontree f (car tree))
-    (ontree f (cdr tree))))
-
 (def dotted (x)
   (if (atom x)
     nil
