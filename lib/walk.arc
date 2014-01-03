@@ -1,20 +1,3 @@
-($:namespace-undefine-variable! '_walk)
-(def walk (seq f)
-  ((afn (l)
-     (when acons.l
-       (f car.l)
-       (self cdr.l)))
-   seq))
-
-(defmethod walk (seq f) (isa seq table)
-  (maptable (fn (k v)
-              (f (list k v)))
-            seq))
-
-(defmethod walk (seq f) (isa seq string)
-  (forlen i seq
-    (f seq.i)))
-
 ; different ways to navigate trees
 (def tree (x)
   (annotate 'tree x))

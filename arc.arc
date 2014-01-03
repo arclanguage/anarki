@@ -543,20 +543,24 @@
 (mac forlen (var s . body)
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
-(def walk (seq func)
-  (if alist.seq
-        ((afn (l)
-           (when (acons l)
-             (func (car l))
-             (self (cdr l)))) seq)
-      (isa seq 'table)
-        (maptable (fn (k v) (func (list k v))) seq)
-      ; else
-        (forlen i seq
-          (func seq.i))))
+(def walk (seq f)
+  ((afn (l)
+     (when acons.l
+       (f car.l)
+       (self cdr.l)))
+   seq))
 
 (mac each (var expr . body)
   `(walk ,expr (fn (,var) ,@body)))
+
+(defmethod walk (seq f) (isa seq table)
+  (maptable (fn (k v)
+              (f (list k v)))
+            seq))
+
+(defmethod walk (seq f) (isa seq string)
+  (forlen i seq
+    (f seq.i)))
 
 ; ; old definition of 'each. possibly faster, but not extendable.
 ; (mac each (var expr . body)
