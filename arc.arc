@@ -1827,21 +1827,21 @@
     x))
 
 (def type* (x)
-  (or (and (acons x)
+  (if (and (acons x)
            (is 'tagged car.x)
-           (is 3 len.x)
-           x.1)
-      type.x))
+           (is 3 len.x))
+    x.1
+    type.x))
 
 (def isa* (x a)
   (is a type*.x))
 
 (def rep* (x)
-  (or (and (acons x)
+  (if (and (acons x)
            (is 'tagged car.x)
-           (is 3 len.x)
-           x.2)
-      (rep x)))
+           (is 3 len.x))
+    x.2
+    rep.x))
 
 (defextend unserialize (x) (isa* x 'table)  ; (tagged table ((k1 v1) (k2 v2) ..))
   (w/table h

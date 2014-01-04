@@ -204,9 +204,13 @@
   (serialize (obj a 1 b 2)))
 
 (let h (obj a 1 b 2)
-  (test-iso "unserialize undoes serialize"
+  (test-iso "unserialize undoes serialize for tables"
     h
     (unserialize:serialize h)))
+
+(test-iso "unserialize undoes serialize for empty table"
+  (table)
+  (unserialize:serialize (table)))
 
 (mac foo (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
 (mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
