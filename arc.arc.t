@@ -199,18 +199,57 @@
   '((3 4) (5 6))
   (rep:subst '(1 2) '(3 4) (tree '((1 2) (5 6)))))
 
+(test-iso "serialize works on nil"
+  ()
+  (serialize ()))
+
+(test-iso "serialize works on lists"
+  '(1 2 3)
+  (serialize '(1 2 3)))
+
+(test-iso "serialize works on strings"
+  "abc"
+  (serialize "abc"))
+
 (test-iso "serialize works on tables"
-  '(tagged table ((b 2) (a 1)))
-  (serialize (obj a 1 b 2)))
+  '(tagged table ((3 4) (1 2)))
+  (serialize (obj 1 2 3 4)))
 
-(let h (obj a 1 b 2)
-  (test-iso "unserialize undoes serialize for tables"
-    h
-    (unserialize:serialize h)))
+(test-iso "unserialize complements serialize for nil"
+  ()
+  (unserialize:serialize ()))
 
-(test-iso "unserialize undoes serialize for empty table"
+(test-iso "unserialize complements serialize for lists"
+  '(1 2 3)
+  (unserialize:serialize '(1 2 3)))
+
+(test-iso "unserialize complements serialize for strings"
+  "abc"
+  (unserialize:serialize "abc"))
+
+(test-iso "unserialize complements serialize for empty tables"
   (table)
   (unserialize:serialize (table)))
+
+(test-iso "unserialize complements serialize for tables"
+  (obj 1 2 3 4)
+  (unserialize:serialize (obj 1 2 3 4)))
+
+(test-iso "serialize operates on tables inside lists"
+  '(1 (tagged table ()) 2 3)
+  (serialize `(1 ,(table) 2 3)))
+
+(test-iso "unserialize complements serialize for tables inside lists"
+  `(1 ,(table) 2 3)
+  (unserialize:serialize `(1 ,(table) 2 3)))
+
+(test-iso "serialize operates on nested tables"
+  '(tagged table ((2 3) (1 (tagged table ()))))
+  (serialize (obj 1 (table) 2 3)))
+
+(test-iso "unserialize complements serialize for nested tables"
+  (obj 1 (table) 2 3)
+  (unserialize:serialize (obj 1 (table) 2 3)))
 
 (mac foo (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
 (mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
