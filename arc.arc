@@ -1742,6 +1742,11 @@
            (iso y.k v))
          tablist.x)))
 
+; default impl for tagged types
+(defextend iso (a b) ($.vector? a)
+  (iso ($.vector->list a)
+       ($.vector->list b)))
+
 (defextend len (x) (isa x 'cons)
   (if
     (acons cdr.x)   (+ 1 (len cdr.x))
