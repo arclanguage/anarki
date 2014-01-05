@@ -540,8 +540,6 @@
        (loop (assign ,v ,gi) (> ,v ,gm) (assign ,v (- ,v 1))
          ,@body))))
 
-; could bind index instead of gensym
-
 (mac repeat (n . body)
   `(for ,(uniq) 1 ,n ,@body))
 

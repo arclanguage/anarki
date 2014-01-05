@@ -171,7 +171,7 @@
 
 (test-iso "map works with multiple lists"
   '(1 4 9)
-  (map (fn(a b) (* a b))  '(1 2 3) '(1 2 3)))
+  (map * '(1 2 3) '(1 2 3)))
 
 (test-iso "map works with one string"
   "mno"
