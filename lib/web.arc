@@ -24,14 +24,15 @@
         (close ,i ,o)
         ,response))))
 
-(def mkreq (url (o querylist) (o method "GET") (o cookies))
+(def mkreq (url (o querylist) (o method "GET") (o cookies) (o headers))
   (let url (parse-url url)
     (w/io (get-io   url!resource url!host url!port)
           (buildreq url!host
                     url!path
                     (build-query url!query querylist)
                     (upcase method)
-                    cookies)
+                    cookies
+                    headers)
           receive-response)))
 
 (mac defreq (name url (o querylist) (o method "GET") (o cookies))
@@ -92,14 +93,15 @@
                        (pair:map [coerce _ 'string] querylist)))
              "&")))
 
-(def build-header (host path query method cookies)
+(def build-header (host path query method cookies headers)
   (reduce +
     (intersperse (str-rn)
                  (flat:list
                    (first-req-line method path query)
                    (request-header host)
                    (entity-header  method query)
-                   (cookie-header  cookies)))))
+                   (cookie-header  cookies)
+                   headers))))
 
 (def first-req-line (method path query)
   (+ method " " (build-uri path method query) " " protocol*))
@@ -133,8 +135,8 @@
     (+ query (str-rn))
     nil))
 
-(def buildreq (host path query method cookies)
-  (+ (build-header host path query method cookies)
+(def buildreq (host path query method cookies headers)
+  (+ (build-header host path query method cookies headers)
      (str-rn 2)
      (build-body query method)))
 
