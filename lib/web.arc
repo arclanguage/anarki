@@ -110,7 +110,8 @@
                    (+ "?" query))))
 
 (def request-header (host)
-  (list (+ "Host: " host) useragent*))
+  (list (+ "Host: " host)
+        (+ "User-Agent: " useragent*)))
 
 (def entity-header (method query)
   (if (is method "POST")
