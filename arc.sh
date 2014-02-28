@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-if [ $(uname) == "Darwin" ]; then
+if [ $(uname) = "Darwin" ]; then
     if which -s greadlink; then
         arc_dir=$(dirname "$(greadlink -f "$0")")
     else
