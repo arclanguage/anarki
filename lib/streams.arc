@@ -46,7 +46,7 @@
    if n is specified prints the first n elements
    otherwise just prints the whole stream
    WARNING: have to be careful because possibly infinite streams
-   does not work print correctly on streams of streams"
+   does not print streams of streams correctly"
   (if (or (sno xs) (is n 0))
       (do (prn "()") snil)
       (do (pr "(" (scar xs))
