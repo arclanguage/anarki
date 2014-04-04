@@ -22,7 +22,7 @@
 (= snil '())
 
 (mac scons (x y)
-  "conses x onto the stream (lazy seq) y"
+  "lazily conses x onto y"
   `(cons ,x (delay ,y)))
 
 (def scar (xs)
