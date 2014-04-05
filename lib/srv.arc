@@ -16,11 +16,11 @@
     (flushout)
     (= currsock* s)
     (until quitsrv*
-      (handle-request s breaksrv*)))
+      (serve-socket s breaksrv*)))
   (prn "quit server"))
 
 (def serve1 ((o port 8080))
-  (w/socket s port (handle-request s t)))
+  (w/socket s port (serve-socket s t)))
 
 (def ensure-srvdirs ()
   (map ensure-dir (list arcdir* logdir* staticdir*)))
@@ -41,12 +41,12 @@
 (= threadlife* 30  requests* 0  requests/ip* (table)
    throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
 
-(def handle-request (s breaksrv)
+(def serve-socket (s breaksrv)
   (if breaksrv
-    (handle-request-1 s)
-    (errsafe (handle-request-1 s))))
+    (accept-request-with-timeout s)
+    (errsafe (accept-request-with-timeout s))))
 
-(def handle-request-1 (s)
+(def accept-request-with-timeout (s)
   (with ((in out ip) (socket-accept s)
          th1 nil th2 nil)
     (++ requests*)
