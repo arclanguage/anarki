@@ -385,77 +385,6 @@
           ,(with/p ,(zip names gensyms)
              ,@body)))))
 
-; afnwith by Conan Dalton
-; http://arclanguage.org/item?id=10055
-; CHANGED 2009-08-15: added docstrings - Michael Arntzenius
-(mac rfnwith (name withses . body)
-  " Convenient wrapper for applying an rfn using with-like syntax.
-    `withses' is a list of argument names and their initial values.
-    Best explained by example:
-
-      arc> (rfnwith sum (x (range 1 3))
-             (iflet (a . r) x (+ a (sum r)) 0))
-      6
-
-    The above example macroexpands to:
-
-      ((rfn sum (x) (iflet (a . r) x (+ a (sum r)) 0))
-       (range 1 3))
-
-    See also [[afnwith]] [[w/rfn]] [[rfn]] "
-  (let w (pair withses)
-    `((rfn ,name ,(map car w) ,@body) ,@(map cadr w))))
-
-(mac afnwith (withses . body)
-  " Convenient wrapper for applying an afn using with-like syntax.
-    `withses' is a list of argument names and their initial values.
-    Best explained by example:
-
-      arc> (afnwith (x (range 1 3))
-             (iflet (a . r) x (+ a (self r)) 0))
-      6
-
-    See also [[rfnwith]] [[w/afn]] [[afn]] "
-  `(rfnwith self ,withses ,@body))
-
-; ripoff: w/afn, by absz
-; http://arclanguage.org/item?id=10125
-; CHANGED 2009-08-15: added docstrings - Michael Arntzenius
-
-(mac w/rfn (name withses . body)
-  " Convenient wrapper for applying an rfn using preexisting variables
-    in `withses' as arguments. Best explained by example:
-
-      arc> (let x (range 1 3)
-             (w/rfn sum (x)
-               (iflet (a . r) x (+ a (sum r)) 0)))
-      6
-
-    The above example (w/rfn sum ...) macroexpands to:
-
-      ((rfn sum (x) (iflet (a . r) x (+ a (sum r)) 0))
-       x)
-
-    See also [[w/afn]] [[rfnwith]] [[rfn]] "
-  `(rfnwith ,name ,(mappend [list _ _] mklist.withses) ,@body))
-
-(mac w/afn (withses . body)
-  " Convenient wrapper for applying an afn using the preexisting variables
-    in `withses' as arguments. Best explained by example:
-
-      arc> (let x (range 1 3)
-             (w/afn (x)
-               (iflet (a . r) x (+ a (self r)) 0)))
-      6
-
-    The above example (w/afn (x) ...) macroexpands to:
-
-      ((afn (x) (iflet (a . r) x (+ a (sum r)) 0))
-       x)
-
-    See also [[w/rfn]] [[afnwith]] [[afn]] "
-  `(w/rfn self ,withses ,@body))
-
 ; start Andrew Wilcox (aw) code
 
 ; http://awwx.ws/span0.arc
@@ -466,7 +395,8 @@
           (list (rev a) lst)))
    nil lst))
 
-; http://awwx.ws/xloop0.arc
+; http://awwx.ws/xloop0
+; inspired by the earlier afnwith: http://arclanguage.org/item?id=10055
 (mac xloop (withses . body)
   (let w (pair withses)
       `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
