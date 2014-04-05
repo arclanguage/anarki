@@ -44,7 +44,7 @@
 
 (def auto (exp)
   "Tests whether an expression should be autogensymed"
-  (and exp (atom exp) (endmatch "@" (string exp))))
+  (and exp (isa exp 'sym) (endmatch "@" (string exp))))
 
 
 ; miscellaneous
