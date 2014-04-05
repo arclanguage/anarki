@@ -1785,6 +1785,9 @@
     See also: [[set-coercer]] [[defcall]] "
   `(set-coercer ',to ',from (fn ,parms ,@body)))
 
+(mac as (type expr)
+  `(coerce ,expr ',type))
+
 (mac defcall (type-name parms . body)
   " Defines the calling function for type 'type-name.
     See also: [[defcoerce]] "
