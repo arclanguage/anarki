@@ -315,10 +315,12 @@
        ,alt)))
 
 (def find (test seq)
-  (let f (testify test)
-    (if (alist seq)
-      (reclist   [if (f:carif _) (carif _)] seq)
-      (recstring [if (f:seq _) (seq _)] seq))))
+  (let f testify.test
+    (reclist [check carif._ f] seq)))
+
+(defextend find (test seq) (isa seq 'string)
+  (let f testify.test
+    (recstring [check seq._ f] seq)))
 
 (def isa (x y) (is (type x) y))
 
