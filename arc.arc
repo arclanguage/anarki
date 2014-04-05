@@ -84,8 +84,6 @@
 
 (def acons (x) (is (type x) 'cons))
 
-(def atom (x) (no (acons x)))
-
 ; Can return to this def once Rtm gets ac to make all rest args
 ; nil-terminated lists.
 
@@ -147,7 +145,7 @@
     t))
 
 (def assoc (key al)
-  (if (atom al)
+  (if (no acons.al)
        nil
       (and (acons (car al)) (is (caar al) key))
        (car al)
@@ -252,6 +250,8 @@
   (w/uniq g
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
+
+(def atom (x) (in type.x 'int 'num 'sym 'string))
 
 (def iso (x y)
   (or (is x y)
@@ -838,8 +838,8 @@
 (def flat x
   ((afn (x acc)
      (if (no x)   acc
-         (atom x) (cons x acc)
-                  (self (car x) (self (cdr x) acc))))
+         (~acons x) (cons x acc)
+                  (self car.x (self cdr.x acc))))
    x nil))
 
 (def pos (test seq (o start 0))
@@ -1238,9 +1238,8 @@
   (prall args "" #\space))
 
 (def dotted (x)
-  (if (atom x)
-    nil
-    (and (cdr x) (or (atom (cdr x))
+  (if (acons x)
+    (and (cdr x) (or (~acons (cdr x))
                      (dotted (cdr x))))))
 
 (def fill-table (table data)
