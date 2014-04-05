@@ -285,7 +285,9 @@
 (def testify (x)
   (if (isa x 'fn) x [iso _ x]))
 
-(def carif (x) (if (atom x) x (car x)))
+(def carif (x)
+  (on-err (fn(_) x)
+    (fn() (car x))))
 
 ; Like keep, seems like some shouldn't testify.  But find should,
 ; and all probably should.
