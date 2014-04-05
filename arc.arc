@@ -601,13 +601,15 @@
 
 (def rem (test seq)
   (let f (testify test)
-    (if (alist seq)
-      ((afn (s)
-         (if (no s)       nil
-             (f (car s))  (self (cdr s))
-                          (cons (car s) (self (cdr s)))))
-        seq)
-      (coerce (rem test (coerce seq 'cons)) 'string))))
+    ((afn (s)
+       (if (no s)       nil
+           (f car.s)    (self cdr.s)
+                        (cons car.s (self cdr.s))))
+      seq)))
+
+(defextend rem (test seq) (isa seq 'string)
+  (as string
+      (rem test (as cons seq))))
 
 ; Seems like keep doesn't need to testify-- would be better to
 ; be able to use tables as fns.  But rem does need to, because
