@@ -303,6 +303,17 @@
   (let f (testify test)
     (reclist [if (f:carif _) _] seq)))
 
+(mac check (x test (o alt))
+  (w/uniq gx
+    `(let ,gx ,x
+       (if (,test ,gx) ,gx ,alt))))
+
+(mac acheck (x test (o alt))
+  `(let it ,x
+     (if (,test it)
+       it
+       ,alt)))
+
 (def find (test seq)
   (let f (testify test)
     (if (alist seq)
@@ -826,17 +837,6 @@
          (atom x) (cons x acc)
                   (self (car x) (self (cdr x) acc))))
    x nil))
-
-(mac check (x test (o alt))
-  (w/uniq gx
-    `(let ,gx ,x
-       (if (,test ,gx) ,gx ,alt))))
-
-(mac acheck (x test (o alt))
-  `(let it ,x
-     (if (,test it)
-       it
-       ,alt)))
 
 (def pos (test seq (o start 0))
   (let f (testify test)
