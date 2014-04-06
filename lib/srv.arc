@@ -70,10 +70,12 @@
     (after
       (unless (abusive ip)
         (let t1 (msec)
-          (case req!type
-            get  (respond out req)
-            post (handle-post in out req)
-                 (respond-err out "Unknown request: " req))
+          (if (~authorized? req)
+            (request-credentials out)
+            (case req!type
+              get  (respond out req)
+              post (handle-post in out req)
+                   (respond-err out "Unknown request: " req)))
           (log-request req!type req!op req!args req!cooks ip t0 t1)))
       (close in out))
     (harvest-fnids)))
@@ -108,6 +110,32 @@
                 (do (= (req-times* ip) (queue))
                     nil))
               (enq now (req-times* ip))))))
+
+; basic auth support for private websites
+; to enable, provide a single common user:pass in the clear for all users in this file:
+(= private-credentials* (errsafe:string:fromfile (+ arcdir* "/private-credentials") (read)))
+
+(def authorized? (req)
+  (or no.private-credentials*
+      (aand (req "authorization")
+            (cut it (len "Basic "))
+            (iso private-credentials* base64-decode.it))))
+
+(def request-credentials (out)
+  (w/stdout out
+    (prrn "HTTP/1.1 401 Not Authorized")
+    (prrn "WWW-Authenticate: Basic realm=\"" site-url* "\"")
+    (prrn)))
+
+($ (require net/base64))
+(def base64-encode (s)
+  (fromstring s
+    (tostring
+      ($.base64-encode-stream (stdin) (stdout)))))
+(def base64-decode (s)
+  (fromstring s
+    (tostring
+      ($.base64-decode-stream (stdin) (stdout)))))
 
 (def log-request (type op args cooks ip t0 t1)
   (with (parsetime (- t1 t0) respondtime (- (msec) t1))
