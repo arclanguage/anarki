@@ -64,7 +64,7 @@
 (def handle-request-thread (in out ip)
   (withs (t0 (msec)
           req parse-header.in)
-    (= req!cooks (parse-cookies (req "cookie")))
+    (= req!cooks (only.parse-cookies (req "cookie")))
     (aif (req "x-forwarded-for")
       (= ip it))
     (after
