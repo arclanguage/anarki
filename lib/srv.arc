@@ -121,14 +121,6 @@
                    (if (caris arg1 "fnid") "" arg1))
                  cooks)))
 
-(= header* "HTTP/1.1 200 OK\r
-Content-Type: text/html; charset=utf-8\r
-Connection: close")
-
-(= err-header* "HTTP/1.1 404 Not Found\r
-Content-Type: text/html; charset=utf-8\r
-Connection: close")
-
 (def static-filetype (sym)
   (let fname (coerce sym 'string)
     (and (~findsubseq ".." fname) ; for security
@@ -144,8 +136,6 @@ Connection: close")
            "html" 'text/html
            "arc"  'text/plain
            ))))
-
-(= rdheader* "HTTP/1.0 302 Moved")
 
 (= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
 
@@ -187,22 +177,24 @@ Connection: close")
 
 ;(mac testop (name . args) `((srvops* ',name) ,@args))
 
-(= unknown-msg* "Unknown." max-age* (table) static-max-age* nil)
+(= max-age* (table) static-max-age* nil)
 
 (def respond (out req)
   (w/stdout out
     (iflet f (srvops* req!op)
       (if (redirector* req!op)
-        (do (prrn rdheader*)
+        (do (prrn "HTTP/1.1 302 Moved")
             (prrn "Location: " (f out req))
             (prrn))
-        (do (prrn header*)
+        (do (prrn "HTTP/1.1 200 OK")
+            (prrn "Content-Type: text/html; charset=utf-8")
+            (prrn "Connection: close")
             (awhen (max-age* req!op)
               (prrn "Cache-Control: max-age=" it))
             (f out req)))
       (let filetype (static-filetype req!op)
         (aif (and filetype (file-exists (string staticdir* req!op)))
-          (do (prrn "HTTP/1.0 200 OK")
+          (do (prrn "HTTP/1.1 200 OK")
               (prrn "Content-Type: " filetype
                    (if (litmatch "text" filetype)
                      "; charset=utf-8"
@@ -214,7 +206,7 @@ Connection: close")
               (w/infile i it
                 (whilet b (readb i)
                   (writeb b out))))
-          (respond-err out unknown-msg*))))))
+          (respond-err out "Unknown."))))))
 
 (def handle-post (in out req)
   (iflet clen (req "content-length")
@@ -313,7 +305,9 @@ Connection: close")
 
 (def respond-err (str msg . args)
   (w/stdout str
-    (prrn err-header*)
+    (prrn "HTTP/1.1 404 Not Found")
+    (prrn "Content-Type: text/html; charset=utf-8")
+    (prrn "Connection: close")
     (prrn)
     (apply pr msg args)))
 
