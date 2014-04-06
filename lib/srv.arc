@@ -50,20 +50,33 @@
   (with ((in out ip) (socket-accept s)
          th1 nil th2 nil)
     (++ requests*)
-    (let ip-wrapper (fn args
-                      (if args
-                        (= ip car.args)
-                        ip))
-      (= th1 (thread
-               (after (handle-request-thread in out ip-wrapper)
-                      (close in out)
-                      (kill-thread th2))))
-      (= th2 (thread
-               (sleep threadlife*)
-               (unless (dead th1)
-                 (prn "srv thread took too long for " ip))
-               (kill-thread th1)
-               (force-close in out))))))
+    (= th1 (thread
+             (after (handle-request-thread in out ip)
+                    (close in out)
+                    (kill-thread th2))))
+    (= th2 (thread
+             (sleep threadlife*)
+             (unless (dead th1)
+               (prn "srv thread took too long for " ip))
+             (kill-thread th1)
+             (force-close in out)))))
+
+(def handle-request-thread (in out ip)
+  (withs (t0 (msec)
+          req parse-header.in)
+    (= req!cooks (parse-cookies (req "cookie")))
+    (aif (req "x-forwarded-for")
+      (= ip it))
+    (after
+      (unless (abusive ip)
+        (let t1 (msec)
+          (case req!type
+            get  (respond out req)
+            post (handle-post in out req)
+                 (respond-err out "Unknown request: " req))
+          (log-request req!type req!op req!args req!cooks ip t0 t1)))
+      (close in out))
+    (harvest-fnids)))
 
 ; Returns true if ip has made req-limit* requests in less than
 ; req-window* seconds.  If an ip is throttled, only 1 request is
@@ -76,14 +89,14 @@
 
 (= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
 
-(def abusive-ip (ip)
+(def abusive (ip)
   (++ (requests/ip* ip 0))
-  (when (or (ignore-ips* ip) (abusive-ip-core ip))
+  (when (or (ignore-ips* ip) (abusive-core ip))
     (when (~spurned* ip)
       (prn "throttling abusive ip " ip))
     (++ (spurned* ip 0))))
 
-(def abusive-ip-core (ip)
+(def abusive-core (ip)
   (and (only.> (requests/ip* ip) 250)
        (let now (seconds)
          (do1 (if (req-times* ip)
@@ -95,40 +108,6 @@
                 (do (= (req-times* ip) (queue))
                     nil))
               (enq now (req-times* ip))))))
-
-(let proxy-header "X-Forwarded-For: "
-  (def strip-header (s)
-    (subst "" proxy-header s))
-  (def proxy-ip (ip-wrapper lines)
-    (aif (only.strip-header (car:keep [headmatch proxy-header _] lines))
-      (ip-wrapper it)
-      (ip-wrapper))))
-
-(wipe show-requests*)
-(def handle-request-thread (in out ip-wrapper)
-  (with (nls 0 lines nil line nil responded nil t0 (msec))
-    (after
-      (whilet c (unless responded (readc in))
-        (if srv-noisy* (pr c))
-        (if (is c #\newline)
-          (if (is (++ nls) 2)
-            (let (type op args clen cooks ctype) (parseheader (rev lines))
-              (if show-requests* (prn lines))
-              (unless (abusive-ip (proxy-ip ip-wrapper lines))
-                (let t1 (msec)
-                  (case type
-                    get  (respond out op args cooks 0 in "" (ip-wrapper))
-                    post (handle-post in out op args clen cooks ctype (ip-wrapper))
-                         (respond-err out "Unknown request: " (car lines)))
-                  (log-request type op args cooks (ip-wrapper) t0 t1)))
-              (set responded))
-            (do (push (string (rev line)) lines)
-                (wipe line)))
-          (unless (is c #\return)
-            (push c line)
-            (= nls 0))))
-      (close in out)))
-  (harvest-fnids))
 
 (def log-request (type op args cooks ip t0 t1)
   (with (parsetime (- t1 t0) respondtime (- (msec) t1))
@@ -208,30 +187,21 @@ Connection: close")
 
 ;(mac testop (name . args) `((srvops* ',name) ,@args))
 
-(deftem request
-  args  nil
-  cooks nil
-  ctype nil
-  clen  0
-  in    nil
-  ip    nil)
-
 (= unknown-msg* "Unknown." max-age* (table) static-max-age* nil)
 
-(def respond (str op args cooks clen ctype in ip)
-  (w/stdout str
-    (iflet f (srvops* op)
-      (let req (inst 'request 'args args 'cooks cooks 'ctype ctype 'clen clen 'in in 'ip ip)
-        (if (redirector* op)
-          (do (prrn rdheader*)
-              (prrn "Location: " (f str req))
-              (prrn))
-          (do (prrn header*)
-              (awhen (max-age* op)
-                (prrn "Cache-Control: max-age=" it))
-              (f str req))))
-      (let filetype (static-filetype op)
-        (aif (and filetype (file-exists (string staticdir* op)))
+(def respond (out req)
+  (w/stdout out
+    (iflet f (srvops* req!op)
+      (if (redirector* req!op)
+        (do (prrn rdheader*)
+            (prrn "Location: " (f out req))
+            (prrn))
+        (do (prrn header*)
+            (awhen (max-age* req!op)
+              (prrn "Cache-Control: max-age=" it))
+            (f out req)))
+      (let filetype (static-filetype req!op)
+        (aif (and filetype (file-exists (string staticdir* req!op)))
           (do (prrn "HTTP/1.0 200 OK")
               (prrn "Content-Type: " filetype
                    (if (litmatch "text" filetype)
@@ -243,17 +213,20 @@ Connection: close")
               (prrn)
               (w/infile i it
                 (whilet b (readb i)
-                  (writeb b str))))
-          (respond-err str unknown-msg*))))))
+                  (writeb b out))))
+          (respond-err out unknown-msg*))))))
 
-(def handle-post (in out op args clen cooks ctype ip)
-  (if (no clen)
-    (respond-err out "Post request without Content-Length.")
-    (respond out op (+ args
-                       (if (~begins downcase.ctype "multipart/form-data")
-                         (parseargs:string:readchars clen in) ; ascii
-                         (parse-multipart-args multipart-boundary.ctype in))) ; maybe non-ascii
-             cooks clen ctype in ip)))
+(def handle-post (in out req)
+  (iflet clen (req "content-length")
+    (do (zap [errsafe:as int _] clen)
+        (= req!args
+           (+ req!args
+              (let ctype (req "content-type")
+                (if (~begins downcase.ctype "multipart/form-data")
+                  (parseargs:string:readchars clen in) ; ascii
+                  (parse-multipart-args multipart-boundary.ctype in))))) ; maybe non-ascii
+        (respond out req))
+    (respond-err out "Post request without Content-Length.")))
 
 (def multipart-boundary (s)
   (let delim "boundary="
@@ -344,35 +317,41 @@ Connection: close")
     (prrn)
     (apply pr msg args)))
 
-(def parseheader (lines)
-  (let (type op args) (parseurl (car lines))
-    (list type
-          op
-          args
-          (and (is type 'post)
-               (some (fn (s)
-                       (and (begins downcase.s "content-length:")
-                            (errsafe:coerce (cadr (tokens s)) 'int)))
-                     (cdr lines)))
-          (some (fn (s)
-                  (and (begins downcase.s "cookie:")
-                       (parsecookies s)))
-                (cdr lines))
-          (and (is type 'post)
-               (some (fn (s)
-                       (and (begins downcase.s "content-type: ")
-                            (cut s (len "content-type: "))))
-                     (cdr lines))))))
+(def parse-header ((o in (stdin)))
+  (let (request-line . header-lines) read-header.in
+    (as table (accum yield
+      (map yield parse-cmd.request-line)
+      (map yield (map split-header header-lines))))))
 
-; (parseurl "GET /p1?foo=bar&ug etc") -> (get p1 (("foo" "bar") ("ug")))
+(def read-header ((o in (stdin)))
+  (with (nls 0  lines nil  line nil)
+    (forever:let c readc.in
+      (if no.c (break))
+      (if (is c #\return) (continue))
+      (if (is c #\newline)
+        (++ nls)
+        (= nls 0))
+      (when (>= nls 2)
+        (break))
+      (if (is c #\newline)
+        (do (push (string rev.line) lines)
+            (wipe line))
+        (push c line)))
+    rev.lines))
 
-(def parseurl (s)
-  (let (type url) (tokens s)
-    (let (base args) (tokens url #\?)
-      (list (sym (downcase type))
-            (sym (cut base 1))
-            (if args
-              (parseargs args))))))
+(def split-header (line)
+  (whenlet n (findsubseq ": " line)
+    (list (downcase:cut line 0 n)  ; normalize header key
+          (cut line (+ n 2)))))
+
+(def parse-cmd (request-line)
+  (accum yield
+    (let (type url) tokens.request-line
+      (yield `(type ,(sym downcase.type)))
+      (let (base args) (tokens url #\?)
+        (yield `(op ,(sym:cut base 1)))  ; skip leading slash
+        (aif args
+          (yield `(args ,parseargs.it)))))))
 
 ; I don't urldecode field names or anything in cookies; correct?
 
@@ -380,9 +359,9 @@ Connection: close")
   (map (fn ((k v)) (list k urldecode.v))
        (map [tokens _ #\=] (tokens s #\&))))
 
-(def parsecookies (s)
+(def parse-cookies (s)
   (map [tokens _ #\=]
-       (cdr (tokens s [or whitec._ (is _ #\;)]))))
+       (tokens s [or whitec._ (is _ #\;)])))
 
 (def arg (req key)
   (acheck (alref req!args key) [~isa _ 'table]

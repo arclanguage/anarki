@@ -9,8 +9,8 @@
 ; Test with both text and binary files.
 (def form-action (req)
   (prn " ... headers ...")
-  (prn "<br>Content-Type: " req!ctype)
-  (prn "<br>Content-Length: " req!clen)
+  (prn "<br>Content-Type: " (req "content-type"))
+  (prn "<br>Content-Length: " (req "content-length"))
   (prn "<br> ... more headers ...")
   (prn "<br><br>x: " (arg req "x"))
   (tag hr)
