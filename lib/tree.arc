@@ -5,14 +5,14 @@
 (defextend walk (seq f) (isa seq 'tree)
   (let x rep.seq
     (f x)
-    (unless (atom x)
+    (when (acons x)
       (walk (tree car.x) f)
       (walk (tree cdr.x) f))))
 
 (defextend map (f seq) (isa seq 'tree)
   (withs (old rep.seq
           new f.old)
-    (if (or atom.old (~is old new))
+    (if (or (~acons old) (~is old new))
       new
       (cons (map f (tree car.old))
             (map f (tree cdr.old))))))
@@ -22,14 +22,14 @@
 
 (defextend walk (seq f) (isa seq 'leaves)
   (let x rep.seq
-    (if (atom x)
+    (if (~acons x)
       (f x)
       (do (walk (leaves car.x) f)
           (walk (leaves cdr.x) f)))))
 
 (defextend reduce (f base seq) (isa seq 'leaves)
   (let x rep.seq
-    (if (atom x)
+    (if (~acons x)
       base
       (f (reduce f base (leaves car.x))
          (reduce f base (leaves cdr.x))))))
