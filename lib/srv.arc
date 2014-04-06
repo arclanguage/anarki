@@ -2,6 +2,9 @@
 
 ; To improve performance with static files, set static-max-age*.
 
+; http requests currently capped to upload-limit* bytes
+; see socket-accept
+
 (= arcdir* "arc/" logdir* "arc/logs/" staticdir* "static/")
 
 (= quitsrv* nil breaksrv* nil)
@@ -25,26 +28,21 @@
 (def ensure-srvdirs ()
   (map ensure-dir (list arcdir* logdir* staticdir*)))
 
-(= srv-noisy* nil)
-
-; http requests currently capped to upload-limit* bytes
-; see socket-accept
+(def serve-socket (s breaksrv)
+  (if breaksrv
+    (accept-request-with-deadline s)
+    (errsafe (accept-request-with-deadline s))))
 
 ; should threads process requests one at a time? no, then
 ; a browser that's slow consuming the data could hang the
 ; whole server.
 
-; wait for a connection from a browser and start a thread
-; to handle it. also arrange to kill that thread if it
-; has not completed in threadlife* seconds.
+; instead, wait for a connection from a browser and start
+; a thread to handle it. also arrange to kill that thread
+; if it has not completed in threadlife* seconds.
 
 (= threadlife* 30  requests* 0  requests/ip* (table)
    throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
-
-(def serve-socket (s breaksrv)
-  (if breaksrv
-    (accept-request-with-deadline s)
-    (errsafe (accept-request-with-deadline s))))
 
 (def accept-request-with-deadline (s)
   (with ((in out ip) (socket-accept s)
