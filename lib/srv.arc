@@ -43,10 +43,10 @@
 
 (def serve-socket (s breaksrv)
   (if breaksrv
-    (accept-request-with-timeout s)
-    (errsafe (accept-request-with-timeout s))))
+    (accept-request-with-deadline s)
+    (errsafe (accept-request-with-deadline s))))
 
-(def accept-request-with-timeout (s)
+(def accept-request-with-deadline (s)
   (with ((in out ip) (socket-accept s)
          th1 nil th2 nil)
     (++ requests*)
@@ -68,7 +68,7 @@
     (aif (req "x-forwarded-for")
       (= ip it))
     (after
-      (unless (abusive ip)
+      (unless (abusive? ip)
         (let t1 (msec)
           (if (~authorized? req)
             (request-credentials out)
@@ -79,131 +79,6 @@
           (log-request req!type req!op req!args req!cooks ip t0 t1)))
       (close in out))
     (harvest-fnids)))
-
-; Returns true if ip has made req-limit* requests in less than
-; req-window* seconds.  If an ip is throttled, only 1 request is
-; allowed per req-window* seconds.  If an ip makes req-limit*
-; requests in less than dos-window* seconds, it is a treated as a DoS
-; attack and put in ignore-ips* (for this server invocation).
-
-; To adjust this while running, adjust the req-window* time, not
-; req-limit*, because algorithm doesn't enforce decreases in the latter.
-
-(= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
-
-(def abusive (ip)
-  (++ (requests/ip* ip 0))
-  (when (or (ignore-ips* ip) (abusive-core ip))
-    (when (~spurned* ip)
-      (prn "throttling abusive ip " ip))
-    (++ (spurned* ip 0))))
-
-(def abusive-core (ip)
-  (and (only.> (requests/ip* ip) 250)
-       (let now (seconds)
-         (do1 (if (req-times* ip)
-                (and (>= (qlen (req-times* ip))
-                         (if (throttle-ips* ip) 1 req-limit*))
-                     (let dt (- now (deq (req-times* ip)))
-                       (if (< dt dos-window*) (set (ignore-ips* ip)))
-                       (< dt req-window*)))
-                (do (= (req-times* ip) (queue))
-                    nil))
-              (enq now (req-times* ip))))))
-
-; basic auth support for private websites
-; to enable, provide a single common user:pass in the clear for all users in this file:
-(= private-credentials* (errsafe:string:fromfile (+ arcdir* "/private-credentials") (read)))
-
-(def authorized? (req)
-  (or no.private-credentials*
-      (aand (req "authorization")
-            (cut it (len "Basic "))
-            (iso private-credentials* base64-decode.it))))
-
-(def request-credentials (out)
-  (w/stdout out
-    (prrn "HTTP/1.1 401 Not Authorized")
-    (prrn "WWW-Authenticate: Basic realm=\"" site-url* "\"")
-    (prrn)))
-
-($ (require net/base64))
-(def base64-encode (s)
-  (fromstring s
-    (tostring
-      ($.base64-encode-stream (stdin) (stdout)))))
-(def base64-decode (s)
-  (fromstring s
-    (tostring
-      ($.base64-decode-stream (stdin) (stdout)))))
-
-(def log-request (type op args cooks ip t0 t1)
-  (with (parsetime (- t1 t0) respondtime (- (msec) t1))
-    (srvlog 'srv ip
-                 parsetime
-                 respondtime
-                 (if (> (+ parsetime respondtime) 1000) "***" "")
-                 type
-                 op
-                 (let arg1 (car args)
-                   (if (caris arg1 "fnid") "" arg1))
-                 cooks)))
-
-(def static-filetype (sym)
-  (let fname (coerce sym 'string)
-    (and (~findsubseq ".." fname) ; for security
-         (case (downcase (last (check (tokens fname #\.) ~single)))
-           "gif"  'image/gif
-           "jpg"  'image/jpg
-           "jpeg" 'image/jpg
-           "png"  'image/png
-           "css"  'text/plain
-           "js"   'text/javascript
-           "txt"  'text/plain
-           "htm"  'text/html
-           "html" 'text/html
-           "arc"  'text/plain
-           ))))
-
-(= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
-
-(def save-optime (name elapsed)
-  ; this is the place to put a/b testing
-  ; toggle a flag and push elapsed into one of two lists
-  (++ (opcounts* name 0))
-  (unless (optimes* name) (= (optimes* name) (queue)))
-  (enq-limit elapsed (optimes* name) 1000))
-
-; For ops that want to add their own headers.  They must thus remember
-; to prrn a blank line before anything meant to be part of the page.
-
-(mac defop-raw (name parms . body)
-  (w/uniq t1
-    `(= (srvops* ',name)
-        (fn ,parms
-          (let ,t1 (msec)
-            (do1 (do ,@body)
-                 (save-optime ',name (- (msec) ,t1))))))))
-
-(mac defopr-raw (name parms . body)
-  `(= (redirector* ',name) t
-      (srvops* ',name)     (fn ,parms ,@body)))
-
-(mac defop (name parm . body)
-  (w/uniq gs
-    `(do (wipe (redirector* ',name))
-         (defop-raw ,name (,gs ,parm)
-           (w/stdout ,gs (prrn) ,@body)))))
-
-; Defines op as a redirector.  Its retval is new location.
-
-(mac defopr (name parm . body)
-  (w/uniq gs
-    `(do (set (redirector* ',name))
-         (defop-raw ,name (,gs ,parm)
-           ,@body))))
-
-;(mac testop (name . args) `((srvops* ',name) ,@args))
 
 (= max-age* (table) static-max-age* nil)
 
@@ -235,6 +110,157 @@
                 (whilet b (readb i)
                   (writeb b out))))
           (respond-err out "Unknown."))))))
+
+(def static-filetype (sym)
+  (let fname (coerce sym 'string)
+    (and (~findsubseq ".." fname) ; for security
+         (case (downcase (last (check (tokens fname #\.) ~single)))
+           "gif"  'image/gif
+           "jpg"  'image/jpg
+           "jpeg" 'image/jpg
+           "png"  'image/png
+           "css"  'text/plain
+           "js"   'text/javascript
+           "txt"  'text/plain
+           "htm"  'text/html
+           "html" 'text/html
+           "arc"  'text/plain
+           ))))
+
+(def respond-err (out msg . args)
+  (w/stdout out
+    (prrn "HTTP/1.1 404 Not Found")
+    (prrn "Content-Type: text/html; charset=utf-8")
+    (prrn "Connection: close")
+    (prrn)
+    (apply pr msg args)))
+
+(def log-request (type op args cooks ip t0 t1)
+  (with (parsetime (- t1 t0) respondtime (- (msec) t1))
+    (srvlog 'srv ip
+                 parsetime
+                 respondtime
+                 (if (> (+ parsetime respondtime) 1000) "***" "")
+                 type
+                 op
+                 (let arg1 (car args)
+                   (if (caris arg1 "fnid") "" arg1))
+                 cooks)))
+
+;; http headers
+
+(def parse-header ((o in (stdin)))
+  (let (request-line . header-lines) read-header.in
+    (as table (accum yield
+      (map yield parse-cmd.request-line)
+      (map yield (map split-header header-lines))))))
+
+(def read-header ((o in (stdin)))
+  (with (nls 0  lines nil  line nil)
+    (forever:let c readc.in
+      (if no.c (break))
+      (if (is c #\return) (continue))
+      (if (is c #\newline)
+        (++ nls)
+        (= nls 0))
+      (when (>= nls 2)
+        (break))
+      (if (is c #\newline)
+        (do (push (string rev.line) lines)
+            (wipe line))
+        (push c line)))
+    rev.lines))
+
+(def split-header (line)
+  (whenlet n (findsubseq ": " line)
+    (list (downcase:cut line 0 n)  ; normalize header key
+          (cut line (+ n 2)))))
+
+(def parse-cmd (request-line)
+  (accum yield
+    (let (type url) tokens.request-line
+      (yield `(type ,(sym downcase.type)))
+      (let (base args) (tokens url #\?)
+        (yield `(op ,(sym:cut base 1)))  ; skip leading slash
+        (aif args
+          (yield `(args ,parseargs.it)))))))
+
+; I don't urldecode field names or anything in cookies; correct?
+
+(def parseargs (s)
+  (map (fn ((k v)) (list k urldecode.v))
+       (map [tokens _ #\=] (tokens s #\&))))
+
+(def parse-cookies (s)
+  (map [tokens _ #\=]
+       (tokens s [or whitec._ (is _ #\;)])))
+
+(def arg (req key)
+  (acheck (alref req!args key) [~isa _ 'table]
+    ; deref multipart params by default
+    (it "contents")))
+
+;; abusive ip throttling
+
+; Returns true if ip has made req-limit* requests in less than
+; req-window* seconds.  If an ip is throttled, only 1 request is
+; allowed per req-window* seconds.  If an ip makes req-limit*
+; requests in less than dos-window* seconds, it is a treated as a DoS
+; attack and put in ignore-ips* (for this server invocation).
+
+; To adjust this while running, adjust the req-window* time, not
+; req-limit*, because algorithm doesn't enforce decreases in the latter.
+
+(= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
+
+(def abusive? (ip)
+  (++ (requests/ip* ip 0))
+  (when (or (ignore-ips* ip) (abusive-core ip))
+    (when (~spurned* ip)
+      (prn "throttling abusive ip " ip))
+    (++ (spurned* ip 0))))
+
+(def abusive-core (ip)
+  (and (only.> (requests/ip* ip) 250)
+       (let now (seconds)
+         (do1 (if (req-times* ip)
+                (and (>= (qlen (req-times* ip))
+                         (if (throttle-ips* ip) 1 req-limit*))
+                     (let dt (- now (deq (req-times* ip)))
+                       (if (< dt dos-window*) (set (ignore-ips* ip)))
+                       (< dt req-window*)))
+                (do (= (req-times* ip) (queue))
+                    nil))
+              (enq now (req-times* ip))))))
+
+;; basic auth for private websites
+
+; to enable, provide a single common user:pass in the clear for all users in this file:
+(= private-credentials* (errsafe:string:fromfile (+ arcdir* "/private-credentials") (read)))
+
+(def authorized? (req)
+  (or no.private-credentials*
+      (aand (req "authorization")
+            (cut it (len "Basic "))
+            (iso private-credentials* base64-decode.it))))
+
+(def request-credentials (out)
+  (w/stdout out
+    (prrn "HTTP/1.1 401 Not Authorized")
+    (prrn "WWW-Authenticate: Basic realm=\"" site-url* "\"")
+    (prrn)))
+
+($ (require net/base64))
+(def base64-encode (s)
+  (fromstring s
+    (tostring
+      ($.base64-encode-stream (stdin) (stdout)))))
+(def base64-decode (s)
+  (fromstring s
+    (tostring
+      ($.base64-decode-stream (stdin) (stdout)))))
+
+;; multipart post requests
 
 (def handle-post (in out req)
   (iflet clen (req "content-length")
@@ -331,80 +357,52 @@
     (cut s 1 -1)
     s))
 
-(def respond-err (str msg . args)
-  (w/stdout str
-    (prrn "HTTP/1.1 404 Not Found")
-    (prrn "Content-Type: text/html; charset=utf-8")
-    (prrn "Connection: close")
-    (prrn)
-    (apply pr msg args)))
-
-(def parse-header ((o in (stdin)))
-  (let (request-line . header-lines) read-header.in
-    (as table (accum yield
-      (map yield parse-cmd.request-line)
-      (map yield (map split-header header-lines))))))
-
-(def read-header ((o in (stdin)))
-  (with (nls 0  lines nil  line nil)
-    (forever:let c readc.in
-      (if no.c (break))
-      (if (is c #\return) (continue))
-      (if (is c #\newline)
-        (++ nls)
-        (= nls 0))
-      (when (>= nls 2)
-        (break))
-      (if (is c #\newline)
-        (do (push (string rev.line) lines)
-            (wipe line))
-        (push c line)))
-    rev.lines))
-
-(def split-header (line)
-  (whenlet n (findsubseq ": " line)
-    (list (downcase:cut line 0 n)  ; normalize header key
-          (cut line (+ n 2)))))
-
-(def parse-cmd (request-line)
-  (accum yield
-    (let (type url) tokens.request-line
-      (yield `(type ,(sym downcase.type)))
-      (let (base args) (tokens url #\?)
-        (yield `(op ,(sym:cut base 1)))  ; skip leading slash
-        (aif args
-          (yield `(args ,parseargs.it)))))))
-
-; I don't urldecode field names or anything in cookies; correct?
-
-(def parseargs (s)
-  (map (fn ((k v)) (list k urldecode.v))
-       (map [tokens _ #\=] (tokens s #\&))))
-
-(def parse-cookies (s)
-  (map [tokens _ #\=]
-       (tokens s [or whitec._ (is _ #\;)])))
-
-(def arg (req key)
-  (acheck (alref req!args key) [~isa _ 'table]
-    ; deref multipart params by default
-    (it "contents")))
-
 (def multipart-metadata (req arg key)
   (let val (alref req!args arg)
     (if (isa val 'table)
       val.key)))
 
-; *** Warning: does not currently urlencode args, so if need to do
-; that replace v with (urlencode v).
+;; extending the server with new ops
 
-(def reassemble-args (req)
-  (aif req!args
-    (apply string "?" (intersperse '&
-                                   (map (fn ((k v))
-                                          (string k '= v))
-                                        it)))
-    ""))
+(= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
+
+(def save-optime (name elapsed)
+  ; this is the place to put a/b testing
+  ; toggle a flag and push elapsed into one of two lists
+  (++ (opcounts* name 0))
+  (unless (optimes* name) (= (optimes* name) (queue)))
+  (enq-limit elapsed (optimes* name) 1000))
+
+; For ops that want to add their own headers.  They must thus remember
+; to prrn a blank line before anything meant to be part of the page.
+
+(mac defop-raw (name parms . body)
+  (w/uniq t1
+    `(= (srvops* ',name)
+        (fn ,parms
+          (let ,t1 (msec)
+            (do1 (do ,@body)
+                 (save-optime ',name (- (msec) ,t1))))))))
+
+(mac defopr-raw (name parms . body)
+  `(= (redirector* ',name) t
+      (srvops* ',name)     (fn ,parms ,@body)))
+
+(mac defop (name parm . body)
+  (w/uniq gs
+    `(do (wipe (redirector* ',name))
+         (defop-raw ,name (,gs ,parm)
+           (w/stdout ,gs (prrn) ,@body)))))
+
+; Defines op as a redirector.  Its retval is new location.
+
+(mac defopr (name parm . body)
+  (w/uniq gs
+    `(do (set (redirector* ',name))
+         (defop-raw ,name (,gs ,parm)
+           ,@body))))
+
+;(mac testop (name . args) `((srvops* ',name) ,@args))
 
 (= fns* (table) fnids* nil timed-fnids* nil)
 
