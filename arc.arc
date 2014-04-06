@@ -822,6 +822,15 @@
        (while (no (,gf (= ,var ,expr)))
          ,@body))))
 
+; while with break and continue. by fallintothis
+; http://arclanguage.org/item?id=12229
+(mac whilesc (test . body)
+  `(point break (while ,test (point continue ,@body))))
+
+(mac forever body
+  ; infinite loop inevitably needs break/continue
+  `(whilesc t ,@body))
+
 ;(def macex (e)
 ;  (if (atom e)
 ;    e

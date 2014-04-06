@@ -423,9 +423,4 @@
 
 ; end aw code
 
-; while with break and continue. by fallintothis
-; http://arclanguage.org/item?id=12229
-(mac whilesc (test . body)
-  `(point break (while ,test (point continue ,@body))))
-
 ; END RIPOFFS
