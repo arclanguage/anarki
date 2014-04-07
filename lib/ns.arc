@@ -29,7 +29,7 @@
 ;
 ; This introduces seven types: 'rns, 'anchor, 'ns, 'module, 'rmodule,
 ; 'modecule, and 'rns-var. The R stands for "Racket," the NS stands
-; "namespace", and the MODECULE stands for justice and freedom. For
+; "namespace", and the MODULE stands for justice and freedom. For
 ; each type that starts with R, the non-R version (if there is one)
 ; automatically converts between Arc variable names and Racket
 ; variable names so that it's easy to do a certain amount of
