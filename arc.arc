@@ -326,6 +326,9 @@
 
 (def isa (x y) (is (type x) y))
 
+(mac as (type expr)
+  `(coerce ,expr ',type))
+
 ; Possible to write map without map1, but makes News 3x slower.
 
 ;(def map (f . seqs)
@@ -1796,9 +1799,6 @@
   " Defines the coercion function from 'from to 'to.
     See also: [[set-coercer]] [[defcall]] "
   `(set-coercer ',to ',from (fn ,parms ,@body)))
-
-(mac as (type expr)
-  `(coerce ,expr ',type))
 
 (mac defcall (type-name parms . body)
   " Defines the calling function for type 'type-name.
