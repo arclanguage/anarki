@@ -266,12 +266,6 @@
 (mac unless (test . body)
   `(if (no ,test) (do ,@body)))
 
-(mac while (test . body)
-  (w/uniq (gf gp)
-    `((rfn ,gf (,gp)
-        (when ,gp ,@body (,gf ,test)))
-      ,test)))
-
 (def reclist (f xs)
   (and xs (or (f xs) (if (acons xs) (reclist f (cdr xs))))))
 
@@ -783,14 +777,6 @@
 (mac awhen (expr . body)
   `(let it ,expr (if it (do ,@body))))
 
-(mac whilet (var test . body)
-  (w/uniq (gf gp)
-    `((rfn ,gf (,gp)
-        (whenlet ,var ,gp
-          ,@body
-          (,gf ,test)))
-      ,test)))
-
 (mac aand args
   (if (no args)
        t
@@ -803,6 +789,19 @@
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
        (rev ,gacc))))
+
+(mac whilet (var test . body)
+  (w/uniq (gf gp)
+    `((rfn ,gf (,gp)
+        (whenlet ,var ,gp
+          ,@body
+          (,gf ,test)))
+      ,test)))
+
+(mac while (test . body)
+  (w/uniq gp
+    `(whilet ,gp ,test
+       ,@body)))
 
 ; Repeatedly evaluates its body till it returns nil, then returns vals.
 
@@ -819,10 +818,10 @@
 ; For the common C idiom while x = snarfdata != stopval.
 ; Rename this if use it often.
 
-(mac whiler (var expr endval . body)
-  (w/uniq gf
-    `(withs (,var nil ,gf (testify ,endval))
-       (while (no (,gf (= ,var ,expr)))
+(mac whiler (var expr end . body)
+  (w/uniq gendf
+    `(withs (,var nil ,gendf (testify ,end))
+       (while (no (,gendf (= ,var ,expr)))
          ,@body))))
 
 ; while with break and continue. by fallintothis
