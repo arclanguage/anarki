@@ -37,9 +37,9 @@
 
 (= hexreps (table))
 
-(for i 0 255 (= (hexreps i)
-                (let s (coerce i 'string 16)
-                  (if (is (len s) 1) (+ "0" s) s))))
+(up i 0 255 (= (hexreps i)
+               (let s (coerce i 'string 16)
+                 (if (is (len s) 1) (+ "0" s) s))))
 
 (defmemo hexrep (col)
   (+ (hexreps (col 'r)) (hexreps (col 'g)) (hexreps (col 'b))))

@@ -395,12 +395,6 @@
           (list (rev a) lst)))
    nil lst))
 
-; http://awwx.ws/xloop0
-; inspired by the earlier afnwith: http://arclanguage.org/item?id=10055
-(mac xloop (withses . body)
-  (let w (pair withses)
-      `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
-
 ; http://awwx.ws/implicit2.arc
 (mac implicit (name (o val))
   `(do (defvar ,name ($.make-parameter ,val))

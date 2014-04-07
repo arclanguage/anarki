@@ -119,9 +119,9 @@
 (def posmatch (pat seq (o start 0))
   (catch
     (if (isa pat 'fn)
-        (for i start (- (len seq) 1)
+        (up i start (- (len seq) 1)
           (when (pat (seq i)) (throw i)))
-        (for i start (- (len seq) (len pat))
+        (up i start (- (len seq) (len pat))
           (when (headmatch pat seq i) (throw i))))
     nil))
 

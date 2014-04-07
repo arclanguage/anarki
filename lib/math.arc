@@ -16,9 +16,9 @@
 13"
   (if car.its
       (if (> cadar.its 0)
-          `(for ,(caar its) 0 ,(cadar its)
+          `(up ,(caar its) 0 ,(cadar its)
                 (iterators ,(cdr its) ,@body))
-          `(for ,(caar its) ,(cadar its) 0
+          `(up ,(caar its) ,(cadar its) 0
                 (iterators ,(cdr its) ,@body)))
       `(do ,@body)))
 
@@ -55,10 +55,10 @@
   (with (ans (table) keys (list))
        (let rec (afn (X pre)
                   (if (atom:car X)
-                      (for i 0 (- len.X 1)
+                      (up i 0 (- len.X 1)
                          (= (ans (cons i pre)) X.i)
                          (push (cons i pre) keys))
-                      (for i 0 (- len.X 1)
+                      (up i 0 (- len.X 1)
                          (self X.i (cons i pre)))))
             (rec mat (list)))
        (= ans!dims (map [+ _ 1] (car:sort (fn (x y) (> (apply + x) (apply + y))) keys)))
@@ -98,7 +98,7 @@
            (is (cadr mat!dims) 1))
        (mat '(0 0))
        (let ans 0
-            (for i 0 (- (car mat!dims) 1)
+            (up i 0 (- (car mat!dims) 1)
                  (++ ans (* (mat (list 0 i))
                             (expt -1 i) (det:matrix-minor mat (list 0 i)))))
             ans)))
@@ -106,7 +106,7 @@
 (def ident-matrix (order size (o table? nil))
   "creates an identity maxtrix of number of dimensions order and of size size"
   (let M (mat-to-table (zeros (n-of order size)))
-       (for i 0 (- size 1)
+       (up i 0 (- size 1)
          (= (M (n-of size i)) 1))
        (if table? M
            (table-to-mat M))))
@@ -117,9 +117,9 @@
   (if (isa b 'table) (zap table-to-mat b))
   (with (col (fn (mat i) (map [_ i] mat))
          result-matrix (list))
-    (for rw 0 (- len.a 1)
+    (up rw 0 (- len.a 1)
           (push (let result-row (list)
-                  (for cl 0 (- (len b.0) 1)
+                  (up cl 0 (- (len b.0) 1)
                        (push (apply + (map * a.rw (col b cl))) result-row))
                   rev.result-row)
                 result-matrix))
@@ -142,7 +142,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                 (do (pr "car.dims:")(pr (car mat!dims))(pr " ")(pr " cadr.dims:")(pr (cadr mat!dims))(pr " ")(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable")))
           N (car mat!dims))
       (let M (copy mat)
-           (for i 0 (- N 1)
+           (up i 0 (- N 1)
                 (= (M (list N i)) rhs.i))
            ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients
            (loop (= i 0) (< i N) (++ i)
@@ -445,7 +445,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
    (let pmm 1.0
     (if (> m 0) (with (omx2 (* (- 1 x) (+ 1 x))
                        fac 1.0)
-                  (for i 1 m
+                  (up i 1 m
                     (= pmm (/ (* pmm omx2 fac) (+ 1 fac)))
                     (++ fac 2))))
     (= pmm (sqrt:/ (* pmm 2 (+ m 1)) (* pi 4)))
@@ -519,8 +519,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                    (map (fn (x) x) xs))
           A (mat-to-table (init-matrix '(2 2) 0))
           B (map [vec-dot _ ys] fs))
-         (for i 0 1
-           (for j 0 1
+         (up i 0 1
+           (up j 0 1
              (= (A (list i j)) (vec-dot fs.i fs.j))))
          (gauss-elim A B)))
 
@@ -534,8 +534,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                    (map (fn (x) square.x) xs))
           A (mat-to-table (init-matrix '(3 3) 0))
           B (map [vec-dot _ ys] fs))
-         (for i 0 2
-           (for j 0 2
+         (up i 0 2
+           (up j 0 2
              (= (A (list i j)) (vec-dot fs.i fs.j))))
          (gauss-elim A B)))
 
@@ -548,7 +548,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
           A (mat-to-table (init-matrix (list len.fns len.fns) 0))
           B (do (prn fs) (prn ys) (map [vec-dot _ ys] fs)))
          (map prn (list xs ys fns fs A B))
-         (for i 0 (- len.fns 1)
-           (for j 0 (- len.fns 1)
+         (up i 0 (- len.fns 1)
+           (up j 0 (- len.fns 1)
              (= (A (list i j)) (vec-dot fs.i fs.j))))
          (gauss-elim A B)))
