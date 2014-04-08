@@ -247,11 +247,11 @@
   (fn args (no (apply f args))))
 
 (def rev (xs)
-  ((afn (xs acc)
-     (if (no xs)
-       acc
-       (self (cdr xs) (cons (car xs) acc))))
-   xs nil))
+  (loop (xs xs acc nil)
+    (if (no xs)
+      acc
+      (recur cdr.xs
+             (cons car.xs acc)))))
 
 (def isnt (x y) (no (is x y)))
 
@@ -287,11 +287,10 @@
   (and xs (or (f xs) (if (acons xs) (reclist f (cdr xs))))))
 
 (def recstring (test s (o start 0))
-  ((afn (i)
-     (and (< i (len s))
-          (or (test i)
-              (self (+ i 1)))))
-   start))
+  (loop (i start)
+    (and (< i len.s)
+         (or test.i
+             (recur (+ i 1))))))
 
 (def testify (x)
   (if (isa x 'fn) x [iso _ x]))
@@ -814,29 +813,20 @@
        (rev ,gacc))))
 
 (mac whilet (var test . body)
-  (w/uniq (gf gp)
-    `((rfn ,gf (,gp)
-        (whenlet ,var ,gp
-          ,@body
-          (,gf ,test)))
-      ,test)))
+  `(point break
+     (loop (,var ,test)
+       (when ,var
+         (point continue
+           ,@body)
+         (recur ,test)))))
 
 (mac while (test . body)
   (w/uniq gp
     `(whilet ,gp ,test
        ,@body)))
 
-; Repeatedly evaluates its body till it returns nil, then returns vals.
-
-(mac drain (expr (o eof nil))
-  (w/uniq (gacc gdone gres)
-    `(with (,gacc nil ,gdone nil)
-       (while (no ,gdone)
-         (let ,gres ,expr
-           (if (is ,gres ,eof)
-             (= ,gdone t)
-             (push ,gres ,gacc))))
-       (rev ,gacc))))
+(mac forever body
+  `(while t ,@body))
 
 ; For the common C idiom while x = snarfdata != end.
 ; Rename this if use it often.
@@ -847,14 +837,14 @@
        (while (no (,gendf (= ,var ,expr)))
          ,@body))))
 
-; while with break and continue. by fallintothis
-; http://arclanguage.org/item?id=12229
-(mac whilesc (test . body)
-  `(point break (while ,test (point continue ,@body))))
+; Repeatedly evaluates its body till it returns eos (end of stream being
+; drained), then returns vals.
 
-(mac forever body
-  ; infinite loop inevitably needs break/continue
-  `(whilesc t ,@body))
+(mac drain (expr (o eos nil))
+  (w/uniq (gacc gres)
+    `(accum ,gacc
+       (whiler ,gres ,expr ,eos
+         (,gacc ,gres)))))
 
 ;(def macex (e)
 ;  (if (atom e)
