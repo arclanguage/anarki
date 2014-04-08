@@ -28,4 +28,37 @@
        (subst "ab" "m" "abcabd")
        "mcmd")))
 
+(register-test
+  '(suite "posmatch"
+     ("handles equal character"
+       (posmatch "a" "a")
+       0)
+     ("handles inequal character"
+       (posmatch "a" "b")
+       nil)
+     ("handles single-character patterns at start"
+       (posmatch "a" "abc")
+       0)
+     ("handles single-character pattern in middle"
+       (posmatch "b" "abc")
+       1)
+     ("handles single-character pattern at end"
+       (posmatch "c" "abc")
+       2)
+     ("handles missing single-character pattern"
+       (posmatch "d" "abc")
+       nil)
+     ("handles patterns at start"
+       (posmatch "ab" "abcd")
+       0)
+     ("handles pattern in middle"
+       (posmatch "bc" "abcd")
+       1)
+     ("handles pattern at end"
+       (posmatch "cd" "abcd")
+       2)
+     ("handles missing pattern"
+       (posmatch "de" "abcd")
+       nil)))
+
 (run-all-tests)

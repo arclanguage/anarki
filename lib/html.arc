@@ -37,7 +37,7 @@
 
 (= hexreps (table))
 
-(up i 0 255 (= (hexreps i)
+(up i 0 256 (= (hexreps i)
                (let s (coerce i 'string 16)
                  (if (is (len s) 1) (+ "0" s) s))))
 

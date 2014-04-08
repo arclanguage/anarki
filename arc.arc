@@ -542,21 +542,21 @@
 
 (mac up (v init max . body)
   (w/uniq (gi gm)
-    `(with (,v nil ,gi ,init ,gm (+ ,max 1))
+    `(with (,v nil ,gi ,init ,gm ,max)
        (loop (assign ,v ,gi) (< ,v ,gm) (assign ,v (+ ,v 1))
          ,@body))))
 
 (mac down (v init min . body)
   (w/uniq (gi gm)
-    `(with (,v nil ,gi ,init ,gm (- ,min 1))
+    `(with (,v nil ,gi ,init ,gm ,min)
        (loop (assign ,v ,gi) (> ,v ,gm) (assign ,v (- ,v 1))
          ,@body))))
 
 (mac repeat (n . body)
-  `(up ,(uniq) 1 ,n ,@body))
+  `(up ,(uniq) 0 ,n ,@body))
 
 (mac forlen (var s . body)
-  `(up ,var 0 (- (len ,s) 1) ,@body))
+  `(up ,var 0 (len ,s) ,@body))
 
 (def walk (seq f)
   ((afn (l)
@@ -590,7 +590,7 @@
 ;            (isa ,gseq 'table)
 ;             (maptable (fn ,var ,@body)
 ;                       ,gseq)
-;             (up ,gv 0 (- (len ,gseq) 1)
+;             (up ,gv 0 (len ,gseq)
 ;               (let ,var (,gseq ,gv) ,@body))))))
 
 ; (nthcdr x y) = (cut y x).
@@ -601,7 +601,7 @@
                           end)
     (if (isa seq 'string)
       (let s2 (newstring (- end start))
-        (up i 0 (- end start 1)
+        (up i 0 (- end start)
           (= (s2 i) (seq (+ start i))))
         s2)
       (firstn (- end start) (nthcdr start seq)))))
