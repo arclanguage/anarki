@@ -784,6 +784,7 @@
 (xdef mod modulo)
 (xdef expt expt)
 (xdef sqrt sqrt)
+(xdef gcd gcd)
 
 ; generic comparison
 
