@@ -7,6 +7,10 @@ privileges, just submit your first pull request or ask on http://arclanguage.org
 might mess up your site's data. Come talk to us first, and be sure to make a
 backup before the migration.
 
+Anarki is explicitly not constrained to maintain compatibility with pg's
+releases, and compatibility status may swing wildly from commit to commit
+depending on who takes an interest.
+
 To run, install Racket from http://racket-lang.org, then:
 
     $ git clone http://github.com/arclanguage/anarki
