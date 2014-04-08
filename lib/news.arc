@@ -247,7 +247,7 @@
 (mac each-loaded-item (var . body)
   (w/uniq g
     `(let ,g nil
-       (loop (= ,g maxid*) (> ,g 0) (-- ,g)
+       (down ,g maxid* 0
          (whenlet ,var (items* ,g)
            ,@body)))))
 

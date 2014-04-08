@@ -136,31 +136,31 @@ mat_n0*x_0 + mat_n1*x_1 ... mat_nn*x_n = rhs_n
 using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)"
   (zap flat rhs)
   (if (acons mat) (zap mat-to-table mat)) ;assumes if using list-of-lists representation of matrices you arent worried about efficiency and so wont mind inline conversion
-  (withs (MAX 0
-          i 0  j 0  k 0  tmp 0
-          X (if (is (car mat!dims) (cadr mat!dims) len.rhs) (zeros (car mat!dims))
-                (do (pr "car.dims:")(pr (car mat!dims))(pr " ")(pr " cadr.dims:")(pr (cadr mat!dims))(pr " ")(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable")))
+  (withs (MAX  0
+          tmp  0
+          X  (if (is (car mat!dims) (cadr mat!dims) len.rhs) (zeros (car mat!dims))
+               (do (pr "car.dims:")(pr (car mat!dims))(pr " ")(pr " cadr.dims:")(pr (cadr mat!dims))(pr " ")(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable")))
           N (car mat!dims))
     (let M (copy mat)
       (up i 0 N
         (= (M (list N i)) rhs.i))
       ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients
-      (loop (= i 0)  (< i N)  (++ i)
+      (up i 0 N
         (= MAX i)
-        (loop (= j (+ i 1))  (< j N)  (++ j)
+        (up j (+ i 1) N
           (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
-        (loop (= k i)  (<= k N)  (++ k)
+        (up k i (+ N 1)
           (= tmp (M (list k i)))
              (M (list k i)) (M (list k MAX))
              (M (list k MAX)) tmp)
-        (loop (= j (+ i 1))  (< j N)  (++ j)
-          (loop (= k N)  (>= k i)  (-- k)
+        (up j (+ i 1) N
+          (down k N (- i 1)
             (-- (M (list k j)) (/ (* (M (list k i)) (M (list i j)))
                                   (M (list i i)))))))
       ;;sub step - starting from bottom element which just has one co-efficient and can therefore be easily calculated sub in the value of the know variables and solve
-      (loop (= j (- N 1))  (>= j 0)  (-- j)
+      (down j (- N 1) -1
         (= tmp 0)
-        (loop (= k (+ j 1))  (< k N)  (++ k)
+        (up k (+ j 1) N
           (++ tmp (* X.k (M (list k j)))))
         (= X.j (/ (- (M (list N j)) tmp)
                   (M (list j j)))))
@@ -472,7 +472,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
            (if remorm? pmmp1 (* pmmp1 (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
            (with (oldfac (sqrt:+ 3 (* 2 m))
                   fac 0 pll 0)
-             (loop (= ll (+ m 2))  (<= ll 1)  (++ ll)
+             (up ll (+ m 2) 2  ; todo: is 2 the right upper bound? see git history
                (= fac (sqrt:/ (- (* 4 ll ll) 1) (- (* ll ll) (* m m)))
                   pll (* fac (/ (- (* x pmmp1) pmm) oldfac))
                   oldfac fac
@@ -488,15 +488,15 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 
 (def sine-integral (x (o terms 100))
   "returns the value of the sine integral Si(x)=integral from 0 to x sin(t)/t dt"
-  (with (X (abs x) i 0)
-    (loop (= i 3)  (<= ((- i 1) 2) terms)  (++ i 2)
+  (let X abs.x
+    (for i 3  (<= ((- i 1) 2) terms)  (++ i 2)
       (++ X (/ (* (expt X i) (expt -1 (mod i 2))) i fact.i)))
     (if (< x 0) (- X) X)))
 
 (def cos-integral (x (o terms 100))
   "returns the value of the cosine integral Ci(x)=euler_gamma+ln(x)+integral from 0 to x (cos(t)-1)/t dt"
-  (with (X (abs x) tot 0 i 0)
-    (loop (= i 2)  (< (/ i 2) terms)  (++ i 2)
+  (with (X (abs x) tot 0)
+    (for i 2  (< (/ i 2) terms)  (++ i 2)
       (++ tot (/ (* (expt -1 (mod (/ i 2) 2)) (expt X i)) i fact.i)))
     (++ tot (+ log.x euler-gamma))
     (if (< x 0)  (- X (* +i pi))  X)))
