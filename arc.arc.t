@@ -44,6 +44,23 @@
   ($.expand-ssyntax 'f&g))
 
 
+(test-iso "break works with for"
+  '(1 x 2 x 3)
+  (accum acc
+    (up i 1 6
+      (acc i)
+      (if (> i 2) (break))
+      (acc 'x))))
+
+(test-iso "continue works with for"
+  '(1 x 2 x 3 4 5)
+  (accum acc
+    (up i 1 6
+      (acc i)
+      (if (> i 2) (continue))
+      (acc 'x))))
+
+
 (test "copy works on lists"
   (withs (old  '(1 2 3)
           new  copy.old)

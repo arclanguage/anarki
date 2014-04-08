@@ -566,11 +566,11 @@
      (let ,(sym:string "break-" var) break
        (loop (,var ,init)
           (when ,test
-            (point continue
-              (let ,(sym:string "continue-" var) continue
-                (do1 (do ,@body)
-                     ,update
-                     (recur ,var)))))))))
+            (do1 (point continue
+                   (let ,(sym:string "continue-" var) continue
+                     ,@body))
+                 ,update
+                 (recur ,var)))))))
 
 (mac up (v init max . body)
   `(for ,v ,init (< ,v ,max) (assign ,v (+ ,v 1))
