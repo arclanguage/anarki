@@ -303,10 +303,12 @@
 ; and all probably should.
 
 (def some (test seq)
-  (let f (testify test)
-    (if (isa seq 'string)
-      (recstring f:seq seq)
-      (reclist f:carif seq))))
+  (let f testify.test
+    (reclist f:carif seq)))
+
+(defextend some (test seq)  (isa seq 'string)
+  (let f testify.test
+    (recstring f:seq seq)))
 
 (def all (test seq)
   (~some (complement (testify test)) seq))
