@@ -211,6 +211,7 @@
   `(let self nil
      (assign self (fn ,parms ,@body))))
 
+; a more readable variant of rfn
 ; http://awwx.ws/xloop0; http://arclanguage.org/item?id=10055
 (mac loop (withses . body)
   (let w (pair withses)
