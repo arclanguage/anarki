@@ -1,3 +1,6 @@
+($ (require (file "lib/json.ss")))
+($ (xdef json-read read-json))
+
 (test-iso "json-read should parse digits"
   345
   (w/instring f "345" (json-read f)))
