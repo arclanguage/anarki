@@ -815,7 +815,7 @@
              (push ,gres ,gacc))))
        (rev ,gacc))))
 
-; For the common C idiom while x = snarfdata != stopval.
+; For the common C idiom while x = snarfdata != end.
 ; Rename this if use it often.
 
 (mac whiler (var expr end . body)
