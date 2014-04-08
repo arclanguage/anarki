@@ -15,12 +15,12 @@
 12
 13"
   (if car.its
-      (if (> cadar.its 0)
-          `(up ,(caar its) 0 ,(cadar its)
-                (iterators ,(cdr its) ,@body))
-          `(up ,(caar its) ,(cadar its) 0
-                (iterators ,(cdr its) ,@body)))
-      `(do ,@body)))
+    (if (> cadar.its 0)
+      `(up ,(caar its) 0 ,(cadar its)
+         (iterators ,(cdr its) ,@body))
+      `(up ,(caar its) ,(cadar its) 0
+         (iterators ,(cdr its) ,@body)))
+    `(do ,@body)))
 
 
 ;matrix fns
@@ -33,10 +33,10 @@
 
 (def matrix-order (mat)
   (if atom.mat 0
-      (let rec (afn (M r)
-                 (if (atom car.M) r
-                     (self car.M (+ r 1))))
-        (rec mat 1))))
+    (let rec (afn (M r)
+               (if (atom car.M) r
+                 (self car.M (+ r 1))))
+      (rec mat 1))))
 
 (def zeros dims
   (init-matrix dims 0))
@@ -47,22 +47,22 @@
 (mac elt (mat pos)
   "access the element of the matix given by co-ords listed in pos"
   (if (cdr pos)
-      `(elt (,mat ,(last pos)) ,(butlast pos))
-      `(,mat ,(car pos))))
+    `(elt (,mat ,(last pos)) ,(butlast pos))
+    `(,mat ,(car pos))))
 
 (def mat-to-table (mat)
   "coerces a list-of-lists representation of a matrix into a hash table one where the key is a list of indices (0 referenced)"
   (with (ans (table) keys (list))
-       (let rec (afn (X pre)
-                  (if (atom:car X)
-                      (up i 0 (- len.X 1)
-                         (= (ans (cons i pre)) X.i)
-                         (push (cons i pre) keys))
-                      (up i 0 (- len.X 1)
-                         (self X.i (cons i pre)))))
-            (rec mat (list)))
-       (= ans!dims (map [+ _ 1] (car:sort (fn (x y) (> (apply + x) (apply + y))) keys)))
-       ans))
+    (let rec (afn (X pre)
+               (if (atom:car X)
+                 (up i 0 (- len.X 1)
+                   (= (ans (cons i pre)) X.i)
+                   (push (cons i pre) keys))
+                 (up i 0 (- len.X 1)
+                   (self X.i (cons i pre)))))
+      (rec mat (list)))
+    (= ans!dims (map [+ _ 1] (car:sort (fn (x y) (> (apply + x) (apply + y))) keys)))
+    ans))
 
 (def table-to-mat (tab)
   "coerces a table representation of a matrix into a list-of-lists one"
@@ -70,63 +70,62 @@
     (maptable (fn (key val) (if (isnt key 'dims) (push (cons key val) key-val-lis))) tab)
     (let rec (afn (lis)
                (if (is (len caar.lis) 1)  (map cdr (sort (fn (x y) (< caar.x caar.y)) lis)) ;if there is only one index sort by it
-                   (map (fn (tp) (self:map [cons (butlast car._) cdr._] tp))            ;
-                            (tuples (sort (fn (x y) (< (last car.x) (last car.y))) lis) ; if there is more than one index: collect into tuples of the rightmost index and list the answers of rec on each tuple
-                                    (len:keep [is (last car._) 0] lis)))))              ;
-
-         (rec key-val-lis))))
+                 (map (fn (tp) (self:map [cons (butlast car._) cdr._] tp))            ;
+                        (tuples (sort (fn (x y) (< (last car.x) (last car.y))) lis) ; if there is more than one index: collect into tuples of the rightmost index and list the answers of rec on each tuple
+                                (len:keep [is (last car._) 0] lis)))))              ;
+      (rec key-val-lis))))
 
 (def matrix-minor (mat indices (o table? t))
-     "creates the minor the the element of mat with the indices specified, i.e. if the indices are (i j k ...) then it is the matrix which excludes elements in the ith row or jth column or kth depth etc"
+  "creates the minor the the element of mat with the indices specified, i.e. if the indices are (i j k ...) then it is the matrix which excludes elements in the ith row or jth column or kth depth etc"
   (if (acons mat) (zap mat-to-table mat))
   (= indices (firstn (len mat!dims) indices))
-      (let ans (mat-to-table:init-matrix (map [- _ 1] mat!dims) 0)
-        (maptable (fn (key val)
-                    (if (~acons key) nil
-                        (~all t (map (fn (k i) (isnt k i)) key indices)) nil
-                        (= (ans (map (fn (k i) (if (> k i) (- k 1) k)) key indices))
-                               val))) mat)
-        (if table? ans
-            (table-to-mat ans)))))
+  (let ans (mat-to-table:init-matrix (map [- _ 1] mat!dims) 0)
+    (maptable (fn (key val)
+                (if (~acons key)  nil
+                    (~all t (map (fn (k i) (isnt k i)) key indices))  nil
+                    'else  (= (ans (map (fn (k i) (if (> k i) (- k 1) k)) key indices)) val)))
+              mat)
+    (if table? ans
+      (table-to-mat ans)))))
 
 (def det (mat)
   "calculates the determinant of a matrix by cramer's rule: det(A)=sum_over_i(A(i,j) * det(A_minor(i,j)) * -1^(i+j)); det(scalar)=scalar"
   (if (acons mat) (zap mat-to-table mat))
   (if (nand (is (len mat!dims) 2) (is (car mat!dims) (cadr mat!dims)))
-      (err "can only calculate the determinant for a square matrix of order 2"))
+    (err "can only calculate the determinant for a square matrix of order 2"))
   (if (and (is (car  mat!dims) 1)
            (is (cadr mat!dims) 1))
-       (mat '(0 0))
-       (let ans 0
-            (up i 0 (- (car mat!dims) 1)
-                 (++ ans (* (mat (list 0 i))
-                            (expt -1 i) (det:matrix-minor mat (list 0 i)))))
-            ans)))
+    (mat '(0 0))
+    (ret ans 0
+      (up i 0 (- (car mat!dims) 1)
+        (++ ans (* (mat (list 0 i))
+                   (expt -1 i)
+                   (det:matrix-minor mat (list 0 i))))))))
 
 (def ident-matrix (order size (o table? nil))
   "creates an identity maxtrix of number of dimensions order and of size size"
   (let M (mat-to-table (zeros (n-of order size)))
-       (up i 0 (- size 1)
-         (= (M (n-of size i)) 1))
-       (if table? M
-           (table-to-mat M))))
+    (up i 0 (- size 1)
+      (= (M (n-of size i)) 1))
+    (if table? M
+      (table-to-mat M))))
 
 (def matrix-multiply (a b)
   "multiplies the matrix a by the matrix b (N.B. Order one row vectors need to be in the form ((a b c d ...)) /NOT/ (a b c d), i.e. initiated with dims=(1 n) not (n))"
   (if (isa a 'table) (zap table-to-mat a))
   (if (isa b 'table) (zap table-to-mat b))
-  (with (col (fn (mat i) (map [_ i] mat))
-         result-matrix (list))
+  (with (col  (fn (mat i) (map [_ i] mat))
+         result-matrix  (list))
     (up rw 0 (- len.a 1)
-          (push (let result-row (list)
-                  (up cl 0 (- (len b.0) 1)
-                       (push (apply + (map * a.rw (col b cl))) result-row))
-                  rev.result-row)
-                result-matrix))
-    rev.result-matrix));could be generalised as a recursive macro to work on arbitrary order tensors?
+      (push (let result-row (list)
+              (up cl 0 (- (len b.0) 1)
+                (push (apply + (map * a.rw (col b cl))) result-row))
+              rev.result-row)
+            result-matrix))
+    rev.result-matrix))  ; could be generalised as a recursive macro to work on arbitrary order tensors?
 
 (def gauss-elim (mat rhs)
- "solves the linear equations:
+  "solves the linear equations:
 
 mat_00*x_0 + mat_01*x_1 ... mat_0n*x_n = rhs_0
 mat_10*x_0 + mat_11*x_1 ... mat_1n*x_n = rhs_1
@@ -141,30 +140,30 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
           X (if (is (car mat!dims) (cadr mat!dims) len.rhs) (zeros (car mat!dims))
                 (do (pr "car.dims:")(pr (car mat!dims))(pr " ")(pr " cadr.dims:")(pr (cadr mat!dims))(pr " ")(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable")))
           N (car mat!dims))
-      (let M (copy mat)
-           (up i 0 (- N 1)
-                (= (M (list N i)) rhs.i))
-           ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients
-           (loop (= i 0) (< i N) (++ i)
-              (= MAX i)
-              (loop (= j (+ i 1)) (< j N) (++ j)
-                 (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
-              (loop (= k i) (<= k N) (++ k)
-                 (= tmp (M (list k i)))
-                    (M (list k i)) (M (list k MAX))
-                    (M (list k MAX)) tmp)
-              (loop (= j (+ i 1)) (< j N) (++ j)
-                 (loop (= k N) (>= k i) (-- k)
-                    (-- (M (list k j)) (/ (* (M (list k i)) (M (list i j)))
-                                          (M (list i i)))))))
-           ;;sub step - starting from bottom element which just has one co-efficient and can therefore be easily calculated sub in the value of the know variables and solve
-           (loop (= j (- N 1)) (>= j 0) (-- j)
-              (= tmp 0)
-              (loop (= k (+ j 1)) (< k N) (++ k)
-                 (++ tmp (* X.k (M (list k j)))))
-              (= X.j (/ (- (M (list N j)) tmp)
-                        (M (list j j)))))
-           X)))
+    (let M (copy mat)
+      (up i 0 (- N 1)
+        (= (M (list N i)) rhs.i))
+      ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients
+      (loop (= i 0)  (< i N)  (++ i)
+        (= MAX i)
+        (loop (= j (+ i 1))  (< j N)  (++ j)
+          (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
+        (loop (= k i)  (<= k N)  (++ k)
+          (= tmp (M (list k i)))
+             (M (list k i)) (M (list k MAX))
+             (M (list k MAX)) tmp)
+        (loop (= j (+ i 1))  (< j N)  (++ j)
+          (loop (= k N)  (>= k i)  (-- k)
+            (-- (M (list k j)) (/ (* (M (list k i)) (M (list i j)))
+                                  (M (list i i)))))))
+      ;;sub step - starting from bottom element which just has one co-efficient and can therefore be easily calculated sub in the value of the know variables and solve
+      (loop (= j (- N 1))  (>= j 0)  (-- j)
+        (= tmp 0)
+        (loop (= k (+ j 1))  (< k N)  (++ k)
+          (++ tmp (* X.k (M (list k j)))))
+        (= X.j (/ (- (M (list N j)) tmp)
+                  (M (list j j)))))
+      X)))
 
 
 ;calculus fns
@@ -173,33 +172,33 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
   "provides differential of a function of a single vairable"
   (fn (x)
     (let dx (if (is x 0) 1d-9 (abs:* x 1d-9))
-       (/ (- (f (+ x dx))
-             (f (- x dx)))
-          2 dx))))
+      (/ (- (f (+ x dx))
+            (f (- x dx)))
+         2 dx))))
 
 (mac partial-diff (f n arity)
   "returns deriv function of f (w/ num args ARITY) wrt Nth variable(from 0)"
-  (withs (arglis (n-of arity (uniq))
-          a-lis (firstn n arglis)
-          x arglis.n
-          b-lis (nthcdr (+ n 1) arglis))
+  (withs (arglis  (n-of arity (uniq))
+          a-lis  (firstn n arglis)
+          x  arglis.n
+          b-lis  (nthcdr (+ n 1) arglis))
     `(fn ,arglis
-      (let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
-        (/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
-              (,f ,@a-lis (- ,x dx) ,@b-lis))
-           2 dx)))))
+       (let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
+         (/ (- (,f ,@a-lis (+ ,x dx) ,@b-lis)
+               (,f ,@a-lis (- ,x dx) ,@b-lis))
+            2 dx)))))
 
 (mac partial-diff-vec (f n arity)
   "returns vector with each element differentiated with respect to Nth argument"
-  (withs (arglis (n-of arity (uniq))
-          a-lis (firstn n arglis)
-          x arglis.n
-          b-lis (nthcdr (+ n 1) arglis))
+  (withs (arglis  (n-of arity (uniq))
+          a-lis  (firstn n arglis)
+          x  arglis.n
+          b-lis  (nthcdr (+ n 1) arglis))
     `(fn ,arglis
-        (let dx (if (is ,x 0) 1d-9 (abs:* ,x 1d-9))
-           (vec-scale (vec- (,f ,@a-lis (+ ,x dx) ,@b-lis)
-                            (,f ,@a-lis (- ,x dx) ,@b-lis))
-                      (/ 1 2 dx))))))
+       (let dx (if (is ,x 0)  1d-9  (abs:* ,x 1d-9))
+         (vec-scale (vec- (,f ,@a-lis (+ ,x dx) ,@b-lis)
+                          (,f ,@a-lis (- ,x dx) ,@b-lis))
+                    (/ 1 2 dx))))))
 
 (def grad (f)
   "gradient of 3D scalar field given by F"
@@ -239,23 +238,23 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
             next    (f (+ x dx))
             accum   0)
       (while (<= x (- upper dx))
-             (++ accum (/ (+ (* (+ current next) dx/2)
-                             (* 2 dx (f (+ x dx/2))))
-                          3))
-             (++ x dx)
-             (= current next)
-             (= next (f:+ x dx)))
+        (++ accum (/ (+ (* (+ current next) dx/2)
+                        (* 2 dx (f (+ x dx/2))))
+                     3))
+        (++ x dx)
+        (= current next)
+        (= next (f:+ x dx)))
       accum)))
 
 (def adaptive-integral (f)
   (let inte (memo:integral f)
-       (afn (lower upper (o tol 0.001))
-            (with (a (inte lower upper 2)
-                   b (inte lower upper 8))
-               (if (and (isnt b 0) (< (abs:/ (- a b) b) tol))
-                   b
-                   (let half (+ lower (/ (- upper lower) 2))
-                        (+ (self lower half tol) (self half upper tol))))))))
+    (afn (lower upper (o tol 0.001))
+      (with (a (inte lower upper 2)
+             b (inte lower upper 8))
+        (if (and (isnt b 0) (< (abs:/ (- a b) b) tol))
+          b
+          (let half (+ lower (/ (- upper lower) 2))
+            (+ (self lower half tol) (self half upper tol))))))))
 
 
 
@@ -265,23 +264,24 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
   (apply + (map (fn (x y) (* x y)) v1 v2)))
 
 (def vec-cross (v1 v2 . args)
-  (if (car args)(vec-cross (vec-cross v1 v2) (car args) (cdr args))
-                (list (- (* v1.1 v2.2) (* v2.1 v1.2))
-                      (- (* v1.2 v2.0) (* v2.2 v1.0))
-                      (- (* v1.0 v2.1) (* v2.0 v1.1)))))
+  (if (car args)
+    (vec-cross (vec-cross v1 v2) (car args) (cdr args))
+    (list (- (* v1.1 v2.2) (* v2.1 v1.2))
+          (- (* v1.2 v2.0) (* v2.2 v1.0))
+          (- (* v1.0 v2.1) (* v2.0 v1.1)))))
 
 (with (v+ (fn (v1 v2)
-             (map (fn (x y) (+ x y)) v1 v2))
+            (map (fn (x y) (+ x y)) v1 v2))
        v- (fn (v1 v2)
-             (map (fn (x y) (- x y)) v1 v2)))
+            (map (fn (x y) (- x y)) v1 v2)))
 
   (def vec+ (v1 . args)
     (if no.args v1
-        (reduce v+ (cons v1 args))))
+      (reduce v+ (cons v1 args))))
 
   (def vec- (v1 . args)
     (if no.args (map [- _] v1)
-        (v- v1 (apply vec+ args))))
+      (v- v1 (apply vec+ args))))
 )
 
 
@@ -291,8 +291,9 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 
 (def quad-add args
   ((afn (tot xs)
-     (if no.xs sqrt.tot
-         (self (+ tot (expt car.xs 2)) cdr.xs)))
+     (if no.xs
+       sqrt.tot
+       (self (+ tot (expt car.xs 2)) cdr.xs)))
    0 args))
 
 (def vec-norm (vec)
@@ -301,25 +302,27 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 
 ;others
 
-(def square (x) (* x x))
-(def cube (x) (* x x x))
-(def e^ (x) (expt e x))
-(def floor (n) (trunc n))
-(def ceiling (n) (int ($.ceiling n)))
-(def highbyte (n) (floor (/ n 256)))
-(def lowbyte (n) (mod n 256))
+(def square (x)  (* x x))
+(def cube (x)  (* x x x))
+(def e^ (x)  (expt e x))
+(def floor (n)  (trunc n))
+(def ceiling (n)  (int ($.ceiling n)))
+(def highbyte (n)  (floor (/ n 256)))
+(def lowbyte (n)  (mod n 256))
 
 
 (def mean lis
   ((afn (tot i x xs)
-     (if no.xs (/ (+ tot x) (+ i 1))
-         (self (+ tot x) (+ i 1) car.xs cdr.xs)))
+     (if no.xs
+       (/ (+ tot x) (+ i 1))
+       (self (+ tot x) (+ i 1) car.xs cdr.xs)))
    0 0 car.lis cdr.lis))
 
 (def geo-mean lis
   ((afn (tot i x xs)
-     (if no.xs (expt (* tot x) (/:+ i 1))
-         (self (* tot x) (+ i 1) car.xs cdr.xs)))
+     (if no.xs
+       (expt (* tot x) (/:+ i 1))
+       (self (* tot x) (+ i 1) car.xs cdr.xs)))
    1 0 car.lis cdr.lis))
 
 (def std-dev lis
@@ -335,22 +338,23 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
           x (- u 0.449871)
           y (+ abs.v 0.386595)
           q (+ (* x x) (* y (- (* 0.196 y) (* 0.25472 x)))))
-        (while (and (> q 0.27597)
-                    (or (> q 0.27846) (> (* v v) (* -4 log.u u u))))
-          (= u (rand)
-             v (* 1.7156 (- (rand) 0.5))
-             x (- u 0.449871)
-             y (+ abs.v 0.386595)
-             q (+ (* x x) (* y (- (* 0.196 y) (* 0.25472 x))))))
-        (+ mu (/ (* sigma v) u))))
+    (while (and (> q 0.27597)
+                (or (> q 0.27846) (> (* v v) (* -4 log.u u u))))
+      (= u (rand)
+         v (* 1.7156 (- (rand) 0.5))
+         x (- u 0.449871)
+         y (+ abs.v 0.386595)
+         q (+ (* x x) (* y (- (* 0.196 y) (* 0.25472 x))))))
+    (+ mu (/ (* sigma v) u))))
 
 
 (def quad-roots (a b c)
   "returns roots of the equation ax^2+bx+c=0"
   (let sqroot (sqrt (- (* b b) (* 4 a c)))
-    (if (is sqroot 0) (list (/ (- b) 2 a))
-        (list (/ (- sqroot b) 2 a)
-              (/ (- 0 sqroot b) 2 a)))))
+    (if (is sqroot 0)
+      (list (/ (- b) 2 a))
+      (list (/ (- sqroot b) 2 a)
+            (/ (- 0 sqroot b) 2 a)))))
 
 
 ;special functions
@@ -358,38 +362,42 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 (def ln-gamma (x)
   "calculates the natural log of gamma, lots of magic numbers from numerical recipes: third edition"
   (let consts '(57.1562356658629235 -59.5979603554754912 14.1360979747417471 -0.491913816097620199 .339946499848118887e-4 .465236289270485756e-4 -.983744753048795646e-4 .158088703224912494e-3 -.210264441724104883e-3 .217439618115212643e-3 -.164318106536763890e-3 .844182239838527433e-4 -.261908384015814087e-4 .368991826595316234e-5)
-       (with (y   x
-              tmp (+ x 671/128)
-              ser 0.999999999999997092)
-         (= tmp (- (* log.tmp (+ x 0.5)) tmp))
-         (map [++ ser (/ _ (++ y))] consts)
-         (+ tmp (log:/ (* 2.5066282746310005 ser) x)))))
+    (with (y   x
+           tmp (+ x 671/128)
+           ser 0.999999999999997092)
+      (= tmp (- (* log.tmp (+ x 0.5)) tmp))
+      (map [++ ser (/ _ (++ y))] consts)
+      (+ tmp (log:/ (* 2.5066282746310005 ser) x)))))
 
 (def gamma (x)
   (e^:ln-gamma x))
 
 (let rec (memo:afn (n x)
-            (if (<= n 1) x
-                (self (- n 1) (* n x))))
+           (if (<= n 1)
+             x
+             (self (- n 1) (* n x))))
  (def fact (num)
    "factorial of num (num must be a fixnum)"
-   (if (or (< num 0)(no:isa num 'int)) (err "num must be a positive integer")
-       (rec num 1))))
+   (if (or (< num 0)(no:isa num 'int))
+     (err "num must be a positive integer")
+     (rec num 1))))
 
 (defmemo ln-fact (num)
   "natural log of num!"
-  (if (or (< num 0)(no:isa num 'int)) (err "num must be a positive integer")
-      (ln-gamma (+ num 1))))
+  (if (or (< num 0)(no:isa num 'int))
+    (err "num must be a positive integer")
+    (ln-gamma (+ num 1))))
 
 (def bin-coef (n k)
   "number of ways of picking n elements from k (ie no. of ways of mixing 2 different sets of identical objects of size n and (- k n))"
   (if (< n k)   (err "n > k in bin-coef")
-      (< n 171) (/ (fact n) (* (fact k) (fact (- n k)))) ; 170! is largest factorial which is represented exactly as a double-float
-      (floor:+ 0.5 (e^:- ln-fact.n ln-fact.k (ln-fact:- n k)))))
+      (< n 171)  (/ (fact n) (* (fact k) (fact (- n k)))) ; 170! is largest factorial which is represented exactly as a double-float
+        (floor:+ 0.5 (e^:- ln-fact.n ln-fact.k (ln-fact:- n k)))))
 
 (def beta (z w)
   "returns the value of the beta function B(z,w)"
-  (e^ (- (+ ln-gamma.z ln-gamma.w) (ln-gamma (+ z w)))))
+  (e^ (- (+ ln-gamma.z ln-gamma.w)
+         (ln-gamma (+ z w)))))
 
 
 (def Jn-bessel (n (o terms 100))
@@ -398,92 +406,97 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     (with (i 0
            tot 0)
       (while (< i terms)
-             (++ tot (/ (* (expt -1 i) (expt (/ x 2) (+ n i i)))
-                        (* fact.i (e^:ln-gamma (+ n i 1)))))
-             (++ i 1))
+        (++ tot (/ (* (expt -1 i) (expt (/ x 2) (+ n i i)))
+                   (* fact.i (e^:ln-gamma (+ n i 1)))))
+        (++ i 1))
       tot)))
 
 (def Yn-bessel (n (o terms 100))
   "gives a fn for the nth bessel function of the second kind evaluated at x"
   (let J (Jn-bessel n terms)
-       (fn (x)
-           (with (JNx  (J x terms)
-                  Cnpi (cos (* n pi)))
-                 (/ (- (* JNx Cnpi) (* (expt -1 n) JNx))
-                    Cnpi)))))
+    (fn (x)
+      (with (JNx  (J x terms)
+             Cnpi (cos (* n pi)))
+        (/ (- (* JNx Cnpi) (* (expt -1 n) JNx))
+           Cnpi)))))
 
 (def In-bessel (n (o terms 100))
   "gives a function for the nth modified bessel function of the first kind"
   (let J(Jn-bessel n terms)
-     (fn (x)
-         (* (expt -i n)
-            (J:* i x) terms))))
+    (fn (x)
+      (* (expt -i n)
+         (J:* i x) terms))))
 
 (def Kn-bessel (n (o terms 100))
   "gives a function for the nth modified bessel function of the second kind"
   (with (J (Jn-bessel n terms)
          Y (Yn-bessel n terms))
     (fn (x)
-        (* (/ pi 2) (expt +i (+ n 1))
-           (+ (J (* +i x)) (* +i (Y (* +i x))))))))
+      (* (/ pi 2) (expt +i (+ n 1))
+         (+ (J (* +i x)) (* +i (Y (* +i x))))))))
 
 (def jn-spherical-bessel (n)
   "creates a function for the nth spherical bessel function of the first kind"
   (let J (Jn-bessel (+ n 1/2))
-     (fn (x) (* (sqrt:/ pi 2 x)
-                J.x))))
+    (fn (x)
+      (* (sqrt:/ pi 2 x)
+         J.x))))
 
 (def yn-spherical-bessel (n)
   "creates a function for the nth spherical bessel function of the first kind"
   (let Y (Yn-bessel (+ n 1/2))
-     (fn (x) (* (sqrt:/ pi 2 x)
-                Y.x))))
+     (fn (x)
+       (* (sqrt:/ pi 2 x)
+          Y.x))))
 
 (def P-legendre (l m)
   "creates a function for the Legendre polynomial P_m,l(x) with an optional second argument for re-normalising by the spherical harmonics co-efficients (from Numerical recipes 3rd edition section 6.7)"
   (fn (x (o renorm? nil))
-   (let pmm 1.0
-    (if (> m 0) (with (omx2 (* (- 1 x) (+ 1 x))
-                       fac 1.0)
-                  (up i 1 m
-                    (= pmm (/ (* pmm omx2 fac) (+ 1 fac)))
-                    (++ fac 2))))
-    (= pmm (sqrt:/ (* pmm 2 (+ m 1)) (* pi 4)))
-    (if (isnt m 0) (= pmm (* pmm -1)))
-    (if (is l m) (if remorm? pmm (* pmm (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
+    (let pmm 1.0
+      (if (> m 0)
+        (with (omx2 (* (- 1 x) (+ 1 x))
+               fac 1.0)
+          (up i 1 m
+            (= pmm (/ (* pmm omx2 fac) (+ 1 fac)))
+            (++ fac 2))))
+      (= pmm (sqrt:/ (* pmm 2 (+ m 1)) (* pi 4)))
+      (if (isnt m 0) (= pmm (* pmm -1)))
+      (if (is l m)
+        (if remorm? pmm (* pmm (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
         (with (pmmp1 (* x pmm (sqrt:+ (* 2 m) 3))
                ll 0)
-         (if (is l (+ m 1)) (if remorm? pmmp1 (* pmmp1 (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
+         (if (is l (+ m 1))
+           (if remorm? pmmp1 (* pmmp1 (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
            (with (oldfac (sqrt:+ 3 (* 2 m))
                   fac 0 pll 0)
-              (loop (= ll (+ m 2)) (<= ll 1) (++ ll)
-                 (= fac (sqrt:/ (- (* 4 ll ll) 1) (- (* ll ll) (* m m)))
-                    pll (* fac (/ (- (* x pmmp1) pmm) oldfac))
-                    oldfac fac
-                    pmm pmmp1
-                    pmmp1 pll))
-              (if remorm? pll (* pll (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m)))))))))))))
+             (loop (= ll (+ m 2))  (<= ll 1)  (++ ll)
+               (= fac (sqrt:/ (- (* 4 ll ll) 1) (- (* ll ll) (* m m)))
+                  pll (* fac (/ (- (* x pmmp1) pmm) oldfac))
+                  oldfac fac
+                  pmm pmmp1
+                  pmmp1 pll))
+             (if remorm? pll (* pll (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m)))))))))))))
 
 (def sphere-harm (l m)
   "creates a function for the spherical harmonic Y_l,m(theta phi)"
   (let P_lm (P-legendre l m)
     (fn (theta phi)
-        (* (P_lm (cos theta) t) (e^:* i m phi)))))
+      (* (P_lm (cos theta) t) (e^:* i m phi)))))
 
 (def sine-integral (x (o terms 100))
   "returns the value of the sine integral Si(x)=integral from 0 to x sin(t)/t dt"
   (with (X (abs x) i 0)
-    (loop (= i 3) (<= ((- i 1) 2) terms) (++ i 2)
-       (++ X (/ (* (expt X i) (expt -1 (mod i 2))) i fact.i)))
+    (loop (= i 3)  (<= ((- i 1) 2) terms)  (++ i 2)
+      (++ X (/ (* (expt X i) (expt -1 (mod i 2))) i fact.i)))
     (if (< x 0) (- X) X)))
 
 (def cos-integral (x (o terms 100))
   "returns the value of the cosine integral Ci(x)=euler_gamma+ln(x)+integral from 0 to x (cos(t)-1)/t dt"
   (with (X (abs x) tot 0 i 0)
-    (loop (= i 2) (< (/ i 2) terms) (++ i 2)
-       (++ tot (/ (* (expt -1 (mod (/ i 2) 2)) (expt X i)) i fact.i)))
+    (loop (= i 2)  (< (/ i 2) terms)  (++ i 2)
+      (++ tot (/ (* (expt -1 (mod (/ i 2) 2)) (expt X i)) i fact.i)))
     (++ tot (+ log.x euler-gamma))
-    (if (< x 0) (- X (* +i pi)) X)))
+    (if (< x 0)  (- X (* +i pi))  X)))
 
 
 ;probability distributions
@@ -491,21 +504,24 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 (def poisson-dist (lambda)
   "returns a function for the probability of k discrete, uncorrelated events occuring in a time where the mean expected events is lambda"
   (fn (k)
-      (if (or (< k 0) (no:isa k 'int)) (err "k in poisson dist must be a non-negative integer"))
-      (* (/ (expt lambda k) fact.k) (e^ (- lambda)))))
+    (if (or (< k 0) (no:isa k 'int))
+      (err "k in poisson dist must be a non-negative integer"))
+    (* (/ (expt lambda k) fact.k) (e^ (- lambda)))))
 
 (def beta-dist (a b)
   "beta probability distribution defined over the unit interval 0<x<1, a&b > 0"
   (if (or (< b 0) (< a 0)) (err "alpha and beta must both be non-negative"))
   (fn (x)
-      (if (no:< 0 x 1) (err "x must be between 0 and one"))
-      (* (/:beta a b) (expt x (- a 1)) (expt (- 1 x) (- b 1)))))
+    (if (no:< 0 x 1)
+      (err "x must be between 0 and one"))
+    (* (/:beta a b) (expt x (- a 1)) (expt (- 1 x) (- b 1)))))
 
 (def binomial-dist (n p)
   "returns a function for the binomal distribution, gives the probability of k events with probability p out of n occuring"
-  (if (no:<= 0 p 1) (err "p is a probability and muxt be between 0 and 1"))
+  (if (no:<= 0 p 1)
+    (err "p is a probability and muxt be between 0 and 1"))
   (fn (k)
-      (* (bin-coef n k) (expt p k) (expt (- 1 p) (- n k)))))
+    (* (bin-coef n k) (expt p k) (expt (- 1 p) (- n k)))))
 
 
 ;data-fitting
@@ -519,10 +535,10 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                    (map (fn (x) x) xs))
           A (mat-to-table (init-matrix '(2 2) 0))
           B (map [vec-dot _ ys] fs))
-         (up i 0 1
-           (up j 0 1
-             (= (A (list i j)) (vec-dot fs.i fs.j))))
-         (gauss-elim A B)))
+    (up i 0 1
+      (up j 0 1
+        (= (A (list i j)) (vec-dot fs.i fs.j))))
+    (gauss-elim A B)))
 
 (def least-squares-quadratic (data)
   "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in acsending order"
@@ -534,10 +550,10 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                    (map (fn (x) square.x) xs))
           A (mat-to-table (init-matrix '(3 3) 0))
           B (map [vec-dot _ ys] fs))
-         (up i 0 2
-           (up j 0 2
-             (= (A (list i j)) (vec-dot fs.i fs.j))))
-         (gauss-elim A B)))
+    (up i 0 2
+      (up j 0 2
+        (= (A (list i j)) (vec-dot fs.i fs.j))))
+    (gauss-elim A B)))
 
 (def least-squares-custom (data . fns)
   "data is expected in the form ((x1 y1)(x2 y2)...), fns must each accept 1 argument, returns list of co-efficients for powers of x in acsending order"
@@ -547,8 +563,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
           fs (map [map _ xs] fns)
           A (mat-to-table (init-matrix (list len.fns len.fns) 0))
           B (do (prn fs) (prn ys) (map [vec-dot _ ys] fs)))
-         (map prn (list xs ys fns fs A B))
-         (up i 0 (- len.fns 1)
-           (up j 0 (- len.fns 1)
-             (= (A (list i j)) (vec-dot fs.i fs.j))))
-         (gauss-elim A B)))
+    (map prn (list xs ys fns fs A B))
+    (up i 0 (- len.fns 1)
+      (up j 0 (- len.fns 1)
+        (= (A (list i j)) (vec-dot fs.i fs.j))))
+    (gauss-elim A B)))
