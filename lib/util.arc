@@ -245,10 +245,16 @@
   `(mappend (fn (,var) ,@body) ,lst))
 
 (mac ado body
-  " Anaphoric do.
-    See also [[aif]] [[awhen]] [[aand]] "
+  " Anaphoric do. Each expr in the body is available to the next.
+    See also [[aif]] [[awhen]] [[aand]] [[ado1]]"
   (aif cdr.body `(let it ,car.body (ado ,@it))
        car.body))
+
+(mac ado1 args
+  " Anaphoric ado1. First expr is available to the rest and also returned.
+    See also [[aif]] [[awhen]] [[aand]] [[ado]]"
+  `(ret it ,car.args
+     ,@cdr.args))
 
 (mac assert (exp (o msg (+ "Assertion failed: "
                            (tostring:ppr exp (len "Assertion failed: ") t))))
