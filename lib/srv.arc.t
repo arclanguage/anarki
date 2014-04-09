@@ -91,3 +91,21 @@
 (test-iso "parse-multipart-args returns lists of ints for non-ascii data"
   `(("a" ,(obj "contents" "34")) ("b" ,(obj "contents" list.128))) ; \x80 in decimal
   (parse-multipart-args "--abc" (instring "\r\n--abc\r\nContent-Disposition: form-data; name=\"a\"\r\n\r\n34\r\n--abc\r\nContent-Disposition: form-data; name=\"b\"\r\n\r\n\x80\r\n--abc--\r\n")))
+
+; just checks for errors at the moment
+(wipe ranked-stories*)
+(def run-request (msg input-string)
+  (prn "- " msg)
+  (tostring
+     (fromstring input-string
+       (handle-request-thread (stdin) (stdout) "no ip"))))
+
+(run-request "simple request"
+"GET / HTTP/1.1
+
+")
+
+(run-request "empty request"
+"
+
+")

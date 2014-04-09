@@ -151,8 +151,9 @@
 (def parse-header ((o in (stdin)))
   (let (request-line . header-lines) read-header.in
     (as table (accum yield
-      (map yield parse-cmd.request-line)
-      (map yield (map split-header header-lines))))))
+      (when (aand request-line (~blank it))
+        (map yield parse-cmd.request-line)
+        (map yield (map split-header header-lines)))))))
 
 (def read-header ((o in (stdin)))
   (with (nls 0  lines nil  line nil)
