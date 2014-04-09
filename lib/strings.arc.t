@@ -14,6 +14,9 @@
      ("escapes unicode"
        (urlencode "abcüd")
        "abc%c3%bcd")
+     ("escapes url params"
+       (urlencode "item?id=1")
+       "item%3fid%3d1")
 ))
 
 (register-test

@@ -79,7 +79,7 @@
   (tostring
     (each i (utf-8-bytes s)
       (let c (coerce i 'char)
-        (if (and (< i 128) (~whitec c) (~is c #\%))
+        (if (and (< i 128) (~whitec c) (~in c #\% #\? #\= #\&))
           (writec c)
           (urlencode-char i))))))
 
