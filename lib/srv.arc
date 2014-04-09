@@ -65,6 +65,7 @@
     (= req!cooks (only.parse-cookies (req "cookie")))
     (aif (req "x-forwarded-for")
       (= ip it))
+    (= req!ip ip)
     (after
       (unless (abusive? ip)
         (let t1 (msec)
