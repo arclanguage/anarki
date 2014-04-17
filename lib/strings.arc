@@ -36,13 +36,8 @@
         (if (f (seq i)) (a i))))))
 
 (def lines (s)
-  (accum a
-    ((afn ((p . ps))
-       (if ps
-           (do (a (rem #\return (cut s (+ p 1) (car ps))))
-               (self ps))
-           (a (cut s (+ p 1)))))
-     (cons -1 (positions #\newline s)))))
+  (map [rem #\return _]
+       (slices s #\newline)))
 
 (def slices (s test)
   (accum a

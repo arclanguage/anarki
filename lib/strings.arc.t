@@ -1,6 +1,30 @@
 (require "lib/unit-test.arc")
 
 (register-test
+  '(suite "lines"
+     ("empty string"
+       (lines "")
+       (""))
+     ("empty lines"
+       (lines "\n")
+       ("" ""))
+     ("single line without newline"
+       (lines "a b")
+       ("a b"))
+     ("trailing newline"
+       (lines "a b\n")
+       ("a b" ""))
+     ("skip returns"
+       (lines "a b\r\n")
+       ("a b" ""))
+     ("skip returns without newline"
+       (lines "a b\r")
+       ("a b"))
+     ("all together"
+       (lines "a b\nc d\n\ne f")
+       ("a b" "c d" "" "e f"))))
+
+(register-test
   '(suite "urlencode"
      ("passes alphanumerics through"
        (urlencode "abc")
