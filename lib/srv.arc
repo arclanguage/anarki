@@ -112,7 +112,7 @@
 
 (def static-filetype (sym)
   (let fname (coerce sym 'string)
-    (and (~findsubseq ".." fname) ; for security
+    (and (~posmatch ".." fname) ; for security
          (case (downcase (last (check (tokens fname #\.) ~single)))
            "gif"  'image/gif
            "jpg"  'image/jpg
@@ -172,7 +172,7 @@
     rev.lines))
 
 (def split-header (line)
-  (whenlet n (findsubseq ": " line)
+  (whenlet n (posmatch ": " line)
     (list (downcase:cut line 0 n)  ; normalize header key
           (cut line (+ n 2)))))
 
@@ -276,7 +276,7 @@
 
 (def multipart-boundary (s)
   (let delim "boundary="
-    (+ "--" (cut s (+ (findsubseq delim s)
+    (+ "--" (cut s (+ (posmatch delim s)
                       len.delim)))))
 
 (def parse-multipart-args (boundary in)

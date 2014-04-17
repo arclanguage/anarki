@@ -30,7 +30,7 @@
   " Returns a list of symbols whose documentation matches or partly matches 
     `str'. "
   (zap downcase str)
-  (let part-match [findsubseq str (downcase:string _)]
+  (let part-match [posmatch str (downcase:string _)]
     (sort < 
       (accum add
         (each (name doc) help* 

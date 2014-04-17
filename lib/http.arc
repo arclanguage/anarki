@@ -114,7 +114,7 @@
 (def read-body (req (o from (stdin)))
   (awhen (aand (alref req!hds "Content-Length") (errsafe:int it))
     (= req!body (readbytes it from))
-    (when (findsubseq "x-www-form-urlencoded" (alref req!hds "Content-Type"))
+    (when (posmatch "x-www-form-urlencoded" (alref req!hds "Content-Type"))
       (= req!args (join req!args (parse-args:string (map [coerce _ 'char] req!body)))))))
 
 (def start-httpd ((o port 8080))
@@ -130,7 +130,7 @@
 
 (def parse-url (url)
   (with (prot "http"  host nil  port 80  path "/")
-    (awhen (findsubseq "://" url)  ; explicit protocol?
+    (awhen (posmatch "://" url)  ; explicit protocol?
       (= prot (downcase:cut url 0 it)
          url (cut url (+ it 3))))
     (aif (pos #\/ url)  ; deal with host & path

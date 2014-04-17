@@ -155,15 +155,6 @@
             (pr new))
         (pr seq.i)))))
 
-; not a good name
-
-(def findsubseq (pat seq (o start 0))
-  (if (< (- len.seq start) len.pat)
-       nil
-      (if (headmatch pat seq start)
-          start
-          (findsubseq pat seq (+ start 1)))))
-
 (def blank (s) (~find ~whitec s))
 
 (def nonblank (s) (unless blank.s s))

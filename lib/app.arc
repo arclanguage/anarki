@@ -616,7 +616,7 @@
                              endurl)))
                (writec (s i))))
           (litmatch "<pre><code>" s i)
-           (awhen (findsubseq "</code></pre>" s (+ i 12))
+           (awhen (posmatch "</code></pre>" s (+ i 12))
              (pr (cut s (+ i 11) it))
              (= i (+ it 12)))
           (writec (s i))))))

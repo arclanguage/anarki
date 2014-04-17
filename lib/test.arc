@@ -19,6 +19,6 @@
 
 (= is-deeply test-iso)
 
-(= contains findsubseq)
+(= contains posmatch)
 
 (= not no)
