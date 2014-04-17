@@ -200,7 +200,7 @@
                                         rest)
                               final  (if trail-zeros
                                        padded
-                                       (trim padded 'end [is _ #\0])))
+                                       (trim padded 'end #\0)))
                         (string (unless empty.final ".")
                                 final)))))))
     (if (and (< n 0) (find [and (digit _) (isnt _ #\0)] abrep))
