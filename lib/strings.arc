@@ -9,12 +9,17 @@
 
 (def tokens (s (o sep whitec))
   (let test testify.sep
-    (let rec (afn (cs toks tok)
-               (if (no cs)        (consif tok toks)
-                   (test car.cs)  (self cdr.cs (consif tok toks) nil)
-                                  (self cdr.cs toks (cons car.cs tok))))
-      (rev (map [coerce _ 'string]
-                (map rev (rec (coerce s 'cons) nil nil)))))))
+    (rev:map [coerce _ 'string]
+             (map rev
+                  (loop (cs  (coerce s 'cons)
+                         toks  nil
+                         tok  nil)
+                    (if no.cs
+                          (consif tok toks)
+                        (test car.cs)
+                          (recur cdr.cs (consif tok toks) nil)
+                        'else
+                          (recur cdr.cs toks (cons car.cs tok))))))))
 
 ; names of cut, split, halve not optimal
 
