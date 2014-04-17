@@ -163,14 +163,14 @@
   (withs (f   testify.test
           p1  (pos ~f s))
     (if p1
-        (cut s
-             (if (in where 'front 'both) p1 0)
-             (when (in where 'end 'both)
-               (let i (- len.s 1)
-                 (while (and (> i p1) (f s.i))
-                   (-- i))
-                 (+ i 1))))
-        "")))
+      (cut s
+           (if (in where 'front 'both) p1 0)
+           (when (in where 'end 'both)
+             (let i (- len.s 1)
+               (while (and (> i p1) (f s.i))
+                 (-- i))
+               (+ i 1))))
+      "")))
 
 (def num (n (o digits 2) (o trail-zeros nil) (o init-zero nil))
   (withs (comma
@@ -193,19 +193,19 @@
                          i trunc.m
                          r (abs:trunc (- (* m d) (* i d))))
                    (+ (if (is i 0)
-                          (if (or init-zero (is r 0)) "0" "")
-                          comma.i)
+                        (if (or init-zero (is r 0)) "0" "")
+                        comma.i)
                       (withs (rest   string.r
                               padded (+ (newstring (- digits len.rest) #\0)
                                         rest)
                               final  (if trail-zeros
-                                         padded
-                                         (trim padded 'end [is _ #\0])))
+                                       padded
+                                       (trim padded 'end [is _ #\0])))
                         (string (unless empty.final ".")
                                 final)))))))
     (if (and (< n 0) (find [and (digit _) (isnt _ #\0)] abrep))
-        (+ "-" abrep)
-        abrep)))
+      (+ "-" abrep)
+      abrep)))
 
 (def joinstr (lst (o glue " "))
   (string:intersperse glue lst))
@@ -219,8 +219,8 @@
 
 (def pluralize (n str)
   (if (or (is n 1) single.n)
-      str
-      (string str "s")))
+    str
+    (string str "s")))
 
 ; Import Scheme's regular expressions
 (= re $.regexp)
@@ -252,8 +252,9 @@
   (string n #\  (pluralize n x)))
 
 (def capitalize (str)
-  (if empty.str str
-      (+ (upcase str.0) (cut str 1))))
+  (if empty.str
+    str
+    (+ (upcase str.0) (cut str 1))))
 
 (def chomp (s)
   (if (iso (s (- len.s 1))
