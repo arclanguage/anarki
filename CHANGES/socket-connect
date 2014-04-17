@@ -1,7 +1,7 @@
 From http://arclanguage.org/item?id=10123:
 
 Vanilla arc3 has the 'open-socket and 'socket-accept functions for receiving
-connections. This hack defines 'socket-connect to establish outgoing
+connections. Anarki also defines 'socket-connect to establish outgoing
 connections:
 
     (socket-connect host port) => (in-stream out-stream)

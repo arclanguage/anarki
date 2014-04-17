@@ -1,9 +1,0 @@
-Makes libs.arc load all *.arc files placed in the load/ directory. Vanilla arc
-only preloads a hardcoded list of files. With this hack, instead of adding to
-that list when you need a new file autoloaded, or adding code to an existing
-file that doesn't obviously belong there, you can just put your code in a file
-in load/. Autoloaded files are loaded with 'require rather than vanilla 'load,
-which allows them to use 'require to ensure load-ordering.
-
-Please read load/README before adding files to the load/ directory. In
-particular, load/ is _not_ the correct place to put arc libraries.
