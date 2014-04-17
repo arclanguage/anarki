@@ -218,7 +218,7 @@
 ; English
 
 (def pluralize (n str (o plural-form))
-  (if (or (is n 1) single.n)
+  (if (is n 1)
     str
     (or plural-form
         (string str "s"))))

@@ -239,27 +239,12 @@
        "foxs")
      ("can take an optional plural form"
        (pluralize 2 "fox" "foxes")
-       "foxes")
-     ("can take a list rather than number"
-       (pluralize '() "fish")
-       "fishs")
-     ("can take a list rather than number - 2"
-       (pluralize '(a) "fish")
-       "fish")))
+       "foxes")))
 
 (register-test
   '(suite "plural"
      ("prints number and appends an 's' if number > 1"
        (plural 2 "fox")
-       "2 foxs")
-     ("can take a list rather than number"
-       (plural '() "fish")
-       " fishs")
-     ("can take a list rather than number - 2"
-       (plural '(a) "fish")
-       "a fish")
-     ("can take a list rather than number - 2"
-       (plural '(a b) "fish")
-       "ab fishs")))
+       "2 foxs")))
 
 (run-all-tests)
