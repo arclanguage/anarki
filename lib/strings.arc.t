@@ -86,6 +86,177 @@
        2)
      ("handles missing pattern"
        (posmatch "de" "abcd")
-       nil)))
+       nil)
+     ("can take an optional start index"
+       (posmatch "a" "banana" 2)
+       3)
+     ("can take a list of chars instead of a substring"
+       (posmatch '(#\a #\b) '(#\c #\a #\b))
+       1)
+     ("can take a predicate instead of a substring"
+       (posmatch (fn (c) (in c #\a #\b)) "foobar")
+       3)))
+
+(register-test
+  '(suite "tokens"
+     ("splits at whitespace"
+        (tokens "abc def I'm too lazy")
+        ("abc" "def" "I'm" "too" "lazy"))
+     ("splits at other char"
+        (tokens "banana" #\a)
+        ("b" "n" "n"))))
+
+(register-test
+  '(suite "halve"
+     ("splits at first whitespace without dropping it"
+        (halve "ab cd ef")
+        ("ab" " cd ef"))
+     ("handles single word"
+        (halve "abc")
+        ("abc"))))
+
+(register-test
+  '(suite "positions"
+     ("1"
+       (positions #\space "abc def I'm too lazy")
+       (3 7 11 15))
+     ("2"
+       (positions #\a "That abacus")
+       (2 5 7))
+     ("with predicate"
+       (positions odd '(1 2 4 5 7))
+       (0 3 4))))
+
+(register-test
+  '(suite "nonascii"
+     ("fails on all ascii"
+       (nonascii "Abc")
+       nil)
+     ("passes on some unicode"
+       (nonascii "bcΓ")
+       t)))
+
+(register-test
+  '(suite "litmatch"
+     ("matches at head"
+       (litmatch "abc" "abcde")
+       t)
+     ("fails elsewhere"
+       (litmatch "abc" "xabcde")
+       nil)
+     ("passes at explicitly provided index"
+       (litmatch "abc" "xabcde" 1)
+       t)
+     ("works with literal unquoted lists of chars"
+       (litmatch (#\a #\b #\c) "abcde")
+       t)))
+
+(register-test
+  '(suite "headmatch works like litmatch but with non-literal patterns as well"
+     ("matches at head"
+       (headmatch "abc" "abcde")
+       t)
+     ("fails elsewhere"
+       (headmatch "abc" "xabcde")
+       nil)
+     ("passes at explicitly provided index"
+       (headmatch "abc" "xabcde" 1)
+       t)
+     ("works with lists of chars"
+       (headmatch '(#\a #\b #\c) "abcde")
+       t)
+     ("matches lists against lists"
+       (headmatch '(#\a #\b) '(#\a #\b #\c))
+       t)))
+
+(register-test
+  '(suite "endmatch"
+     ("passes at end"
+       (endmatch "cde" "abcde")
+       t)
+     ("fails elsewhere"
+       (endmatch "abc" "abcde")
+       nil)
+     ("works with lists of chars"
+       (endmatch (#\c #\d #\e) "abcde")
+       t)))
+
+(register-test
+  '(suite "subst"
+     ("substitutes all found patterns"
+       (subst "foo" "bar" "catfood dogfood")
+       "catbard dogbard")
+     ("can substitute any value with a printed representation"
+       (subst "a" '(1 2) "banana")
+       "b(1 2)n(1 2)n(1 2)")))
+
+(register-test
+  '(suite "multisubst"
+     ("substitutes multiple patterns at once"
+       (multisubst '(("a" 1) ("b" "B")) "banana")
+       "B1n1n1")))
+
+(register-test
+  '(suite "trim"
+     ("drops whitespace from end"
+       (trim " abc " 'end)
+       " abc")
+     ("drops whitespace from start and end"
+       (trim " abc " 'both)
+       "abc")
+     ("can drop arbitrary characters"
+       (trim "aabcaa" 'both #\a)
+       "bc")
+     ("can drop based on a predicate"
+       (trim "aabcaa" 'both (fn (_) (in _ #\a #\b)))
+       "c")))
+
+(register-test
+  '(suite "num"
+     ("converts numbers to strings"
+       (num 123)
+       "123")
+     ("inserts a comma every three digits"
+       (num 123456)
+       "123,456")
+     ("handles negative numbers"
+       (num -123456)
+       "-123,456")
+     ("can take an optional precision"
+       (num 1.2345 2)
+       "1.23")
+     ("can pad zeroes to the right"
+       (num 1.2 4 t)
+       "1.2000")
+     ("can add a leading zero"
+       (num 0.3 4 t t)
+       "0.3000")))
+
+(register-test
+  '(suite "pluralize"
+     ("appends an 's' if number > 1"
+       (pluralize 2 "fox")
+       "foxs")
+     ("can take a list rather than number"
+       (pluralize '() "fish")
+       "fishs")
+     ("can take a list rather than number - 2"
+       (pluralize '(a) "fish")
+       "fish")))
+
+(register-test
+  '(suite "plural"
+     ("prints number and appends an 's' if number > 1"
+       (plural 2 "fox")
+       "2 foxs")
+     ("can take a list rather than number"
+       (plural '() "fish")
+       " fishs")
+     ("can take a list rather than number - 2"
+       (plural '(a) "fish")
+       "a fish")
+     ("can take a list rather than number - 2"
+       (plural '(a b) "fish")
+       "ab fishs")))
 
 (run-all-tests)

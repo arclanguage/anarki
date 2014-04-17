@@ -8,22 +8,22 @@
 ;"\u0085"
 
 (def tokens (s (o sep whitec))
-  (let test (testify sep)
+  (let test testify.sep
     (let rec (afn (cs toks tok)
-               (if (no cs)         (consif tok toks)
-                   (test (car cs)) (self (cdr cs) (consif tok toks) nil)
-                                   (self (cdr cs) toks (cons (car cs) tok))))
+               (if (no cs)        (consif tok toks)
+                   (test car.cs)  (self cdr.cs (consif tok toks) nil)
+                                  (self cdr.cs toks (cons car.cs tok))))
       (rev (map [coerce _ 'string]
                 (map rev (rec (coerce s 'cons) nil nil)))))))
 
 ; names of cut, split, halve not optimal
 
 (def halve (s (o sep whitec))
-  (let test (testify sep)
+  (let test testify.sep
     (let rec (afn (cs tok)
-               (if (no cs)         (list (rev tok))
-                   (test (car cs)) (list cs (rev tok))
-                                   (self (cdr cs) (cons (car cs) tok))))
+               (if (no cs)         (list rev.tok)
+                   (test car.cs)   (list cs rev.tok)
+                                   (self cdr.cs (cons car.cs tok))))
       (rev (map [coerce _ 'string]
                 (rec (coerce s 'cons) nil))))))
 
@@ -31,9 +31,9 @@
 
 (def positions (test seq)
   (accum yield
-    (let f (testify test)
+    (let f testify.test
       (forlen i seq
-        (if (f (seq i))
+        (if (f seq.i)
           (yield i))))))
 
 (def lines (s)
@@ -50,7 +50,7 @@
             (recur car.ps cdr.ps))))))
 
 (def nonascii (s)
-  (isnt (len s) (len (utf-8-bytes s))))
+  (~is len.s (len:utf-8-bytes s)))
 
 ; > (require (lib "uri-codec.ss" "net"))
 ;> (form-urlencoded-decode "x%ce%bbx")
@@ -65,7 +65,7 @@
   (forlen i s
     (caselet c (s i)
       #\+ (writec #\space)
-      #\% (do (when (> (- (len s) i) 2)
+      #\% (do (when (> (- len.s i) 2)
                 (writeb (int (cut s (+ i 1) (+ i 3)) 16)))
               (++ i 2))
           (writec c)))))
@@ -90,10 +90,10 @@
 (mac litmatch (pat string (o start 0))
   (w/uniq (gstring gstart)
     `(with (,gstring ,string ,gstart ,start)
-       (unless (> (+ ,gstart ,(len pat)) (len ,gstring))
+       (unless (> (+ ,gstart ,len.pat) (len ,gstring))
          (and ,@(let acc nil
                   (forlen i pat
-                    (push `(is ,(pat i) (,gstring (+ ,gstart ,i)))
+                    (push `(is ,pat.i (,gstring (+ ,gstart ,i)))
                            acc))
                   (rev acc)))))))
 
@@ -107,10 +107,10 @@
 (mac endmatch (pat string)
   (w/uniq (gstring glen)
     `(withs (,gstring ,string ,glen (len ,gstring))
-       (unless (> ,(len pat) (len ,gstring))
+       (unless (> ,len.pat (len ,gstring))
          (and ,@(let acc nil
                   (forlen i pat
-                    (push `(is ,(pat (- (len pat) 1 i))
+                    (push `(is ,(pat (- len.pat 1 i))
                                (,gstring (- ,glen 1 ,i)))
                            acc))
                   (rev acc)))))))
@@ -118,22 +118,24 @@
 (def posmatch (pat seq (o start 0))
   (catch
     (if (isa pat 'fn)
-        (up i start (len seq)
-          (when (pat (seq i)) (throw i)))
-        (up i start (- len.seq (- len.pat 1))
-          (when (headmatch pat seq i) (throw i))))
+      (up i start len.seq
+        (when (pat seq.i)
+          (throw i)))
+      (up i start (- len.seq (- len.pat 1))
+        (when (headmatch pat seq i)
+          (throw i))))
     nil))
 
 (def headmatch (pat seq (o start 0))
-  (let p (len pat)
+  (let p len.pat
     ((afn (i)
        (or (is i p)
-           (and (is (pat i) (seq (+ i start)))
+           (and (is pat.i (seq (+ i start)))
                 (self (+ i 1)))))
      0)))
 
 (def begins (seq pat (o start 0))
-  (unless (len> pat (- (len seq) start))
+  (unless (> len.pat (- len.seq start))
     (headmatch pat seq start)))
 
 (defextend subst (old new seq) (isa seq 'string)
@@ -149,14 +151,14 @@
   (tostring
     (forlen i seq
       (iflet (old new) (find [begins seq (car _) i] pairs)
-        (do (++ i (- (len old) 1))
+        (do (++ i (- len.old 1))
             (pr new))
-        (pr (seq i))))))
+        (pr seq.i)))))
 
 ; not a good name
 
 (def findsubseq (pat seq (o start 0))
-  (if (< (- (len seq) start) (len pat))
+  (if (< (- len.seq start) len.pat)
        nil
       (if (headmatch pat seq start)
           start
@@ -164,17 +166,17 @@
 
 (def blank (s) (~find ~whitec s))
 
-(def nonblank (s) (unless (blank s) s))
+(def nonblank (s) (unless blank.s s))
 
 (def trim (s (o where 'both) (o test whitec))
-  (withs (f   (testify test)
-           p1 (pos ~f s))
+  (withs (f   testify.test
+          p1  (pos ~f s))
     (if p1
         (cut s
              (if (in where 'front 'both) p1 0)
              (when (in where 'end 'both)
-               (let i (- (len s) 1)
-                 (while (and (> i p1) (f (s i)))
+               (let i (- len.s 1)
+                 (while (and (> i p1) (f s.i))
                    (-- i))
                  (+ i 1))))
         "")))
@@ -183,49 +185,49 @@
   (withs (comma
           (fn (i)
             (tostring
-              (map [apply pr (rev _)]
-                   (rev (intersperse '(#\,)
-                                     (tuples (rev (coerce (string i) 'cons))
-                                             3))))))
+              (map [apply pr rev._]
+                   (rev:intersperse '(#\,)
+                                    (tuples (rev:coerce string.i 'cons)
+                                            3)))))
           abrep
-          (let a (abs n)
+          (let a abs.n
             (if (< digits 1)
-                 (comma (roundup a))
+                 (comma roundup.a)
                 (exact a)
-                 (string (comma a)
+                 (string comma.a
                          (when (and trail-zeros (> digits 0))
                            (string "." (newstring digits #\0))))
                  (withs (d (expt 10 digits)
                          m (/ (roundup (* a d)) d)
-                         i (trunc m)
-                         r (abs (trunc (- (* m d) (* i d)))))
+                         i trunc.m
+                         r (abs:trunc (- (* m d) (* i d))))
                    (+ (if (is i 0)
                           (if (or init-zero (is r 0)) "0" "")
-                          (comma i))
-                      (withs (rest   (string r)
-                              padded (+ (newstring (- digits (len rest)) #\0)
+                          comma.i)
+                      (withs (rest   string.r
+                              padded (+ (newstring (- digits len.rest) #\0)
                                         rest)
                               final  (if trail-zeros
                                          padded
                                          (trim padded 'end [is _ #\0])))
-                        (string (unless (empty final) ".")
+                        (string (unless empty.final ".")
                                 final)))))))
     (if (and (< n 0) (find [and (digit _) (isnt _ #\0)] abrep))
         (+ "-" abrep)
         abrep)))
 
 (def joinstr (lst (o glue " "))
-  (string (intersperse glue lst)))
+  (string:intersperse glue lst))
 
 ; by Andrew Wilcox
 (def begins-rest (pattern s)
   (if (begins s pattern)
-      (cut s (len pattern))))
+    (cut s len.pattern)))
 
 ; English
 
 (def pluralize (n str)
-  (if (or (is n 1) (single n))
+  (if (or (is n 1) single.n)
       str
       (string str "s")))
 
@@ -237,7 +239,7 @@
        s
        start
        (if end end
-	       (len s))
+	       len.s)
        output-port
        input-prefix))
 (def pre-match (px s (o start 0) (o end nil) (o output-port $.#f) (o input-prefix ($.bytes)))
@@ -248,7 +250,7 @@
        s
        start
        (if end end
-	       (len s))
+	       len.s)
        output-port
        input-prefix))
 (= re-match? [no:no:re-match _1 _2])
@@ -259,8 +261,8 @@
   (string n #\  (pluralize n x)))
 
 (def capitalize (str)
-  (if (empty str) str
-      (+ (upcase (str 0)) (cut str 1))))
+  (if empty.str str
+      (+ (upcase str.0) (cut str 1))))
 
 (def chomp (s)
   (if (iso (s (- len.s 1))
