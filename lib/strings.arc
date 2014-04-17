@@ -30,23 +30,24 @@
 ; maybe promote to arc.arc, but if so include a list clause
 
 (def positions (test seq)
-  (accum a
+  (accum yield
     (let f (testify test)
       (forlen i seq
-        (if (f (seq i)) (a i))))))
+        (if (f (seq i))
+          (yield i))))))
 
 (def lines (s)
   (map [rem #\return _]
        (slices s #\newline)))
 
 (def slices (s test)
-  (accum a
-    ((afn ((p . ps))
-       (if ps
-           (do (a (cut s (+ p 1) (car ps)))
-               (self ps))
-           (a (cut s (+ p 1)))))
-     (cons -1 (positions test s)))))
+  (accum yield
+    (loop (p  -1
+           ps  (positions test s))
+      (if no.ps
+        (yield (cut s (+ p 1)))
+        (do (yield (cut s (+ p 1) car.ps))
+            (recur car.ps cdr.ps))))))
 
 (def nonascii (s)
   (isnt (len s) (len (utf-8-bytes s))))
