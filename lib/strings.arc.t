@@ -8,9 +8,9 @@
      ("escapes spaces"
        (urlencode "a b")
        "a%20b")
-     ("passes through other punctuation"
+     ("escapes other punctuation"
        (urlencode "a@@b#%^def")
-       "a@b#%25^def")
+       "a%40b%23%25%5edef")
      ("escapes unicode"
        (urlencode "abcüd")
        "abc%c3%bcd")

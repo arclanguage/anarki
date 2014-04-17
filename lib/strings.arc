@@ -74,14 +74,17 @@
               (++ i 2))
           (writec c)))))
 
-; should behave just like javascript's encodeURI
+; should behave just like javascript's encodeURIComponent
+; http://stackoverflow.com/questions/9635661/encodeuricomponent-algorithm-source-code
 (def urlencode (s)
   (tostring
-    (each i (utf-8-bytes s)
-      (let c (coerce i 'char)
-        (if (and (< i 128) (~whitec c) (~in c #\% #\? #\= #\&))
-          (writec c)
-          (urlencode-char i))))))
+    (each code-point (utf-8-bytes s)
+      (let c (coerce code-point 'char)
+        (if (or (>= code-point 128)
+                (~alphadig c)
+                (in c #\! #\' #\( #\) #\* #\- #\. #\_ #\~))
+          (urlencode-char code-point)
+          (writec c))))))
 
 (def urlencode-char (i)
   (writec #\%)
