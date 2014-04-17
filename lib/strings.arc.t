@@ -237,6 +237,9 @@
      ("appends an 's' if number > 1"
        (pluralize 2 "fox")
        "foxs")
+     ("can take an optional plural form"
+       (pluralize 2 "fox" "foxes")
+       "foxes")
      ("can take a list rather than number"
        (pluralize '() "fish")
        "fishs")

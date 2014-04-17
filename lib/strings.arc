@@ -217,10 +217,11 @@
 
 ; English
 
-(def pluralize (n str)
+(def pluralize (n str (o plural-form))
   (if (or (is n 1) single.n)
     str
-    (string str "s")))
+    (or plural-form
+        (string str "s"))))
 
 ; Import Scheme's regular expressions
 (= re $.regexp)
@@ -248,8 +249,8 @@
 (= re-pos $.regexp-match-positions)
 (= re-subst $.regexp-replace)
 
-(def plural (n x)
-  (string n #\  (pluralize n x)))
+(def plural (n x (o plural-form))
+  (string n #\space (pluralize n x plural-form)))
 
 (def capitalize (str)
   (if empty.str
