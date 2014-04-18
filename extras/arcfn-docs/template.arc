@@ -7,29 +7,29 @@
 )
 
 (def codelinkencode (str)
-   (subst "%2f" "/"
-     (subst "%2b" "+"
-       (subst "%3c" "<"
-         (subst "%3e" ">"
-           (subst "%2a" "*"
-             (subst "%3f" "?"
-               (subst "%2f" "%" str))))))))
+   (subst "/" "%2f"
+     (subst "+" "%2b"
+       (subst "<" "%3c"
+         (subst ">" "%3e"
+           (subst "*" "%2a"
+             (subst "?" "%3f"
+               (subst "%" "%2f" str))))))))
 
 (def end-table () (prn "</table>"))
 
 (def errproc (ex) (prn "Error: " (details ex)) 'err)
 
-(def html-esc (str) (subst "&gt;" ">" (subst "&lt;" "<" (subst "&amp;" "&" str))))
-(def url-esc (str) (subst "%20" " " (subst "%2b" "+" (subst "%3d" "=" (coerce str 'string)))))
-(def anchor-esc (str) (url-esc (subst "_" " " (coerce str 'string))))
+(def html-esc (str) (subst ">" "&gt;" (subst "<" "&lt;" (subst "&" "&amp;" str))))
+(def url-esc (str) (subst " " "%20" (subst "+" "%2b" (subst "=" "%3d" (coerce str 'string)))))
+(def anchor-esc (str) (url-esc (subst " " "_" (coerce str 'string))))
 
 
 (def copy-file (filename)
   (let inf (infile filename)
     (while (= line (readline inf))
       (if (posmatch "%%INDEX%%" line)
-        (disp (subst (getlinkindexhtml) "%%INDEX%%" line))
-        (disp (subst links* "%%LINKS%%" (subst page* "%%TITLE%%" line))))
+        (disp (subst "%%INDEX%%" (getlinkindexhtml) line))
+        (disp (subst "%%LINKS%%" links* (subst "%%TITLE%%" page* line))))
       (prn)
       )
     (close inf)))
@@ -106,7 +106,7 @@
     (pr "    <td class='arc'>")
     (add-anchor2 (coerce operation 'string))
     (if (no (intags 'nolink tags))
-      (prn "<a target='CODE' href='/src/"  (subst "%2f" "%" (codelinkencode (string operation))) ".html'><img src='code.gif' title='code'/></a>"))
+      (prn "<a target='CODE' href='/src/"  (subst "%" "%2f" (codelinkencode (string operation))) ".html'><img src='code.gif' title='code'/></a>"))
     (if (intags 'mac tags) (prn "<img src='macro.gif' title='Macro'/>"))
     (if (intags 'op tags) (prn "<img src='foundation.gif' title='Foundation'/>"))
     (if (intags 'def tags) (prn "<img src='proc.gif' title='Procedure'/>"))
@@ -251,7 +251,7 @@
           (withs (n (safematch "\">" line (+ m 1))
                   o (safematch "<" line (+ m 1))
                   link (cut line m n)
-                  link2 (subst ".tem" ".html" link))
+                  link2 (subst ".html" ".tem" link))
             (when (and n o (< n o))
               (let text (cut line (+ n 2) o)
                 (when (and (isnt link link2) (file-exists link2))
@@ -272,7 +272,7 @@
 (def htmllink (href text) (prn "<a href=\"" href "\">" text "</a>"))
 
 ; Convert foo.tem to foo.html
-(def htmlname(x) (subst ".html" ".tem" x))
+(def htmlname(x) (subst ".tem" ".html" x))
 
 (def getlinks (tem)
   (aif index*.tem
@@ -291,7 +291,7 @@
 ; Generate html from a template
 (def run (filename)
   (= current-file* filename)
-  (= out-file-name* (+ "html/" (subst "" ".tem" filename) ".html"))
+  (= out-file-name* (+ "html/" (subst ".tem" "" filename) ".html"))
   (= page* "")
   (= out-file* (outfile out-file-name*))
   (= links* (getlinks filename))
@@ -326,7 +326,7 @@
  (mergesort (fn (x y) (< (car x) (car y)))
   (accum accfn
    (each links all-links*
-    (let file (+ (subst ".html" ".tem" (car links)) "#")
+    (let file (+ (subst ".tem" ".html" car.links) "#")
      (each link (cdr links)
       (accfn (list link (+ file (codelinkencode link))))))))))
 

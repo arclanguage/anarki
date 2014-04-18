@@ -37,8 +37,8 @@
 (tests (headmatch "abc" "abcde") (headmatch "cd" "abcde") (headmatch "cd" "abcde" 2) (headmatch '(#\a #\b) '(#\a #\b #\c))))
 (def begins "seq pat [start]" "Tests if <code>seq</code> begins with <code>pat</code>.  <code>begins</code> is the same as <code>headmatch</code> with the first two arguments reversed, except <code>begins</code> doesn't die if matching goes past the end of <code>seq</code>."
 (tests (begins "abcde" "abc") (begins "abc" "abcde") (begins "abcde" "cd" 2)))
-(def subst "new old seq" "Substitutes <code>new</code> for <code>old</code> in <code>seq</code>.  <code>new</code> can be any printable object.  <code>old</code> and <code>seq</code> can be strings or lists of characters."
-(tests (subst "bar" "foo" "catfood dogfood") (subst '(1 2) "a" "banana")))
+(def subst "old new seq" "Substitutes <code>new</code> for <code>old</code> in <code>seq</code>.  <code>new</code> can be any printable object.  <code>old</code> and <code>seq</code> can be strings or lists of characters."
+(tests (subst "foo" "bar" "catfood dogfood") (subst "a" '(1 2) "banana")))
 (def multisubst "pairs seq" "Performs multiple substitutions on <code>seq</code>.  <code>pairs</code> is a list of pairs of old and new values." (tests  (multisubst '(("a" 1) ("b" "B")) "banana")))
 (def predicate blank "str" "Tests if <code>str</code> is blank (whitespace)." (tests (blank "a b") (blank " ")(blank '(#\ #\tab#\newline))))
 (def trim "str where [test]" "Trims whitespace (or arbitrary expression) from <code>str</code>.  <code>where</code> can have the value <code>'front</code>, to trim the front of the string (currently broken); <code>'back</code>, to trim the end of the string; or </code>'both</code> to trim both ends of the string.  If specified, <code>test</code> is either a character or a predicate function on characters." (tests (trim " abc " 'end) (trim " abc " 'both) (trim "aabcaa" 'both #\a) (trim "aabcaa" 'both [in _ #\a #\b])))
