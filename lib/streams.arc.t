@@ -1,6 +1,5 @@
 ;; tests in the style of https://bitbucket.org/zck/unit-test.arc
 ;; need to first hg clone it into lib/unit-test
-(load "lib/unit-test/unit-test.arc")
 
 (suite lazy-stream
   car (assert-same 1 (car (lazy-cons 1 2)))
