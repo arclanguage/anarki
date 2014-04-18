@@ -34,6 +34,12 @@
     (drain (do (acc car.s)
                (zap cdr s)))))
 
+; comparing two lazy streams requires reifying them
+(defextend iso (x y)  (or (isa x 'lazy-stream)
+                          (isa y 'lazy-stream))
+  (iso (as cons x)
+       (as cons y)))
+
 (def lazy-gen (f)
   "turn a generator function f into a lazy stream"
   (lazy-cons (f) (lazy-gen f)))

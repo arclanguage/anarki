@@ -6,6 +6,8 @@
   cdr (assert-same 2 (cdr (lazy-cons 1 2)))
   to-list (assert-same '(1 2 3)
                        (as cons (lazy-cons 1 (lazy-cons 2 (lazy-cons 3 nil)))))
+  iso (assert-same (lazy-cons 1 (lazy-cons 2 (lazy-cons 3 nil)))
+                   (lazy-cons 1 (lazy-cons 2 (lazy-cons 3 nil))))
   lazy-gen (assert-same '(1 2 3)
                         (firstn 3 (lazy-gen (let x 0
                                               (fn () ++.x)))))
