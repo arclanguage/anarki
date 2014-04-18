@@ -12,9 +12,8 @@
        (subst "%3c" "<"
          (subst "%3e" ">"
            (subst "%2a" "*"
-	     (subst "%3f" "?"
-	       (subst "%2f" "%"
-	   str))))))))
+             (subst "%3f" "?"
+               (subst "%2f" "%" str))))))))
 
 (def end-table () (prn "</table>"))
 
@@ -30,7 +29,7 @@
     (while (= line (readline inf))
       (if (posmatch "%%INDEX%%" line)
         (disp (subst (getlinkindexhtml) "%%INDEX%%" line))
-        (disp (subst links* "%%LINKS%%" (subst (string "Arc: " page*) "%%TITLE%%" line))))
+        (disp (subst links* "%%LINKS%%" (subst page* "%%TITLE%%" line))))
       (prn)
       )
     (close inf)))
@@ -72,7 +71,7 @@
   (= result-string (inside sop))
   (if (or (is result-string "#t")
           (is result-string "#f")
-	  (is result-string "#<thread>"))
+          (is result-string "#<thread>"))
         (= result result-string))
 
   (if (no (is "" stdout-val)) (spanclass "stdout" (prn (html-esc (splitstring stdout-val 60)))))
@@ -121,13 +120,13 @@
     (prn "    <div class='desc'>" desc "</div>")
     (prn "    </td>")
     (pr "    <td class='arc'>")
-    (if (no testlist) nil
-	(no (testlist 0)) nil
-	(is 'faketest ((testlist 0) 0)) (faketest ((testlist 0) 1) ((testlist
-	0) 2))
-	(is 'tests ((testlist 0) 0)) (map dotest (cdr:car testlist))
-	(is 'htmltests ((testlist 0) 0)) (map dohtmltest (cdr:car testlist))
-        (err "Expected tests" operation (car testlist) ))
+    (if (no testlist)  nil
+        (no (testlist 0))  nil
+        (is 'faketest testlist.0.0)  (faketest ((testlist 0) 1)
+                                               ((testlist 0) 2))
+        (is 'tests testlist.0.0)  (map dotest (cdr:car testlist))
+        (is 'htmltests ((testlist 0) 0))  (map dohtmltest (cdr:car testlist))
+        'else  (err "Expected tests" operation (car testlist) ))
     (prn "  </td></tr>")
 )
     )
@@ -160,10 +159,10 @@
   (hdr title)
   (when (and (pair? contents)
            (pair? (car contents)))
-	   (if (is ((car contents) 0) 'text)
-	     (do (text ((car contents) 1)) (= contents (cdr contents))))
-	   (if (is ((car contents) 0) 'import)
-	     (do (copy-file ((car contents) 1)) (= contents (cdr contents)))))
+    (if (is ((car contents) 0) 'text)
+      (do (text ((car contents) 1)) (= contents (cdr contents))))
+    (if (is ((car contents) 0) 'import)
+      (do (copy-file ((car contents) 1)) (= contents (cdr contents)))))
   (start-table title)
   (map doit contents)
   (end-table)
@@ -199,8 +198,7 @@
       (prn "<div class=\"sublink\">")
       (on link (cdr links)
         (prn "<a class=\"sublink\" href=\"" filename "#" (anchor-esc link)  "\">" link "</a>"))
-      (prn "</div>")
-	)))
+      (prn "</div>"))))
 
 (= out-file-name* "")
 (= out-file* (stdout))
@@ -216,11 +214,11 @@
         (is 'def cmd) (op (cons 'def args))
         (is 'var cmd) (op (cons 'var args))
         (is 'op-nolink cmd) (op (join '(op nolink) args))
-	(is 'index cmd) (index)
+        (is 'index cmd) (index)
         (is 'import cmd) (copy-file (args 0))
         (is 'template) nil
         (is 'file cmd) (do (= out-file-name* (args 0))
-			 (= out-file* (outfile (arg 1))))
+                           (= out-file* (outfile (arg 1))))
         (err "Expected a template operation" arg)
       ))))
 
@@ -229,7 +227,7 @@
      (if (or (no xs) (< (len xs) n))
        nil
        (cons (firstn n xs)
-	     (triples (cdr xs) n))))
+             (triples (cdr xs) n))))
 
 ; Return just the templates from filename
 (def gettemplates (filename)
@@ -245,8 +243,8 @@
 ; Create list of (text link):
 ; Extract <a href="foo.html">text</a> and convert to (text "foo.tem")
 (def gettemlinks (filename)
- (let result nil
-  (w/infile inf filename (w/stdin inf (whilet line (readline)
+ (ret result nil
+   (w/infile inf filename (w/stdin inf (whilet line (readline)
      (let m (safematch "href=\"" line)
         (when m
           (++ m 6)
@@ -254,23 +252,22 @@
                   o (safematch "<" line (+ m 1))
                   link (cut line m n)
                   link2 (subst ".tem" ".html" link))
-	    (when (and n o (< n o))
-	      (let text (cut line (+ n 2) o)
-	        (when (and (isnt link link2) (file-exists link2))
-		  (= result (+ result (list (list text link2)))))))))))))
-result))
+            (when (and n o (< n o))
+              (let text (cut line (+ n 2) o)
+                (when (and (isnt link link2) (file-exists link2))
+                  (= result (+ result (list (list text link2)))))))))))))))
 
 (def readtop (filename)
-     ; (index* foo.tem) == (prev.tem this.tem next.tem)
+   ; (index* foo.tem) == (title prev.tem this.tem next.tem)
+   (= index* (table))
+   (let temlinks (gettemlinks filename)
      ; pagelist* == ("page1.tem" "page2.tem" ...)
-     (= index* (table))
-     (let temlinks (gettemlinks filename)
-       (= pagelist* (map [_ 1] temlinks))
-       (each (title link) temlinks
-          (= (index* link) title)) ; (index* foo.tem) = title
-       (each trip (triples (+ '(nil) pagelist* '(nil)))
-         (= (index* (trip 1)) (cons (index* (trip 1)) trip))
-       )))
+     (= pagelist* (map [_ 1] temlinks))
+     (each (title link) temlinks
+        (= (index* link) title))
+     (each trip (triples (+ '(nil) pagelist* '(nil)))
+       (if trip
+         (= (index* trip.1) (cons (index* trip.1) trip))))))
 
 (def htmllink (href text) (prn "<a href=\"" href "\">" text "</a>"))
 
@@ -278,48 +275,38 @@ result))
 (def htmlname(x) (subst ".html" ".tem" x))
 
 (def getlinks (tem)
-     (let info (index* tem)
-      (if info
-       (with (text (info 0) prev (info 1) this (info 2) next (info 3))
-     (tostring (pr "<div class=\"links\">")
-	       (when prev
-		 (pr "Previous: ")
-		 (htmllink (htmlname prev) ((index* prev) 0)))
-	       (pr "Up: ")
-	       (htmllink "index.html" "Contents")
-	       (when next
-		 (pr "Next: ")
-		 (htmllink (htmlname next) ((index* next) 0)))
-	       (pr "</div>")
-     )
-     ))))
-
-(= index* nil)
+  (aif index*.tem
+    (let (_ prev this next) it
+      (tostring
+        (tag (div class "links")
+          (when prev
+            (pr "Previous: ")
+            (htmllink (htmlname prev) ((index* prev) 0)))
+          (pr "Up: ")
+          (htmllink "index.html" "Contents")
+          (when next
+            (pr "Next: ")
+            (htmllink (htmlname next) ((index* next) 0))))))))
 
 ; Generate html from a template
 (def run (filename)
-        (= current-file* filename)
-        (= out-file-name* (+ "html/" (subst "" ".tem" filename) ".html"))
-	(= page* "")
-        (= out-file* (outfile out-file-name*))
-	(when (no index*)
-	  (prn "Reading top.tem")
-	  (readtop "top.tem"))
-	(= links* (getlinks filename))
-	(doit (sread (infile filename) 'eof))
-        out-file-name*
-)
+  (= current-file* filename)
+  (= out-file-name* (+ "html/" (subst "" ".tem" filename) ".html"))
+  (= page* "")
+  (= out-file* (outfile out-file-name*))
+  (= links* (getlinks filename))
+  (doit (sread (infile filename) 'eof))
+  out-file-name*)
 
 ; Run through all the templates listed in the top file.
 (def runall ((o topname "docs/index.html"))
-     (= all-links* '())
-     (readtop topname)
-     (= update-links* t)
-     (on filename pagelist*
-	 (prn "Doing file " filename)
-	 (run filename))
-     (= update-links* nil)
-	 )
+  (= all-links* '())
+  (readtop topname)
+  (= update-links* t)
+  (on filename pagelist*
+    (prn "Doing file " filename)
+    (run filename))
+  (= update-links* nil))
 
 (def tem () (load "template.arc"))
 
@@ -352,9 +339,9 @@ result))
 ; Find index of last location <= pos where chr appears in str, or nil
 (def rmatch (str chr (o pos 99999))
   (let minpos (min pos (- (len str) 1))
-    (if (< minpos 0) nil
-        (is (str minpos) chr) minpos
-	 (rmatch str chr (- minpos 1)))))
+    (if (< minpos 0)  nil
+        (is (str minpos) chr)  minpos
+        'else  (rmatch str chr (- minpos 1)))))
 
 ; Split string at length n or earlier, splitting at a <
 (def splitstring (str (o maxlen 60) (o splitchar #\<))
