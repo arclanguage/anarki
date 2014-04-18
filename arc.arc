@@ -1807,10 +1807,13 @@
     `(defcoerce fn ,type-name (,fnobj)
        (fn ,args (apply (fn ,parms ,@body) ,fnobj ,args)))))
 
+(defcoerce cons sym (x)  ; only for nil
+  nil)
+
 (defcoerce cons table (h)
   (tablist h))
 
-(defcoerce table sym (x) ; only for nil
+(defcoerce table sym (x)  ; only for nil
   (table))
 
 (defcoerce table cons (al)

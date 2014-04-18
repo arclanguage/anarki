@@ -61,6 +61,11 @@
       (acc 'x))))
 
 
+(test-iso "coerce nil to cons works"
+   nil
+   (as cons nil))
+
+
 (test "copy works on lists"
   (withs (old  '(1 2 3)
           new  copy.old)
