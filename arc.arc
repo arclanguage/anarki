@@ -1431,6 +1431,17 @@
 (def split (seq pos)
   (list (cut seq 0 pos) (cut seq pos)))
 
+(def split-at (s (o delim whitec))
+  " Split string s at first instance of delimiter, dropping delimiter."
+  (zap testify delim)
+  (iflet i (posmatch delim s)
+    (list (cut s 0 i)
+          (cut s (+ i len.delim)))
+    (list s)))
+
+(def strip-after (delim s)
+  (car:split-at delim s))
+
 (mac time (expr)
   (w/uniq (t1 t2)
     `(let ,t1 (msec)

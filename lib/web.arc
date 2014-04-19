@@ -60,16 +60,6 @@
 (def ensure-resource (url)
   (if (posmatch "://" url) url (+ "http://" url)))
 
-(def strip-after (delim s)
-  (car (split-at delim s)))
-
-(def split-at (delim s)
-  " Split string s at first instance of delimeter.
-    Return split list. "
-  (iflet i (posmatch delim s)
-    (list (cut s 0 i) (cut s (+ i (len delim))))
-    (list s)))
-
 (def select-port (portstr resource)
   (if (nonblank portstr)
     (int portstr)

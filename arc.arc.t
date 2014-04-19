@@ -261,6 +261,14 @@
   "cd"
   (cut "abcde" 2 -1))
 
+(test-iso "split chops list at given index"
+  '((1 2) (3 4))
+  (split '(1 2 3 4) 2))
+
+(test-iso "split chops string at given index"
+  '((1 2) (3 4))
+  (split '(1 2 3 4) 2))
+
 (test-iso "serialize works on nil"
   ()
   (serialize ()))
