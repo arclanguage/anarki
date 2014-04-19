@@ -10,8 +10,6 @@
 ;   3)  mkuri - Construct a uri from url and query list.
 ;             - Only compatible with GET requests.
 
-(require "lib/re.arc")
-
 (= protocol* "HTTP/1.0"
    useragent* "Web.arc/1.0"
    content-type* "Content-Type: application/x-www-form-urlencoded")
@@ -47,10 +45,10 @@
        (build-uri url!path "GET" (build-query url!query querylist)))))
 
 (def parse-url (url)
-  (withs ((resource url) (split-at "://" (ensure-resource (strip-after "#" url)))
-          (hp pq)        (split-at "/" url)
-          (host port)    (split-at ":" hp)
-          (path query)   (split-at "?" pq))
+  (withs ((resource url) (split-at (ensure-resource (strip-after url "#")) "://")
+          (hp pq)        (split-at url "/")
+          (host port)    (split-at hp ":")
+          (path query)   (split-at pq "?"))
     (obj resource resource
          host     host
          port     (select-port port resource)
