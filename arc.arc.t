@@ -221,6 +221,46 @@
   '((3 4) (5 6))
   (rep:subst '(1 2) '(3 4) (tree '((1 2) (5 6)))))
 
+(test-iso "cut works"
+  '(3 4 5)
+  (cut '(1 2 3 4 5) 2))
+
+(test-iso "cut handles end index"
+  '(3 4)
+  (cut '(1 2 3 4 5) 2 4))
+
+(test-iso "cut handles max end index"
+  '(3 4 5)
+  (cut '(1 2 3 4 5) 2 5))
+
+(test-iso "cut handles overlong end index"
+  '(3 4 5)
+  (cut '(1 2 3 4 5) 2 6))
+
+(test-iso "cut handles negative end index"
+  '(3 4)
+  (cut '(1 2 3 4 5) 2 -1))
+
+(test-iso "cut works on strings"
+  "cde"
+  (cut "abcde" 2))
+
+(test-iso "cut handles end index for strings"
+  "cd"
+  (cut "abcde" 2 4))
+
+(test-iso "cut handles max end index for strings"
+  "cde"
+  (cut "abcde" 2 5))
+
+(test-iso "cut handles overlong end index for strings"
+  "cde"
+  (cut "abcde" 2 6))
+
+(test-iso "cut handles negative end index for strings"
+  "cd"
+  (cut "abcde" 2 -1))
+
 (test-iso "serialize works on nil"
   ()
   (serialize ()))

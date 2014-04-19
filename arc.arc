@@ -627,15 +627,23 @@
 ; (nthcdr x y) = (cut y x).
 
 (def cut (seq start (o end))
-  (let end (if (no end)   (len seq)
-               (< end 0)  (+ (len seq) end)
-                          end)
-    (if (isa seq 'string)
-      (let s2 (newstring (- end start))
-        (up i 0 (- end start)
-          (= (s2 i) (seq (+ start i))))
-        s2)
-      (firstn (- end start) (nthcdr start seq)))))
+  "extract a chunk of seq from start (inclusive) to end (exclusive)"
+  (firstn (- (range-bounce end len.seq)
+             start)
+          (nthcdr start seq)))
+
+(defextend cut (seq start (o end))  (isa seq 'string)
+  (let end (range-bounce end len.seq)
+    (ret s2 (newstring (- end start))
+      (up i 0 (- end start)
+        (= s2.i (seq (+ start i)))))))
+
+(def range-bounce (i max)
+  "munge illegal indices in slices"
+  (if (no i)  max
+      (< i 0)  (+ max i)
+      (>= i max) max
+      'else  i))
 
 (def last (xs)
   (if (cdr xs)
