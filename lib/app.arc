@@ -365,10 +365,6 @@
        (menu id '("yes" "no") (if val "yes" "no"))
       (is typ 'hexcol)
        (gentag input type 'text name id value val)
-      (is typ 'time)
-       (gentag input type 'text name id value (if val (english-time val) ""))
-      (is typ 'date)
-       (gentag input type 'text name id value (if val (english-date val) ""))
        (err "unknown varfield type" typ)))
 
 (def text-rows (text wid (o pad 3))
@@ -423,8 +419,6 @@
     choice  (readvar (cadr typ) str)
     yesno   (is str "yes")
     hexcol  (if (hex>color str) str fail)
-    time    (or (errsafe (parse-time str)) fail)
-    date    (or (errsafe (parse-date str)) fail)
             (err "unknown readvar type" typ)))
 
 ; dates should be tagged date, and just redefine <
@@ -620,101 +614,6 @@
              (pr (cut s (+ i 11) it))
              (= i (+ it 12)))
           (writec (s i))))))
-
-
-(def english-time (min)
-  (let n (mod min 720)
-    (string (let h (trunc (/ n 60)) (if (is h 0) "12" h))
-            ":"
-            (let m (mod n 60)
-              (if (is m 0) "00"
-                  (< m 10) (string "0" m)
-                           m))
-            (if (is min 0)   " midnight"
-                (is min 720) " noon"
-                (>= min 720) " pm"
-                             " am"))))
-
-(def parse-time (s)
-  (let (nums (o label "")) (halve s letter)
-    (with ((h (o m 0)) (map int (tokens nums ~digit))
-           cleanlabel  (downcase (rem ~alphadig label)))
-      (+ (* (if (is h 12)
-                 (if (in cleanlabel "am" "midnight")
-                   0
-                   12)
-                (is cleanlabel "am")
-                 h
-                 (+ h 12))
-            60)
-          m))))
-
-
-(= months* '("January" "February" "March" "April" "May" "June" "July"
-             "August" "September" "October" "November" "December"))
-
-(def english-date ((y m d))
-  (string d " " (months* (- m 1)) " " y))
-
-(= month-names* (obj "january"    1  "jan"        1
-                     "february"   2  "feb"        2
-                     "march"      3  "mar"        3
-                     "april"      4  "apr"        4
-                     "may"        5
-                     "june"       6  "jun"        6
-                     "july"       7  "jul"        7
-                     "august"     8  "aug"        8
-                     "september"  9  "sept"       9  "sep"      9
-                     "october"   10  "oct"       10
-                     "november"  11  "nov"       11
-                     "december"  12  "dec"       12))
-
-(def monthnum (s) (month-names* (downcase s)))
-
-; Doesn't work for BC dates.
-
-(def parse-date (s)
-  (let nums (date-nums s)
-    (if (valid-date nums)
-      nums
-      (err (string "Invalid date: " s)))))
-
-(def date-nums (s)
-  (with ((ynow mnow dnow) (date)
-         toks             (tokens s ~alphadig))
-    (if (all [all digit _] toks)
-         (let nums (map int toks)
-           (case (len nums)
-             1 (list ynow mnow (car nums))
-             2 (iflet d (find [> _ 12] nums)
-                 (list ynow (find [isnt _ d] nums) d)
-                 (cons ynow nums))
-               (if (> (car nums) 31)
-                 (firstn 3 nums)
-                 (rev (firstn 3 nums)))))
-        ([all digit _] (car toks))
-         (withs ((ds ms ys) toks
-                 d          (int ds))
-           (aif (monthnum ms)
-                (list (or (errsafe (int ys)) ynow)
-                      it
-                      d)
-                nil))
-        (monthnum (car toks))
-         (let (ms ds ys) toks
-           (aif (errsafe (int ds))
-                (list (or (errsafe (int ys)) ynow)
-                      (monthnum (car toks))
-                      it)
-                nil))
-          nil)))
-
-; To be correct needs to know days per month, and about leap years
-
-(def valid-date ((y m d))
-  (and y m d
-       (< 0 m 13)
-       (< 0 d 32)))
 
 (mac defopl (name parm . body)
   `(defop ,name ,parm

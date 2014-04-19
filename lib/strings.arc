@@ -21,17 +21,6 @@
                         'else
                           (recur cdr.cs toks (cons car.cs tok))))))))
 
-; names of cut, split, halve not optimal
-
-(def halve (s (o sep whitec))
-  (let test testify.sep
-    (let rec (afn (cs tok)
-               (if (no cs)         (list rev.tok)
-                   (test car.cs)   (list cs rev.tok)
-                                   (self cdr.cs (cons car.cs tok))))
-      (rev (map [coerce _ 'string]
-                (rec (coerce s 'cons) nil))))))
-
 ; maybe promote to arc.arc, but if so include a list clause
 
 (def positions (test seq)

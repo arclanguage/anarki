@@ -71,13 +71,6 @@
                                                 (tokens "banana" #\a)))
 
 
-       (suite halve
-              splits-at-first-whitespace-without-dropping-it (assert-same '("ab" " cd ef")
-                                                                          (halve "ab cd ef"))
-              handles-single-word (assert-same '("abc")
-                                               (halve "abc")))
-
-
        (suite positions
               1 (assert-same '(3 7 11 15)
                              (positions #\space "abc def I'm too lazy"))
