@@ -122,8 +122,8 @@
        (suite num
               converts-numbers-to-strings (assert-same "123"
                                                        (num 123))
-              inserts-a-comma-every-three-digits (assert-same "123,456"
-                                                              (num 123456))
+              inserts-a-comma-every-three-digits (assert-same "1,234,567"
+                                                              (num 1234567))
               handles-negative-numbers (assert-same "-123,456"
                                                     (num -123456))
               can-take-an-optional-precision (assert-same "1.23"

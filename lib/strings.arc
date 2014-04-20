@@ -147,11 +147,9 @@
 (def num (n (o digits 2) (o trail-zeros nil) (o init-zero nil))
   (withs (comma
           (fn (i)
-            (tostring
-              (map [apply pr rev._]
-                   (rev:intersperse '(#\,)
-                                    (tuples (rev:coerce string.i 'cons)
-                                            3)))))
+            (rev:string:intersperse #\,
+                                    (tuples (rev:as cons string.i)
+                                            3)))
           abrep
           (let a abs.n
             (if (< digits 1)
