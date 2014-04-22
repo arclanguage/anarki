@@ -1,3 +1,13 @@
+(test-iso "do sequences"
+  3
+  (ret x 1
+    (do ++.x ++.x)))
+
+(test-iso "do returns final form"
+  34
+  (let x 1
+    (do ++.x ++.x 34)))
+
 (test "ssyntax?"
   (not ($.ssyntax? 'car)))
 
