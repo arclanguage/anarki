@@ -1,8 +1,8 @@
 (= pprsyms* (fill-table (table) 
-			'(quote "'" 
-			  quasiquote "`"
-			  unquote ","
-			  unquote-splicing ",@")))
+                        '(quote "'" 
+                          quasiquote "`"
+                          unquote ","
+                          unquote-splicing ",@")))
 
 (def sp ((o n 1))
   " Print a number of spaces. "
@@ -18,13 +18,13 @@
   " Print an expression on one line, replacing quote, unquote,
     quasiquote, unquote-splicing, and make-br-fn with their respective symbols. " 
   (do (aif (or atom.x dotted.x)
-	     write.x
-	   (pprsyms* car.x)
-	     (do pr.it
-	       (print cadr.x))
-	   (is car.x 'make-br-fn)
-	     (do (pr "[") (print-spaced cadr.x) (pr "]"))
-	   (do (pr "(") print-spaced.x (pr ")")))
+             write.x
+           (pprsyms* car.x)
+             (do pr.it
+               (print cadr.x))
+           (is car.x 'make-br-fn)
+             (do (pr "[") (print-spaced cadr.x) (pr "]"))
+           (do (pr "(") print-spaced.x (pr ")")))
       x))
 
 (= oneline* 45)
@@ -60,29 +60,29 @@
 
 (def indent-basic (xs l (o col 0))
   (if (all [or atom._ (and (is car._ 'quote) (atom cadr._))]
-	   xs)
+           xs)
       print-spaced.xs
       (do (ppr-main car.xs (+ col 2 l) t)
-	  (indent-block cdr.xs (+ col 2 l)))))
+          (indent-block cdr.xs (+ col 2 l)))))
 
 (def indent-wave (xs (o col 0))
   (do (ppr-main car.xs col t)
       (on x cdr.xs
-	  (prn)
-	  (ppr-main x (+ col (* 2 (mod (+ index 1) 2)))))))
+          (prn)
+          (ppr-main x (+ col (* 2 (mod (+ index 1) 2)))))))
 
 (= ifline* 20)
 
 (def indent-if (l)
   (fn (xs (o col 0)) 
       (if (< len.xs 4)
-	    (on x xs 
-		(if (~is index 0) (prn))
-		(ppr-main x (+ col 2 l) (is index 0)))
-	  (all [< (len:tostring print._) ifline*]
-	       pair.xs)
-	    (indent-pairs xs (+ col 2 l))
-	  (indent-wave xs (+ col 2 l)))))
+            (on x xs 
+                (if (~is index 0) (prn))
+                (ppr-main x (+ col 2 l) (is index 0)))
+          (all [< (len:tostring print._) ifline*]
+               pair.xs)
+            (indent-pairs xs (+ col 2 l))
+          (indent-wave xs (+ col 2 l)))))
 
 (def indent-with (l)
   (fn (xs (o col 0))
@@ -95,9 +95,9 @@
   (print-spaced (firstn 2 xs))
   (if (isa xs.2 'string)
       (do (prn)
-	  (sp (+ col 2))
-	  (pr #\" xs.2 #\")
-	  (indent-block (nthcdr 3 xs) (+ col 2)))
+          (sp (+ col 2))
+          (pr #\" xs.2 #\")
+          (indent-block (nthcdr 3 xs) (+ col 2)))
       (indent-block (nthcdr 2 xs) (+ col 2))))
 
 (def indent-case (n)
@@ -125,41 +125,41 @@
 
 (def ppr-main (x (o col 0) (o noindent nil))
   " Recursive main body of the ppr function. "
-  (aif (or atom.x dotted.x)		;just print the expression if it's an atom or dotted list
+  (aif (or atom.x dotted.x)             ;just print the expression if it's an atom or dotted list
          (do (unless noindent sp.col)
              print.x
              nil)
-       (is car.x 'make-br-fn)		;if the expression is a br-fn, print the brackets and then the contents
+       (is car.x 'make-br-fn)           ;if the expression is a br-fn, print the brackets and then the contents
          (ppr-sub
-	   (pr "[")
-	   (ppr-main cadr.x (+ col 1) t)
-	   (pr "]"))
+           (pr "[")
+           (ppr-main cadr.x (+ col 1) t)
+           (pr "]"))
        (pprsyms* car.x)
          (ppr-sub
-	   pr.it
-	   (ppr-main cadr.x (+ col len.it) t))
+           pr.it
+           (ppr-main cadr.x (+ col len.it) t))
        (ppr-sub
-	 (pr "(")
-	 (withs (proc car.x
-		 args sig.proc
+         (pr "(")
+         (withs (proc car.x
+                 args sig.proc
                  n    len.args
-		 str  (tostring:print proc)
-		 l    len.str
-		 xs   cdr.x)
-	   (if (isa proc 'cons)
-	       (do (ppr-main proc (+ col 1) t)
-		   (indent-block xs (+ col 1)))
-	       (do pr.str
-		   (when xs
-		     (sp)
-		     (aif indent-rules*.proc
-			    (it xs col)
-			  (and (isa proc 'sym) (bound proc) (isa (eval proc) 'mac))
-			    (if (or dotted.args (and args (~acons args)))
-				(indent-mac xs (- len.args 1) col)
-				(indent-mac xs 0 col))
-			  (indent-basic xs l col)))))
-	   (pr ")")))))
+                 str  (tostring:print proc)
+                 l    len.str
+                 xs   cdr.x)
+           (if (isa proc 'cons)
+               (do (ppr-main proc (+ col 1) t)
+                   (indent-block xs (+ col 1)))
+               (do pr.str
+                   (when xs
+                     (sp)
+                     (aif indent-rules*.proc
+                            (it xs col)
+                          (and (isa proc 'sym) (bound proc) (isa (eval proc) 'mac))
+                            (if (or dotted.args (and args (~acons args)))
+                                (indent-mac xs (- len.args 1) col)
+                                (indent-mac xs 0 col))
+                          (indent-basic xs l col)))))
+           (pr ")")))))
 
 (def ppr l
   " Pretty print. This function displays arc code with proper
