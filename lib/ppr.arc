@@ -141,7 +141,7 @@
        (ppr-sub
          (pr "(")
          (withs (proc car.x
-                 args sig.proc
+                 args sig*.proc
                  n    len.args
                  str  (tostring:print proc)
                  l    len.str

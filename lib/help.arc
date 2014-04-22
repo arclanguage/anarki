@@ -47,7 +47,7 @@
       (when (or value doc)
         (pr "[" kind "]")
         (apply pr (n-of (- 4 (len:string kind)) " "))
-        (write (aif sig.name (cons name it)
+        (write (aif sig*.name (cons name it)
                     (in kind 'fn 'mac) (list name)
                     name))
         (prn)
@@ -60,5 +60,5 @@
     Otherwise, names of which `(string test)' is a prefix pass. "
   (let test (if (isa test 'fn) test
               (let pfx string.test [begins string._ pfx]))
-    (each f (sort < (keep test keys.sig))
+    (each f (sort < (keep test keys.sig*))
       (pr (helpstr sym.f nil)))))

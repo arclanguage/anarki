@@ -29,7 +29,7 @@
 (assign do (annotate 'mac
              (fn args `((fn () ,@args)))))
 
-(sref sig 'args 'do)
+(sref sig* 'args 'do)
 (sref source-file* current-load-file* 'do)
 
 (assign safeset (annotate 'mac
@@ -40,7 +40,7 @@
                                (disp #\newline (stderr))))
                          (assign ,var ,val)))))
 
-(sref sig '(var val) 'safeset)
+(sref sig* '(var val) 'safeset)
 (sref source-file* current-load-file* 'safeset)
 
 (assign docify-body (fn (body)
@@ -48,13 +48,13 @@
                         body
                         (cons nil body))))
 
-(sref sig '(body) 'docify-body)
+(sref sig* '(body) 'docify-body)
 (sref source-file* current-load-file* 'docify-body)
 
 (assign def (annotate 'mac
                (fn (name parms . body)
                  ((fn ((doc . body))
-                    `(do (sref sig ',parms ',name)
+                    `(do (sref sig* ',parms ',name)
                          (sref help* ',doc ',name)
                          (sref source-file* current-load-file* ',name)
                          (sref source* '(def ,name ,parms ,@body) ',name)
@@ -64,14 +64,14 @@
 (assign redef (annotate 'mac
                 (fn (name parms . body)
                   ((fn ((doc . body))
-                     `(do (sref sig ',parms ',name)
+                     `(do (sref sig* ',parms ',name)
                           (sref help* ',doc ',name)
                           (sref source-file* current-load-file* ',name)
                           (sref source* '(def ,name ,parms ,@body) ',name)
                           (assign ,name (fn ,parms ,@body))))  ; don't warn on redef
                     (docify-body body)))))
 
-(sref sig '(name parms . body) 'def)
+(sref sig* '(name parms . body) 'def)
 (sref source-file* current-load-file* 'def)
 
 (def caar (xs) (car:car xs))
@@ -115,7 +115,7 @@
 (assign mac (annotate 'mac
               (fn (name parms . body)
                 ((fn ((doc . body))
-                   `(do (sref sig ',parms ',name)
+                   `(do (sref sig* ',parms ',name)
                         (sref help* ',doc ',name)
                         (sref source-file* current-load-file* ',name)
                         (sref source* '(mac ,name ,parms ,@body) ',name)
@@ -125,14 +125,14 @@
 (assign remac (annotate 'mac
                 (fn (name parms . body)
                   ((fn ((doc . body))
-                     `(do (sref sig ',parms ',name)
+                     `(do (sref sig* ',parms ',name)
                           (sref help* ',doc ',name)
                           (sref source-file* current-load-file* ',name)
                           (sref source* '(mac ,name ,parms ,@body) ',name)
                           (assign ,name (annotate 'mac (fn ,parms ,@body)))))  ; don't warn on redef
                     (docify-body body)))))
 
-(sref sig '(name parms . body) 'mac)
+(sref sig* '(name parms . body) 'mac)
 (sref source-file* current-load-file* 'mac)
 
 (mac make-br-fn (body) `(fn (_) ,body))

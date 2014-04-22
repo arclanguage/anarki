@@ -619,17 +619,16 @@
        (namespace-set-variable-value! nm a)
        a))))
 
-(define fn-signatures (make-hash-table 'equal))
+(define sig* (make-hash-table 'equal))  ;; fn/macro name -> params
+(xdef sig* sig*)
 
-; This is a replacement for xdef that stores opeator signatures.
+; This is a replacement for xdef that stores operator signatures.
 ; Haven't started using it yet.
 
 (define (odef a parms b)
   (namespace-set-variable-value! (ac-global-name a) b)
-  (hash-table-put! fn-signatures a (list parms))
+  (hash-table-put! sig* a (list parms))
   b)
-
-(xdef sig fn-signatures)
 
 ; versions of car and cdr for parsing arguments for optional
 ; parameters, that yield nil for nil. maybe we should use
