@@ -98,9 +98,9 @@
         (aif (and filetype (file-exists (string staticdir* req!op)))
           (do (prrn "HTTP/1.1 200 OK")
               (prrn "Content-Type: " filetype
-                   (if (headmatch "text" string.filetype)
-                     "; charset=utf-8"
-                     ""))
+                    (if (headmatch "text" filetype)
+                      "; charset=utf-8"
+                      ""))
               (prrn "Connection: close")
               (awhen static-max-age*
                 (prrn "Cache-Control: max-age=" it))
@@ -114,16 +114,16 @@
   (let fname (coerce sym 'string)
     (and (~posmatch ".." fname) ; for security
          (case (downcase (last (check (tokens fname #\.) ~single)))
-           "gif"  'image/gif
-           "jpg"  'image/jpg
-           "jpeg" 'image/jpg
-           "png"  'image/png
-           "css"  'text/plain
-           "js"   'text/javascript
-           "txt"  'text/plain
-           "htm"  'text/html
-           "html" 'text/html
-           "arc"  'text/plain
+           "gif"  "image/gif"
+           "jpg"  "image/jpg"
+           "jpeg" "image/jpg"
+           "png"  "image/png"
+           "css"  "text/plain"
+           "js"   "text/javascript"
+           "txt"  "text/plain"
+           "htm"  "text/html"
+           "html" "text/html"
+           "arc"  "text/plain"
            ))))
 
 (def respond-err (out msg . args)
