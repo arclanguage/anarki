@@ -98,7 +98,7 @@
         (aif (and filetype (file-exists (string staticdir* req!op)))
           (do (prrn "HTTP/1.1 200 OK")
               (prrn "Content-Type: " filetype
-                   (if (headmatch "text" filetype)
+                   (if (headmatch "text" string.filetype)
                      "; charset=utf-8"
                      ""))
               (prrn "Connection: close")
