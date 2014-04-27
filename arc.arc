@@ -1694,10 +1694,11 @@
       (when (isnt c (s2 index))
         (throw index)))))
 
-(def memtable (ks)
-  (let h (table)
-    (each k ks (set (h k)))
-    h))
+(def memtable ((o keys nil) (o val t))
+  (let tbl (table)
+    (each key keys (= tbl.key
+                      val))
+    tbl))
 
 (= bar* " | ")
 
