@@ -2,4 +2,5 @@
 (map load:string '(
     lib/strings.arc.t
     lib/streams.arc.t
+    arc.arc.t
 ))
