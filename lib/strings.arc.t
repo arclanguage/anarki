@@ -71,13 +71,6 @@
                                                 (tokens "banana" #\a)))
 
 
-       (suite halve
-              splits-at-first-whitespace-without-dropping-it (assert-same '("ab" " cd ef")
-                                                                          (halve "ab cd ef"))
-              handles-single-word (assert-same '("abc")
-                                               (halve "abc")))
-
-
        (suite positions
               1 (assert-same '(3 7 11 15)
                              (positions #\space "abc def I'm too lazy"))
@@ -90,13 +83,7 @@
               fails-on-all-ascii (assert-nil (nonascii "Abc"))
               passes-on-some-unicode (assert-t (nonascii "bcΓ")))
 
-       (suite litmatch
-              matches-at-head (assert-t (litmatch "abc" "abcde"))
-              fails-elsewhere (assert-nil (litmatch "abc" "xabcde"))
-              passes-at-explicitly-provided-index (assert-t (litmatch "abc" "xabcde" 1))
-              works-with-literal-unquoted-lists-of-chars (assert-t (litmatch (#\a #\b #\c) "abcde")))
-
-       (suite headmatch-works-like-litmatch-but-with-non-literal-patterns-as-well
+       (suite headmatch
               matches-at-head (assert-t (headmatch "abc" "abcde"))
               fails-elsewhere (assert-nil (headmatch "abc" "xabcde"))
               passes-at-explicitly-provided-index (assert-t (headmatch "abc" "xabcde" 1))
@@ -106,7 +93,11 @@
        (suite endmatch
               passes-at-end (assert-t (endmatch "cde" "abcde"))
               fails-elsewhere (assert-nil (endmatch "abc" "abcde"))
-              works-with-lists-of-chars (assert-t (endmatch (#\c #\d #\e) "abcde")))
+              works-with-lists-of-chars (assert-t (endmatch '(#\c #\d #\e) "abcde")))
+
+       (suite rev
+              works-with-strings (assert-same "cba"
+                                              (rev "abc")))
 
        (suite subst
               substitutes-all-found-patterns (assert-same "catbard dogbard"
@@ -131,8 +122,8 @@
        (suite num
               converts-numbers-to-strings (assert-same "123"
                                                        (num 123))
-              inserts-a-comma-every-three-digits (assert-same "123,456"
-                                                              (num 123456))
+              inserts-a-comma-every-three-digits (assert-same "1,234,567"
+                                                              (num 1234567))
               handles-negative-numbers (assert-same "-123,456"
                                                     (num -123456))
               can-take-an-optional-precision (assert-same "1.23"

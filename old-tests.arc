@@ -8,7 +8,6 @@
     lib/queue.arc.t
     lib/spliceable-list.arc.t
     lib/srv.arc.t
-    lib/strings.arc.t
     lib/tem.arc.t
     lib/web.arc.t
 

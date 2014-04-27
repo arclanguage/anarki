@@ -21,17 +21,6 @@
                         'else
                           (recur cdr.cs toks (cons car.cs tok))))))))
 
-; names of cut, split, halve not optimal
-
-(def halve (s (o sep whitec))
-  (let test testify.sep
-    (let rec (afn (cs tok)
-               (if (no cs)         (list rev.tok)
-                   (test car.cs)   (list cs rev.tok)
-                                   (self cdr.cs (cons car.cs tok))))
-      (rev (map [coerce _ 'string]
-                (rec (coerce s 'cons) nil))))))
-
 ; maybe promote to arc.arc, but if so include a list clause
 
 (def positions (test seq)
@@ -92,34 +81,6 @@
   (if (< i 16) (writec #\0))
   (pr (coerce i 'string 16)))
 
-(mac litmatch (pat string (o start 0))
-  (w/uniq (gstring gstart)
-    `(with (,gstring ,string ,gstart ,start)
-       (unless (> (+ ,gstart ,len.pat) (len ,gstring))
-         (and ,@(let acc nil
-                  (forlen i pat
-                    (push `(is ,pat.i (,gstring (+ ,gstart ,i)))
-                           acc))
-                  (rev acc)))))))
-
-; litmatch would be cleaner if map worked for string and integer args:
-
-;             ,@(map (fn (n c)
-;                      `(is ,c (,gstring (+ ,gstart ,n))))
-;                    (len pat)
-;                    pat)
-
-(mac endmatch (pat string)
-  (w/uniq (gstring glen)
-    `(withs (,gstring ,string ,glen (len ,gstring))
-       (unless (> ,len.pat (len ,gstring))
-         (and ,@(let acc nil
-                  (forlen i pat
-                    (push `(is ,(pat (- len.pat 1 i))
-                               (,gstring (- ,glen 1 ,i)))
-                           acc))
-                  (rev acc)))))))
-
 (def posmatch (pat seq (o start 0))
   (catch
     (if (isa pat 'fn)
@@ -138,6 +99,12 @@
            (and (is pat.i (seq (+ i start)))
                 (self (+ i 1)))))
      0)))
+
+(def endmatch (pat seq)
+  (headmatch rev.pat rev.seq))
+
+(defextend rev (x)  (isa x 'string)
+  (as string (rev:as cons x)))
 
 (def begins (seq pat (o start 0))
   (unless (> len.pat (- len.seq start))
@@ -180,11 +147,9 @@
 (def num (n (o digits 2) (o trail-zeros nil) (o init-zero nil))
   (withs (comma
           (fn (i)
-            (tostring
-              (map [apply pr rev._]
-                   (rev:intersperse '(#\,)
-                                    (tuples (rev:coerce string.i 'cons)
-                                            3)))))
+            (rev:string:intersperse #\,
+                                    (tuples (rev:as cons string.i)
+                                            3)))
           abrep
           (let a abs.n
             (if (< digits 1)

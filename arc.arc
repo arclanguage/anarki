@@ -26,53 +26,59 @@
 (assign source* (table))
 (assign help* (table))
 
-(assign do (annotate 'mac
-             (fn args `((fn () ,@args)))))
-
-(sref sig 'args 'do)
-(sref source-file* current-load-file* 'do)
-
-(assign safeset (annotate 'mac
-                  (fn (var val)
-                    `(do (if (bound ',var)
-                           (do (disp "*** redefining " (stderr))
-                               (disp ',var (stderr))
-                               (disp #\newline (stderr))))
-                         (assign ,var ,val)))))
-
-(sref sig '(var val) 'safeset)
-(sref source-file* current-load-file* 'safeset)
-
-(assign docify-body (fn (body)
-                      (if (if (is (type car.body) 'string) cdr.body)
-                        body
-                        (cons nil body))))
-
-(sref sig '(body) 'docify-body)
-(sref source-file* current-load-file* 'docify-body)
-
-(assign def (annotate 'mac
-               (fn (name parms . body)
-                 ((fn ((doc . body))
-                    `(do (sref sig ',parms ',name)
-                         (sref help* ',doc ',name)
-                         (sref source-file* current-load-file* ',name)
-                         (sref source* '(def ,name ,parms ,@body) ',name)
-                         (safeset ,name (fn ,parms ,@body))))
-                   (docify-body body)))))
-
-(assign redef (annotate 'mac
+(assign remac (annotate 'mac
                 (fn (name parms . body)
-                  ((fn ((doc . body))
-                     `(do (sref sig ',parms ',name)
-                          (sref help* ',doc ',name)
-                          (sref source-file* current-load-file* ',name)
-                          (sref source* '(def ,name ,parms ,@body) ',name)
-                          (assign ,name (fn ,parms ,@body))))  ; don't warn on redef
-                    (docify-body body)))))
+                   ; remac doesn't actually make the help text available
+                   ; but adding it won't do any harm
+                   `(assign ,name (annotate 'mac (fn ,parms ,@body))))))
 
-(sref sig '(name parms . body) 'def)
-(sref source-file* current-load-file* 'def)
+(remac do args
+  `((fn () ,@args)))
+
+(remac document (definer name parms doc . body)
+  `(do
+     (sref sig* ',parms ',name)
+     (sref help* ,doc ',name)  ; doc will be a literal string
+     (sref source-file* current-load-file* ',name)
+     (sref source* '(,definer ,name ,parms ,@body) ',name)))
+
+(remac warn-if-bound (var)
+  `(if (bound ',var)
+     (do (disp "*** redefining " (stderr))
+         (disp ',var (stderr))
+         (disp #\newline (stderr)))))
+
+(remac mac (name parms . body)
+"Defines a new *macro*, or abbreviation for some more complex code.
+Macros are the hallmark of lisp, the ability to program on programs.
+For more information see the tutorial: http://ycombinator.com/arc/tut.txt
+Or come ask questions at http://arclanguage.org/forum"
+  `(do (warn-if-bound ,name)
+       (document mac ,name ,parms
+                   ,@(if (is (type car.body) 'string)
+                        body
+                        (cons nil body)))
+       (remac ,name ,parms ,@body)))
+
+(mac def (name parms . body)
+"Defines a new function called `name'. When called, functions run their
+bodies, parameterizing `parms' with the arguments they're called with.
+For more information see the tutorial: http://ycombinator.com/arc/tut.txt
+Or come ask questions at http://arclanguage.org/forum"
+  `(do (warn-if-bound ,name)
+       (document def ,name ,parms
+                   ,@(if (is (type car.body) 'string)
+                        body
+                        (cons nil body)))
+       (assign ,name (fn ,parms ,@body))))
+
+(mac redef (name parms . body)
+"Defines a new function like [[def]], but doesn't warn if `name' already exists."
+  `(do (document redef ,name ,parms
+                   ,@(if (is (type car.body) 'string)
+                        body
+                        (cons nil body)))
+       (assign ,name (fn ,parms ,@body))))
 
 (def caar (xs) (car:car xs))
 (def cadr (xs) (car:cdr xs))
@@ -112,27 +118,7 @@
       (cons (f car.xs cadr.xs)
             (pair cddr.xs f))))
 
-(assign mac (annotate 'mac
-              (fn (name parms . body)
-                ((fn ((doc . body))
-                   `(do (sref sig ',parms ',name)
-                        (sref help* ',doc ',name)
-                        (sref source-file* current-load-file* ',name)
-                        (sref source* '(mac ,name ,parms ,@body) ',name)
-                        (safeset ,name (annotate 'mac (fn ,parms ,@body)))))
-                  (docify-body body)))))
-
-(assign remac (annotate 'mac
-                (fn (name parms . body)
-                  ((fn ((doc . body))
-                     `(do (sref sig ',parms ',name)
-                          (sref help* ',doc ',name)
-                          (sref source-file* current-load-file* ',name)
-                          (sref source* '(mac ,name ,parms ,@body) ',name)
-                          (assign ,name (annotate 'mac (fn ,parms ,@body)))))  ; don't warn on redef
-                    (docify-body body)))))
-
-(sref sig '(name parms . body) 'mac)
+(sref sig* '(name parms . body) 'mac)
 (sref source-file* current-load-file* 'mac)
 
 (mac make-br-fn (body) `(fn (_) ,body))
@@ -627,15 +613,23 @@
 ; (nthcdr x y) = (cut y x).
 
 (def cut (seq start (o end))
-  (let end (if (no end)   (len seq)
-               (< end 0)  (+ (len seq) end)
-                          end)
-    (if (isa seq 'string)
-      (let s2 (newstring (- end start))
-        (up i 0 (- end start)
-          (= (s2 i) (seq (+ start i))))
-        s2)
-      (firstn (- end start) (nthcdr start seq)))))
+  "extract a chunk of seq from start (inclusive) to end (exclusive)"
+  (firstn (- (range-bounce end len.seq)
+             start)
+          (nthcdr start seq)))
+
+(defextend cut (seq start (o end))  (isa seq 'string)
+  (let end (range-bounce end len.seq)
+    (ret s2 (newstring (- end start))
+      (up i 0 (- end start)
+        (= s2.i (seq (+ start i)))))))
+
+(def range-bounce (i max)
+  "munge illegal indices in slices"
+  (if (no i)  max
+      (< i 0)  (+ max i)
+      (>= i max) max
+      'else  i))
 
 (def last (xs)
   (if (cdr xs)
@@ -1181,7 +1175,12 @@
 
 
 (mac defmemo (name parms . body)
-  `(safeset ,name (memo (fn ,parms ,@body))))
+  `(do (warn-if-bound ,name)
+       (document defmemo ,name ,parms
+                   ,@(if (is (type car.body) 'string)
+                        body
+                        (cons nil body)))
+       (assign ,name (memo (fn ,parms ,@body)))))
 
 (def <= args
   (or (no args)
@@ -1423,6 +1422,16 @@
 (def split (seq pos)
   (list (cut seq 0 pos) (cut seq pos)))
 
+(def split-at (s delim)
+  " Split string s at first instance of delimiter, dropping delimiter."
+  (iflet i (posmatch delim s)
+    (list (cut s 0 i)
+          (cut s (+ i len.delim)))
+    (list s)))
+
+(def strip-after (s delim)
+  (car:split-at s delim))
+
 (mac time (expr)
   (w/uniq (t1 t2)
     `(let ,t1 (msec)
@@ -1459,8 +1468,13 @@
       cached)))
 
 (mac defcache (name lasts . body)
-  `(safeset ,name (cache (fn () ,lasts)
-                         (fn () ,@body))))
+  `(do (warn-if-bound ,name)
+       (document defcache ,name (,lasts)
+                   ,@(if (is (type car.body) 'string)
+                        body
+                        (cons nil body)))
+       (assign ,name (cache (fn () ,lasts)
+                            (fn () ,@body)))))
 
 (mac errsafe (expr)
   `(on-err (fn (c) nil)
@@ -1808,10 +1822,13 @@
     `(defcoerce fn ,type-name (,fnobj)
        (fn ,args (apply (fn ,parms ,@body) ,fnobj ,args)))))
 
+(defcoerce cons sym (x)  ; only for nil
+  nil)
+
 (defcoerce cons table (h)
   (tablist h))
 
-(defcoerce table sym (x) ; only for nil
+(defcoerce table sym (x)  ; only for nil
   (table))
 
 (defcoerce table cons (al)

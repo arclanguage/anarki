@@ -5,6 +5,7 @@
     lib/spliceable-list.arc
     lib/tem.arc
     lib/tree.arc
+    lib/streams.arc
     lib/lru-cache.arc
     lib/util.arc
     lib/declare.arc

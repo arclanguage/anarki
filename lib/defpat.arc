@@ -81,14 +81,13 @@
     (())       ())
     See also [[defpat]] "
   ; special handling for some macros because
-  ; their signatures are not in the (sig ...)
-  ; table
+  ; their signatures are not in the sig* table
   (if (in macro 'def 'mac)
       `(,macro ,(car body) ,@(*defpat-internal (cdr body)))
       (is macro 'fn)
       `(fn ,@(*defpat-internal body))
       ; else
-      (let s (sig macro)
+      (let s (sig* macro)
         (unless s
           (err (string "p-m: unknown macro " macro)))
         (unless (dotted s)

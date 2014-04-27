@@ -1,3 +1,13 @@
+(test-iso "do sequences"
+  3
+  (ret x 1
+    (do ++.x ++.x)))
+
+(test-iso "do returns final form"
+  34
+  (let x 1
+    (do ++.x ++.x 34)))
+
 (test "ssyntax?"
   (not ($.ssyntax? 'car)))
 
@@ -59,6 +69,11 @@
       (acc i)
       (if (> i 2) (continue))
       (acc 'x))))
+
+
+(test-iso "coerce nil to cons works"
+   nil
+   (as cons nil))
 
 
 (test "copy works on lists"
@@ -215,6 +230,54 @@
 (test-iso "subst can replace subtrees"
   '((3 4) (5 6))
   (rep:subst '(1 2) '(3 4) (tree '((1 2) (5 6)))))
+
+(test-iso "cut works"
+  '(3 4 5)
+  (cut '(1 2 3 4 5) 2))
+
+(test-iso "cut handles end index"
+  '(3 4)
+  (cut '(1 2 3 4 5) 2 4))
+
+(test-iso "cut handles max end index"
+  '(3 4 5)
+  (cut '(1 2 3 4 5) 2 5))
+
+(test-iso "cut handles overlong end index"
+  '(3 4 5)
+  (cut '(1 2 3 4 5) 2 6))
+
+(test-iso "cut handles negative end index"
+  '(3 4)
+  (cut '(1 2 3 4 5) 2 -1))
+
+(test-iso "cut works on strings"
+  "cde"
+  (cut "abcde" 2))
+
+(test-iso "cut handles end index for strings"
+  "cd"
+  (cut "abcde" 2 4))
+
+(test-iso "cut handles max end index for strings"
+  "cde"
+  (cut "abcde" 2 5))
+
+(test-iso "cut handles overlong end index for strings"
+  "cde"
+  (cut "abcde" 2 6))
+
+(test-iso "cut handles negative end index for strings"
+  "cd"
+  (cut "abcde" 2 -1))
+
+(test-iso "split chops list at given index"
+  '((1 2) (3 4))
+  (split '(1 2 3 4) 2))
+
+(test-iso "split chops string at given index"
+  '((1 2) (3 4))
+  (split '(1 2 3 4) 2))
 
 (test-iso "serialize works on nil"
   ()
