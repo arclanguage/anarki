@@ -1471,8 +1471,6 @@ Or come ask questions at http://arclanguage.org/forum"
   `(on-err (fn (c) nil)
            (fn () ,expr)))
 
-(def saferead (arg) (errsafe:read arg))
-
 (def safe-load-table (filename)
   (or (errsafe:load-table filename)
       (table)))
