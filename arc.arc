@@ -1229,15 +1229,6 @@ Or come ask questions at http://arclanguage.org/forum"
 (def readlines ((o str (stdin)))
   (drain:readline str))
 
-; Don't currently use this but suspect some code could.
-
-(mac summing (sumfn . body)
-  (w/uniq (gc gt)
-    `(let ,gc 0
-       (let ,sumfn (fn (,gt) (if ,gt (++ ,gc)))
-         ,@body)
-       ,gc)))
-
 (def sum (f xs)
   (let n 0
     (each x xs (++ n (f x)))

@@ -5,9 +5,10 @@
 
 (def codelines (file)
   (w/infile in file
-    (summing test
-      (whilet line (readline in)
-        (test (aand (find nonwhite line) (isnt it #\;)))))))
+    (ret numlines 0
+      (whilet line readline.in
+        (when (aand (find nonwhite line) (~is it #\;))
+          (++ numlines))))))
 
 (def codeflat (file)
   (len (flat (readall (infile file)))))
