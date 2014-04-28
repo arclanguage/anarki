@@ -32,37 +32,46 @@
                    ; but adding it won't do any harm
                    `(assign ,name (annotate 'mac (fn ,parms ,@body))))))
 
-(remac do args
-  `((fn () ,@args)))
-
 (remac document (definer name parms doc . body)
-  `(do
+  `((fn ()
      (sref sig* ',parms ',name)
      (sref help* ,doc ',name)  ; doc will be a literal string
      (sref source-file* current-load-file* ',name)
-     (sref source* '(,definer ,name ,parms ,@body) ',name)))
+     (sref source* '(,definer ,name ,parms ,@body) ',name))))
+
+(document builtin fn (params . body)
+"Creates an anonymous function. See the tutorial: http://ycombinator.com/arc/tut.txt")
+
+(document builtin apply (f . args)
+"(apply f '(1 2 3)) <=> (f 1 2 3)
+(apply f x y '(z w)) <=> (f x y z w)")
 
 (remac warn-if-bound (var)
   `(if (bound ',var)
-     (do (disp "*** redefining " (stderr))
-         (disp ',var (stderr))
-         (disp #\newline (stderr)))))
+     ((fn () (disp "*** redefining " (stderr))
+             (disp ',var (stderr))
+             (disp #\newline (stderr))))))
 
 (remac mac (name parms . body)
 "Defines a new *macro*, or abbreviation for some more complex code.
 Macros are the hallmark of lisp, the ability to program on programs.
 For more information see the tutorial: http://ycombinator.com/arc/tut.txt
 Or come ask questions at http://arclanguage.org/forum"
-  `(do (warn-if-bound ,name)
-       (document mac ,name ,parms
-                   ,@(if (is (type car.body) 'string)
-                        body
-                        (cons nil body)))
-       (remac ,name ,parms ,@body)))
+  `((fn () (warn-if-bound ,name)
+           (document mac ,name ,parms
+                       ,@(if (is (type car.body) 'string)
+                            body
+                            (cons nil body)))
+           (remac ,name ,parms ,@body))))
+
+(mac do args
+"Evaluates each expression in sequence and returns the result of the
+last expression."
+  `((fn () ,@args)))
 
 (mac def (name parms . body)
-"Defines a new function called `name'. When called, functions run their
-bodies, parameterizing `parms' with the arguments they're called with.
+"Defines a new function called 'name'. When called, the function runs
+'body', parameterizing 'parms' with call arguments.
 For more information see the tutorial: http://ycombinator.com/arc/tut.txt
 Or come ask questions at http://arclanguage.org/forum"
   `(do (warn-if-bound ,name)
@@ -73,22 +82,40 @@ Or come ask questions at http://arclanguage.org/forum"
        (assign ,name (fn ,parms ,@body))))
 
 (mac redef (name parms . body)
-"Defines a new function like [[def]], but doesn't warn if `name' already exists."
+"Defines a new function like [[def]], but doesn't warn if 'name' already exists."
   `(do (document redef ,name ,parms
                    ,@(if (is (type car.body) 'string)
                         body
                         (cons nil body)))
        (assign ,name (fn ,parms ,@body))))
 
-(def caar (xs) (car:car xs))
-(def cadr (xs) (car:cdr xs))
-(def cddr (xs) (cdr:cdr xs))
-(def cdar (xs) (cdr:car xs))
-(def cadar (xs) (car:cdar xs))
+(document builtin cons (x xs) "Returns a new list with element 'x' added to the start of list 'xs'.")
+(document builtin car (xs) "Returns the first element of list 'xs'")
+(document builtin cdr (xs) "Returns all elements of list 'xs' but the first")
 
-(def no (x) (is x nil))
+(def caar (xs)
+"Equivalent to (car (car xs))"
+  (car:car xs))
+(def cadr (xs)
+"Equivalent to (car (cdr xs)). Returns the second element of the list 'xs'"
+  (car:cdr xs))
+(def cddr (xs)
+"Equivalent to (cdr (cdr xs)). Returns all elements of list 'xs' but the first two."
+  (cdr:cdr xs))
+(def cdar (xs)
+"Equivalent to (cdr (car xs))."
+  (cdr:car xs))
+(def cadar (xs)
+"Equivalent to (car (cdar xs))."
+  (car:cdar xs))
 
-(def acons (x) (is (type x) 'cons))
+(def no (x)
+"Is 'x' nil? Sometimes we say A passes if it's non-nil, in which case no.A is said to fail."
+  (is x nil))
+
+(def acons (x)
+"Is 'x' a non-nil list?"
+  (is type.x 'cons))
 
 ; Can return to this def once Rtm gets ac to make all rest args
 ; nil-terminated lists.
@@ -96,21 +123,25 @@ Or come ask questions at http://arclanguage.org/forum"
 ; (def list args args)
 
 (def list args
+"Creates a list containing the given 'args'."
   (if no.args
     nil
     (cons car.args
           (apply list cdr.args))))
 
-(def idfn (x) x)
-
-; Maybe later make this internal.  Useful to let xs be a fn?
+(def idfn (x)
+"The identity function. Returns whatever is passed in."
+  x)
 
 (def map1 (f xs)
+"Returns a list containing the result of function 'f' applied to every element of 'xs'."
   (if (no xs)
     nil
     (cons (f (car xs)) (map1 f (cdr xs)))))
 
 (def pair (xs (o f list))
+"Splits the elements of 'xs' into buckets of two, and optionally applies the
+function 'f' to them."
   (if (no xs)
        nil
       (no cdr.xs)
@@ -118,12 +149,13 @@ Or come ask questions at http://arclanguage.org/forum"
       (cons (f car.xs cadr.xs)
             (pair cddr.xs f))))
 
-(sref sig* '(name parms . body) 'mac)
-(sref source-file* current-load-file* 'mac)
-
-(mac make-br-fn (body) `(fn (_) ,body))
+(mac make-br-fn (body)
+"The function invoked on square-bracket calls.
+For example, [car _] => (make-br-fn (car _)) => (fn (_) (car _))"
+  `(fn (_) ,body))
 
 (mac and args
+"Stops at the first argument to fail (return nil). Returns the last argument before stopping."
   (if args
     (if (cdr args)
         `(if ,(car args) (and ,@(cdr args)))
@@ -131,32 +163,53 @@ Or come ask questions at http://arclanguage.org/forum"
     t))
 
 (def assoc (key al)
+"Finds a (key value) pair in an association list 'al' of such pairs."
   (if (no acons.al)
        nil
       (and (acons (car al)) (is (caar al) key))
        (car al)
       (assoc key (cdr al))))
 
-(def alref (al key) (cadr (assoc key al)))
+(def alref (al key)
+"Returns the value of 'key' in an association list 'al' of (key value) pairs"
+  (cadr (assoc key al)))
 
 (mac with (parms . body)
+"Evaluates all expressions in 'body' under the bindings provided in 'parms'.
+Returns value of last expression in 'body'.
+For example, (with (x 1 y 2)
+               (+ x y))
+             => 3"
   `((fn ,(map1 car (pair parms))
      ,@body)
     ,@(map1 cadr (pair parms))))
 
 (mac let (var val . body)
+"Like [[with]] but with just one binding.
+For example, (let x 1
+               (+ x 1))
+             => (with (x 1)
+                  (+ x 1))
+             => 2"
   `(with (,var ,val) ,@body))
 
 (mac withs (parms . body)
+"Like [[with]], but binding for a variable can refer to earlier variables.
+For example, (withs (x 1 y (+ x 1))
+               (+ x y))
+             => 3"
   (if (no parms)
     `(do ,@body)
     `(let ,(car parms) ,(cadr parms)
        (withs ,(cddr parms) ,@body))))
 
 (mac ret (var val . body)
+"Like [[let]], but returns 'val' rather than the value of the final form in 'body'."
   `(let ,var ,val ,@body ,var))
 
 (mac w/uniq (names . body)
+"Assigns a set of variables to unique symbols.
+Useful for avoiding name capture in macros; see the tutorial: http://ycombinator.com/arc/tut.txt"
   (if (acons names)
     `(with ,(apply + nil (map1 (fn (n) `(,n (uniq ',n)))
                            names))
@@ -164,11 +217,13 @@ Or come ask questions at http://arclanguage.org/forum"
     `(let ,names (uniq ',names) ,@body)))
 
 (mac do1 args
+"Like [[do]], but returns the value of the first arg rather than the last."
   (w/uniq g
     `(ret ,g ,(car args)
        ,@(cdr args))))
 
 (mac defextend (name args pred . body)
+"Extends an existing function to trigger only if 'pred' is non-nil."
   (w/uniq (old allargs)
     `(let ,old ,name
        (redef ,name ,allargs
@@ -180,6 +235,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; Rtm prefers to overload + to do this
 
 (def join args
+"Concatenates/appends its arguments into a new list."
   (if (no args)
     nil
     (let a (car args)
@@ -187,24 +243,31 @@ Or come ask questions at http://arclanguage.org/forum"
         (apply join (cdr args))
         (cons (car a) (apply join (cdr a) (cdr args)))))))
 
-; Need rfn for use in macro expansions.
-
 (mac rfn (name parms . body)
+"Like [[fn]] but permits the created function to call itself recursively as the given 'name'."
   `(let ,name nil
      (assign ,name (fn ,parms ,@body))))
 
 (mac afn (parms . body)
+"Like [[fn]] and [[rfn]] but the created function can call itself as 'self'"
   `(let self nil
      (assign self (fn ,parms ,@body))))
 
 ; a more readable variant of rfn
 ; http://awwx.ws/xloop0; http://arclanguage.org/item?id=10055
 (mac loop (withses . body)
+"Like 'with', but the body can also be rerun with new bindings by calling 'recur'.
+Often a more readable alternative to [[rfn]] or [[afn]].
+For example, this prints numbers ad infinitum:
+  (loop (x 1)
+    (prn x)
+    (recur (+ x 1)))"
   (let w (pair withses)
     `((rfn recur ,(map1 car w) ,@body)
         ,@(map1 cadr w))))
 
 (mac point (name . body)
+"Like [[do]], but may be exited by calling 'name' from within 'body'."
   (w/uniq (g p)
     `(ccc (fn (,g)
             (let ,name (fn ((o ,p)) (,g ,p))
@@ -217,6 +280,11 @@ Or come ask questions at http://arclanguage.org/forum"
 ; Composes in functional position are transformed away by ac.
 
 (mac compose args
+"Takes a list of functions and returns a function that behaves as if all its
+'args' were called in sequence.
+For example, this is always true:
+  ((compose f g h) a b c) <=> (f (g (h a b c))).
+Be wary of passing macros to compose."
   (w/uniq g
     `(fn ,g
        ,((afn (fs)
@@ -231,9 +299,13 @@ Or come ask questions at http://arclanguage.org/forum"
 ; macros.
 
 (def complement (f)
+"Returns a function that behaves as if the result of calling 'f' was negated.
+For example, this is always true:
+  ((complement f) a b) <=> (no (f a b))"
   (fn args (no (apply f args))))
 
 (def rev (xs)
+"Returns a list containing the elements of 'xs' back to front."
   (loop (xs xs acc nil)
     (if (no xs)
       acc
@@ -243,53 +315,77 @@ Or come ask questions at http://arclanguage.org/forum"
 (def isnt (x y) (no (is x y)))
 
 (mac or args
+"Stops at the first argument to pass, and returns its result."
   (and args
        (w/uniq g
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
-(def alist (x) (or (no x) (is (type x) 'cons)))
+(def alist (x)
+"Is 'x' a (possibly empty) list?"
+  (or no.x acons.x))
 
 (mac in (x . choices)
+"Does 'x' match one of the given 'choices'?"
   (w/uniq g
     `(let ,g ,x
        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
 
-(def atom (x) (in type.x 'int 'num 'sym 'string))
+(def atom (x)
+"Is 'x' a simple type? (i.e. not list, table or user-defined)"
+  (in type.x 'int 'num 'sym 'string))
+
+(document builtin is (x y)
+"Are 'x' and 'y' identical?")
 
 (def iso (x y)
+"Are 'x' and 'y' equal-looking to each other? Non-atoms like lists and tables can contain
+the same elements (be *isomorphic*) without being identical."
   (or (is x y)
       (and (acons x)
            (acons y)
            (iso (car x) (car y))
            (iso (cdr x) (cdr y)))))
 
+(document builtin if (test1 then1 test2 then2 ... else)
+"Version 1: (if test then) runs 'then' if 'test' passes.
+Version 2: (if test then else) runs 'then' or 'else' depending on whether
+'test' passes or fails.
+Version 3: takes arbitrary numbers of alternating tests and expressions,
+running the first expression whose test passes. Optionally might take an
+'else' branch to run if none of the tests pass.")
+
 (mac when (test . body)
+"Like [[if]], but can take multiple expressions to run when 'test' is not nil.
+Can't take an 'else' branch."
   `(if ,test (do ,@body)))
 
 (mac unless (test . body)
+"Opposite of [[when]]; runs multiple expressions when 'test' is nil."
   `(if (no ,test) (do ,@body)))
 
 (def reclist (f xs)
+"Calls function 'f' with successive [[cdr]]s of 'xs' until one of the calls passes."
   (and xs (or (f xs) (if (acons xs) (reclist f (cdr xs))))))
 
 (def recstring (test s (o start 0))
+"Calls function 'test' with successive characters in string 's' until one of the calls passes."
   (loop (i start)
     (and (< i len.s)
          (or test.i
              (recur (+ i 1))))))
 
 (def testify (x)
+"Turns an arbitrary value 'x' into a predicate function to compare with 'x'."
   (if (isa x 'fn) x [iso _ x]))
 
 (def carif (x)
+"Returns the first element of the given list 'x', or just 'x' if it isn't a list."
   (on-err (fn(_) x)
     (fn() (car x))))
 
-; Like keep, seems like some shouldn't testify.  But find should,
-; and all probably should.
-
 (def some (test seq)
+"Does at least one element of 'seq' satisfy 'test'?"
   (let f testify.test
     (reclist f:carif seq)))
 
@@ -298,24 +394,31 @@ Or come ask questions at http://arclanguage.org/forum"
     (recstring f:seq seq)))
 
 (def all (test seq)
+"Does every element of 'seq' satisfy 'test'?"
   (~some (complement (testify test)) seq))
 
 (def mem (test seq)
+"Returns all elements of 'seq' after first element to satisfy 'test'.
+This is the most reliable way to check for presence, even when searching for nil."
   (let f (testify test)
     (reclist [if (f:carif _) _] seq)))
 
 (mac check (x test (o alt))
+"Returns `x' if it satisfies `test', otherwise returns 'alt' (nil if it's not provided)."
   (w/uniq gx
     `(let ,gx ,x
        (if (,test ,gx) ,gx ,alt))))
 
 (mac acheck (x test (o alt))
+"Like [[check]], but 'alt' can refer to the value of expr 'x' as 'it.
+Pronounced 'anaphoric check'."
   `(let it ,x
      (if (,test it)
        it
        ,alt)))
 
 (def find (test seq)
+"Returns the first element of 'seq' that satisfies `test'."
   (let f testify.test
     (reclist [check carif._ f] seq)))
 
@@ -323,18 +426,30 @@ Or come ask questions at http://arclanguage.org/forum"
   (let f testify.test
     (recstring [check seq._ f] seq)))
 
-(def isa (x y) (is (type x) y))
+(def isa (x y)
+"Is 'x' of type 'y'?"
+  (is (type x) y))
 
 (mac as (type expr)
+"Tries to convert 'expr' into a different 'type'.
+More convenient form of [[coerce]] with arguments reversed; doesn't need
+'type' to be quoted."
   `(coerce ,expr ',type))
 
-(def sym (x) (coerce x 'sym))
+(def sym (x)
+"Converts 'x' into a symbol."
+  (coerce x 'sym))
 
-(def int (x (o b 10)) (coerce x 'int b))
+(def int (x (o b 10))
+"Converts 'x' into an integer, optionally in the given base 'b' (decimal by default)."
+  (coerce x 'int b))
 
-(def real (x) ($.exact->inexact x))
+(def real (x)
+"Converts 'x' into a real number."
+  ($.exact->inexact x))
 
 (def string args
+"Converts all 'args' into strings and concatenate the result."
   (apply + "" (map [coerce _ 'string] args)))
 
 ; Possible to write map without map1, but makes News 3x slower.
@@ -350,6 +465,8 @@ Or come ask questions at http://arclanguage.org/forum"
 ;            (apply map f (map cdr seqs)))))
 
 (def map (f . seqs)
+"Successively applies corresponding elements of 'seqs' to function 'f'.
+Generalizes [[map1]] to functions with more than one argument."
   (if (no cdr.seqs)
         (map1 f car.seqs)
       (all idfn seqs)
@@ -368,9 +485,11 @@ Or come ask questions at http://arclanguage.org/forum"
 
 ; common uses of map
 (def mappend (f . args)
+"Like [[map]] followed by append."
   (apply + nil (apply map f args)))
 
 (def subst (old new seq)
+"Returns a copy of 'seq' with all values of 'old' replaced with 'new'."
   (map (fn (_)
          (if (testify.old _)
            (if (isa new 'fn) new._ new)
@@ -378,19 +497,24 @@ Or come ask questions at http://arclanguage.org/forum"
        seq))
 
 (def firstn (n xs)
+"Returns the first 'n' elements of 'xs'."
   (if (no n)            xs
       (and (> n 0) xs)  (cons (car xs) (firstn (- n 1) (cdr xs)))
                         nil))
 
 (def lastn (n xs)
+"Returns the last 'n' elements of 'xs'."
   (rev (firstn n (rev xs))))
 
 (def nthcdr (n xs)
+"Returns all but the first 'n' elements of 'xs'."
   (if (no n)  xs
       (> n 0) (nthcdr (- n 1) (cdr xs))
               xs))
 
 (def lastcons (xs)
+"Returns the absolute last link of list 'xs'. Save this value to efficiently
+append to 'xs'."
   (if cdr.xs
     (lastcons cdr.xs)
     xs))
@@ -398,6 +522,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; Generalization of pair: (tuples x) = (pair x)
 
 (def tuples (xs (o n 2))
+"Splits 'xs' up into lists of size 'n'. Generalization of [[pair]]."
   (if (no xs)
     nil
     (cons (firstn n xs)
@@ -412,20 +537,28 @@ Or come ask questions at http://arclanguage.org/forum"
   (and (acons x) (is (car x) val)))
 
 (def warn (msg . args)
+"Displays args to screen as a warning."
   (disp (+ "Warning: " msg ". "))
   (map [do (write _) (disp " ")] args)
   (disp #\newline))
 
 (mac atomic body
+"Runs expressions in 'body' with exclusive access to system resources.
+Currently invoked for you anytime you modify a variable. This can slow things down, but
+prevents multiple threads of execution from stepping on each other's toes by, say,
+writing to a variable at the same time."
   `(atomic-invoke (fn () ,@body)))
 
 (mac atlet args
+"Like [[let]], but [[atomic]]."
   `(atomic (let ,@args)))
 
 (mac atwith args
+"Like [[with]], but [[atomic]]."
   `(atomic (with ,@args)))
 
 (mac atwiths args
+"Like [[withs]], but [[atomic]]."
   `(atomic (withs ,@args)))
 
 ; setforms returns (vars get set) for a place based on car of an expr
@@ -544,10 +677,19 @@ Or come ask questions at http://arclanguage.org/forum"
                   (pair terms))))
 
 (mac = args
+"(= var val) saves 'val' in 'var'.
+(= var1 val1 var2 val2) saves 'val's in corresponding 'var's.
+'var's can be complex expressions like (car x), and so on. See [[defset]].
+When you run multiple threads at once, only one will ever be modifying a variable at once.
+See [[atomic]]."
   (expand=list args))
 
 ; http://arclanguage.org/item?id=12229
 (mac for (var init test update . body)
+"Loops through expressions in 'body' as long as 'test' passes, first binding 'var' to 'init'. At the end of each iteration it runs 'update', which usually will modify 'var'.
+Can also be terminated from inside 'body' by calling '(break)', or interrupt a single iteration by calling '(continue)'.
+If you nest multiple loops with different 'var's like i and j, you can break
+out of either of them by calling (break-i), (break-j), etc."
   `(point break
      (let ,(sym:string "break-" var) break
        (loop (,var ,init)
@@ -559,23 +701,30 @@ Or come ask questions at http://arclanguage.org/forum"
                  (recur ,var)))))))
 
 (mac up (v init max . body)
+"Counts 'v' up from 'init' (inclusive) to 'max' (exclusive), running 'body'
+with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
   `(for ,v ,init (< ,v ,max) (assign ,v (+ ,v 1))
      ,@body))
 
 (mac down (v init min . body)
+"Counts 'v' down from 'init' (inclusive) to 'min' (exclusive), running 'body'
+with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
   `(for ,v ,init (> ,v ,min) (assign ,v (- ,v 1))
      ,@body))
 
 (mac repeat (n . body)
+"Runs 'body' expression by expression 'n' times."
   (w/uniq gi
     `(up ,gi 0 ,n
        ,@body)))
 
 (mac forlen (var s . body)
+"Loops through the length of sequence 's', binding each element to 'var'."
   `(up ,var 0 (len ,s)
      ,@body))
 
 (def walk (seq f)
+"Calls function 'f' on each element of 'seq'. See also [[map]]."
   ((afn (l)
      (when acons.l
        (f car.l)
@@ -583,6 +732,8 @@ Or come ask questions at http://arclanguage.org/forum"
    seq))
 
 (mac each (var expr . body)
+"Loops through expressions in 'body' with 'var' bound to each successive
+element of 'expr'."
   `(walk ,expr (fn (,var) ,@body)))
 
 (defextend walk (seq f) (isa seq 'table)
@@ -613,7 +764,9 @@ Or come ask questions at http://arclanguage.org/forum"
 ; (nthcdr x y) = (cut y x).
 
 (def cut (seq start (o end))
-  "extract a chunk of seq from start (inclusive) to end (exclusive)"
+"Extract a chunk of 'seq' from index 'start' (inclusive) to 'end' (exclusive). 'end'
+can be left out or nil to indicate everything from 'start', and can be
+negative to count backwards from the end."
   (firstn (- (range-bounce end len.seq)
              start)
           (nthcdr start seq)))
@@ -625,18 +778,21 @@ Or come ask questions at http://arclanguage.org/forum"
         (= s2.i (seq (+ start i)))))))
 
 (def range-bounce (i max)
-  "munge illegal indices in slices"
+"Munges index 'i' in slices of a sequence of length 'max'. First element starts
+ at index 0. Negative indices count from the end. A nil index denotes the end."
   (if (no i)  max
       (< i 0)  (+ max i)
       (>= i max) max
       'else  i))
 
 (def last (xs)
+"Returns the last element of 'xs'."
   (if (cdr xs)
     (last (cdr xs))
     (car xs)))
 
 (def rem (test seq)
+"Returns all elements of 'seq' except those satisfying 'test'."
   (let f (testify test)
     ((afn (s)
        (if (no s)       nil
@@ -654,12 +810,14 @@ Or come ask questions at http://arclanguage.org/forum"
 ; is to make keep the more primitive, not rem.
 
 (def keep (test seq)
+"Returns all elements of 'seq' for which 'test' passes."
   (rem (complement (testify test)) seq))
 
 ;(def trues (f seq)
 ;  (rem nil (map f seq)))
 
 (def trues (f xs)
+"Returns (map f xs) dropping any nils."
   (and xs
       (let fx (f (car xs))
         (if fx
@@ -670,6 +828,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; but can't insert objects into expansions in Mzscheme.
 
 (mac caselet (var expr . args)
+"Like [[case]], but 'expr' is also bound to 'var' and available inside the 'args'."
   (let ex (afn (args)
             (if (no (cdr args))
               (car args)
@@ -679,9 +838,12 @@ Or come ask questions at http://arclanguage.org/forum"
     `(let ,var ,expr ,(ex args))))
 
 (mac case (expr . args)
+"Usage: (case expr test1 then1 test2 then2 ...)
+Matches 'expr' to the first satisfying 'test' and runs the corresponding 'then' branch."
   `(caselet ,(uniq) ,expr ,@args))
 
 (mac push (x place)
+"Adds 'x' to the start of the sequence at 'place'."
   (w/uniq gx
     (let (binds val setter) (setforms place)
       `(let ,gx ,x
@@ -689,6 +851,7 @@ Or come ask questions at http://arclanguage.org/forum"
            (,setter (cons ,gx ,val)))))))
 
 (mac swap (place1 place2)
+"Exchanges the values of 'place1' and 'place2'."
   (w/uniq (g1 g2)
     (with ((binds1 val1 setter1) (setforms place1)
            (binds2 val2 setter2) (setforms place2))
@@ -697,6 +860,9 @@ Or come ask questions at http://arclanguage.org/forum"
          (,setter2 ,g1)))))
 
 (mac rotate places
+"Like [[swap]] but for more than two places.
+For example, after (rotate place1 place2 place3), place3 is moved to place2,
+place2 to place1, and place1 to place3."
   (with (vars (map [uniq] places)
          forms (map setforms places))
     `(atwiths ,(mappend (fn (g (binds val setter))
@@ -709,6 +875,7 @@ Or come ask questions at http://arclanguage.org/forum"
               forms))))
 
 (mac pop (place)
+"Opposite of [[push]]: removes the first element of the sequence at 'place' and returns it."
   (w/uniq g
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ binds (list g val))
@@ -721,11 +888,13 @@ Or come ask questions at http://arclanguage.org/forum"
     (cons x xs)))
 
 (mac pushnew (x place . args)
+"Like [[push]] but first checks if 'x' is already present in 'place'."
   (let (binds val setter) (setforms place)
     `(atwiths ,binds
        (,setter (adjoin ,x ,val ,@args)))))
 
 (mac pull (test place)
+"Removes all elements from 'place' that satisfy 'test'."
   (let (binds val setter) (setforms place)
     `(atwiths ,binds
        (,setter (rem ,test ,val)))))
@@ -739,6 +908,7 @@ Or come ask questions at http://arclanguage.org/forum"
                     (adjoin ,gx ,val ,@args)))))))
 
 (mac ++ (place (o i 1))
+"Increments 'place' by 'i' (1 by default)."
   (if (isa place 'sym)
     `(= ,place (+ ,place ,i))
     (w/uniq gi
@@ -747,6 +917,7 @@ Or come ask questions at http://arclanguage.org/forum"
            (,setter (+ ,val ,gi)))))))
 
 (mac -- (place (o i 1))
+"Decrements 'place' by 'i' (1 by default)."
   (if (isa place 'sym)
     `(= ,place (- ,place ,i))
     (w/uniq gi
@@ -757,6 +928,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; E.g. (++ x) equiv to (zap + x 1)
 
 (mac zap (op place . args)
+"Replaces 'place' with (apply op place args)"
   (with (gop    (uniq)
          gargs  (map [uniq] args)
          mix    (afn seqs
@@ -769,14 +941,17 @@ Or come ask questions at http://arclanguage.org/forum"
          (,setter (,gop ,val ,@gargs))))))
 
 (mac wipe args
+"Sets each place in 'args' to nil."
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
 
 (mac set args
+"Sets each place in 'args' to t."
   `(do ,@(map (fn (a) `(= ,a t)) args)))
 
 ; Destructuring means ambiguity: are pat vars bound in else? (no)
 
 (mac iflet (var expr . branches)
+"Like [[if]] but also puts the value of 'expr' in 'var', making it available in 'branches'."
   (if branches
     (w/uniq gv
       `(let ,gv ,expr
@@ -788,15 +963,20 @@ Or come ask questions at http://arclanguage.org/forum"
     expr))
 
 (mac whenlet (var expr . body)
+"Like [[when]] but also puts the value of 'expr' in 'var' so 'body' can access it."
   `(iflet ,var ,expr (do ,@body)))
 
 (mac aif (expr . branches)
+"Like [[if]], but also puts the value of 'expr' in variable 'it'."
   `(iflet it ,expr ,@branches))
 
 (mac awhen (expr . body)
+"Like [[when]], but also puts the value of 'expr' in variable 'it'."
   `(let it ,expr (if it (do ,@body))))
 
 (mac aand args
+"Like [[and]], but each expression in 'args' can access the result of the
+previous one in variable 'it'."
   (if (no args)
        t
       (no (cdr args))
@@ -804,12 +984,15 @@ Or come ask questions at http://arclanguage.org/forum"
       `(let it ,(car args) (and it (aand ,@(cdr args))))))
 
 (mac accum (accfn . body)
+"Runs 'body' (usually containing a loop) and then returns in order all the
+values that were called with 'accfn' in the process."
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
        (rev ,gacc))))
 
 (mac whilet (var test . body)
+"Like [[while]], but successive values of 'test' are bound to 'var'."
   `(point break
      (loop (,var ,test)
        (when ,var
@@ -818,17 +1001,23 @@ Or come ask questions at http://arclanguage.org/forum"
          (recur ,test)))))
 
 (mac while (test . body)
+"Loops through the expressions in 'body' as long as 'test' passes.
+Can also terminate by calling '(break)', or terminate just one iteration by calling
+'(continue)'."
   (w/uniq gp
     `(whilet ,gp ,test
        ,@body)))
 
 (mac forever body
+"Loops through the expressions in 'body' forever.
+May still terminate by calling '(break)'."
   `(while t ,@body))
 
 ; For the common C idiom while x = snarfdata != end.
 ; Rename this if use it often.
 
 (mac whiler (var expr end . body)
+"Repeatedly binds 'var' to 'expr' and runs 'body' until 'var' matches 'end'."
   (w/uniq gendf
     `(withs (,var nil ,gendf (testify ,end))
        (while (no (,gendf (= ,var ,expr)))
@@ -838,6 +1027,8 @@ Or come ask questions at http://arclanguage.org/forum"
 ; drained), then returns vals.
 
 (mac drain (expr (o eos nil))
+"Repeatedly evaluates 'expr' until it returns 'eos' (nil by default). Returns
+a list of the results."
   (w/uniq (gacc gres)
     `(accum ,gacc
        (whiler ,gres ,expr ,eos
@@ -851,9 +1042,12 @@ Or come ask questions at http://arclanguage.org/forum"
 ;        (apply (rep op) (cdr e))
 ;        e))))
 
-(def consif (x y) (if x (cons x y) y))
+(def consif (x y)
+"Like [[cons]] on 'x' and 'y' unless 'x' is nil."
+  (if x (cons x y) y))
 
 (def flat x
+"Flattens a list of lists."
   ((afn (x acc)
      (if (no x)   acc
          (~acons x) (cons x acc)
@@ -861,6 +1055,8 @@ Or come ask questions at http://arclanguage.org/forum"
    x nil))
 
 (def pos (test seq (o start 0))
+"Returns the index of the first element of 'seq' matching 'test', starting
+from index 'start' (0 by default)."
   (let f (testify test)
     (if (alist seq)
       ((afn (seq n)
@@ -873,11 +1069,17 @@ Or come ask questions at http://arclanguage.org/forum"
          start)
       (recstring [if (f (seq _)) _] seq start))))
 
-(def even (n) (is (mod n 2) 0))
+(def even (n)
+"Is n even?"
+  (is (mod n 2) 0))
 
-(def odd (n) (no (even n)))
+(def odd (n)
+"Is n odd?"
+  (no (even n)))
 
 (mac after (x . ys)
+"Runs all 'ys' after 'x', even if 'x' throws an error.
+Returns result of 'ys' on success, and nothing on error."
   `(protect (fn () ,x) (fn () ,@ys)))
 
 (let expander
@@ -886,55 +1088,81 @@ Or come ask questions at http://arclanguage.org/forum"
           (after (do ,@body) (close ,var))))
 
   (mac w/infile (var name . body)
+  "Opens file 'name' into stream 'var' to [[read]] from it in 'body'.
+Reliably closes the file when it's done.
+See also [[read]]."
     (expander 'infile var name body))
 
   (mac w/outfile (var name . body)
+  "Opens file 'name' into stream 'var' to [[write]] to it in 'body'.
+Reliably closes the file when it's done."
     (expander 'outfile var name body))
 
   (mac w/instring (var str . body)
+  "Creates a stream 'var' to [[read]] from 'str' in 'body'.
+Reliably closes the stream when it's done."
     (expander 'instring var str body))
 
   (mac w/socket (var port . body)
+  "Creates a stream 'var' to listen to and [[read]] from 'port'.
+Reliably closes the stream when it's done."
     (expander 'open-socket var port body))
   )
 
 (mac w/outstring (var . body)
+"Create an in-memory string and [[write]] to it in 'body'.
+The contents of the string can be accessed by calling 'inside'."
   `(let ,var (outstring) ,@body))
 
 ; what happens to a file opened for append if arc is killed in
 ; the middle of a write?
 
 (mac w/appendfile (var name . body)
+"Opens file 'name' into stream 'var' to [[write]] to it in 'body'.
+Unlike [[w/outfile]], appends to existing contents of the file.
+Reliably closes the file when it's done."
   `(let ,var (outfile ,name 'append)
      (after (do ,@body) (close ,var))))
 
 ; rename this simply "to"?  - prob not; rarely use
 
 (mac w/stdout (str . body)
+"Redirects writes to (stdout) inside 'body' using calls to [[write]], [[prn]],
+etc. to write to the stream 'str'."
   `(call-w/stdout ,str (fn () ,@body)))
 
 (mac w/stdin (str . body)
+"Redirects reads from (stdin) inside 'body' using calls to [[read]], etc. to
+read from the stream 'str'."
   `(call-w/stdin ,str (fn () ,@body)))
 
 (mac tostring body
+"Runs 'body' then collect all output to (stdout) and return it as a string."
   (w/uniq gv
    `(w/outstring ,gv
       (w/stdout ,gv ,@body)
       (inside ,gv))))
 
 (mac fromstring (str . body)
+"Runs 'body', reading from 'str' as stdin."
   (w/uniq gv
    `(w/instring ,gv ,str
       (w/stdin ,gv ,@body))))
 
 (mac pipe-to (dest . body)
+"Redirects stdout for 'body' into stdin of 'dest'."
   `(fromstring
      (tostring ,@body)
      ,dest))
 
-(def readstring1 (s (o eof nil)) (w/instring i s (read i eof)))
+(def readstring1 (s (o eof nil))
+"Reads a single expression from string 's'. Returns 'eof' if there's nothing to read.
+Caller is responsible for picking an unambiguous 'eof' indicator."
+  (w/instring i s (read i eof)))
 
 (def read ((o x (stdin)) (o eof nil))
+"Reads a single expression from string or stream 'x'. Returns 'eof' if there's
+nothing to read. Caller is responsible for picking an unambiguous 'eof' indicator."
   (if (isa x 'string) (readstring1 x eof) (sread x eof)))
 
 ; encapsulate eof management
@@ -952,12 +1180,14 @@ Or come ask questions at http://arclanguage.org/forum"
   `(ifread ,var ,port (do ,@body)))
 
 (mac fromfile (f . body)
+"Redirects standard input from the file 'f' within 'body'."
   (w/uniq gf
     `(w/infile ,gf ,f
        (w/stdin ,gf
          ,@body))))
 
 (mac tofile (f . body)
+"Redirects stdout to the file 'f' within 'body'."
   (w/uniq (gf gs)
     `(let ,gs (mktemp:basename ,f)
        (w/outfile ,gf ,gs
@@ -972,18 +1202,23 @@ Or come ask questions at http://arclanguage.org/forum"
          ,@body))))
 
 (def readfile (name)
+"Slurps the entire contents of file 'name' using [[read]] and returns the
+expressions  as a list."
   (fromfile name
     (drain:read)))
 
 (def readfile1 (name)
+"Returns the first expression [[read]] from file 'name'."
   (fromfile name
     (read)))
 
 (def writefile (val name)
+"Outputs 'val' to file 'name' using [[write]]."
   (tofile name
     (write val)))
 
 (def readall (src (o eof nil))
+"Like [[readfile]], but can also accept a string 'src'."
   ((afn (i)
     (let x (read i eof)
       (if (is x eof)
@@ -1004,22 +1239,28 @@ Or come ask questions at http://arclanguage.org/forum"
 ; the rep of these.  That would also require hacking the reader.
 
 (def pr args
+"Prints all its 'args' to screen. Returns the first arg."
   (map1 disp args)
   (car args))
 
 (def prt args
+"Like [[pr]], but doesn't print nils."
   (map1 only.pr args)
   (car args))
 
 (def prn args
+"Prints all its 'args' to screen followed by a newline. Returns the first arg."
   (do1 (apply pr args)
        (pr #\newline))) ; writec doesn't implicitly flush
 
 (def prrn args  ; print with \r\n at the end
+"Like [[prn]], but prints both carriage return and newline, usually because the HTTP
+protocol requires them."
   (do1 (apply pr args)
        (pr #\return #\newline)))
 
 (def ero args
+"Like [[prn]] but prints to stderr rather than stdout."
   (w/stdout (stderr)
     (apply prn args)))
 
@@ -1075,12 +1316,14 @@ Or come ask questions at http://arclanguage.org/forum"
              (ac-niltree:$:thread-cell-ref ,storage)))))))
 
 (mac rand-choice exprs
+"Runs one of the given 'exprs' at random and returns the result."
   `(case (rand ,(len exprs))
      ,@(let key -1
          (mappend [list (++ key) _]
                   exprs))))
 
 (mac n-of (n expr)
+"Runs 'expr' 'n' times, and returns a list of the results."
   (w/uniq ga
     `(let ,ga nil
        (repeat ,n (push ,expr ,ga))
@@ -1089,6 +1332,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; rejects bytes >= 248 lest digits be overrepresented
 
 (def rand-string (n)
+"Generates a random string of letters and numbers."
   (let c "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     (with (nc 62 s (newstring n) i 0)
       (w/infile str "/dev/urandom"
@@ -1103,6 +1347,7 @@ Or come ask questions at http://arclanguage.org/forum"
   (last:tokens s #\/))
 
 (mac on (var s . body)
+"Like [[each]], but also maintains a variable calles 'index' counting the iterations."
   (if (is var 'index)
     (err "Can't use index as first arg to on.")
     (w/uniq gs
@@ -1112,6 +1357,7 @@ Or come ask questions at http://arclanguage.org/forum"
              ,@body))))))
 
 (def best (f seq)
+"Maximizes comparator function 'f' throughout seq."
   (if (no seq)
     nil
     (let wins (car seq)
@@ -1119,14 +1365,20 @@ Or come ask questions at http://arclanguage.org/forum"
         (if (f elt wins) (= wins elt)))
       wins)))
 
-(def max args (best > args))
-(def min args (best < args))
+(def max args
+"Returns the greatest of 'args'."
+  (best > args))
+(def min args
+"Returns the least of 'args'."
+  (best < args))
 
 ; (mac max2 (x y)
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
 (def most (f seq)
+"Like [[best]], but function 'f' is a scorer for each element rather than a
+comparator between elements."
   (if seq
     (withs (wins (car seq) topscore (f wins))
       (each elt (cdr seq)
@@ -1139,6 +1391,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; macroexpansion.
 
 (def insert-sorted (test elt seq)
+"Inserts 'elt' into a sequence 'seq' that is assumed to be sorted by 'test'."
   (if (no seq)
        (list elt)
       (test elt (car seq))
@@ -1146,6 +1399,7 @@ Or come ask questions at http://arclanguage.org/forum"
       (cons (car seq) (insert-sorted test elt (cdr seq)))))
 
 (mac insort (test elt seq)
+"Like [[insert-sorted]] but modifies 'seq' in place'."
   `(zap [insert-sorted ,test ,elt _] ,seq))
 
 (def reinsert-sorted (test elt seq)
@@ -1164,6 +1418,8 @@ Or come ask questions at http://arclanguage.org/forum"
 ; right no of args and didn't have to call apply (or list if 1 arg).
 
 (def memo (f)
+"Turns function 'f' into a _memoized_ version that also stores results returned
+by args passed in, so that future calls with the same inputs can save work."
   (with (cache (table) nilcache (table))
     (fn args
       (or (cache args)
@@ -1175,6 +1431,7 @@ Or come ask questions at http://arclanguage.org/forum"
 
 
 (mac defmemo (name parms . body)
+"Like [[def]] but defines a memoized function. See [[memo]]."
   `(do (warn-if-bound ,name)
        (document defmemo ,name ,parms
                    ,@(if (is (type car.body) 'string)
@@ -1183,33 +1440,41 @@ Or come ask questions at http://arclanguage.org/forum"
        (assign ,name (memo (fn ,parms ,@body)))))
 
 (def <= args
+"Is each element of 'args' lesser than or equal to all following elements?"
   (or (no args)
       (no (cdr args))
       (and (no (> (car args) (cadr args)))
            (apply <= (cdr args)))))
 
 (def >= args
+"Is each element of 'args' greater than or equal to all following elements?"
   (or (no args)
       (no (cdr args))
       (and (no (< (car args) (cadr args)))
            (apply >= (cdr args)))))
 
 (def whitec (c)
+"Is 'c' a whitespace char?"
   ($.char-whitespace? c))
 
 (def nonwhite (c)
+"Is 'c' a non-whitespace char?"
   (~whitec c))
 
 (def letter (c)
+"Is 'c' a letter?"
   ($.char-alphabetic? c))
 
 (def digit (c)
+"Is 'c' a digit?"
   ($.char-numeric? c))
 
 (def alphadig (c)
+"Is 'c' a latter or a digit?"
   (or letter.c digit.c))
 
 (def punc (c)
+"Is 'c' a punctuation char?"
   ($.char-punctuation? c))
 
 ; a version of readline that accepts both lf and crlf endings
@@ -1217,6 +1482,7 @@ Or come ask questions at http://arclanguage.org/forum"
 ; Arntzenius <daekharel@gmail.com>
 
 (def readline ((o str (stdin)))
+"Reads a string terminated by a newline from the stream 'str'."
   (awhen (readc str)
     (tostring
       ((afn (c)
@@ -1227,9 +1493,11 @@ Or come ask questions at http://arclanguage.org/forum"
        it))))
 
 (def readlines ((o str (stdin)))
+"Slurps contents of stream 'str' as a list of lines."
   (drain:readline str))
 
 (def sum (f xs)
+"Returns total of all elements in (map f xs)."
   (let n 0
     (each x xs (++ n (f x)))
     n))
@@ -1237,62 +1505,84 @@ Or come ask questions at http://arclanguage.org/forum"
 ; Could prob be generalized beyond printing.
 
 (def prall (elts (o init "") (o sep ", "))
+"Prints elements of list 'elts' prefixed with 'init' and separated by 'sep'.
+Returns 'elts'."
   (when elts
     (pr init (car elts))
     (map [pr sep _] (cdr elts))
     elts))
 
 (def prs args
+"Prints elements of list 'args' separated by spaces."
   (prall args "" #\space))
 
 (def dotted (x)
+"Is 'x' an _improper_ list terminating in something other than nil?
+Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
   (if (acons x)
     (and (cdr x) (or (~acons (cdr x))
                      (dotted (cdr x))))))
 
 (def fill-table (table data)
+"Populates 'table' with alternating keys and values in 'data'."
   (each (k v) (pair data) (= (table k) v))
   table)
 
 (def keys (h)
+"Returns list of keys in table 'h'."
   (accum a (each (k v) h (a k))))
 
 (def vals (h)
+"Returns list of values in table 'h'."
   (accum a (each (k v) h (a v))))
 
 (def tablist (h)
+"Converts table 'h' into an association list of (key value) pairs. Reverse of
+[[listtab]]."
   (accum a (maptable (fn args (a args)) h)))
 
 (def listtab (al)
+"Converts association list 'al' of (key value) pairs into a table. Reverse of
+[[tablist]]."
   (let h (table)
     (map (fn ((k v)) (= (h k) v))
          al)
     h))
 
 (mac obj args
+"Creates a table out of a list of alternating keys and values."
   `(listtab (list ,@(map (fn ((k v))
                            `(list ',k ,v))
                          (pair args)))))
 
 (def load-table (file (o eof))
+"Reads an association list from 'file' and turns it into a table."
   (w/infile i file (read-table i eof)))
 
 (def read-table ((o i (stdin)) (o eof))
+"Reads an association list from a stream 'i' (stdin by default) and turns it
+into a table."
   (let e (read i eof)
     (if (alist e) (listtab e) e)))
 
 (def load-tables (file)
+"Reads multiple association lists from 'file' and returns a corresponding list
+of tables."
   (w/infile i file
     (w/uniq eof
       (drain (read-table i eof) eof))))
 
 (def save-table (h file)
+"Writes table 'h' to 'file'."
   (writefile (tablist h) file))
 
 (def write-table (h (o o (stdout)))
+"Writes table as an association list to stream 'o' (stdout by default)."
   (write (tablist h) o))
 
 (def copy (x)
+"Creates a deep copy of 'x'. Future changes to any part of 'x' are guaranteed
+to be isolated from the copy."
   (if (atom x)
     x
     (cons (copy car.x)
@@ -1310,10 +1600,15 @@ Or come ask questions at http://arclanguage.org/forum"
     (each (k v) pair.args
       (= new.k v))))
 
+(document builtin shl (n m)
+"Shifts the binary twos-complement representation of 'n' left by 'm' bits.")
+
 (def shr (n m)
+"Shifts the binary twos-complement representation of 'n' right by 'm' bits."
   (shl n (- m)))
 
 (def abs (n)
+"Returns the absolute value of 'n'."
   (if (< n 0) (- n) n))
 
 ; The problem with returning a list instead of multiple values is that
@@ -1321,6 +1616,10 @@ Or come ask questions at http://arclanguage.org/forum"
 ; you only want the first.  Not a big problem.
 
 (def round (n)
+"Approximates a fractional value to the nearest integer.
+Exact halves are rounded down to the lower integer.
+Negative numbers are always treated exactly like their positive variants
+barring the sign."
   (withs (base (trunc n) rem (abs (- n base)))
     (if (> rem 1/2) ((if (> n 0) + -) base 1)
         (< rem 1/2) base
@@ -1328,23 +1627,29 @@ Or come ask questions at http://arclanguage.org/forum"
                     base)))
 
 (def roundup (n)
+"Like [[round]] but halves are rounded up rather than down."
   (withs (base (trunc n) rem (abs (- n base)))
     (if (>= rem 1/2)
       ((if (> n 0) + -) base 1)
       base)))
 
 (def nearest (n quantum)
+"Like [[round]] but generalized to arbitrary units."
   (* (roundup (/ n quantum)) quantum))
 
-(def avg (ns) (/ (apply + ns) (len ns)))
+(def avg (ns)
+"Returns the arithmetic mean of a list of numbers 'ns'."
+  (/ (apply + ns) (len ns)))
 
 (def med (ns (o test >))
+"Returns the median of a list of numbers 'ns' according to the comparison 'test'."
   ((sort test ns) (round (/ (len ns) 2))))
 
 ; Use mergesort on assumption that mostly sorting mostly sorted lists
 ; benchmark: (let td (n-of 10000 (rand 100)) (time (sort < td)) 1)
 
 (def sort (test seq)
+"Orders a list 'seq' by comparing its elements using 'test'."
   (if (alist seq)
     (mergesort test (copy seq))
     (coerce (mergesort test (coerce seq 'cons)) (type seq))))
@@ -1408,13 +1713,15 @@ Or come ask questions at http://arclanguage.org/forum"
               x)))))
 
 (def bestn (n f seq)
+"Returns a list of the top 'n' elements of 'seq' ordered by 'f'."
   (firstn n (sort f seq)))
 
 (def split (seq pos)
+"Partitions 'seq' at index 'pos'."
   (list (cut seq 0 pos) (cut seq pos)))
 
 (def split-at (s delim)
-  " Split string s at first instance of delimiter, dropping delimiter."
+"Partitions string s at first instance of delimiter, dropping delimiter."
   (iflet i (posmatch delim s)
     (list (cut s 0 i)
           (cut s (+ i len.delim)))
@@ -1424,6 +1731,7 @@ Or come ask questions at http://arclanguage.org/forum"
   (car:split-at s delim))
 
 (mac time (expr)
+"Runs 'expr', then prints the amount of time it took to do so."
   (w/uniq (t1 t2)
     `(let ,t1 (msec)
        (do1 ,expr
@@ -1431,16 +1739,20 @@ Or come ask questions at http://arclanguage.org/forum"
               (ero "time: " (- ,t2 ,t1) " msec."))))))
 
 (mac jtime (expr)
+"Like [[time]] but always returns 'ok'."
   `(do1 'ok (time ,expr)))
 
 (mac time10 (expr)
+"Like [[time]] but runs 'expr' 10 times."
   `(time (repeat 10 ,expr)))
 
 (def union (f xs ys)
   (+ xs (rem (fn (y) (some [f _ y] xs))
              ys)))
 
-(def number (n) (in (type n) 'int 'num))
+(def number (n)
+"Is 'n' a number?"
+  (in (type n) 'int 'num))
 
 (def since (t1) (- (seconds) t1))
 
@@ -1451,6 +1763,9 @@ Or come ask questions at http://arclanguage.org/forum"
 ; could use a version for fns of 1 arg at least
 
 (def cache (timef valf)
+"Converts a function 'valf' into a version that saves and reuses the results
+of calls for a certain time. For greater configurability the caching time is
+determined by calling 'timef' rather than directly passing in a number."
   (with (cached nil gentime nil)
     (fn ()
       (unless (and cached (< (since gentime) (timef)))
@@ -1468,52 +1783,67 @@ Or come ask questions at http://arclanguage.org/forum"
                             (fn () ,@body)))))
 
 (mac errsafe (expr)
+"Runs 'expr' and returns the result, or nil if there were any errors."
   `(on-err (fn (c) nil)
            (fn () ,expr)))
 
 (def safe-load-table (filename)
+"Loads a table from 'filename', or an empty table on any errors."
   (or (errsafe:load-table filename)
       (table)))
 
 (def ensure-dir (path)
+"Creates the directory 'path' if it doesn't exist."
   (unless (dir-exists path)
     (system (string "mkdir -p " path))))
 
 (def date ((o s (seconds)))
+"Converts time in seconds-since-epoch (now by default) into a list '(year month date)."
   (rev (nthcdr 3 (timedate s))))
 
 (def datestring ((o s (seconds)))
+"Converts time in seconds-since-epoch (now by default) into a string \"YYYY-MM-DD\"."
   (let (y m d) (date s)
     (string y "-" (if (< m 10) "0") m "-" (if (< d 10) "0") d)))
 
 (def count (test x)
+"Returns the number of elements of 'x' that pass 'test'."
   (with (n 0 testf (testify test))
     (each elt x
       (if (testf elt) (++ n)))
     n))
 
 (def ellipsize (str (o limit 80))
+"Trim string 'str' and append ellipses '...' if its length exceeds 'limit'."
   (if (<= (len str) limit)
     str
     (+ (cut str 0 limit) "...")))
 
 (def rand-elt (seq)
+"Returns a random element of 'seq'. See also [[rand-choice]]."
   (seq (rand (len seq))))
 
 (mac until (test . body)
+"Like [[while]], but negates 'test'; loops through 'body' as long as 'test' fails."
   `(while (no ,test) ,@body))
 
 (def before (x y seq (o i 0))
+"Does 'x' lie before 'y' in 'seq' (optionally starting from index 'i')?"
   (with (xp (pos x seq i) yp (pos y seq i))
     (and xp (or (no yp) (< xp yp)))))
 
 (def orf fns
+"Returns a function which calls all the functions in 'fns' on its args, and
+[[or]]s the results. ((orf f g) x y) <=> (or (f x y) (g x y))"
   (fn args
     ((afn (fs)
        (and fs (or (apply (car fs) args) (self (cdr fs)))))
      fns)))
 
 (def andf fns
+"Returns a function which calls all the functions in 'fns' on its args, and
+[[and]]s the results. For example, ((andf f g) x y) <=> (and (f x y) (g x y)).
+Simple syntax: f&g <=> (andf f g)"
   (fn args
     ((afn (fs)
        (if (no fs)       t
@@ -1522,13 +1852,21 @@ Or come ask questions at http://arclanguage.org/forum"
      fns)))
 
 (def atend (i s)
+"Is index 'i' at or past the end of sequence 's'?"
   (> i (- (len s) 2)))
 
 (def multiple (x y)
+"Is 'x' a multiple of 'y'?"
   (is 0 (mod x y)))
 
-(mac nor args `(no (or ,@args)))
-(mac nand args `(no (and ,@args)))
+(mac nor args
+"Computes args until one of them passes, then returns nil.
+Returns t if none of the args passes."
+  `(no (or ,@args)))
+(mac nand args
+"Computes args until one of them fails, then returns t.
+Returns nil if none of the args fails."
+  `(no (and ,@args)))
 
 ; Consider making the default sort fn take compare's two args (when do
 ; you ever have to sort mere lists of numbers?) and rename current sort
@@ -1538,6 +1876,8 @@ Or come ask questions at http://arclanguage.org/forum"
 ; as (compare > len).
 
 (def compare (comparer scorer)
+"Creates a function to score two args using 'scorer' and compare them using
+'comparer'. Often passed to [[sort]]."
   (fn (x y) (comparer (scorer x) (scorer y))))
 
 ; Cleaner thus, but may only ever need in 2 arg case.
@@ -1548,9 +1888,12 @@ Or come ask questions at http://arclanguage.org/forum"
 ; (def only (f g . args) (aif (apply g args) (f it)))
 
 (def only (f)
+"Transforms a function 'f' info a variant that runs only if its first arg is
+non-nil."
   (fn args (if (car args) (apply f args))))
 
 (mac conswhen (f x y)
+"Adds 'x' to the front of 'y' if 'x' satisfies test 'f'."
   (w/uniq (gf gx)
    `(with (,gf ,f ,gx ,x)
       (if (,gf ,gx) (cons ,gx ,y) ,y))))
@@ -1558,12 +1901,14 @@ Or come ask questions at http://arclanguage.org/forum"
 ; Could combine with firstn if put f arg last, default to (fn (x) t).
 
 (def retrieve (n f xs)
+"Returns the first 'n' elements of 'xs' that satisfy 'f'."
   (if (no n)                 (keep f xs)
       (or (<= n 0) (no xs))  nil
       (f (car xs))           (cons (car xs) (retrieve (- n 1) f (cdr xs)))
                              (retrieve n f (cdr xs))))
 
 (def dedup (xs)
+"Returns 'xs' with duplicate elements dropped."
   (with (h (table) acc nil)
     (each x xs
       (unless (h x)
@@ -1571,30 +1916,39 @@ Or come ask questions at http://arclanguage.org/forum"
         (set (h x))))
     (rev acc)))
 
-(def single (x) (and (acons x) (no (cdr x))))
+(def single (x)
+"Is 'x' a list with just one element?"
+  (and (acons x) (no (cdr x))))
 
 (def intersperse (x ys)
+"Inserts 'x' between the elements of 'ys'."
   (and ys (cons (car ys)
                 (mappend [list x _] (cdr ys)))))
 
 (def counts (seq)
+"Returns a table with counts of each unique element in 'seq'."
   (ret ans (table)
     (each x seq
       (++ (ans x 0)))))
 
 (def commonest (seq)
+"Returns the most common element of 'seq' and the number of times it occurred
+in 'seq'."
   (best (compare > counts.seq) seq))
 
 (def sort-by-commonest (seq (o f idfn))
+"Reorders 'seq' with most common elements first."
   (let h (counts:map f seq)
     (sort (compare > h:f) seq)))
 
 (def reduce (f xs)
+"Accumulates elements of 'xs' using binary function 'f'."
   (if (cddr xs)
     (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
     (apply f xs)))
 
 (def rreduce (f xs)
+"Like [[reduce]] but accumulates elements of 'xs' in reverse order."
   (if (cddr xs)
     (f (car xs) (rreduce f (cdr xs)))
     (apply f xs)))
@@ -1619,12 +1973,15 @@ Or come ask questions at http://arclanguage.org/forum"
            (a (coerce (rev chars) 'string))))))
 
   (mac prf (str . args)
+  "Prints 'str' interpolating #exprs and replacing instances of \"~* with
+successive elements of 'args'."
     `(let ,argsym (list ,@args)
        (pr ,@(parse-format str))))
 )
 
 (wipe load-file-stack*)
 (def load (file)
+"Successively reads and runs all expressions in 'file'."
   (push current-load-file* load-file-stack*)
   (= current-load-file* file)
   (after (w/infile f file
@@ -1637,12 +1994,14 @@ Or come ask questions at http://arclanguage.org/forum"
   (and (number x) (> x 0)))
 
 (mac w/table (var . body)
+"Runs 'body' to add to table 'var' and finally return it."
   `(let ,var (table) ,@body ,var))
 
 (def median (ns)
   ((sort > ns) (trunc (/ (len ns) 2))))
 
 (mac noisy-each (n var val . body)
+"Like [[each]] but print a progress indicator every 'n' iterations."
   (w/uniq (gn gc)
     `(with (,gn ,n ,gc 0)
        (each ,var ,val
@@ -1655,9 +2014,11 @@ Or come ask questions at http://arclanguage.org/forum"
        (flushout))))
 
 (mac catch body
+"Runs 'body', but any call to (throw x) immediately returns x."
   `(point throw ,@body))
 
 (def downcase (x)
+"Converts 'x' to lowercase."
   (let downc (fn (c)
                (let n (coerce c 'int)
                  (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
@@ -1670,6 +2031,7 @@ Or come ask questions at http://arclanguage.org/forum"
              (err "Can't downcase" x))))
 
 (def upcase (x)
+"Converts 'x' to uppercase."
   (let upc (fn (c)
              (let n (coerce c 'int)
                (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
@@ -1687,17 +2049,20 @@ Or come ask questions at http://arclanguage.org/forum"
   (coerce (+ (coerce x 'int) n) (type x)))
 
 (def range (start end)
+"Returns the list of integers from 'start' to 'end' (both inclusive)."
   (if (> start end)
     nil
     (cons start (range (inc start) end))))
 
 (def mismatch (s1 s2)
+"Returns the first index where 's1' and 's2' do not match."
   (catch
     (on c s1
       (when (isnt c (s2 index))
         (throw index)))))
 
 (def memtable ((o keys nil) (o val t))
+"Turns a list into a table indicating membership of all elements."
   (let tbl (table)
     (each key keys (= tbl.key
                       val))
@@ -1706,6 +2071,8 @@ Or come ask questions at http://arclanguage.org/forum"
 (= bar* " | ")
 
 (mac w/bars body
+"Assumes each expression in 'body' will print something, and intersperses them
+with '|'s."
   (w/uniq (out needbars)
     `(let ,needbars nil
        (do ,@(map (fn (e)
@@ -1722,10 +2089,20 @@ Or come ask questions at http://arclanguage.org/forum"
 (def len> (x n) (> (len x) n))
 
 (mac thread body
+"Concurrently run expressions in 'body', returning an id that can be used to
+check their progress, interrupt them, etc.
+
+Creating multiple threads doesn't currently cause arc to use more than one
+processor. See http://docs.racket-lang.org/guide/concurrency.html. Programs
+will still speed up while waiting for keyboard input, reading/writing files,
+or communicating over the network."
   `(new-thread (fn () ,@body)))
 (def kill-thread (th)
+"Abruptly interrupt a [[thread]] of concurrently running expressions given its id."
   (atomic ($:kill-thread th)))
 (def break-thread (th)
+"Politely tries to interrupt a [[thread]] of concurrently running expressions
+when it's ready to be interrupted."
   (atomic ($:break-thread th)))
 
 (def thread-send (thd v)
@@ -1741,6 +2118,9 @@ Or come ask questions at http://arclanguage.org/forum"
   ($ (path->string (make-temporary-file (string-append prefix ".~a")))))
 
 (mac trav (x . fs)
+"Traverses 'x', applying each function in 'fs' to it and to every sub-part
+(sublist, subtree, etc.). Functions can also explicitly recurse by calling
+'self'."
   (w/uniq g
     `((afn (,g)
         (when ,g
@@ -1786,6 +2166,7 @@ Or come ask questions at http://arclanguage.org/forum"
 
 ; most types need define just len
 (def empty (seq)
+"Is 'seq' an empty container? Usually checks 'seq's [[len]]."
   (iso 0 len.seq))
 
 ; optimization: empty list nil is of type sym
@@ -1934,9 +2315,11 @@ Or come ask questions at http://arclanguage.org/forum"
     (/ (count test xs) (len xs))))
 
 (def butlast (x)
+"Returns all elements of 'x' except the last."
   (cut x 0 (- (len x) 1)))
 
 (mac between (var expr within . body)
+"Like [[each]] but run 'within' between iterations."
   (w/uniq first
     `(let ,first t
        (each ,var ,expr
@@ -1962,8 +2345,6 @@ Or come ask questions at http://arclanguage.org/forum"
   (load (+ string.f ".arc")))
 
 (wipe current-load-file*)
-
-(load "help/arc.arc")
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from

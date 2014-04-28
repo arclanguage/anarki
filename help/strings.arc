@@ -1,3 +1,7 @@
+(mac doclist args
+  `(= ,@(mappend (fn ((name doc)) `((help* ',name) ,doc))
+                 (pair args))))
+
 (doclist
   tokens
   " Splits `s' into tokens using `sep' (a character or predicate) as separator.
