@@ -8,6 +8,9 @@
 ;"\u0085"
 
 (def tokens (s (o sep whitec))
+"Breaks up the string 's' at characters matching the predicate 'sep'
+(whitespace by default). Continuous runs of such characters count as a single
+separation; no empty strings are returned."
   (let test testify.sep
     (rev:map [coerce _ 'string]
              (map rev
@@ -24,6 +27,7 @@
 ; maybe promote to arc.arc, but if so include a list clause
 
 (def positions (test seq)
+"Returns all the indices in 'seq' at which 'test' passes."
   (accum yield
     (let f testify.test
       (forlen i seq
@@ -31,10 +35,14 @@
           (yield i))))))
 
 (def lines (s)
+"Breaks up a multi-line string into lines, respecting either newlines or CRLF
+sequences."
   (map [rem #\return _]
        (slices s #\newline)))
 
 (def slices (s test)
+"Like [[tokens]] but creates a new string at every character matching 'test',
+creating empty strings as necessary."
   (accum yield
     (loop (p  -1
            ps  (positions test s))
@@ -55,6 +63,8 @@
 ; Fixed for utf8 by pc.
 
 (def urldecode (s)
+"Reverse [[urlencode]], replacing runs of encoded %sequences with
+corresponding (potentially multibyte) characters."
  (tostring
   (forlen i s
     (caselet c (s i)
@@ -64,9 +74,10 @@
               (++ i 2))
           (writec c)))))
 
-; should behave just like javascript's encodeURIComponent
 ; http://stackoverflow.com/questions/9635661/encodeuricomponent-algorithm-source-code
 (def urlencode (s)
+"Encode string 's' using only characters permitted in urls according to the http spec.
+Should behave just like javascript's encodeURIComponent."
   (tostring
     (each code-point (utf-8-bytes s)
       (let c (coerce code-point 'char)
@@ -82,6 +93,7 @@
   (pr (coerce i 'string 16)))
 
 (def posmatch (pat seq (o start 0))
+"Returns the first index after 'start' where substring 'pat' is found in 'seq'."
   (catch
     (if (isa pat 'fn)
       (up i start len.seq
@@ -93,6 +105,7 @@
     nil))
 
 (def headmatch (pat seq (o start 0))
+"Does 'seq' contain 'pat' at index 'start'?"
   (when (>= len.seq
             (+ start len.pat))
     (loop (i 0 j start)
@@ -101,14 +114,15 @@
             (recur inc.i inc.j))))))
 
 (def endmatch (pat seq)
+"Does 'seq' end with 'pat'?"
   (headmatch rev.pat rev.seq))
 
 (defextend rev (x)  (isa x 'string)
   (as string (rev:as cons x)))
 
 (def begins (seq pat (o start 0))
-  (unless (> len.pat (- len.seq start))
-    (headmatch pat seq start)))
+"Like [[headmatch]] but with 'seq' and 'pat' reversed."
+  (headmatch pat seq start))
 
 (defextend subst (old new seq) (isa seq 'string)
   (tostring
@@ -120,6 +134,7 @@
         (pr seq.i)))))
 
 (def multisubst (pairs seq)
+"For each (old new) pair in 'pairs', substitute 'old' with 'new' in 'seq'."
   (tostring
     (forlen i seq
       (iflet (old new) (find [begins seq (car _) i] pairs)
@@ -127,17 +142,23 @@
             (pr new))
         (pr seq.i)))))
 
-(def blank (s) (~find ~whitec s))
+(def blank (s)
+"Is 's' empty or all whitespace?"
+  (~find ~whitec s))
 
-(def nonblank (s) (unless blank.s s))
+(def nonblank (s)
+"Returns string 's' unless it's blank."
+  (unless blank.s s))
 
 (def trim (s (o where 'both) (o test whitec))
+"Strips out characters matching 'test' from front/start/begin of 's',
+back/finish/end, or both."
   (withs (f   testify.test
           p1  (pos ~f s))
     (if p1
       (cut s
-           (if (in where 'front 'both) p1 0)
-           (when (in where 'end 'both)
+           (if (in where 'front 'start 'begin 'both) p1 0)
+           (when (in where 'back 'finish 'end 'both)
              (let i (- len.s 1)
                (while (and (> i p1) (f s.i))
                  (-- i))
@@ -145,6 +166,8 @@
       "")))
 
 (def num (n (o digits 2) (o trail-zeros nil) (o init-zero nil))
+"Formats 'n' as a string with the appropriate 'digits' of precision, padding
+trailing zeros and an initial zero before the decimal as desired."
   (withs (comma
           (fn (i)
             (rev:string:intersperse #\,
@@ -188,6 +211,7 @@
 ; English
 
 (def pluralize (n str (o plural-form))
+"Returns plural form of 'str' if 'n' is not 1."
   (if (is n 1)
     str
     (or plural-form
@@ -220,6 +244,7 @@
 (= re-subst $.regexp-replace)
 
 (def plural (n x (o plural-form))
+"Returns a phrase like \"3 apples\", [[pluralize]]ing depending on 'n'."
   (string n #\space (pluralize n x plural-form)))
 
 (def capitalize (str)
@@ -232,8 +257,6 @@
            #\newline)
     (cut s 0 (- len.s 1))
     s))
-
-(load "help/strings.arc")
 
 ; http://www.eki.ee/letter/chardata.cgi?HTML4=1
 ; http://jrgraphix.net/research/unicode_blocks.php?block=1
