@@ -93,12 +93,12 @@
     nil))
 
 (def headmatch (pat seq (o start 0))
-  (let p len.pat
-    ((afn (i)
-       (or (is i p)
-           (and (is pat.i (seq (+ i start)))
-                (self (+ i 1)))))
-     0)))
+  (when (>= len.seq
+            (+ start len.pat))
+    (loop (i 0 j start)
+      (or (is i len.pat)
+          (when (iso pat.i seq.j)
+            (recur inc.i inc.j))))))
 
 (def endmatch (pat seq)
   (headmatch rev.pat rev.seq))
