@@ -16,15 +16,14 @@
     (atomic (unless (is 0 q.2) (-- q.2))
             (pop q.0))))
 
-(def qlen (q) (rep.q 2))
+(defextend len (q) (isa q 'queue)
+  rep.q.2)
 
-(defextend len (x) (isa x 'queue)
-  (qlen x))
-
-(def qlist (q) (car rep.q))
+(defcoerce cons queue (q)
+  rep.q.0)
 
 (def enq-limit (val q (o limit 1000))
   (atomic
-     (unless (< (qlen q) limit)
+     (unless (< len.q limit)
        (deq q))
      (enq val q)))

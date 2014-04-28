@@ -2587,7 +2587,7 @@ first asterisk isn't whitespace.
 (adop goodlogins () (logins-page good-logins*))
 
 (def logins-page (source)
-  (sptab (each (time ip user) (firstn 100 (rev (qlist source)))
+  (sptab (each (time ip user) (firstn 100 (rev (as list source)))
            (row time ip user))))
 
 
@@ -2599,9 +2599,9 @@ first asterisk isn't whitespace.
     (spacerow 10)
     (each name (sort < newsop-names*)
       (tr (td name)
-          (let ms (only.avg (qlist (optimes* name)))
+          (let ms (only.avg (as list (optimes* name)))
             (tdr:prt (only.round ms))
-            (tdr:prt (only.med (qlist (optimes* name))))
+            (tdr:prt (only.med (as list (optimes* name))))
             (let n (opcounts* name)
               (tdr:prt n)
               (tdr:prt (and n (round (/ (* n ms) 1000))))))))))
