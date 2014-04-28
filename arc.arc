@@ -1856,8 +1856,8 @@ Simple syntax: f&g <=> (andf f g)"
 
 (def before (x y seq (o i 0))
 "Does 'x' lie before 'y' in 'seq' (optionally starting from index 'i')?"
-  (with (xp (pos x seq i) yp (pos y seq i))
-    (and xp (or (no yp) (< xp yp)))))
+  (aand (pos (orf testify.x testify.y) seq)
+        (iso x seq.it)))
 
 (def atend (i s)
 "Is index 'i' at or past the end of sequence 's'?"
