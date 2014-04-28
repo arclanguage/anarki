@@ -1045,9 +1045,9 @@ a list of the results."
 ;        (apply (rep op) (cdr e))
 ;        e))))
 
-(def consif (x y)
-"Like [[cons]] on 'x' and 'y' unless 'x' is nil."
-  (if x (cons x y) y))
+(def consif (x xs)
+"Like [[cons]] on 'x' and 'xs' unless 'x' is nil."
+  (if x (cons x xs) xs))
 
 (def flat x
 "Flattens a list of lists."
