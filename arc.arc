@@ -885,16 +885,16 @@ place2 to place1, and place1 to place3."
          (do1 (car ,g)
               (,setter (cdr ,g)))))))
 
-(def adjoin (x xs (o test iso))
-  (if (some [test x _] xs)
+(def adjoin (x xs)
+  (if (some x xs)
     xs
     (cons x xs)))
 
-(mac pushnew (x place . args)
+(mac pushnew (x place)
 "Like [[push]] but first checks if 'x' is already present in 'place'."
   (let (binds val setter) (setforms place)
     `(atwiths ,binds
-       (,setter (adjoin ,x ,val ,@args)))))
+       (,setter (adjoin ,x ,val)))))
 
 (mac pull (test place)
 "Removes all elements from 'place' that satisfy 'test'."
@@ -902,13 +902,13 @@ place2 to place1, and place1 to place3."
     `(atwiths ,binds
        (,setter (rem ,test ,val)))))
 
-(mac togglemem (x place . args)
+(mac togglemem (x place)
   (w/uniq gx
     (let (binds val setter) (setforms place)
       `(atwiths ,(+ (list gx x) binds)
          (,setter (if (mem ,gx ,val)
                     (rem ,gx ,val)
-                    (adjoin ,gx ,val ,@args)))))))
+                    (adjoin ,gx ,val)))))))
 
 (mac ++ (place (o i 1))
 "Increments 'place' by 'i' (1 by default)."
