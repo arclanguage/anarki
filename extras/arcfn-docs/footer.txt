@@ -1,4 +1,0 @@
-<p>
-Copyright 2008 Ken Shirriff.
-</body>
-</html>

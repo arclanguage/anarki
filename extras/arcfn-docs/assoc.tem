@@ -1,8 +1,0 @@
-(page "Association lists"
-(newtable "Association lists"
-(import "docs/assoc0.html")
-
-(def alref "al key" "Looks up <code>key</code> in association list <code>al</code>.  Returns the value or <code>nil</code>." (tests (alref '((k1 v1) (k2 v2)) 'k1) (alref '((k1 v1) (k2 v2)) 'foo) ))
-(def assoc "key al" "Looks up <code>key</code> in association list <code>al</code>.  Returns the key/value pair or <code>nil</code>.  Note that <code>assoc</code> and <code>alref</code> reverse the order of the arguments." (tests (assoc 'k1 '((k1 v1) (k2 v2))) (assoc 'foo '((k1 v1) (k2 v2)))))
-)
-)
