@@ -220,13 +220,10 @@
 ; because people try e.g. item?id=363/blank.php
 
 (def safe-item (id)
-  (ok-id&item (if (isa id 'string) (saferead id) id)))
+  (ok-id&item (if (isa id 'string) (errsafe:read id) id)))
 
 (def ok-id (id)
   (and (exact id) (<= 1 id maxid*)))
-
-(def arg->item (req key)
-  (safe-item:saferead (arg req key)))
 
 (def live (i) (nor i!dead i!deleted))
 
@@ -1098,7 +1095,7 @@ function vote(node) {
 
 (newsop vote (by for dir auth whence)
   (with (i      (safe-item for)
-         dir    (saferead dir)
+         dir    (errsafe:read dir)
          whence (if whence (urldecode whence) "news"))
     (if (no i)
          (pr "No such item.")
@@ -1551,7 +1548,7 @@ function vote(node) {
 (defmemo sitename (url)
   (and (valid-url url)
        (let toks (parse-site (rem #\space url))
-         (if (isa (saferead (car toks)) 'int)
+         (if (isa (errsafe:read (car toks)) 'int)
            (tostring (prall toks "" "."))
            (let (t1 t2 t3 . rest) toks
              (if (and (~in t3 nil "www")
@@ -2587,7 +2584,7 @@ first asterisk isn't whitespace.
 (adop goodlogins () (logins-page good-logins*))
 
 (def logins-page (source)
-  (sptab (each (time ip user) (firstn 100 (rev (qlist source)))
+  (sptab (each (time ip user) (firstn 100 (rev (as list source)))
            (row time ip user))))
 
 
@@ -2599,9 +2596,9 @@ first asterisk isn't whitespace.
     (spacerow 10)
     (each name (sort < newsop-names*)
       (tr (td name)
-          (let ms (only.avg (qlist (optimes* name)))
+          (let ms (only.avg (as list (optimes* name)))
             (tdr:prt (only.round ms))
-            (tdr:prt (only.med (qlist (optimes* name))))
+            (tdr:prt (only.med (as list (optimes* name))))
             (let n (opcounts* name)
               (tdr:prt n)
               (tdr:prt (and n (round (/ (* n ms) 1000))))))))))

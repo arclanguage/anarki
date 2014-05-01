@@ -34,4 +34,10 @@
             (insert (list args result)))))))
 
 (mac def-lru (name params capacity . body)
-  `(safeset ,name (lru ,capacity (fn ,params ,@body))))
+  `(do (warn-if-bound ,name)
+       (document def-lru ,name ,params
+                   ,@(let newdoc (string "Caches last " capacity " unique calls.")
+                       (if (is (type car.body) 'string)
+                         (cons (+ car.body "\n" newdoc) cdr.body)
+                         (cons newdoc body))))
+       (assign ,name (lru ,capacity (fn ,params ,@body)))))

@@ -1,6 +1,7 @@
 (= templates* (table))
 
 (mac deftem (tem . fields)
+"Defines a _template_, a table with defaults defined for various keys."
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
     `(= (templates* ',name)
         (+ (mappend templates* ',(rev includes))
@@ -16,6 +17,8 @@
 
 ; (tagged 'tem (tem-type fields nils))
 (def inst (tem-type . args)
+"Instantiates a table with the given 'args', setting defaults for missing keys
+from template 'tem-type'."
   (annotate 'tem (list tem-type
                        (let default-vals (map (fn ((k v))
                                            (list k (v)))

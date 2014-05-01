@@ -1,7 +1,10 @@
 (def queue ()
+"A queue is like a list but with efficient insertion in one end and deletion
+in the other."
   (annotate 'queue (list nil nil 0)))
 
 (def enq (obj qq)
+"Insert 'obj' into queue 'qq'."
   (let q rep.qq
     (atomic
       (++ q.2)
@@ -12,19 +15,20 @@
       q.0)))
 
 (def deq (qq)
+"Delete last element from queue 'qq' and return it."
   (let q rep.qq
     (atomic (unless (is 0 q.2) (-- q.2))
             (pop q.0))))
 
-(def qlen (q) (rep.q 2))
+(defextend len (q) (isa q 'queue)
+  rep.q.2)
 
-(defextend len (x) (isa x 'queue)
-  (qlen x))
-
-(def qlist (q) (car rep.q))
+(defcoerce cons queue (q)
+  rep.q.0)
 
 (def enq-limit (val q (o limit 1000))
+"Like [[enq]], but never let the queue 'q' grow larger than 'limit'."
   (atomic
-     (unless (< (qlen q) limit)
+     (unless (< len.q limit)
        (deq q))
      (enq val q)))

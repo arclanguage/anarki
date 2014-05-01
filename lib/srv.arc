@@ -224,7 +224,7 @@
   (and (only.> (requests/ip* ip) 250)
        (let now (seconds)
          (do1 (if (req-times* ip)
-                (and (>= (qlen (req-times* ip))
+                (and (>= (len req-times*.ip)
                          (if (throttle-ips* ip) 1 req-limit*))
                      (let dt (- now (deq (req-times* ip)))
                        (if (< dt dos-window*) (set (ignore-ips* ip)))

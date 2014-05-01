@@ -93,7 +93,9 @@
   (parse-multipart-args "--abc" (instring "\r\n--abc\r\nContent-Disposition: form-data; name=\"a\"\r\n\r\n34\r\n--abc\r\nContent-Disposition: form-data; name=\"b\"\r\n\r\n\x80\r\n--abc--\r\n")))
 
 ; just checks for errors at the moment
+; absolutely no sandboxing for production data so far
 (wipe ranked-stories*)
+(ensure-dir logdir*)
 (def run-request (msg input-string)
   (prn "- " msg)
   (tostring

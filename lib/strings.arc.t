@@ -86,6 +86,7 @@
        (suite headmatch
               matches-at-head (assert-t (headmatch "abc" "abcde"))
               fails-elsewhere (assert-nil (headmatch "abc" "xabcde"))
+              works-with-empty-string (assert-nil (headmatch "abc" ""))
               passes-at-explicitly-provided-index (assert-t (headmatch "abc" "xabcde" 1))
               works-with-lists-of-chars (assert-t (headmatch '(#\a #\b #\c) "abcde"))
               matches-lists-against-lists (assert-t (headmatch '(#\a #\b) '(#\a #\b #\c))))
@@ -93,6 +94,7 @@
        (suite endmatch
               passes-at-end (assert-t (endmatch "cde" "abcde"))
               fails-elsewhere (assert-nil (endmatch "abc" "abcde"))
+              works-with-empty-string (assert-nil (endmatch "abc" ""))
               works-with-lists-of-chars (assert-t (endmatch '(#\c #\d #\e) "abcde")))
 
        (suite rev
