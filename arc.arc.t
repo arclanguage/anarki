@@ -17,3 +17,36 @@
        returns-final-form (assert-same 34
                                        (let x 1
                                             (do ++.x ++.x 34))))
+
+(suite ssyntax
+       ssyntax? (assert-nil ($.ssyntax? 'car))
+
+       infix (assert-t ($.ssyntax? 'car.body))
+
+       expand-ssyntax-infix (assert-same '(car body)
+                                         ($.expand-ssyntax 'car.body))
+
+       ssyntax?-!-prefix (assert-t ($.ssyntax? '!a))
+
+       expand-ssyntax-!-prefix (assert-same '(get 'a)
+                                            ($.expand-ssyntax '!a))
+
+       ssyntax?-!-infix (assert-t ($.ssyntax? 'car!body))
+
+       expand-ssyntax-!-infix (assert-same '(car 'body)
+                                           ($.expand-ssyntax 'car!body))
+
+       ssyntax?-:-infix (assert-t ($.ssyntax? 'f:g))
+
+       expand-ssyntax-:-infix (assert-same '(compose f g)
+                                           ($.expand-ssyntax 'f:g))
+
+       ssyntax?-~-prefix (assert-t ($.ssyntax? '~f))
+
+       expand-ssyntax-~-prefix (assert-same '(complement f)
+                                            ($.expand-ssyntax '~f))
+
+       ssyntax?-&-infix (assert-t ($.ssyntax? 'f&g))
+
+       expand-ssyntax-&-infix (assert-same '(andf f g)
+                                           ($.expand-ssyntax 'f&g)))
