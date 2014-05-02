@@ -129,3 +129,8 @@
                                          (mem 6 '(2 4 5 6 . 7)))
        improper-list-element-in-cdr (assert-same 6
                                                  (mem 6 '(2 4 5 . 6))))
+
+(suite some
+       improper-list-element-in-car (assert-t (some odd '(2 4 5 . 6)))
+       improper-list-element-in-cdr (assert-t (some 6 '(2 4 5 . 6)))
+       improper-list-element-doesnt-exist (assert-nil (some 7 '(2 4 5 . 6))))
