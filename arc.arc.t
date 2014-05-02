@@ -134,3 +134,14 @@
        improper-list-element-in-car (assert-t (some odd '(2 4 5 . 6)))
        improper-list-element-in-cdr (assert-t (some 6 '(2 4 5 . 6)))
        improper-list-element-doesnt-exist (assert-nil (some 7 '(2 4 5 . 6))))
+
+(suite pushnew
+       improper-list-new-element (assert-same '(2 . 3)
+                                              (ret x 3
+                                                   (pushnew 2 x)))
+       improper-list-element-already-exists (assert-same 3
+                                                         (ret x 3
+                                                              (pushnew 3 x)))
+       nil-can-be-pushed (assert-same '(nil 3)
+                                      (ret x '(3)
+                                           (pushnew nil x))))
