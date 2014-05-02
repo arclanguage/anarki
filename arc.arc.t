@@ -68,3 +68,23 @@
 
 (suite coerce
        nil-to-cons (assert-nil (as cons nil)))
+
+(suite-w/setup copy
+               (old-list '(1 2 3)
+                list-copy (copy old-list)
+                old-string "abc"
+                string-copy (copy old-string)
+                old-table (obj a 1 b 2)
+                table-copy (copy old-table))
+               list-copies-are-same (assert-same old-list
+                                                 list-copy)
+               copy-list-returns-new-list (assert-nil (is old-list
+                                                          list-copy))
+               string-copies-are-same (assert-same old-string
+                                                   string-copy)
+               copy-string-returns-new-string (assert-nil ($.eq? old-string
+                                                                 string-copy)) ; ugly that string copies are 'is' each other
+               table-copies-are-same (assert-same old-table
+                                                  table-copy)
+               copy-table-returns-new-table (assert-nil (is old-table
+                                                            table-copy)))
