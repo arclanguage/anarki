@@ -120,3 +120,12 @@
        improper-list-exists-in-last-position (assert-same 'c
                                                           (find 'c '(a b . c)))
        improper-list-element-doesnt-exist (assert-nil (find 'd '(a b . c))))
+
+(suite mem
+       element-exists (assert-same '(6 7)
+                                   (mem 6 '(2 4 5 6 7)))
+       element-doesnt-exist (assert-nil (mem 6 '(2 4 5 7)))
+       improper-list-element-in-car (assert-same '(6 . 7)
+                                         (mem 6 '(2 4 5 6 . 7)))
+       improper-list-element-in-cdr (assert-same 6
+                                                 (mem 6 '(2 4 5 . 6))))
