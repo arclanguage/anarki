@@ -145,3 +145,15 @@
        nil-can-be-pushed (assert-same '(nil 3)
                                       (ret x '(3)
                                            (pushnew nil x))))
+
+(suite map
+       one-list (assert-same '(2 4 6)
+                             (map [* _ 2] '(1 2 3)))
+       multiple-lists (assert-same '(1 4 9)
+                                   (map * '(1 2 3) '(1 2 3)))
+       one-string (assert-same "mno"
+                               (map (obj #\a #\m #\b #\n #\c #\o)
+                                    "abc"))
+       multiple-strings (assert-same "dahe"
+                                     (map (fn (a b) (min a b))
+                                          "dave" "john")))
