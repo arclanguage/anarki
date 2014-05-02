@@ -96,3 +96,27 @@
                                    (len '(1 2 . 3)))
        symbols (assert-same 0
                             (len 'a)))
+
+(suite find
+       list-element-exists (assert-same #\b
+                                        (find #\b '(#\a #\b #\c)))
+       list-element-doesnt-exist (assert-nil (find #\d '(#\a #\b #\c)))
+       arbitrary-predicate-finds-single-element (assert-same 34
+                                                             (find even '(34)))
+       arbitrary-predicate-no-match-single-element (assert-nil (find even '(35)))
+       arbitrary-predicate-finds-in-car (assert-same 34
+                                                     (find even '(34 35)))
+       arbitrary-predicate-finds-in-cdr (assert-same 34
+                                                     (find even '(33 34)))
+       arbitrary-predicate-finds-in-middle-of-list (assert-same 34
+                                                                (find even '(33 34 35)))
+       returns-first-match (assert-same 34
+                                        (find even '(34 35 36)))
+       string-element-exists (assert-same #\b
+                                          (find #\b "abc"))
+       string-element-doesnt-exist (assert-nil (find #\d "abc"))
+       improper-list-exists (assert-same 'a
+                                         (find 'a '(a b . c)))
+       improper-list-exists-in-last-position (assert-same 'c
+                                                          (find 'c '(a b . c)))
+       improper-list-element-doesnt-exist (assert-nil (find 'd '(a b . c))))
