@@ -65,3 +65,6 @@
                                         (acc i)
                                         (if (> i 2) (continue))
                                         (acc 'x)))))
+
+(suite coerce
+       nil-to-cons (assert-nil (as cons nil)))
