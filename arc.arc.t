@@ -50,3 +50,18 @@
 
        expand-ssyntax-&-infix (assert-same '(andf f g)
                                            ($.expand-ssyntax 'f&g)))
+
+(suite for-goto
+       break (assert-same '(1 x 2 x 3)
+                          (accum acc
+                                 (up i 1 6
+                                     (acc i)
+                                     (if (> i 2) (break))
+                                     (acc 'x))))
+
+       continue (assert-same '(1 x 2 x 3 4 5)
+                             (accum acc
+                                    (up i 1 6
+                                        (acc i)
+                                        (if (> i 2) (continue))
+                                        (acc 'x)))))
