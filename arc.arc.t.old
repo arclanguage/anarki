@@ -1,15 +1,3 @@
-(test-iso "len works on lists"
-  3
-  (len '(1 2 3)))
-
-(test-iso "len of syms is 0"
-  0
-  (len 'a))
-
-(test-iso "len works on improper lists"
-  3
-  (len '(1 2 . 3)))
-
 (test-iso "find works on lists"
   #\b
   (find #\b '(#\a #\b #\c)))

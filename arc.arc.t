@@ -88,3 +88,11 @@
                                                   table-copy)
                copy-table-returns-new-table (assert-nil (is old-table
                                                             table-copy)))
+
+(suite len
+       lists (assert-same 3
+                          (len '(1 2 3)))
+       improper-lists (assert-same 3
+                                   (len '(1 2 . 3)))
+       symbols (assert-same 0
+                            (len 'a)))
