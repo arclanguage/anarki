@@ -157,3 +157,12 @@
        multiple-strings (assert-same "dahe"
                                      (map (fn (a b) (min a b))
                                           "dave" "john")))
+(suite subst
+       lists (assert-same '(2 2 3)
+                          (subst 1 2 '(1 2 3)))
+       old-arg-can-be-a-function (assert-same '(2 2 2 (4 2 . 6) . 2)
+                                              (rep:subst atom&odd 2 (tree '(1 2 3 (4 5 . 6) . 7))))
+       new-arg-can-be-a-function (assert-same '(2 2 4 (4 6 . 6) . 8)
+                                              (rep:subst atom&odd [+ _ 1] (tree '(1 2 3 (4 5 . 6) . 7))))
+       can-replace-subtrees (assert-same '((3 4) (5 6))
+                                         (rep:subst '(1 2) '(3 4) (tree '((1 2) (5 6))))))
