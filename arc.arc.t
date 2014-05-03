@@ -200,3 +200,16 @@
        returns-t-when-second-is-absent (assert-t (before 3 5 '(1 2 3 4)))
        returns-nil-when-first-is-absent (assert-nil (before 5 3 '(1 2 3 4)))
        returns-nil-when-both-are-absent (assert-nil (before 6 5 '(1 2 3 4))))
+
+(suite serialize
+       nil (assert-nil (serialize ()))
+       lists (assert-same '(1 2 3)
+                          (serialize '(1 2 3)))
+       strings (assert-same "abc"
+                            (serialize "abc"))
+       tables (assert-same '(tagged table ((3 4) (1 2)))
+                           (serialize (obj 1 2 3 4)))
+       tables-inside-lists (assert-same '(1 (tagged table ()) 2 3)
+                                        (serialize `(1 ,(table) 2 3)))
+       nested-tables (assert-same '(tagged table ((2 3) (1 (tagged table ()))))
+                                  (serialize (obj 1 (table) 2 3))))
