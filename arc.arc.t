@@ -213,3 +213,18 @@
                                         (serialize `(1 ,(table) 2 3)))
        nested-tables (assert-same '(tagged table ((2 3) (1 (tagged table ()))))
                                   (serialize (obj 1 (table) 2 3))))
+
+(suite deserialize
+       nil (assert-nil (unserialize:serialize ()))
+       lists (assert-same '(1 2 3)
+                          (unserialize:serialize '(1 2 3)))
+       strings (assert-same "abc"
+                            (unserialize:serialize "abc"))
+       empty-tables (assert-same (table)
+                                 (unserialize:serialize (table)))
+       full-tables (assert-same (obj 1 2 3 4)
+                                (unserialize:serialize (obj 1 2 3 4)))
+       tables-inside-lists (assert-same `(1 ,(table) 2 3)
+                                        (unserialize:serialize `(1 ,(table) 2 3)))
+       nested-tables (assert-same (obj 1 (table) 2 3)
+                                  (unserialize:serialize (obj 1 (table) 2 3))))
