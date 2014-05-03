@@ -166,3 +166,24 @@
                                               (rep:subst atom&odd [+ _ 1] (tree '(1 2 3 (4 5 . 6) . 7))))
        can-replace-subtrees (assert-same '((3 4) (5 6))
                                          (rep:subst '(1 2) '(3 4) (tree '((1 2) (5 6))))))
+(suite cut
+       finds-element-in-string (assert-same '(3 4 5)
+                                            (cut '(1 2 3 4 5) 2))
+       respects-end-index-in-list (assert-same '(3 4)
+                                               (cut '(1 2 3 4 5) 2 4))
+       end-index-at-end-of-list-works (assert-same '(3 4 5)
+                                                   (cut '(1 2 3 4 5) 2 5))
+       end-index-beyond-end-of-list-works (assert-same '(3 4 5)
+                                                       (cut '(1 2 3 4 5) 2 6))
+       negative-end-index-in-list-is-ok (assert-same '(3 4)
+                                                     (cut '(1 2 3 4 5) 2 -1))
+       finds-element-in-string (assert-same "cde"
+                                            (cut "abcde" 2))
+       respects-end-index-in-string (assert-same "cd"
+                                                 (cut "abcde" 2 4))
+       end-index-at-end-of-string-works (assert-same "cde"
+                                                     (cut "abcde" 2 5))
+       end-index-beyond-end-of-string-works (assert-same "cde"
+                                                         (cut "abcde" 2 6))
+       negative-end-index-in-string-is-ok (assert-same "cd"
+                                                       (cut "abcde" 2 -1)))
