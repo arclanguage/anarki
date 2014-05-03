@@ -1,7 +1,6 @@
 ;; unit tests in various styles prior to https://bitbucket.org/zck/unit-test.arc
 (map load:string '(
     arc.arc.t.old
-    lib/app.arc.t
     lib/json.arc.t
     lib/lru-cache.arc.t
     lib/ns.arc.t
