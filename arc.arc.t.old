@@ -1,22 +1,3 @@
-(test-iso "before works when both elems are present"
-  t
-  (before 3 4 '(1 2 3 4)))
-(test-iso "before works when both elems are present - 2"
-  nil
-  (before 4 3 '(1 2 3 4)))
-
-(test-iso "before works when second elem is absent"
-  t
-  (before 3 5 '(1 2 3 4)))
-
-(test-iso "before works when first elem is absent"
-  nil
-  (before 5 3 '(1 2 3 4)))
-
-(test-iso "before works when both elems are absent"
-  nil
-  (before 6 5 '(1 2 3 4)))
-
 (test-iso "serialize works on nil"
   ()
   (serialize ()))

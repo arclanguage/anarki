@@ -193,3 +193,10 @@
                                     (split '(1 2 3 4) 2))
        can-split-strings (assert-same  '((1 2) (3 4))
                                        (split '(1 2 3 4) 2)))
+
+(suite before
+       returns-t-when-first-is-before (assert-t (before 3 4 '(1 2 3 4)))
+       returns-nil-when-first-isnt-before (assert-nil (before 4 3 '(1 2 3 4)))
+       returns-t-when-second-is-absent (assert-t (before 3 5 '(1 2 3 4)))
+       returns-nil-when-first-is-absent (assert-nil (before 5 3 '(1 2 3 4)))
+       returns-nil-when-both-are-absent (assert-nil (before 6 5 '(1 2 3 4))))
