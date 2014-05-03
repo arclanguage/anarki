@@ -187,3 +187,9 @@
                                                          (cut "abcde" 2 6))
        negative-end-index-in-string-is-ok (assert-same "cd"
                                                        (cut "abcde" 2 -1)))
+
+(suite split
+       can-split-lists (assert-same '((1 2) (3 4))
+                                    (split '(1 2 3 4) 2))
+       can-split-strings (assert-same  '((1 2) (3 4))
+                                       (split '(1 2 3 4) 2)))
