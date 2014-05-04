@@ -4,7 +4,6 @@
     lib/json.arc.t
     lib/lru-cache.arc.t
     lib/ns.arc.t
-    lib/queue.arc.t
     lib/spliceable-list.arc.t
     lib/srv.arc.t
     lib/tem.arc.t
