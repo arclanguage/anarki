@@ -234,7 +234,8 @@ Useful for avoiding name capture in macros; see the tutorial: http://ycombinator
          (let ,args ,allargs
            (if ,pred
              (do ,@body)
-             (apply ,old ,allargs)))))))
+             (apply ,old ,allargs))))
+       (sref sig* ',args ',name))))
 
 ; Rtm prefers to overload + to do this
 
