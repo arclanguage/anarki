@@ -208,6 +208,7 @@
 
 (suite before
        returns-t-when-first-is-before (assert-t (before 3 4 '(1 2 3 4)))
+       respects-starting-index (assert-nil (before 3 4 '(1 2 3 4 3) 3))
        returns-nil-when-first-isnt-before (assert-nil (before 4 3 '(1 2 3 4)))
        returns-t-when-second-is-absent (assert-t (before 3 5 '(1 2 3 4)))
        returns-nil-when-first-is-absent (assert-nil (before 5 3 '(1 2 3 4)))
