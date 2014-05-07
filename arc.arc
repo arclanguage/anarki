@@ -388,7 +388,7 @@ For example, this is always true:
 
 (def atom (x)
 "Is 'x' a simple type? (i.e. not list, table or user-defined)"
-  (in type.x 'int 'num 'sym 'string))
+  (in type.x 'int 'num 'sym 'char 'string))
 
 (document builtin is (x y)
 "Are 'x' and 'y' identical?")
