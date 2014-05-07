@@ -39,15 +39,21 @@
      (sref source-file* current-load-file* ',name)
      (sref source* '(,definer ,name ,parms ,@body) ',name))))
 
-; docstrings todo: defs union addtem since {minutes,hours,days}-since defcache
-; only positive len< len> or= hook defhook out fromdisk diskvar disktable todisk
-
 (document builtin fn (params . body)
 "Creates an anonymous function. See the tutorial: http://ycombinator.com/arc/tut.txt")
 
 (document builtin apply (f . args)
 "(apply f '(1 2 3)) <=> (f 1 2 3)
 (apply f x y '(z w)) <=> (f x y z w)")
+
+(document builtin annotate (tag . val)
+"Creates a user-defined tagged type containing 'val'. See also [[type]] and [[rep]].")
+
+(document builtin type (x)
+"Returns the type of 'x', even if 'x' is a user-defined tagged-type.")
+
+(document builtin rep (x)
+"Returns the contents of a user-defined tagged type object.")
 
 (remac warn-if-bound (var)
   `(if (bound ',var)
@@ -146,6 +152,17 @@ Or come ask questions at http://arclanguage.org/forum"
   (1 2 3)
   (list "a" '(1 2) 3)
   ("a" (1 2) 3))
+
+(document def len (x)
+"Computes the size of a list, string, hash table or other user-defined type.")
+
+(examples len
+  (len '(1 2 3))
+  3
+  (len "abcd")
+  4
+  (len (obj a 1 b 2))
+  2)
 
 (def idfn (x)
 "The identity function. Returns whatever is passed in."
@@ -483,6 +500,14 @@ Pronounced 'anaphoric check'."
   (let f testify.test
     (reclist [check carif._ f] seq)))
 
+(examples find
+  (find 3 '(1 2 3 4))
+  2
+  (find odd '(1 2 3 4))
+  0
+  (find odd '(2 4 6))
+  nil)
+
 (defextend find (test seq) (isa seq 'string)
   (let f testify.test
     (recstring [check seq._ f] seq)))
@@ -555,6 +580,19 @@ Generalizes [[map1]] to functions with more than one argument."
          (do (sref new (apply f (map1 [_ i] seqs)) i)
              (self (+ i 1)))))
      0)))
+
+(examples map
+  (map cdr '((1) (2 3) (4 5)))
+  (nil (3) (5))
+  (map [list _ (* _ 10)]
+       '(1 2 3))
+  ((1 10) (2 20) (3 30))
+  (map + '(1 2 3) '(4 5 6))
+  (5 7 9)
+  (map (fn (c n) (coerce (+ n (coerce c 'int)) 'char)) "abc" '(0 2 4))
+  "adg"
+  (map min "bird" "elephant")
+  "bied")
 
 ; common uses of map
 (def mappend (f . args)
@@ -669,6 +707,21 @@ writing to a variable at the same time."
 (mac atwiths args
 "Like [[withs]], but [[atomic]]."
   `(atomic (withs ,@args)))
+
+(document builtin sref (aggregate value . indices)
+"Sets position 'indices' in 'aggregate' (which might be a list, string, hash
+table, or other user-defined type) to 'value'.")
+
+(examples sref
+  (ret x '(1 2 3)
+    (sref x 4 1))
+  (1 4 3)
+  (ret x "abc"
+    (sref x 0 #\d))
+  "dbc"
+  (ret x (obj a 1 b 2)
+    (sref x 3 'd))
+  (obj a 1 b 2 d 3))
 
 ; setforms returns (vars get set) for a place based on car of an expr
 ;  vars is a list of gensyms alternating with expressions whose vals they
@@ -880,6 +933,12 @@ negative to count backwards from the end."
              start)
           (nthcdr start seq)))
 
+(examples cut
+  (cut '(a b c d e) 2)
+  (c d e)
+  (cut "abcde" 2 4)
+  "cd")
+
 (defextend cut (seq start (o end))  (isa seq 'string)
   (let end (range-bounce end len.seq)
     (ret s2 (newstring (- end start))
@@ -913,6 +972,16 @@ negative to count backwards from the end."
                         (cons car.s (self cdr.s))))
       seq)))
 
+(examples rem
+  (rem odd '(1 2 3 4 5))
+  (2 4)
+  (rem 3 '(1 2 3 4 5))
+  (1 2 4 5)
+  (rem #\d "abcde")
+  "abce"
+  (rem [in _ #\a #\b] "abcde")
+  "cde")
+
 (defextend rem (test seq) (isa seq 'string)
   (as string
       (rem test (as cons seq))))
@@ -925,6 +994,16 @@ negative to count backwards from the end."
 (def keep (test seq)
 "Returns all elements of 'seq' for which 'test' passes."
   (rem (complement (testify test)) seq))
+
+(examples keep
+  (keep odd '(1 2 3 4 5))
+  (1 3 5)
+  (keep 3 '(1 2 3 4 5))
+  (3)
+  (keep 3 '(1 3 1 3 1))
+  (3 3)
+  (keep [in _ #\a #\b] "banana")
+  "baaa")
 
 ;(def trues (f seq)
 ;  (rem nil (map f seq)))
@@ -1119,11 +1198,18 @@ previous one in variable 'it'."
 
 (mac accum (accfn . body)
 "Runs 'body' (usually containing a loop) and then returns in order all the
-values that were called with 'accfn' in the process."
+values that were called with 'accfn' in the process.
+Can be cleaner than map for complex anonymous functions."
   (w/uniq gacc
     `(withs (,gacc nil ,accfn [push _ ,gacc])
        ,@body
        (rev ,gacc))))
+
+(examples accum
+  (accum accfn (each x '(1 2 3) (accfn (* x 10))))
+  (10 20 30)
+  (accum yield (each x "abcd" (yield x)))
+  (#\a #\b #\c #\d))
 
 (mac whilet (var test . body)
 "Like [[while]], but successive values of 'test' are bound to 'var'."
@@ -1212,6 +1298,18 @@ from index 'start' (0 by default)."
          (nthcdr start seq)
          start)
       (recstring [if (f (seq _)) _] seq start))))
+
+(examples pos
+  (pos 'c '(a b c d))
+  2
+  (pos 'x '(a b c d))
+  nil
+  (pos #\b "abcba")
+  1
+  (pos #\b "abcba" 2)
+  3
+  (pos odd '(2 4 5 6 7))
+  2)
 
 (def even (n)
 "Is n even?"
@@ -1680,6 +1778,16 @@ by args passed in, so that future calls with the same inputs can save work."
     (each x xs
       (++ n f.x))))
 
+(examples sum
+  (sum idfn '(1 2 3 4))
+  10
+  (sum len '("this" "is" "a" "sentence"))
+  15
+  (sum cadr (obj a 1 b 2 c 3))
+  6
+  (sum int "abc")
+  294) ; 97 + 98 + 99
+
 ; Could prob be generalized beyond printing.
 
 (def prall (elts (o init "") (o sep ", "))
@@ -1960,8 +2068,20 @@ barring the sign."
   `(time:repeat 10 ,expr))
 
 (def union (f xs ys)
+"Merges 'xs' and 'ys', while filtering out duplicates using 'f'. Ordering is
+not preserved."
   (+ xs (rem (fn (y) (some [f _ y] xs))
              ys)))
+
+(examples union
+  (union is '(1 2 3) '(2 3 4))
+  (1 2 3 4)
+  (union is "ab" "banana")
+  "abnn"
+  (union (fn (a b) (is (mod a 10)
+                       (mod b 10)))
+         '(1 2 3) '(13 24 35))
+  (1 2 3 24 35))
 
 (def number (n)
 "Is 'n' a number?"
@@ -2026,6 +2146,14 @@ determined by calling 'timef' rather than directly passing in a number."
       (if testf.elt ++.n))
     n))
 
+(examples count
+  (count #\a "banana")
+  3
+  (count odd '(1 2 3 4))
+  2
+  (count odd (obj a 1 b 2))
+  1)
+
 (def ellipsize (str (o limit 80))
 "Trim string 'str' and append ellipses '...' if its length exceeds 'limit'."
   (if (<= (len str) limit)
@@ -2064,6 +2192,18 @@ Simple syntax: f&g <=> (andf f g)"
   (aand (pos (orf testify.x testify.y) seq i)
         (iso x seq.it)))
 
+(examples before
+  (before 2 3 '(1 2 3 4))
+  t
+  (before 2 1 '(1 2 3 4))
+  nil
+  (before 1 even '(1 2 3 4))
+  t
+  (before #\a #\n "banana")
+  t
+  (before #\a #\n "banana" 2)
+  nil)
+
 (def atend (i s)
 "Is index 'i' at or past the end of sequence 's'?"
   (>= i (- len.s 1)))
@@ -2093,6 +2233,12 @@ Returns nil if none of the args fails."
 'comparer'. Often passed to [[sort]]."
   (fn (x y) (comparer scorer.x scorer.y)))
 
+(examples compare
+  ((compare < len) "yz" "abc")
+  t
+  ((compare < len) '(1 2 3) '(4 5))
+  nil)
+
 ; Cleaner thus, but may only ever need in 2 arg case.
 
 ;(def compare (comparer scorer)
@@ -2104,6 +2250,14 @@ Returns nil if none of the args fails."
 "Transforms a function 'f' info a variant that runs only if its first arg is
 non-nil."
   (fn args (if (car args) (apply f args))))
+
+(examples only
+  (only.+ 1 2 3)
+  6
+  (only.+ nil 1 2 3)
+  nil
+  (only.+)
+  nil)
 
 (mac conswhen (f x y)
 "Adds 'x' to the front of 'y' if 'x' satisfies test 'f'."
@@ -2133,7 +2287,7 @@ non-nil."
   nil)
 
 (def dedup (xs)
-"Returns 'xs' with duplicate elements dropped."
+"Returns list of elements in 'xs' with duplicates dropped."
   (let h (table)
     (accum yield
       (each x xs
@@ -2141,9 +2295,25 @@ non-nil."
           (yield x)
           (set h.x))))))
 
+(examples dedup
+  (dedup '(1 2 3 2 1))
+  (1 2 3)
+  (dedup "abcba")
+  (#\a #\b #\c))
+
 (def single (x)
 "Is 'x' a list with just one element?"
   (and acons.x (no cdr.x)))
+
+(examples single
+  (single 1)
+  nil
+  (single '())
+  nil
+  (single '(1))
+  t
+  (single '(1 2))
+  nil)
 
 (def intersperse (x ys)
 "Inserts 'x' between the elements of 'ys'."
@@ -2318,6 +2488,14 @@ successive elements of 'args'."
       (when (isnt c (s2 index))
         (throw index)))))
 
+(examples mismatch
+  (mismatch '(1 2 3) '(1 2 4))
+  2
+  (mismatch "abc" "acc")
+  1
+  (mismatch "abc" "abc")
+  nil)
+
 (def memtable ((o keys nil) (o val t))
 "Turns a list into a table indicating membership of all elements."
   (w/table tbl
@@ -2340,9 +2518,25 @@ with '|'s."
                                (pr ,out))))))
                   body)))))
 
-(def len< (x n) (< len.x n))
+(def len< (x n)
+"Is [[len]] of 'x' less than 'n'?"
+  (< len.x n))
 
-(def len> (x n) (> len.x n))
+(examples len<
+  (len< (obj a 1 b 2) 3)
+  t
+  (len< '(1 2 3) 3)
+  nil)
+
+(def len> (x n)
+"Is [[len]] of 'x' greater than 'n'?"
+  (> len.x n))
+
+(examples len<
+  (len> '(1 2 3) 2)
+  t
+  (len> (obj a 1 b 2) 3)
+  nil)
 
 (mac thread body
 "Concurrently run expressions in 'body', returning an id that can be used to
@@ -2535,7 +2729,20 @@ of 'x' by calling 'self'."
 
 ; if renamed this would be more natural for (map [_ user] pagefns*)
 
-(def get (index) [_ index])
+(def get (i)
+"Returns a function to pass 'i' to its input.
+Useful in higher-order functions, or to index into lists, strings, tables, etc."
+  [_ i])
+
+(examples get
+  (get.2 '(1 2 3 4))
+  3
+  (get!b (obj a 10 b 20))
+  20
+  (get.9 sqrt)
+  3
+  (map get.2 '((a b c) (1 2 3) (p q r)))
+  (c 3 r))
 
 (= savers* (table))
 
