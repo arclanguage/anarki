@@ -67,11 +67,13 @@ Or come ask questions at http://arclanguage.org/forum"
                             (cons nil body)))
            (remac ,name ,parms ,@body))))
 
+(assign examples* (table))
+
 (mac examples (name . tests-and-expected-results)
 "Shows some example calls of a function as an enhancement of its docstring.
 Usually provided immediately after a function docstring+definition, so it
 isn't underfoot when it isn't needed."
-  )  ; not defined here; used only to generate documentation
+  `(sref examples* ',tests-and-expected-results ',name))
 
 (mac do args
 "Evaluates each expression in sequence and returns the result of the
@@ -92,10 +94,11 @@ Or come ask questions at http://arclanguage.org/forum"
 
 (mac redef (name parms . body)
 "Defines a new function like [[def]], but doesn't warn if 'name' already exists."
-  `(do (document redef ,name ,parms
-                   ,@(if (is (type car.body) 'string)
-                        body
-                        (cons nil body)))
+  `(do (if (~help* ',name)  ; assume any existing help is still accurate
+         (document redef ,name ,parms
+                       ,@(if (is (type car.body) 'string)
+                            body
+                            (cons nil body))))
        (assign ,name (fn ,parms ,@body))))
 
 (document builtin cons (x xs) "Returns a new list with element 'x' added to the start of list 'xs'.")
