@@ -63,7 +63,7 @@
                 (prn)
                 (pr "  " expected)
                 (if (~iso expected eval.expr)
-                  (pr " ERROR"))
+                  (pr " <-- ERROR"))
                 (prn)))))))))
 
 (def fns ((o test))
