@@ -86,6 +86,12 @@ isn't underfoot when it isn't needed."
 last expression."
   `((fn () ,@args)))
 
+(examples do
+  (do (prn "line 1")
+      (prn "line 2")
+      (prn "line 3"))
+  _)
+
 (mac def (name parms . body)
 "Defines a new function called 'name'. When called, the function runs
 'body', parameterizing 'parms' with call arguments.
