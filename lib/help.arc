@@ -61,10 +61,11 @@
                 (pr "  arc> ")
                 (ppr-main expr 7 t)
                 (prn)
-                (pr "  " expected)
-                (if (~iso expected eval.expr)
-                  (pr " <-- ERROR"))
-                (prn)))))))))
+                (when (~is '_ expected)
+                  (pr "  " expected)
+                  (if (~iso expected eval.expr)
+                    (pr " <-- this seems outdated"))
+                  (prn))))))))))
 
 (def fns ((o test))
   " Print sigs for macros & functions whose names (as symbols) match `test'.
