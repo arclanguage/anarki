@@ -13,5 +13,7 @@
 (each (name examples-and-expected) examples*
   (each (example expected) pair.examples-and-expected
     (if (and (~is expected '_)
-             (~iso eval.example expected))
+             (~iso eval.example expected)
+             (~and (caris expected 'valueof)
+                   (iso eval.example (eval cadr.expected))))
       (prn "error in example for " name ": " example))))

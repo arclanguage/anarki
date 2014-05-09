@@ -729,7 +729,7 @@ table, or other user-defined type) to 'value'.")
   "dbc"
   (ret x (obj a 1 b 2)
     (sref x 3 'd))
-  (obj a 1 b 2 d 3))
+  (valueof (obj a 1 b 2 d 3)))
 
 ; setforms returns (vars get set) for a place based on car of an expr
 ;  vars is a list of gensyms alternating with expressions whose vals they
@@ -2342,7 +2342,7 @@ non-nil."
 
 (examples counts
   (counts '(b a n a n a))
-  (obj b 1 a 3 n 2))
+  (valueof (obj b 1 a 3 n 2)))
 
 (def commonest (seq)
 "Returns the most common element of 'seq' and the number of times it occurred
