@@ -447,8 +447,10 @@ Can't take an 'else' branch."
   (and xs (or (f xs) (if (acons xs) (reclist f (cdr xs))))))
 
 (examples reclist
-  (reclist 'b '(a b c))
-  (b c)
+  (reclist [caris _ 'b] '(a b c))
+  t
+  (reclist [caris _ 'd] '(a b c))
+  nil
   (reclist [if (is 2 len._) _] '(a b c d))
   (c d))
 
@@ -508,9 +510,9 @@ Pronounced 'anaphoric check'."
 
 (examples find
   (find 3 '(1 2 3 4))
-  2
+  3
   (find odd '(1 2 3 4))
-  0
+  1
   (find odd '(2 4 6))
   nil)
 
@@ -723,7 +725,7 @@ table, or other user-defined type) to 'value'.")
     (sref x 4 1))
   (1 4 3)
   (ret x "abc"
-    (sref x 0 #\d))
+    (sref x #\d 0))
   "dbc"
   (ret x (obj a 1 b 2)
     (sref x 3 'd))
@@ -1581,7 +1583,7 @@ protocol requires them."
 
 (examples n-of
   (n-of 5 "a")
-  "aaaaa"
+  ("a" "a" "a" "a" "a")
   (w/instring ins "abcdefg"
     (n-of 5 readc.ins))
   (#\a #\b #\c #\d #\e))
@@ -1693,7 +1695,7 @@ comparator between elements."
 (examples insortnew
   (ret x '(10 3 1) (insortnew > 5 x))
   (10 5 3 1)
-  (ret x '(10 5 1) (insortnew > 5 '(10 5 1)))
+  (ret x '(10 5 1) (insortnew > 5 x))
   (10 5 1))
 
 ; Could make this look at the sig of f and return a fn that took the
@@ -1961,7 +1963,7 @@ barring the sign."
         '("horse" "dog" "elephant" "cat"))
   ("dog" "cat" "horse" "elephant")
   (sort > "Test word")
-  "wtsroedT")
+  "wtsroedT ")
 
 ; Destructive stable merge-sort, adapted from slib and improved
 ; by Eli Barzilay for MzLib; re-written in Arc.
@@ -2157,7 +2159,7 @@ determined by calling 'timef' rather than directly passing in a number."
   3
   (count odd '(1 2 3 4))
   2
-  (count odd (obj a 1 b 2))
+  (count odd:cadr (obj a 1 b 2))
   1)
 
 (def ellipsize (str (o limit 80))
