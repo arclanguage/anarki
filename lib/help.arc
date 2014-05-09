@@ -63,14 +63,20 @@
                 (prn)
                 (when (~is '_ expected)
                   (if (caris expected 'valueof)
-                    (do (pr "  " expected.1)
-                        (if (~iso (eval expected.1)
-                                  (eval expr))
-                          (pr " <-- this seems outdated")))
-                    (do (pr "  " expected)
-                        (if (~iso expected eval.expr)
-                          (pr " <-- this seems outdated"))))
-                  (prn))))))))))
+                    (print-example-session expr (eval expected.1))
+                    (print-example-session expr expected)))))))))))
+
+(def print-example-session (expr expected)
+  (pr "  ")
+  (print-like-repl expected)
+  (if (~iso expected eval.expr)
+    (pr " <-- this seems outdated"))
+  (prn))
+
+(def print-like-repl (x)
+  (if (isa x 'string)
+    (write x)
+    (prn x)))
 
 (def fns ((o test))
   " Print sigs for macros & functions whose names (as symbols) match `test'.
