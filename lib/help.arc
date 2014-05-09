@@ -75,7 +75,7 @@
 
 (def print-like-repl (x)
   (if (isa x 'string)
-    (write x)
+    (do (write x) (prn))
     (prn x)))
 
 (def fns ((o test))
