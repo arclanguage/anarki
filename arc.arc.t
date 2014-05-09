@@ -1,3 +1,15 @@
+(suite atom
+       includes-int (assert-t (atom 3))
+       includes-float (assert-t (atom 3.14159))
+       includes-exact (assert-t (atom 3/16))
+       includes-symbol (assert-t (atom 'a))
+       includes-char (assert-t (atom #\a))
+       includes-string (assert-t (atom "hello"))
+       includes-nil (assert-t (atom nil))
+       excludes-list (assert-nil (atom '(1 2 3)))
+       excludes-table (assert-nil (atom (obj a 1 b 2)))
+       excludes-tagged-types (assert-nil (atom (annotate 'foo 34))))
+
 (suite memtable
        no-args (assert-same (obj)
                             (memtable))
@@ -196,6 +208,7 @@
 
 (suite before
        returns-t-when-first-is-before (assert-t (before 3 4 '(1 2 3 4)))
+       respects-starting-index (assert-nil (before 3 4 '(1 2 3 4 3) 3))
        returns-nil-when-first-isnt-before (assert-nil (before 4 3 '(1 2 3 4)))
        returns-t-when-second-is-absent (assert-t (before 3 5 '(1 2 3 4)))
        returns-nil-when-first-is-absent (assert-nil (before 5 3 '(1 2 3 4)))

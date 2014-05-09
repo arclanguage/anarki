@@ -36,6 +36,13 @@
              (do pr.whole nil)
              (do ,@body t)))))
 
+; temporarily change line length
+(mac w/line-length (n . body)
+  `(let old-oneline@ oneline*
+     (= oneline* ,n)
+     (after (do ,@body)
+        (= oneline* old-oneline@))))
+
 (def indent-pairs (xs (o col 0))
   (let l (apply max 0 (map len:tostring:print:car (keep cdr pair.xs)))
     (on x pair.xs

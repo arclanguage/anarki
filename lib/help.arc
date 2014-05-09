@@ -52,7 +52,20 @@
                     name))
         (prn)
         (when verbose
-          (prn (or doc (string name " is not documented."))))))))
+          (prn (or doc (string name " is not documented.")))
+          (awhen (examples* name)
+            (w/line-length 20
+              (prn)
+              (prn "Examples:")
+              (each (expr expected) pair.it
+                (pr "  arc> ")
+                (ppr-main expr 7 t)
+                (prn)
+                (when (~is '_ expected)
+                  (pr "  " expected)
+                  (if (~iso expected eval.expr)
+                    (pr " <-- this seems outdated"))
+                  (prn))))))))))
 
 (def fns ((o test))
   " Print sigs for macros & functions whose names (as symbols) match `test'.
