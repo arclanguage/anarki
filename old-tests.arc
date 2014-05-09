@@ -12,7 +12,6 @@
     ; tests from conanite's rainbow
     lib/tests/core-errors-continuations-test.arc
     lib/tests/core-evaluation-test.arc
-    lib/tests/core-lists-test.arc
     lib/tests/core-macros-test.arc
     lib/tests/core-maths-test.arc
     lib/tests/core-predicates-test.arc
