@@ -77,12 +77,3 @@
   (if (isa x 'string)
     (do (write x) (prn))
     (prn x)))
-
-(def fns ((o test))
-  " Print sigs for macros & functions whose names (as symbols) match `test'.
-    If `test' is a function, it is used as a predicate.
-    Otherwise, names of which `(string test)' is a prefix pass. "
-  (let test (if (isa test 'fn) test
-              (let pfx string.test [begins string._ pfx]))
-    (each f (sort < (keep test keys.sig*))
-      (pr (helpstr sym.f nil)))))

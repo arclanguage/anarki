@@ -78,7 +78,39 @@ Or come ask questions at http://arclanguage.org/forum"
 (mac examples (name . tests-and-expected-results)
 "Shows some example calls of a function as an enhancement of its docstring.
 Usually provided immediately after a function docstring+definition, so it
-isn't underfoot when it isn't needed."
+isn't underfoot when it isn't needed.
+
+Usage: (examples name-being-tested
+          expr1
+          expected-result1
+          expr2
+          expected-result2
+          ...)
+
+Expected results are optional. When provided, they can remind you when
+documentation goes out of date. To avoid printing and checking them, use an _
+wildcard. For example:
+
+  (examples foo
+    (foo x)
+    _
+    (foo y z)
+    _)
+
+Expected results are compared directly, without evaluation. For example:
+
+  (def foo (a b c)
+    (list a b c))
+
+  (examples foo
+    (foo 1 2 3)
+    (1 2 3))            <-- no quote
+
+If the result is an object that read can't handle, use valueof. For example:
+
+  (examples foo
+    (foo x)
+    (valueof (obj a x)))"
   `(sref examples* ',tests-and-expected-results ',name))
 
 (mac do args

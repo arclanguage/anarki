@@ -1202,7 +1202,7 @@
 (define (tl)
   (let ((interactive? (terminal-port? (current-input-port))))
     (when interactive?
-      (display "Use (quit) or ^D to quit, (tl) to return here after an interrupt.\n"))
+      (display "Use (quit) or ^D to quit, (tl) to return here after an interrupt, (help _sym_) for docs and examples.\n"))
     (tl2 interactive?)))
 
 (define (tl2 interactive?)
