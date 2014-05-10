@@ -14,21 +14,7 @@
               cdr-of-nil-is-nil (assert-nil (cdr nil))
               cdr-of-empty-list-is-nil (assert-nil (cdr '()))
               cdr-returns-cdr (assert-same '(12.34 "bar")
-                                           (cdr '(foo 12.34 "bar")))
-              cdr-of-empty-list-returns-nil (assert-nil ((fn stuff
-                                                             ((fn (outer)
-                                                                  (((fn (self)
-                                                                        (assign self
-                                                                                (fn (inner)
-                                                                                    (if (is (type inner) 'cons)
-                                                                                        ((fn ()
-                                                                                             ((fn (x)
-                                                                                                  (disp x))
-                                                                                              (car inner))
-                                                                                             (self (cdr inner))))) )))
-                                                                    nil)
-                                                                   outer))
-                                                              stuff)))))
+                                           (cdr '(foo 12.34 "bar"))))
        (suite scar
               on-lists (assert-same '(99 2 3)
                                     (ret lst '(1 2 3)
