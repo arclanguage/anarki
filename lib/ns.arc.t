@@ -6,109 +6,60 @@
 (require "lib/ns.arc")
 
 
-; Namespace tests
-(let foo (nsobj a 1 b 2)
+(suite-w/setup namespace (foo (nsobj a 1 b 2))
+               make-namespaces (assert-same '(a b)
+                                            (sort < (keep $.symbol-interned? ns-keys.foo)))
+               get-namespaces (assert-same 1
+                                           foo!a)
+               assigning-into-namespace (assert-same 2
+                                                     (do (= foo!a 2)
+                                                         foo!a)))
 
-  (test-iso "We can use 'nsobj to make namespaces."
-    (sort < (keep $.symbol-interned? ns-keys.foo))
-    '(a b))
+(suite-w/setup modecule (foo (nsobj i 9 j 10)
+                         bar make-modecule.11)
+               make-namespaces (assert-same '(i j)
+                                            (sort < (keep $.symbol-interned? ns-keys.foo)))
+               ns-set-modecule (assert-same bar
+                                            (ns-set-modecule 'k bar foo))
+               modecule-setting-works (assert-same '(i j k)
+                                                   (do (ns-set-modecule 'k bar foo)
+                                                       (sort < (keep $.symbol-interned? ns-keys.foo))))
+               val-by-evaling-racket-code (assert-same 11
+                                                       (do (ns-set-modecule 'k bar foo)
+                                                           (w/current-ns foo ($.eval global-arcracket!k))))
+               val-by-calling-namespace (assert-same 10
+                                                     foo!j)
+               set-val-with-= (assert-same 12
+                                           (do (= foo!k 12) foo!k)))
 
-  (test-iso "Getting from a namespace works."
-    foo!a
-    1)
-
-  (test-iso "Assigning into a namespace works."
-    (do (= foo!a 2) foo!a)
-    2)
-  )
-
-
-; Modecule tests
-(with (foo (nsobj i 9 j 10) bar make-modecule.11)
-
-  (test-iso "We can still use 'nsobj to make namespaces."
-    (sort < (keep $.symbol-interned? ns-keys.foo))
-    '(i j))
-
-  (test-iso "We can use 'ns-set-modecule."
-    (ns-set-modecule 'k bar foo)
-    bar)
-
-  (test-iso "After setting a modecule, it's actually there."
-    (sort < (keep $.symbol-interned? ns-keys.foo))
-    '(i j k))
-
-  (test-iso "We can get the value of 'k by evaluating Racket code."
-    (w/current-ns foo ($.eval global-arcracket!k))
-    11)
-
-  (test-iso "We can get the value of 'k by calling the namespace."
-    foo!k
-    11)
-
-  (test-iso "We can set the value of 'k using '=."
-    (do (= foo!k 12) foo!k)
-    12)
-  )
-
-
-; Module tests
-(let foo (simple-mod a 1 b 2)
-
-  (test-iso "We can get the keys of a module using 'ns-keys."
-    (sort < (keep $.symbol-interned? ns-keys.foo))
-    '(a b))
-
-  (test-iso "We can call a module to get a value from it."
-    foo!a
-    1)
-
-  (test-iso "We can set to a module."
-    (do (= foo!a 9) foo!a)
-    9)
-  )
-
-
-; Submodule tests
-(let foo (simple-rmod t 1 nil 2)
-
-  (test-iso "We can get the keys to a Racket module using 'rns-keys."
-    (sort < (keep $.symbol-interned? rns-keys.foo))
-    '(nil t))
-
-  (test-iso (+ "We can get the keys to a Racket module using "
-               "'rmodule-keys.")
-    (sort < rmodule-keys.foo)
-    '(nil t))
-
-  (test-iso "We can get a variable named 't from a Racket module."
-    foo!t
-    1)
-
-  (test-iso "We can get a variable named 'nil from a Racket module."
-    foo!nil
-    2)
-
-  (test-iso "We can set a variable named 'nil in a Racket module."
-    (do (= foo!nil 9) foo!nil)
-    9)
-
-  (let bar (make-sub-rmodule foo idfn)
-
-    (test-iso "We can use 'make-sub-rmodule."
-      rmodule-keys.bar
-      '(t))))
-
-
-; Local require tests
-
-(test-iso "We can use 'w/rmodule."
-  (w/rmodule (simple-rmod foo "Racket module") foo)
-  "Racket module")
-
-(test-iso "We can use 'w/module."
-  (w/module (simple-mod foo "Arc module") foo)
-  "Arc module")
+(suite-w/setup module (foo (simple-mod a 1 b 2))
+               ns-keys (assert-same '(a b)
+                                    (sort < (keep $.symbol-interned? ns-keys.foo)))
+               extract-from-module (assert-same 1
+                                                foo!a)
+               set-in-module (assert-same 9
+                                          (do (= foo!a 9)
+                                              foo!a)))
+(suite-w/setup submodule (foo (simple-rmod t 1 nil 2)
+                          bar (make-sub-rmodule foo idfn))
+               get-keys (assert-same '(nil t)
+                                     (sort < (keep $.symbol-interned? rns-keys.foo)))
+               submodule-keys (assert-same '(nil t)
+                                           (sort < rmodule-keys.foo))
+               extract-from-submodule (assert-same 1
+                                                   foo!t)
+               extract-nil-from-submodule (assert-same 2
+                                                       foo!nil)
+               can-set-nil-in-submodule (assert-same 9
+                                                     (do (= foo!nil 9)
+                                                         foo!nil))
+               can-use-make-sub-rmodule (assert-same '(t)
+                                                     rmodule-keys.bar))
+(suite local-require
+       w/rmodule (assert-same "Racket module"
+                              (w/rmodule (simple-rmod foo "Racket module") foo))
+       w/module (assert-same "Arc module"
+                             (w/module (simple-mod foo "Arc module") foo)))
 
 
 ; This is the actual code I (Ross Angle) used to test these things in
@@ -136,64 +87,64 @@
 ;(= foo (make-ns 'a 1 'b 2))
 ;(write:coerce foo 'table)
 
-  (tryout "now namespaces")
-  (let foo (nsobj a 1 b 2)
-    (tryout:firstn 10 ns-keys.foo)
-    (tryout foo!a)
-    (tryout:= foo!a 2)
-    (tryout foo!a)
-    )
+  ;; (tryout "now namespaces")
+  ;; (let foo (nsobj a 1 b 2)
+  ;;   (tryout:firstn 10 ns-keys.foo)
+  ;;   (tryout foo!a)
+  ;;   (tryout:= foo!a 2)
+  ;;   (tryout foo!a)
+  ;;   )
 
-  (tryout "now define-boxvar in Racket")
-  (tryout:eval
-    `($:define-syntax-rule (define-boxvar var base-var)
-       (define-syntax var
-         (make-set!-transformer
-           (lambda (stx)
-             (syntax-case stx (set!)
-               ((set! _ val) #'(set-box! base-var val))
-               (id (identifier? #'id) #'(unbox base-var))))))))
-  (tryout:$.eval:ac-denil '(define bar (box 9)))
-  (tryout:$.eval:ac-denil '(define-boxvar foo bar))
-  (tryout:$.eval:ac-denil 'foo)
-  (tryout:$.eval:ac-denil '(set! foo 4))
-  (tryout:$.eval:ac-denil 'foo)
-  (tryout:$.eval:ac-denil 'bar)
+  ;; (tryout "now define-boxvar in Racket")
+  ;; (tryout:eval
+  ;;   `($:define-syntax-rule (define-boxvar var base-var)
+  ;;      (define-syntax var
+  ;;        (make-set!-transformer
+  ;;          (lambda (stx)
+  ;;            (syntax-case stx (set!)
+  ;;              ((set! _ val) #'(set-box! base-var val))
+  ;;              (id (identifier? #'id) #'(unbox base-var))))))))
+  ;; (tryout:$.eval:ac-denil '(define bar (box 9)))
+  ;; (tryout:$.eval:ac-denil '(define-boxvar foo bar))
+  ;; (tryout:$.eval:ac-denil 'foo)
+  ;; (tryout:$.eval:ac-denil '(set! foo 4))
+  ;; (tryout:$.eval:ac-denil 'foo)
+  ;; (tryout:$.eval:ac-denil 'bar)
 
-  (tryout "now modecules")
-  (with (foo (nsobj i 9 j 10)
-         bar (tryout make-modecule.11))
-    (tryout:firstn 10 ns-keys.foo)    (tryout:= foo!k 12)
-    (tryout foo!k)
+  ;; (tryout "now modecules")
+  ;; (with (foo (nsobj i 9 j 10)
+  ;;        bar (tryout make-modecule.11))
+  ;;   (tryout:firstn 10 ns-keys.foo)    (tryout:= foo!k 12)
+  ;;   (tryout foo!k)
 
-    (tryout:ns-set-modecule 'k bar foo)
-    (tryout:firstn 10 ns-keys.foo)
-    (tryout:w/current-ns foo $.eval!_k)
-    (tryout foo!k)
-    (tryout:= foo!k 12)
-    (tryout foo!k)
-    )
+  ;;   (tryout:ns-set-modecule 'k bar foo)
+  ;;   (tryout:firstn 10 ns-keys.foo)
+  ;;   (tryout:w/current-ns foo $.eval!_k)
+  ;;   (tryout foo!k)
+  ;;   (tryout:= foo!k 12)
+  ;;   (tryout foo!k)
+  ;;   )
 
-  (tryout "now modules")
-  (let foo (simple-mod a 1 b 2)
-    (tryout:firstn 10 ns-keys.foo)
-    (tryout foo!a)
-    (tryout:do (= foo!a 9) foo!a))
+  ;; (tryout "now modules")
+  ;; (let foo (simple-mod a 1 b 2)
+  ;;   (tryout:firstn 10 ns-keys.foo)
+  ;;   (tryout foo!a)
+  ;;   (tryout:do (= foo!a 9) foo!a))
 
-  (tryout "now submodules")
-  (let foo (simple-rmod t 1 nil 2)
-    (tryout:firstn 10 rns-keys.foo)
-    (tryout:firstn 10 rmodule-keys.foo)
-    (tryout foo!t)
-    (tryout foo!nil)
-    (tryout:do (= foo!nil 9) foo!nil)
-    (let bar (tryout:make-sub-rmodule foo idfn)
-      (tryout:firstn 10 rns-keys.bar)
-      (tryout:firstn 10 rmodule-keys.bar)))
+  ;; (tryout "now submodules")
+  ;; (let foo (simple-rmod t 1 nil 2)
+  ;;   (tryout:firstn 10 rns-keys.foo)
+  ;;   (tryout:firstn 10 rmodule-keys.foo)
+  ;;   (tryout foo!t)
+  ;;   (tryout foo!nil)
+  ;;   (tryout:do (= foo!nil 9) foo!nil)
+  ;;   (let bar (tryout:make-sub-rmodule foo idfn)
+  ;;     (tryout:firstn 10 rns-keys.bar)
+  ;;     (tryout:firstn 10 rmodule-keys.bar)))
 
-  (tryout "now local requires")
-  (tryout:w/rmodule (simple-rmod foo "Racket module")
-    foo)
-  (tryout:w/module (simple-mod foo "Arc module")
-    foo)
-  )
+  ;; (tryout "now local requires")
+  ;; (tryout:w/rmodule (simple-rmod foo "Racket module")
+  ;;   foo)
+  ;; (tryout:w/module (simple-mod foo "Arc module")
+  ;;   foo)
+  ;; )
