@@ -30,6 +30,8 @@
 (= cookie->user* (table) user->cookie* (table) logins* (table))
 
 (def get-user (req)
+"Gets the user id string associated with 'req'.
+Returns nil if no logged-in user."
   (let u (aand (alref req!cooks "user") (cookie->user* (sym it)))
     (when u (= (logins* u) req!ip))
     u))
@@ -50,12 +52,14 @@
 (defop mismatch req (mismatch-message))
 
 (mac uform (user req after . body)
+"Like [[aform]] but also authenticates that the form is submitted by 'user'."
   `(aform (fn (,req)
             (when-umatch ,user ,req
               ,after))
      ,@body))
 
 (mac urform (user req after . body)
+"Like [[arform]] but also authenticates that the form is submitted by 'user'."
   `(arform (fn (,req)
              (when-umatch/r ,user ,req
                ,after))
@@ -79,7 +83,9 @@
     (login-page nil
                 (fn (u ip)  (admin-gate u)))))
 
-(def admin (u) (and u (mem u admins*)))
+(def admin (u)
+"Does user 'u' possess administrator privileges for the site?"
+  (and u (mem u admins*)))
 
 (def user-exists (u) (and u (hpasswords* u) u))
 
@@ -132,6 +138,7 @@
   (logout-user user))
 
 (def set-pw (user pw)
+"Updates password for 'user'."
   (= (hpasswords* user) (and pw (shash pw)))
   (save-table hpasswords* hpwfile*))
 
@@ -300,6 +307,7 @@
        nil))
 
 (def goodname (str (o min 1) (o max nil))
+"Is 'str' a valid username?"
   (and (isa str 'string)
        (>= (len str) min)
        (~find (fn (c) (no (or (alphadig c) (in c #\- #\_))))
@@ -616,6 +624,7 @@
           (writec (s i))))))
 
 (mac defopl (name parm . body)
+"Like [[defop]], but requires a logged in user."
   `(defop ,name ,parm
      (if (get-user ,parm)
        (do ,@body)

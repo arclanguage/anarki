@@ -55,6 +55,21 @@
 (document builtin rep (x)
 "Returns the contents of a user-defined tagged type object.")
 
+(document builtin assign (x y)
+"Set variable 'x' to value 'y'.")
+
+(examples assign
+  (assign x 10)
+  _)
+
+(document builtin bound (x)
+"Does variable 'x' currently have a value?")
+
+(examples bound
+  (do (= y 10)
+      (bound 'y))
+  t)
+
 (remac warn-if-bound (var)
   `(if (bound ',var)
      ((fn () (disp "*** redefining " (stderr))
@@ -568,6 +583,9 @@ This is the most reliable way to check for presence, even when searching for nil
 "Is 'x' of type 'y'?"
   (is (type x) y))
 
+(document builtin coerce (x type)
+"Try to turn 'x' into a value of a different 'type'.")
+
 (mac as (type expr)
 "Tries to convert 'expr' into a different 'type'.
 More convenient form of [[coerce]] with arguments reversed; doesn't need
@@ -885,6 +903,12 @@ table, or other user-defined type) to 'value'.")
 When you run multiple threads at once, only one will ever be modifying a variable at once.
 See [[atomic]]."
   (expand=list args))
+
+(examples =
+  (= x 1)
+  _
+  (= x 2 y 4)
+  _)
 
 ; http://arclanguage.org/item?id=12229
 (mac for (var init test update . body)

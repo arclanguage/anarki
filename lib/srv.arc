@@ -389,6 +389,11 @@
       (srvops* ',name)     (fn ,parms ,@body)))
 
 (mac defop (name parm . body)
+"Handles url /'name', giving 'body' access to the request in the variable
+named by 'parm'. 'body' should output the response to stdout.
+For example, to respond to a url called /hello,
+  (defop hello req
+    (prn \"hello\")"
   (w/uniq gs
     `(do (wipe (redirector* ',name))
          (defop-raw ,name (,gs ,parm)
@@ -397,7 +402,11 @@
 ; Defines op as a redirector.  Its retval is new location.
 
 (mac defopr (name parm . body)
+"Like [[defop]], handles url /'name' but instead of printing response to
+stdout, returns a url to redirect requests to after processing."
   (w/uniq gs
+;?     `(defopr-raw ,name (,gs ,parm)
+;?         (w/stdout ,gs (prrn) ,@body))))
     `(do (set (redirector* ',name))
          (defop-raw ,name (,gs ,parm)
            ,@body))))
