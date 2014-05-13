@@ -58,17 +58,8 @@
 (document builtin assign (x y)
 "Set variable 'x' to value 'y'.")
 
-(examples assign
-  (assign x 10)
-  _)
-
 (document builtin bound (x)
 "Does variable 'x' currently have a value?")
-
-(examples bound
-  (do (= y 10)
-      (bound 'y))
-  t)
 
 (remac warn-if-bound (var)
   `(if (bound ',var)
@@ -127,6 +118,15 @@ If the result is an object that read can't handle, use valueof. For example:
     (foo x)
     (valueof (obj a x)))"
   `(sref examples* ',tests-and-expected-results ',name))
+
+(examples assign
+  (assign x 10)
+  _)
+
+(examples bound
+  (do (= y 10)
+      (bound 'y))
+  t)
 
 (mac do args
 "Evaluates each expression in sequence and returns the result of the
