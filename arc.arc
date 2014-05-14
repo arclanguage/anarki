@@ -2628,8 +2628,12 @@ when it's ready to be interrupted."
 (def thread-rewind-receive args
   (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
 
-(def mktemp ((o prefix "arc"))
-  ($ (path->string (make-temporary-file (string-append prefix ".~a")))))
+(= tmpdir* 'nil) ;default tmp directory
+(def mktemp ((o prefix "arc") (o dir tmpdir*))
+  (let f scheme-f
+      ($ (path->string (make-temporary-file (string-append prefix ".~a")
+                                            f
+                                            (if (eq? dir 'nil) f dir))))))
 
 (mac trav (x . fs)
 "Applies each function in 'fs' to 'x', letting the functions recurse on parts
