@@ -1,6 +1,7 @@
 ; tests based on https://bitbucket.org/zck/unit-test.arc
 (map load:string '(
     lib/app.arc.t
+    lib/json.arc.t
     lib/ns.arc.t
     lib/queue.arc.t
     lib/strings.arc.t
