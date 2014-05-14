@@ -1021,7 +1021,11 @@
       (lambda (var val thunk)
         (parameterize ((var val)) (thunk))))
 
-(xdef open-socket  (lambda (num) (tcp-listen num 50 #t)))
+(xdef open-socket 
+      (lambda (port)
+        (if (pair? port)
+            (tcp-listen (cadr port) 50 #t (car port))
+            (tcp-listen port 50 #t))))
 
 (define (ar-init-socket init-fn . args)
   (let ((oc (current-custodian))
