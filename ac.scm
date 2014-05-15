@@ -43,6 +43,7 @@
 (defarc (ac s env)
   (cond ((string? s) (ac-string s env))
         ((literal? s) s)
+        ((keyword? s) s)
         ((eqv? s 'nil) (list 'quote 'nil))
         ((ssyntax? s) (ac (expand-ssyntax s) env))
         ((symbol? s) (ac-var-ref s env))
@@ -114,12 +115,16 @@
 ; (complement (andf foo bar)).
 
 (define (expand-ssyntax sym)
-  ((cond ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
+  ((cond ((eqv? (car (symbol->chars sym)) #\:) expand-keyword)
+         ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
          ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
          ((insym? #\& sym) expand-and)
      ;   ((insym? #\_ sym) expand-curry)
          (#t (error "Unknown ssyntax" sym)))
    sym))
+
+(define (expand-keyword sym)
+  (string->keyword (list->string (cdr (symbol->chars sym)))))
 
 (define (expand-compose sym)
   (let ((elts (map (lambda (tok)
@@ -842,6 +847,7 @@
         ((exn? x)           'exception)
         ((thread? x)        'thread)
         ((thread-cell? x)   'thread-cell)
+        ((keyword? x)       'keyword)
         (#t                 (err "Type: unknown type" x))))
 (xdef type ar-type)
 
