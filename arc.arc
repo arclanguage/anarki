@@ -1015,7 +1015,7 @@ negative to count backwards from the end."
   (if (no i)  max
       (< i 0)  (+ max i)
       (>= i max) max
-      'else  i))
+      :else  i))
 
 (def last (xs)
 "Returns the last element of 'xs'."
@@ -1721,7 +1721,7 @@ comparator between elements."
        (list elt)
       (test elt car.seq)
        (cons elt seq)
-      'else
+      :else
        (cons car.seq (insert-sorted test elt cdr.seq))))
 
 (examples insert-sorted
@@ -1741,7 +1741,7 @@ comparator between elements."
        (reinsert-sorted test elt cdr.seq)
       (test elt car.seq)
        (cons elt (rem elt seq))
-      'else
+      :else
        (cons car.seq (reinsert-sorted test elt cdr.seq))))
 
 (mac insortnew (test elt seq)

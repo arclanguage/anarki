@@ -210,7 +210,7 @@
                       opstring
                     (is opt 'id)
                       opsym
-                    'else
+                    :else
                       (opmeth spec opt))
         (if meth
           (if val

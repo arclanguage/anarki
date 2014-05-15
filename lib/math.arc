@@ -84,7 +84,7 @@
     (maptable (fn (key val)
                 (if (~acons key)  nil
                     (~all t (map (fn (k i) (isnt k i)) key indices))  nil
-                    'else  (= (ans (map (fn (k i) (if (> k i) (- k 1) k)) key indices)) val)))
+                    :else  (= (ans (map (fn (k i) (if (> k i) (- k 1) k)) key indices)) val)))
               mat)
     (if table? ans
       (table-to-mat ans)))))
@@ -395,7 +395,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
   "number of ways of picking n elements from k (ie no. of ways of mixing 2 different sets of identical objects of size n and (- k n))"
   (if (< n k)   (err "n > k in bin-coef")
       (< n 171)  (/ (fact n) (* (fact k) (fact (- n k)))) ; 170! is largest factorial which is represented exactly as a double-float
-      'else  (floor:+ 0.5 (e^:- ln-fact.n ln-fact.k (ln-fact:- n k)))))
+      :else  (floor:+ 0.5 (e^:- ln-fact.n ln-fact.k (ln-fact:- n k)))))
 
 (def beta (z w)
   "returns the value of the beta function B(z,w)"

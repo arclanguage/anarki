@@ -21,7 +21,7 @@ separation; no empty strings are returned."
                           (consif tok toks)
                         (test car.cs)
                           (recur cdr.cs (consif tok toks) nil)
-                        'else
+                        :else
                           (recur cdr.cs toks (cons car.cs tok))))))))
 
 ; maybe promote to arc.arc, but if so include a list clause
