@@ -123,6 +123,7 @@
          (#t (error "Unknown ssyntax" sym)))
    sym))
 
+; turn common-lisp style :keywords into racket #:keywords
 (define (expand-keyword sym)
   (string->keyword (list->string (cdr (symbol->chars sym)))))
 
