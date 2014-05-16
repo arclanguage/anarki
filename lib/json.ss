@@ -69,8 +69,8 @@
       (arc-list-denil x)))
 
 (define (arc-nil? x)
-    (or (eq? x 'nil)
-        (eq? x 'null)))
+  (or (eq? x 'nil)
+      (eq? x 'null)))
 
 (define (arc-boolean? x)
   (or (eq? x 'true)
