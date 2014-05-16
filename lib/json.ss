@@ -68,7 +68,7 @@
       '()
       (arc-list-denil x)))
 
- (define (arc-nil? x)
+(define (arc-nil? x)
     (or (eq? x 'nil)
         (eq? x 'null)))
 
