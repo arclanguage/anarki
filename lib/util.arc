@@ -46,7 +46,6 @@
   "Tests whether an expression should be autogensymed"
   (and exp (isa exp 'sym) (endmatch "@" (string exp))))
 
-
 ; miscellaneous
 
 (def fst (a . _) " Returns its first argument. See also [[snd]] " a)
@@ -73,7 +72,6 @@
 (def anum (x) " `t' iff `x' is a num. Note that ints are not nums. "
   (isa x 'num))
 
-
 ; list manipulation
 
 ; 'reduce and 'rreduce have somewhat quirky behavior, well-suited to arithmetic
@@ -180,7 +178,6 @@
          (let ,g1 (rand-pos ,lst)
            (popnth ,lst ,g1)))))
 
-
 ; combinators
 
 (def applied (f)
@@ -236,7 +233,6 @@
         (fn a (if (apply test a) (apply fun a)
                   (apply restfun a))))))
 
-
 ; macros
 
 (mac mappendeach (var lst . body)
@@ -257,7 +253,7 @@
      ,@cdr.args))
 
 (mac assert (exp (o msg (+ "Assertion failed: "
-                           (tostring:ppr exp (len "Assertion failed: ") t))))
+                           (tostring:ppr-main exp (len "Assertion failed: ") t))))
   " Errors with `msg' if `exp' evaluates to nil. "
   `(unless ,exp (err ,msg)))
 
@@ -289,7 +285,6 @@
             (do ,@body (,loop-name ,@(map1 [_ 2] parms)))))
          ,@(map1 [_ 1] parms)))))
 
-
 ; binding forms
 
 (mac with/p (vars-vals . body)
@@ -372,7 +367,6 @@
     See also [[withr]] [[withr/p]] [[withf]] "
   `(withr/p ,(rev:pair parms) ,expr))
 
-
 ; ripoffs - licenses unknown
 
 ; once-only by fallintothis
