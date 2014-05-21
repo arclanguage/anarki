@@ -1,188 +1,109 @@
-(register-test '(suite "Foundation Tests"
-  (suite "Maths"
-    (suite "+"
-      ("sums all args"
-        (+ 1 2 3)
-        6)
+(suite math
+       (suite addition
+              zero-args-is-0 (assert-same 0
+                                          (+))
+              is-variadic (assert-same 6
+                                       (+ 1 2 3))
+              adds-floats (assert-same 10.2
+                                       (+ 1.2 3.4 5.6))
+              concatenates-lists (assert-same '(a b c d e f)
+                                              (+ '(a b) '(c d) '(e f)))
+              concatenates-lists-ignoring-nil (assert-same '(a b c d e f)
+                                                           (+ '(a b) nil '(c d) nil '(e f)))
+              converts-integer-fraction-to-integer (assert-same 17
+                                                                (+ 12 20/4))
+              doesnt-convert-non-integer-fraction (assert-same 104/7
+                                                               (+ 12 20/7))
+              adding-doubles-results-in-double (assert-same 15.0
+                                                            (+ 13 2.0))
+              simplifies-fractions (assert-same 1/6
+                                                (+ 1/10 1/15))
+              concatenates-strings (assert-same "foobar21"
+                                                (+ "foo" 'bar 21))
+              string-concatenation-ignores-nil (assert-same "abc"
+                                                            (+ "a" "b" "c" nil))
+              cant-add-a-string-to-a-number (assert-error (+ 10 "11"))
+              cant-add-a-number-to-a-list (assert-error (+ '(a b c) 4)))
 
-      ("sums all args"
-        (+ 1.2 3.4 5.6)
-        10.2)
+       (suite subtraction
+              basic-subtraction (assert-same 18
+                                             (- 25 7))
+              is-variadic (assert-same -4
+                                       (- 1 2 3))
+              subtracts-floats (assert-same -7.8
+                                            (- 1.2 3.4 5.6))
+              converts-integer-fraction-to-integer (assert-same 7
+                                                                (- 12 20/4))
+              simplifies-fractions (assert-same 1/30
+                                                (- 1/10 1/15)))
 
-      ("concatenates lists"
-        (+ '(a b) '(c d) '(e f))
-        (a b c d e f))
+       (suite multiplication
+              zero-args-is-1 (assert-same 1
+                                          (*))
+              apply-to-nil-is-1 (assert-same 1
+                                             (apply * nil))
+              basic-multiplication (assert-same 161
+                                                (* 23 7))
+              multiplies-floats (assert-same 8.4
+                                             (* 2.4 3.5))
+              multiplies-fractions (assert-same 5/2
+                                                (* 5 1/2))
+              multiplies-fractions-converts-to-double (assert-same 8.75
+                                                                   (* 2.5 7/2))
+              multiplies-fractions-converts-to-double-when-double-is-seconds (assert-same 8.75
+                                                                                          (* 7/2 2.5))
+              converts-integer-fraction-to-integer (assert-same 3
+                                                                (* 9/4 4/3))
+              reads-exponents (assert-same 40.0
+                                           (* 1000000 4e-5))
+              reads-exponents-with-decimal-places (assert-same 40.1
+                                                               (* 1000000 4.01e-5)))
 
-      ("concatenates lists ignoring nil"
-        (+ '(a b) nil '(c d) nil '(e f))
-        (a b c d e f))
+       (suite division
+              divides-integers (assert-same 32
+                                            (/ 192 6))
+              divides-floats (assert-t (< 3.19999
+                                          (/ 11.2
+                                             3.5)
+                                          3.20001))
+              divides-first-arg-by-all-remaining-args (assert-same 32
+                                                                   (/ 192 3 2))
+              divides-first-arg-by-all-remaining-args-including-float (assert-same 6.0
+                                                                                   (/ 30 2 2.5)))
 
-      ("converts fraction to int if no loss"
-        (+ 12 20/4)
-        17 )
+       (suite infinities-and-NaN
+              dividing-by-zero-is-infinity (assert-same +inf.0
+                                                        (/ 1.0 0.0))
+              dividing-by-zero-is-negative-infinity (assert-same -inf.0
+                                                                 (/ -1.0 0.0))
+              subtracting-infinities-is-NaN (assert-same +nan.0
+                                                         (- +inf.0 +inf.0)))
 
-      ("retains fraction if not integer"
-        (+ 12 20/7)
-        104/7 )
-
-      ("retains double even for integer result"
-        (+ 13 2.0)
-        15.0 )
-
-      ("simplifies fractions"
-        (+ 1/10 1/15)
-        1/6 )
-
-      ("concatenates strings"
-        (+ "foo" 'bar 21)
-        "foobar21")
-
-      ("string concatenation ignores nil"
-        (+ "a" "b" "c" nil)
-        "abc")
-
-      ("can't add a string to a number"
-        (on-err (fn (ex) "impossible") (fn () (+ 10 "11")))
-        "impossible")
-
-      ("can't add a number to a list"
-        (on-err (fn (ex) "impossible") (fn () (+ '(a b c) 4)))
-        "impossible")
-    )
-
-    (suite "-"
-      ("subtracts second arg from first"
-        (- 25 7)
-        18)
-
-      ("subtracts all subsequent integer args from first"
-        (- 1 2 3)
-        -4)
-
-      ("subtracts all subsequent double args from first"
-        (- 1.2 3.4 5.6)
-        -7.8)
-
-      ("converts fraction to int if no loss"
-        (- 12 20/4)
-        7 )
-
-      ("simplifies fractions"
-        (- 1/10 1/15)
-        1/30 ))
-
-    (suite "*"
-      ("returns 1 for zero args"
-        (*)
-        1)
-
-      ("returns 1 for zero args via apply"
-        (apply * nil)
-        1)
-
-      ("multiplies integers"
-        (* 23 7)
-        161)
-
-      ("multiplies floats"
-        (* 2.4 3.5)
-        8.4)
-
-      ("multiplies fractions"
-         (* 5 1/2)
-         5/2 )
-
-      ("multiplies fractions and converts to double"
-         (* 2.5 7/2)
-         8.75 )
-
-      ("multiplies fractions and converts to double regardless of parameter order"
-         (* 7/2 2.5)
-         8.75 )
-
-      ("converts fraction to int if no loss"
-        (* 9/4 4/3)
-        3 )
-
-      ("reads exponents"
-        (* 1000000 4e-5)
-        40.0)
-
-      ("reads exponents"
-        (* 1000000 4.01e-5)
-        40.1))
-
-    (suite "/"
-      ("divides integers"
-        (/ 192 6)
-        32)
-
-      ("divides floats"
-        (< 3.19999 (/ 11.2 3.5) 3.20001)
-        t)
-
-      ("divides first arg by product of remaining args"
-        (/ 192 3 2)
-        32)
-
-      ("divides first arg by product of remaining args"
-        (/ 30 2 2.5)
-        6.0))
-
-    (suite "inifities and NaN"
-      ("division by zero returns inifinity"     (/ 1.0 0.0)        +inf.0)
-      ("division by zero returns neg infinity"  (/ -1.0 0.0)       -inf.0)
-      ("subtraction of infinities returns NaN"  (coerce (- +inf.0 +inf.0) 'string) "+nan.0"))
-
-    (suite "trunc"
-      ("truncates integers with no effect"
-        (trunc 13.0)
-        13)
-
-      ("truncates floats"
-        (trunc 3.1415)
-        3))
-
-    (suite "expt"
-      ("simple integer exponents"
-        (expt 2.5 3)
-        15.625 )
-
-      ("double exponents"
-        (expt 100 0.5)
-        10.0 )
-
-      ("more double exponents"
-        (expt 1000 0.5)
-        31.622776601683793 ))
-
-    (suite "sqrt"
-      ("simple square root"
-        (sqrt 6.25)
-        2.5 )
-
-      ("non-integer roots"
-        (sqrt 2)
-        1.4142135623730951)
-
-      ("root of double"
-        (sqrt 3.14)
-        1.772004514666935 ))
-
-    (suite "mod"
-      ("for positive integers"
-        (mod 10 3)
-        1)
-
-      ("for negative integers"
-        (mod -10 3)
-        2)
-
-      ("for negative integers"
-        (mod -21 5)
-        4)
-
-      ("for fractions"
-        (mod -77/7 5)
-        4))
-)))
+       (suite trunc
+              truncates-integer-valued-floats (assert-same 13
+                                                           (trunc 13.0))
+              truncates-floats (assert-same 3
+                                            (trunc 3.1415)))
+       (suite expt
+              integer-exponents (assert-same 15.625
+                                             (expt 2.5 3))
+              double-exponents (assert-same 10.0
+                                            (expt 100 0.5))
+              double-exponenets-again (assert-same 31.622776601683793
+                                                   (expt 1000 0.5)))
+       (suite sqrt
+              simple (assert-same 4
+                                  (sqrt 16))
+              non-integer-roots (assert-same 1.4142135623730951
+                                             (sqrt 2))
+              root-of-double (assert-same 1.772004514666935
+                                          (sqrt 3.14)))
+       (suite mod
+              positive-integers (assert-same 1
+                                             (mod 10 3))
+              negative-integers (assert-same 2
+                                             (mod -10 3))
+              negative-integers-2 (assert-same 4
+                                               (mod -21 5))
+              fractions (assert-same 4
+                                     (mod -77/7 5))))

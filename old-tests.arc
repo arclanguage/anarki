@@ -11,7 +11,6 @@
     lib/tests/core-errors-continuations-test.arc
     lib/tests/core-evaluation-test.arc
     lib/tests/core-macros-test.arc
-    lib/tests/core-maths-test.arc
     lib/tests/core-predicates-test.arc
     lib/tests/core-special-forms-test.arc
     lib/tests/core-typing-test.arc

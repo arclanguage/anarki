@@ -7,6 +7,7 @@
     lib/strings.arc.t
     lib/streams.arc.t
     lib/tests/core-lists-test.arc
+    lib/tests/core-maths-test.arc
     arc.arc.t
 ))
 
