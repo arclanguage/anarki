@@ -4,7 +4,6 @@
     lib/lru-cache.arc.t
     lib/srv.arc.t
     lib/tem.arc.t
-    lib/web.arc.t
 
     ; tests from conanite's rainbow
     lib/tests/core-errors-continuations-test.arc
