@@ -4,6 +4,7 @@
     lib/json.arc.t
     lib/ns.arc.t
     lib/queue.arc.t
+    lib/spliceable-list.arc.t
     lib/strings.arc.t
     lib/streams.arc.t
     lib/tests/core-lists-test.arc
