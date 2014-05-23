@@ -7,6 +7,7 @@
     lib/spliceable-list.arc.t
     lib/strings.arc.t
     lib/streams.arc.t
+    lib/srv.arc.t
     lib/tests/core-lists-test.arc
     lib/tests/core-maths-test.arc
     lib/web.arc.t
