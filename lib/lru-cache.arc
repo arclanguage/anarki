@@ -12,9 +12,9 @@
                        (wipe pointers.args))))
           insert  (fn (args-and-result)
                     (= cdr.lastvalue list.args-and-result)
-                    (= lastvalue cdr.lastvalue)
                     (= (pointers args-and-result.0)
-                       values)
+                       lastvalue)
+                    (= lastvalue cdr.lastvalue)
                     (when (< capacity (len cdr.values))  ; todo: avoid len
                       (evict)))
           lookup  (fn (args)

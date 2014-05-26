@@ -40,3 +40,10 @@
   '(4 1)
   (let result foo.3
     (list result (num-foo-calls))))
+
+(test-iso "repeated identical calls yield identical results"
+  '(4 4)
+  (do
+    foo.3
+    foo.4
+    (list foo.3 foo.3)))
