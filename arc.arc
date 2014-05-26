@@ -1340,16 +1340,18 @@ a list of the results."
 (def pos (test seq (o start 0))
 "Returns the index of the first element of 'seq' matching 'test', starting
 from index 'start' (0 by default)."
-  (let f (testify test)
-    (if (alist seq)
-      (loop (seq (nthcdr start seq)
-             n   start)
-        (if (no seq)
-             nil
-            (f car.seq)
-             n
-            (recur cdr.seq (+ n 1))))
-      (recstring [if (f (seq _)) _] seq start))))
+  (let f testify.test
+    (loop (seq (nthcdr start seq)
+           n   start)
+      (if (no seq)
+           nil
+          (f car.seq)
+           n
+          (recur cdr.seq (+ n 1))))))
+
+(defextend pos (test seq (o start 0))  (isa seq 'string)
+  (let f testify.test
+    (recstring [if (f (seq _)) _] seq start)))
 
 (examples pos
   (pos 'c '(a b c d))
