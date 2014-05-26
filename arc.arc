@@ -1186,16 +1186,9 @@ place2 to place1, and place1 to place3."
 
 (mac zap (op place . args)
 "Replaces 'place' with (apply op place args)"
-  (with (gop    (uniq)
-         gargs  (map [uniq] args)
-         mix    (afn seqs
-                  (if (some no seqs)
-                    nil
-                    (+ (map car seqs)
-                       (apply self (map cdr seqs))))))
-    (let (binds val setter) (setforms place)
-      `(atwiths ,(+ binds (list gop op) (mix gargs args))
-         (,setter (,gop ,val ,@gargs))))))
+  (let (binds val setter) setforms.place
+    `(atwiths ,binds
+      (,setter (,op ,val ,@args)))))
 
 (mac wipe args
 "Sets each place in 'args' to nil."
