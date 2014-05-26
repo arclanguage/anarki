@@ -2,6 +2,7 @@
 (map load:string '(
     lib/app.arc.t
     lib/json.arc.t
+    lib/lru-cache.arc.t
     lib/ns.arc.t
     lib/queue.arc.t
     lib/spliceable-list.arc.t

@@ -1,49 +1,33 @@
-(let calls 0
-  (def-lru foo (x) 2  ; cache capacity of 2
-    ++.calls
-    (+ x 1))
-  (def num-foo-calls ()
-    calls)
-  (def reset-foo-calls ()
-    (= calls 0)))
-
-; insert first item
-(test-iso "lru-cache calls a function to compute a result"
-  3
-  (foo 2))
-
-(test-iso "first call computes function"
-  1
-  (num-foo-calls))
-
-(reset-foo-calls)
-(test-iso "lru-cache caches result"
-  '(3 0)
-  (let result foo.2
-    (list result (num-foo-calls))))
-
-; insert second item
-(foo 3)
-(reset-foo-calls)
-(test-iso "lru-cache caches multiple results"
-  '(3 4 0)
-  (with (result2 foo.2
-         result3 foo.3)
-    (list result2 result3 (num-foo-calls))))
-
-; make 2 most recent
-(foo 2)
-; now evict 3
-(foo 4)
-(reset-foo-calls)
-(test-iso "evicts least recently used call"
-  '(4 1)
-  (let result foo.3
-    (list result (num-foo-calls))))
-
-(test-iso "repeated identical calls yield identical results"
-  '(4 4)
-  (do
-    foo.3
-    foo.4
-    (list foo.3 foo.3)))
+(suite-w/setup lru (calls 0
+                    test-lru (lru 2
+                                  [do (++ calls)
+                                      (+ _ 1)]))
+               lru-uses-body (assert-same 3
+                                          (test-lru 2))
+               lru-uses-body-once (do (test-lru 2)
+                                      (assert-same 1
+                                                   calls))
+               lru-caches-result (do (test-lru 2)
+                                     (test-lru 2)
+                                     (assert-same 1
+                                                  calls))
+               cached-result-is-correct (do (test-lru 2)
+                                            (assert-same 3
+                                                         (test-lru 2)))
+               capacity-of-2-caches-2-things (do (test-lru 2)
+                                                 (test-lru 3)
+                                                 (test-lru 2)
+                                                 (test-lru 3)
+                                                 (assert-same 2
+                                                              calls))
+               evicts-least-recently-used-call (do (test-lru 2)
+                                                   (test-lru 27)
+                                                   (test-lru 42)
+                                                   (test-lru 2) ;;this should run the body code
+                                                   (assert-same 4
+                                                                calls))
+               repeated-calls-yield-identical-results (do (test-lru 3)
+                                                          (test-lru 42)
+                                                          (test-lru 3)
+                                                          (assert-same 4
+                                                                       (test-lru 3))))
