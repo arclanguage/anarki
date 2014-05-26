@@ -567,7 +567,7 @@ Pronounced 'anaphoric check'."
     (recstring [check seq._ f] seq)))
 
 (def mem (test seq)
-"Returns all elements of 'seq' first element to satisfy 'test'.
+"Returns suffix of 'seq' after the first element to satisfy 'test'.
 This is the most reliable way to check for presence, even when searching for nil."
   (let f (testify test)
     (reclist [if (f:carif _) _] seq)))
