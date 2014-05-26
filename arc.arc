@@ -372,7 +372,7 @@ Useful for avoiding name capture in macros; see the tutorial: http://ycombinator
    5)
   32)
 
-; a more readable variant of rfn
+; a more readable variant of afn
 ; http://awwx.ws/xloop0; http://arclanguage.org/item?id=10055
 (mac loop (withses . body)
 "Like 'with', but the body can also be rerun with new bindings by calling 'recur'.
@@ -406,11 +406,10 @@ For example, this is always true:
 Be wary of passing macros to compose."
   (w/uniq g
     `(fn ,g
-       ,((afn (fs)
-           (if (cdr fs)
-             (list (car fs) (self (cdr fs)))
-             `(apply ,(if (car fs) (car fs) 'idfn) ,g)))
-         args))))
+       ,(loop (fs args)
+          (if cdr.fs
+            (list car.fs (recur cdr.fs))
+            `(apply ,(if car.fs car.fs 'idfn) ,g))))))
 
 ; Ac expands ~x into (complement x)
 ; x cannot be a macro unless the form is in functional position.
@@ -632,12 +631,11 @@ Generalizes [[map1]] to functions with more than one argument."
 (defextend map (f . seqs) (some [isa _ 'string] seqs)
   (withs (n  (apply min (map1 len seqs))
           new  (newstring n))
-    ((afn (i)
-       (if (is i n)
-         new
-         (do (sref new (apply f (map1 [_ i] seqs)) i)
-             (self (+ i 1)))))
-     0)))
+    (loop (i 0)
+      (if (is i n)
+        new
+        (do (sref new (apply f (map1 [_ i] seqs)) i)
+            (recur (+ i 1)))))))
 
 (examples map
   (map cdr '((1) (2 3) (4 5)))
@@ -873,15 +871,16 @@ table, or other user-defined type) to 'value'.")
 
 (def expand-metafn-call (f args)
   (if (is (car f) 'compose)
-       ((afn (fs)
-          (if (caris (car fs) 'compose)            ; nested compose
-               (self (join (cdr (car fs)) (cdr fs)))
-              (cdr fs)
-               (list (car fs) (self (cdr fs)))
-              (cons (car fs) args)))
-        (cdr f))
+       (loop (fs cdr.f)
+         (if (caris car.fs 'compose)  ; nested compose
+              (recur (join cdar.fs cdr.fs))
+             (cdr fs)
+              (list car.fs (recur cdr.fs))
+             :else
+              (cons car.fs args)))
       (is (car f) 'no)
        (err "Can't invert " (cons f args))
+      :else
        (cons f args)))
 
 (def expand= (place val)
@@ -951,11 +950,10 @@ with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
 
 (def walk (seq f)
 "Calls function 'f' on each element of 'seq'. See also [[map]]."
-  ((afn (l)
-     (when acons.l
-       (f car.l)
-       (self cdr.l)))
-   seq))
+  (loop (l seq)
+    (when acons.l
+      (f car.l)
+      (recur cdr.l))))
 
 (mac each (var expr . body)
 "Loops through expressions in 'body' with 'var' bound to each successive
@@ -1030,11 +1028,10 @@ negative to count backwards from the end."
 (def rem (test seq)
 "Returns all elements of 'seq' except those satisfying 'test'."
   (let f (testify test)
-    ((afn (s)
-       (if (no s)       nil
-           (f car.s)    (self cdr.s)
-                        (cons car.s (self cdr.s))))
-      seq)))
+    (loop (s seq)
+      (if (no s)        nil
+          (f car.s)     (recur cdr.s)
+          :else         (cons car.s (recur cdr.s))))))
 
 (examples rem
   (rem odd '(1 2 3 4 5))
@@ -1089,13 +1086,13 @@ negative to count backwards from the end."
 
 (mac caselet (var expr . args)
 "Like [[case]], but 'expr' is also bound to 'var' and available inside the 'args'."
-  (let ex (afn (args)
-            (if (no (cdr args))
-              (car args)
-              `(if (is ,var ',(car args))
-                 ,(cadr args)
-                 ,(self (cddr args)))))
-    `(let ,var ,expr ,(ex args))))
+  `(let ,var ,expr
+     ,(loop (args args)
+        (if (no cdr.args)
+          car.args
+          `(if (is ,var ',car.args)
+             ,cadr.args
+             ,(recur cddr.args))))))
 
 (mac case (expr . args)
 "Usage: (case expr test1 then1 test2 then2 ...)
@@ -1338,11 +1335,10 @@ a list of the results."
 
 (def flat x
 "Flattens a list of lists."
-  ((afn (x acc)
-     (if (no x)   acc
-         (~acons x) (cons x acc)
-                  (self car.x (self cdr.x acc))))
-   x nil))
+  (loop (x x  acc nil)
+    (if no.x        acc
+        (~acons x)  (cons x acc)
+        :else       (recur car.x (recur cdr.x acc)))))
 
 (examples flat
   (flat '(1 2 () 3 (4 (5))))
@@ -1353,14 +1349,13 @@ a list of the results."
 from index 'start' (0 by default)."
   (let f (testify test)
     (if (alist seq)
-      ((afn (seq n)
-           (if (no seq)
-                nil
-               (f (car seq))
-                n
-               (self (cdr seq) (+ n 1))))
-         (nthcdr start seq)
-         start)
+      (loop (seq (nthcdr start seq)
+             n   start)
+        (if (no seq)
+             nil
+            (f car.seq)
+             n
+            (recur cdr.seq (+ n 1))))
       (recstring [if (f (seq _)) _] seq start))))
 
 (examples pos
@@ -1527,12 +1522,13 @@ expressions  as a list."
 
 (def readall (src (o eof nil))
 "Like [[readfile]], but can also accept a string 'src'."
-  ((afn (i)
-    (let x (read i eof)
+  (loop (in (if (isa src 'string)
+              instring.src
+              src))
+    (let x (read in eof)
       (if (is x eof)
         nil
-        (cons x (self i)))))
-   (if (isa src 'string) (instring src) src)))
+        (cons x recur.in)))))
 
 (def allchars (str)
   (tostring (whiler c (readc str nil) no
@@ -1823,14 +1819,17 @@ by args passed in, so that future calls with the same inputs can save work."
 
 (def readline ((o str (stdin)))
 "Reads a string terminated by a newline from the stream 'str'."
-  (awhen (readc str)
+  (awhen readc.str
     (tostring
-      ((afn (c)
-         (if (is c #\return) (when (is peekc.str #\newline) readc.str)
-             (is c #\newline) nil
-             (do (writec c)
-                 (aif readc.str self.it))))
-       it))))
+      (loop (c it)
+        (if (is c #\return)
+             (if (is peekc.str #\newline)
+               readc.str)
+            (is c #\newline)
+             nil
+            :else
+             (do writec.c
+                 (aif readc.str recur.it)))))))
 
 (def readlines ((o str (stdin)))
 "Slurps contents of stream 'str' as a list of lines."
@@ -2034,12 +2033,12 @@ barring the sign."
         ;       (and (not (less? (car next) last))
         ;            (loop (car next) (cdr next)))))
         ; lst
-        ((afn (n)
+        (loop (n n)
            (if (> n 2)
                 ; needs to evaluate L->R
                 (withs (j (/ (if (even n) n (- n 1)) 2) ; faster than round
-                        a (self j)
-                        b (self (- n j)))
+                        a (recur j)
+                        b (recur (- n j)))
                   (merge less? a b))
                ; the following case just inlines the length 2 case,
                ; it can be removed (and use the above case for n>1)
@@ -2055,8 +2054,7 @@ barring the sign."
                   (= lst (cdr lst))
                   (scdr p nil)
                   p)
-               nil))
-         n))))
+               nil)))))
 
 ; Also by Eli.
 
@@ -2236,20 +2234,21 @@ determined by calling 'timef' rather than directly passing in a number."
 "Returns a function which calls all the functions in 'fns' on its args, and
 [[or]]s the results. ((orf f g) x y) <=> (or (f x y) (g x y))"
   (fn args
-    ((afn (fs)
-       (and fs (or (apply (car fs) args) (self (cdr fs)))))
-     fns)))
+    (loop (fs fns)
+      (and fs
+           (or (apply car.fs args)
+               (recur cdr.fs))))))
 
 (def andf fns
 "Returns a function which calls all the functions in 'fns' on its args, and
 [[and]]s the results. For example, ((andf f g) x y) <=> (and (f x y) (g x y)).
 Simple syntax: f&g <=> (andf f g)"
   (fn args
-    ((afn (fs)
-       (if (no fs)       t
-           (no (cdr fs)) (apply (car fs) args)
-                         (and (apply (car fs) args) (self (cdr fs)))))
-     fns)))
+    (loop (fs fns)
+      (if no.fs          t
+          (no cdr.fs)    (apply car.fs args)
+          :else          (and (apply car.fs args)
+                              (recur cdr.fs))))))
 
 (def before (x y seq (o i 0))
 "Does 'x' lie before 'y' in 'seq' (optionally starting from index 'i')?"
@@ -2639,15 +2638,14 @@ when it's ready to be interrupted."
 "Applies each function in 'fs' to 'x', letting the functions recurse on parts
 of 'x' by calling 'self'."
   (w/uniq g
-    `((afn (,g)
-        (when ,g
-          ,@(map [list _ g] fs)))
-      ,x)))
+    `(loop (,g ,x)
+       (when ,g
+         ,@(map [list _ g] fs)))))
 
 (examples trav
   (accum acc
     (trav '(1 2 3 4) [acc _]
-                     [self cdr._]))
+                     [recur cdr._]))
   ((1 2 3 4)
    (2 3 4)
    (3 4)
