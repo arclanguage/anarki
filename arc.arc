@@ -985,6 +985,59 @@ element of 'expr'."
 ;             (up ,gv 0 (len ,gseq)
 ;               (let ,var (,gseq ,gv) ,@body))))))
 
+; Destructuring means ambiguity: are pat vars bound in else? (no)
+
+(mac iflet (var expr . branches)
+"Like [[if]] but also puts the value of 'expr' in 'var', making it available in 'branches'."
+  (if branches
+    (w/uniq gv
+      `(let ,gv ,expr
+         (if ,gv
+           (let ,var ,gv
+             ,(car branches))
+           ,(if (cdr branches)
+              `(iflet ,var ,@(cdr branches))))))
+    expr))
+
+(mac whenlet (var expr . body)
+"Like [[when]] but also puts the value of 'expr' in 'var' so 'body' can access it."
+  `(iflet ,var ,expr (do ,@body)))
+
+(mac aif (expr . branches)
+"Like [[if]], but also puts the value of 'expr' in variable 'it'."
+  `(iflet it ,expr ,@branches))
+
+(examples aif
+  (aif (> 1 2) (+ it 1)
+       42      (+ it 2))
+  44
+  (let h (obj a 1)
+    (aif h!a (+ it 1)))
+  2)
+
+(mac awhen (expr . body)
+"Like [[when]], but also puts the value of 'expr' in variable 'it'."
+  `(let it ,expr (if it (do ,@body))))
+
+(examples awhen
+  (awhen (* 2 3)
+    (+ it 1))
+  7)
+
+(mac aand args
+"Like [[and]], but each expression in 'args' can access the result of the
+previous one in variable 'it'."
+  (if (no args)
+       t
+      (no (cdr args))
+       (car args)
+      `(let it ,(car args) (and it (aand ,@(cdr args))))))
+
+(examples aand
+  (aand 1 (+ it 2) (* it 10))
+  30)
+
+
 ; (nthcdr x y) = (cut y x).
 
 (def cut (seq start (o end))
@@ -1197,58 +1250,6 @@ place2 to place1, and place1 to place3."
 (mac set args
 "Sets each place in 'args' to t."
   `(do ,@(map (fn (a) `(= ,a t)) args)))
-
-; Destructuring means ambiguity: are pat vars bound in else? (no)
-
-(mac iflet (var expr . branches)
-"Like [[if]] but also puts the value of 'expr' in 'var', making it available in 'branches'."
-  (if branches
-    (w/uniq gv
-      `(let ,gv ,expr
-         (if ,gv
-           (let ,var ,gv
-             ,(car branches))
-           ,(if (cdr branches)
-              `(iflet ,var ,@(cdr branches))))))
-    expr))
-
-(mac whenlet (var expr . body)
-"Like [[when]] but also puts the value of 'expr' in 'var' so 'body' can access it."
-  `(iflet ,var ,expr (do ,@body)))
-
-(mac aif (expr . branches)
-"Like [[if]], but also puts the value of 'expr' in variable 'it'."
-  `(iflet it ,expr ,@branches))
-
-(examples aif
-  (aif (> 1 2) (+ it 1)
-       42      (+ it 2))
-  44
-  (let h (obj a 1)
-    (aif h!a (+ it 1)))
-  2)
-
-(mac awhen (expr . body)
-"Like [[when]], but also puts the value of 'expr' in variable 'it'."
-  `(let it ,expr (if it (do ,@body))))
-
-(examples awhen
-  (awhen (* 2 3)
-    (+ it 1))
-  7)
-
-(mac aand args
-"Like [[and]], but each expression in 'args' can access the result of the
-previous one in variable 'it'."
-  (if (no args)
-       t
-      (no (cdr args))
-       (car args)
-      `(let it ,(car args) (and it (aand ,@(cdr args))))))
-
-(examples aand
-  (aand 1 (+ it 2) (* it 10))
-  30)
 
 (mac accum (accfn . body)
 "Runs 'body' (usually containing a loop) and then returns in order all the
