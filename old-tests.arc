@@ -1,10 +1,14 @@
 ;; unit tests in various styles prior to https://bitbucket.org/zck/unit-test.arc
+
 (map load:string '(
     arc.arc.t.old
     lib/lru-cache.arc.t
     lib/tem.arc.t
+))
 
-    ; tests from conanite's rainbow
+; tests from conanite's rainbow
+(load "lib/unit-test.arc")
+(map load:string '(
     lib/tests/core-errors-continuations-test.arc
     lib/tests/core-evaluation-test.arc
     lib/tests/core-macros-test.arc
@@ -16,3 +20,4 @@
     ; currently failing; may be irrelevant to anarki
     ; lib/tests/parser-test.arc
 ))
+(run-all-tests)
