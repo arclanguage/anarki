@@ -399,6 +399,9 @@ For example, to respond to a url called /hello,
          (defop-raw ,name (,gs ,parm)
            (w/stdout ,gs (prrn) ,@body)))))
 
+; root defop is ||; make it easier to refer to
+(= empty-sym* (sym ""))
+
 ; Defines op as a redirector.  Its retval is new location.
 
 (mac defopr (name parm . body)
