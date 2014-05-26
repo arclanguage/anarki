@@ -2437,31 +2437,32 @@ in 'seq'."
   (rreduce / '(1 2 3))
   3/2)
 
-(let argsym (uniq)
+(def parse-format (str args)
+  (accum yield
+    (with (chars nil  i -1)
+      (w/instring s str
+        (whilet c readc.s
+          (case c
+            #\# (do (yield (coerce rev.chars 'string))
+                    (wipe chars)
+                    (yield read.s))
+            #\~ (do (yield (coerce rev.chars 'string))
+                    (wipe chars)
+                    (yield car.args)
+                    (zap cdr args))
+                (push c chars))))
+       (when chars
+         (yield (coerce rev.chars 'string))))))
 
-  (def parse-format (str)
-    (accum a
-      (with (chars nil  i -1)
-        (w/instring s str
-          (whilet c (readc s)
-            (case c
-              #\# (do (a (coerce (rev chars) 'string))
-                      (wipe chars)
-                      (a (read s)))
-              #\~ (do (a (coerce (rev chars) 'string))
-                      (wipe chars)
-                      (readc s)
-                      (a (list argsym (++ i))))
-                  (push c chars))))
-         (when chars
-           (a (coerce (rev chars) 'string))))))
-
-  (mac prf (str . args)
-  "Prints 'str' interpolating #exprs and replacing instances of \"~* with
+(mac prf (str . args)
+"Prints 'str' interpolating #exprs and replacing instances of ~ with
 successive elements of 'args'."
-    `(let ,argsym (list ,@args)
-       (pr ,@(parse-format str))))
-)
+  `(pr ,@(parse-format str args)))
+
+(examples prf
+  (let x 3
+    (prf "the square of #x is ~." 9))
+  _)  ; should print "the square of 3 is 9."
 
 (wipe load-file-stack*)
 (def load (file)
