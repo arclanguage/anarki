@@ -2498,33 +2498,21 @@ successive elements of 'args'."
 "Runs 'body', but any call to (throw x) immediately returns x."
   `(point throw ,@body))
 
-(def downcase (x)
+(def downcase (s)
 "Converts 'x' to lowercase."
-  (let downc (fn (c)
-               (let n (coerce c 'int)
-                 (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
-                   (coerce (+ n 32) 'char)
-                   c)))
-    (case (type x)
-      string (map downc x)
-      char   (downc x)
-      sym    (if x (sym (map downc (coerce x 'string))))
-             (err "Can't downcase" x))))
+  ($.string-downcase s))
+(defextend downcase (c)  (isa c 'char)
+  ($.char-downcase c))
+(defextend downcase (s)  (isa s 'sym)
+  (sym:downcase:string s))
 
-(def upcase (x)
+(def upcase (s)
 "Converts 'x' to uppercase."
-  (let upc (fn (c)
-             (let n (coerce c 'int)
-               (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
-                 (coerce (- n 32) 'char)
-                 c)))
-    (case (type x)
-      string (map upc x)
-      char   (upc x)
-      ; it's arguable whether (upcase nil) should be nil or NIL, but pg has
-      ; chosen NIL, so in the name of compatibility:
-      sym    (if x (sym (map upc (coerce x 'string))) 'NIL)
-             (err "Can't upcase" x))))
+  ($.string-upcase s))
+(defextend upcase (c)  (isa c 'char)
+  ($.char-upcase c))
+(defextend upcase (s)  (isa s 'sym)
+  (sym:upcase:string s))
 
 (def inc (x (o n 1))
   (coerce (+ (coerce x 'int) n) (type x)))
