@@ -1125,10 +1125,9 @@ negative to count backwards from the end."
 (def trues (f xs)
 "Returns (map f xs) dropping any nils."
   (and xs
-      (let fx (f car.xs)
-        (if fx
-          (cons fx (trues f cdr.xs))
-          (trues f cdr.xs)))))
+       (iflet fx (f car.xs)
+         (cons fx (trues f cdr.xs))
+         (trues f cdr.xs))))
 
 (examples trues
   (trues cdr '((1 2) (3) (4 5)))
