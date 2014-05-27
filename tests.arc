@@ -9,6 +9,7 @@
     lib/strings.arc.t
     lib/streams.arc.t
     lib/srv.arc.t
+    lib/tem.arc.t
     lib/tests/core-lists-test.arc
     lib/tests/core-maths-test.arc
     lib/web.arc.t

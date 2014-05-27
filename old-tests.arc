@@ -2,7 +2,6 @@
 
 (map load:string '(
     arc.arc.t.old
-    lib/tem.arc.t
 ))
 
 ; tests from conanite's rainbow

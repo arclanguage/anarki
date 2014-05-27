@@ -3,86 +3,52 @@
         (only.coerce tab 'cons)))
 
 (deftem foo field1 'default)
-(= f inst!foo)
-
-(test-iso "templates pick up defaults"
-  'default
-  f!field1)
-
-(= f!field1 34)
-(test-iso "reading and assigning templates works"
-  34
-  f!field1)
-
-(deftem foo2)
-(test-iso "reading empty templates works"
-  nil
-  inst!foo2!field1)
-
-(= f!field1 nil)
-(test-iso "assigning templates to nil works"
-  nil
-  f!field1)
-
-(test-iso "copying templates works"
-  f
-  copy.f)
-
-(test-iso "temlist works"
-  '((field1 34))
-  (normalize:temlist 'foo (inst 'foo 'field1 34)))
-
-(test-iso "temlist includes default fields"
-  '((field1 default) (new-field 3))
-  (normalize:temlist 'foo (inst 'foo 'new-field 3)))
-
-(test-iso "temlist keeps nil non-default fields"
-  '((field1 nil))
-  (normalize:temlist 'foo (inst 'foo 'field1 nil)))
-
-(test-iso "temlist includes explicitly set default fields"
-  '((field1 default))
-  (normalize:temlist 'foo (inst 'foo 'field1 'default)))
-
-(test-iso "temlist includes unknown nil fields"
-  '((field1 default) (new-field1 nil) (new-field2 3))
-  (normalize:temlist 'foo (inst 'foo 'new-field1 nil 'new-field2 3)))
-
-(test-iso "listtem DOES NOT ignore unknown fields"
-  (inst 'foo 'new-field 34)
-  (listtem 'foo '((new-field 34))))
-
-(test-iso "listtem handles nil"
-  (inst 'foo)
-  (listtem 'foo nil))
-
-(test-iso "temlist and listtem are converses"
-  (inst 'foo 'field1 34)
-  (listtem 'foo (temlist 'foo (inst 'foo 'field1 34))))
-
-(test-iso "temread and temwrite are converses"
-  (inst 'foo 'field1 34)
-  (w/instring i (w/outstring o
-                  (temwrite 'foo (inst 'foo 'field1 34) o)
-                  (inside o))
-    (temread 'foo i)))
-
-(test-iso "temread and temwrite are converses - 2"
-  (inst 'foo 'field1 nil)
-  (w/instring i (w/outstring o
-                  (temwrite 'foo (inst 'foo 'field1 nil) o)
-                  (inside o))
-    (temread 'foo i)))
-
-(test-iso "nil in file overwrites default"
-  nil
-  (w/instring i (w/outstring o
-                  (temwrite 'foo (inst 'foo 'field1 nil) o)
-                  (inside o))
-    ((temread 'foo i) 'field1)))
-
-(deftem foo field1 (seconds))
-(let f (inst 'foo)
-  (test-is "template expressions work"
-    f!field1
-    (do sleep.2 f!field1)))
+(deftem default-expression field1 (seconds))
+(deftem empty-tem)
+(suite-w/setup template (tem-with-default (inst 'foo)
+                         instance-with-expression (inst 'default-expression (seconds))
+                         empty-instance (inst 'empty-tem))
+               default-works (assert-same 'default
+                                          tem-with-default!field1)
+               assigning-templates (do (= tem-with-default!field1
+                                          'changed)
+                                       (assert-same 'changed
+                                                    tem-with-default!field1))
+               empty-template (assert-nil empty-instance!field1)
+               assigning-nil (do (wipe tem-with-default!field1)
+                                 (assert-nil tem-with-default!field1))
+               copy-templates (assert-same tem-with-default
+                                           (copy tem-with-default))
+               temlist (assert-same '((field1 34))
+                                    (normalize:temlist 'foo (inst 'foo 'field1 34)))
+               temlist-includes-default-fields (assert-same '((field1 default) (new-field 3))
+                                                            (normalize:temlist 'foo (inst 'foo 'new-field 3)))
+               temlist-keeps-nil-non-default-fields (assert-same '((field1 nil))
+                                                                 (normalize:temlist 'foo (inst 'foo 'field1 nil)))
+               temlist-includes-explicitly-set-default-fields (assert-same '((field1 default))
+                                                                           (normalize:temlist 'foo (inst 'foo 'field1 'default)))
+               temlist-includes-unknown-nil-fields (assert-same '((field1 default) (new-field1 nil) (new-field2 3))
+                                                                (normalize:temlist 'foo (inst 'foo 'new-field1 nil 'new-field2 3)))
+               templist-doesnt-include-unknown-fields (assert-same (inst 'foo 'new-field 34)
+                                                                   (listtem 'foo '((new-field 34))))
+               listtem-handles-nil (assert-same (inst 'foo)
+                                                (listtem 'foo nil))
+               temlist-is-converse-of-listtem (assert-same (inst 'foo 'field1 34)
+                                                           (listtem 'foo (temlist 'foo (inst 'foo 'field1 34))))
+               temread-is-converse-of-temwrite (assert-same (inst 'foo 'field1 34)
+                                                            (w/instring i (w/outstring o
+                                                                                       (temwrite 'foo (inst 'foo 'field1 34) o)
+                                                                                       (inside o))
+                                                                        (temread 'foo i)))
+               temread-is-converse-of-temwrite-complicated (assert-same (inst 'foo 'field1 nil)
+                                                                        (w/instring i (w/outstring o
+                                                                                                   (temwrite 'foo (inst 'foo 'field1 nil) o)
+                                                                                                   (inside o))
+                                                                                    (temread 'foo i)))
+               nil-in-file-overwrites-default (assert-nil (w/instring i (w/outstring o
+                                                                                     (temwrite 'foo (inst 'foo 'field1 nil) o)
+                                                                                     (inside o))
+                                                                      ((temread 'foo i) 'field1)))
+               template-expressions-are-evaluated-at-inst (assert-same instance-with-expression!field1
+                                                                       (do (sleep 1)
+                                                                           instance-with-expression!field1)))
