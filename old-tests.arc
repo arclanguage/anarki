@@ -1,9 +1,5 @@
 ;; unit tests in various styles prior to https://bitbucket.org/zck/unit-test.arc
 
-(map load:string '(
-    arc.arc.t.old
-))
-
 ; tests from conanite's rainbow
 (load "lib/unit-test.arc")
 (map load:string '(

@@ -241,3 +241,12 @@
                                         (unserialize:serialize `(1 ,(table) 2 3)))
        nested-tables (assert-same (obj 1 (table) 2 3)
                                   (unserialize:serialize (obj 1 (table) 2 3))))
+
+(mac foo (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
+(mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
+
+(suite gensyms
+       gensyms-dont-capture-variables (assert-same 7
+                                                   (let y@ 3 (foo y@)))
+       no-gensyms-capture-variables (assert-same 8  ; probably not what you want
+                                                 (let y 3 (foo-bad y))))

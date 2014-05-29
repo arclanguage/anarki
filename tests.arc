@@ -1,5 +1,6 @@
 ; tests based on https://bitbucket.org/zck/unit-test.arc
 (map load:string '(
+    arc.arc.t
     lib/app.arc.t
     lib/json.arc.t
     lib/lru-cache.arc.t
@@ -13,7 +14,6 @@
     lib/tests/core-lists-test.arc
     lib/tests/core-maths-test.arc
     lib/web.arc.t
-    arc.arc.t
 ))
 
 ; check examples
