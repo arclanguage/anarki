@@ -2105,6 +2105,11 @@ barring the sign."
           (cut s (+ i len.delim)))
     (list s)))
 
+(defextend split-at (s delim)  (isa s 'cons)
+  (iflet i (pos delim s)
+    (list (cut s 0 i)
+          (cut s (+ i 1)))))
+
 (def strip-after (s delim)
   (car:split-at s delim))
 
