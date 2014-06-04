@@ -14,6 +14,9 @@
     lib/tests/core-lists-test.arc
     lib/tests/core-maths-test.arc
     lib/web.arc.t
+
+    ; tests from conanite's rainbow
+    lib/tests/core-errors-continuations-test.arc
 ))
 
 ; check examples
