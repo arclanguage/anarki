@@ -3,7 +3,6 @@
 ; tests from conanite's rainbow
 (load "lib/unit-test.arc")
 (map load:string '(
-    lib/tests/core-macros-test.arc
     lib/tests/core-predicates-test.arc
     lib/tests/core-special-forms-test.arc
     lib/tests/core-typing-test.arc
