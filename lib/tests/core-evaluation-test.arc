@@ -1,158 +1,76 @@
 (mac test-double (x) `(+ ,x ,x))
 
-(register-test '(suite "Foundation Tests"
-  (suite "Evaluation"
-    (suite "[ _ ] shortcut"
-      ("call directly"
-        ([* _ _] 15)
-        225)
+(suite bracket-fn
+       directly (assert-same 225
+                             ([* _ _]
+                                 15))
+       apply (assert-same 256
+                          (apply [* _ _] '(16)))
+       empty (assert-nil ([] 21)))
 
-      ("useful in apply"
-        (apply [* _ _] '(16))
-        256)
+(suite apply
+       add (assert-same 3
+                        (apply + '(1 2)))
+       inline-function (assert-same 51
+                                    (apply (fn (x y) (* x y)) '(17 3)))
+       passes-all-args (assert-same "abcd"
+                                    (apply + "a" "b" '("c" "d"))))
 
-      ("handles empty bracket-fn"
-        ([] 21)
-        nil))
+(suite eval
+       sum (assert-same 25
+                        (eval '(+ 21 4)))
+       inline (assert-same 64
+                           (eval '( (fn (x y) (* x y)) 16 4))))
+(suite ssyntax
+       compose (assert-t (ssyntax 'a:b))
+       complement-and-compose (assert-t (ssyntax '~a:b))
+       complement (assert-t (ssyntax '~a))
+       list (assert-t (ssyntax 'a.b))
+       list-quoted (assert-t (ssyntax 'a!b))
+       and (assert-t (ssyntax 'a&b))
+       and-2 (assert-t (ssyntax '&a&b&))
+       (suite invocation
+              direct (assert-same 6.5
+                                  ((fn ()
+                                       (sqrt:+ 40 2.25))))
+              macro-invocation (assert-same 32
+                                            (coerce (test-double:sqrt 256) 'int))
+              invoke-as-parameter (assert-same 11.0
+                                               ((fn (addand)
+                                                    (addand sqrt:* 5 20 1.0)) (fn (op x y z) (+ z (op x y)))))))
+(suite ssexpand
+       compose (assert-same '(compose x y)
+                            (ssexpand 'x:y))
+       complement (assert-same '(complement p)
+                               (ssexpand '~p))
+       compose-complement (assert-same '(compose p (complement q) r)
+                                       (ssexpand 'p:~q:r))
+       complement-compose (assert-same '(compose (complement p) q r)
+                                       (ssexpand '~p:q:r))
+       compose-with-float (assert-same '(compose x 1.2)
+                                       (ssexpand 'x:1.2)) ; bizarre but true
+       result-of-compose-with-float (assert-same 'num
+                                                 (type ((ssexpand 'x:1.2) 2))) ; bizarre but true
+       list (assert-same '((* a) b)
+                         (ssexpand '*.a.b))
+       quoted-list (assert-same '((cons (quote a)) (quote b))
+                                (ssexpand 'cons!a!b))
+       chained-dots-and-bangs (assert-same '(((a b) (quote c)) d)
+                                           (ssexpand 'a.b!c.d))
+       initial-dot (assert-same '(((get a) b) c)
+                                (ssexpand '.a.b.c))
+       initial-quote (assert-same '(((get (quote a)) b) c)
+                                  (ssexpand '!a.b.c))
+       andf (assert-same '(andf a b)
+                         (ssexpand 'a&b)))
 
-    (suite "apply"
-      ("a simple sum function"
-        (apply + '(1 2))
-        3)
-
-      ("an inline function"
-        (apply (fn (x y) (* x y)) '(17 3))
-        51)
-
-      ("passes all args to function"
-        (apply + "a" "b" '("c" "d"))
-        "abcd" )
-
-      ("passes all args to function"
-        (apply + '(a b) '(c d) '((e f) (g h)))
-        (a b c d e f g h)))
-
-    (suite "eval"
-      ("a simple sum function"
-        (eval '(+ 21 4))
-        25)
-
-      ("an inline function invocation"
-        (eval '( (fn (x y) (* x y)) 16 4))
-        64))
-
-    (suite "ssyntax"
-      ("recognises compose"
-        (ssyntax 'a:b)
-        t )
-
-      ("recognises complement and compose"
-        (ssyntax '~a:b)
-        t )
-
-      ("recognises complement alone"
-        (ssyntax '~a)
-        t )
-
-      ("recognises list"
-        (ssyntax 'a.b)
-        t )
-
-      ("recognises list-quoted"
-        (ssyntax 'a!b)
-        t )
-
-      ("andf"
-        (ssyntax 'a&b)
-        t)
-
-      ("andf"
-        (ssyntax '&a&b&)
-        t)
-    )
-
-    (suite "special syntax invocation (compose is implemented in Arc)"
-      ("direct invocation"
-        ((fn ()
-          (sqrt:+ 40 2.25)))
-        6.5 )
-
-      ("compose macro invocation"
-        (coerce (test-double:sqrt 256) 'int)
-        32)
-
-      ("invoke as parameter"
-        ((fn (addand)
-          (addand sqrt:* 5 20 1.0)) (fn (op x y z) (+ z (op x y))))
-        11.0 )))))
-
-(register-test '(suite "ssexpand"
-  ("expand compose"
-    (ssexpand 'x:y)
-    (compose x y))
-
-  ("expand complement"
-    (ssexpand '~p)
-    (complement p))
-
-  ("expand compose/complement"
-    (ssexpand 'p:~q:r)
-    (compose p (complement q) r) )
-
-  ("expand compose/complement"
-    (ssexpand '~p:q:r)
-    (compose (complement p) q r) )
-
-  ("expand compose with numbers"
-    (ssexpand 'x:1.2)
-    (compose x 1.2))              ; bizarre but true
-
-  ("expand compose with numbers"
-    (type ((ssexpand 'x:1.2) 2))
-    num)                          ; bizarre but true
-
-  ("expand list"
-    (ssexpand '*.a.b)
-    ((* a) b))
-
-  ("expand quoted list"
-    (ssexpand 'cons!a!b)
-    ((cons (quote a)) (quote b)) )
-
-  ("expand chained dots and bangs"
-    (ssexpand 'a.b!c.d)
-    (((a b) (quote c)) d))
-
-  ("ssexpand with initial dot"
-    (ssexpand '.a.b.c)
-    (((get a) b) c))
-
-  ("ssexpand with initial quote"
-    (ssexpand '!a.b.c)
-    (((get (quote a)) b) c))
-
-  ("andf"
-    (ssexpand 'a&b)
-    (andf a b))
-))
-
-(register-test '(suite "using special syntax"
-  ("ssyntax copes with embedded nil"
-    list.nil
-    (nil))
-
-  ("ssyntax expands numbers too"
-    ((fn (s) s.1) "foo")
-    #\o)
-
-  ("everything at once, in functional position"
-    (let x (fn(n) (fn(p) (is (mod n p) 0)))
-      (~odd&x.9 3))
-    nil)
-
-  ("everything at once, as argument"
-    (let x (fn(n) (fn(p) (is (mod n p) 0)))
-      (map ~odd&x.9 '(3 4 5)))  ; contrived 'not a factor of 9' function
-    (nil t t))
-
-    ))
+(suite special-syntax
+       embedded-nil (assert-same (list nil)
+                                 list.nil)
+       expands-numbers-too (assert-same #\o
+                                        ((fn (s) s.1) "foo"))
+       everything-in-functional-position (assert-nil (let x (fn(n) (fn(p) (is (mod n p) 0)))
+                                                          (~odd&x.9 3)))
+       everything-as-argument (assert-same '(nil t t)
+                                (let x (fn(n) (fn(p) (is (mod n p) 0)))  ; contrived 'not a factor of 9' function
+                                     (map ~odd&x.9 '(3 4 5)))))

@@ -17,6 +17,7 @@
 
     ; tests from conanite's rainbow
     lib/tests/core-errors-continuations-test.arc
+    lib/tests/core-evaluation-test.arc
 ))
 
 ; check examples
