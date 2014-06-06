@@ -2,267 +2,144 @@
 (mac act-of-god () 'earthquake)
 (mac overwrite (after) `(+ ,after 3))
 
-(register-test '(suite "Foundation Tests"
-  (suite "Special Forms"
-    (suite "Quotation"
-      (suite "quote"
-        ("quotation"
-          'a
-          a)
+(suite special-forms
+       (suite quote
+              quotes-symbol (assert-same 'a
+                                         (quote a))
+              quotes-list-of-numbers (assert-same '(1 2 3)
+                                                  (quote (1 2 3)))
+              quotes-list-of-symbols (assert-same '(fooble bar)
+                                                  (quote (fooble bar))))
+       (suite quasiquote
+              backquote-is-quasiquote (assert-same '(quasiquote qqfoo)
+                                                   '`qqfoo)
+              comma-is-unquote (assert-same '(unquote uqfoo)
+                                 ',uqfoo)
+              comma-at-is-unquote-splice (assert-same '(unquote-splicing uqsfoo)
+                                           ',@uqsfoo)
+              quasiquote-quotes-symbols (assert-same `qqqfoo
+                                                     'qqqfoo)
+              double-quasiquote (assert-same '(quasiquote double-qq)
+                                             ``double-qq)
+              unquote-is-value (assert-same "foo"
+                                            ((fn (x) `,x) "foo"))
+              unquote-evals-argument (assert-same '(1 2 3)
+                                       `(1 2 ,(+ 1 2)))
+              unquote-looks-deep-inside-lists (assert-same '(a b c (+ 1 2 3))
+                                                           `(a b c (+ 1 2 ,(+ 1 2))))
+              unquote-in-first-position (assert-same '(3 2 1)
+                                                     `(,(+ 1 2) 2 1))
+              unquote-splices-in-list (assert-same '(a b c (+ 1 2 3 4))
+                                                   `(a b c (+ 1 2 ,@(cons 3 (cons 4 nil)))))
+              unquote-splices-list-in-first-position (assert-same '(3 4 a b c 5)
+                                                                  `(,@(cons 3 (cons 4 nil)) a b c ,(+ 0 5)))
+              nested-quasiquotes-arent-expanded (assert-same '(* 17 6 `(+ 1 ,(plusall 1 2 3)))
+                                                             `(* 17 ,(plusall 1 2 3) `(+ 1 ,(plusall 1 2 3))))
+              quasiquote-uses-local-namespace (assert-same 17
+                                                           ((fn (x) (overwrite (+ x x))) 7))
+              double-unquote (assert-same '(a b qqq qoo `(a b qqq ,qqq ,qoo))
+                                          ((fn (qqq) `(a b qqq ,qqq `(a b qqq ,qqq ,,qqq))) 'qoo))
+              double-unquote-in-function (assert-same '`,y
+                                                      ((fn (x) ``,,x) 'y)))
+       (suite if
+              when-one-arg-returns-it (assert-same 12
+                                                   (if 12))
+              non-nil-atom-is-t (assert-same 'titi
+                                             (if 'toto 'titi))
+              false-condition-with-two-args-returns-nil (assert-nil (if (is 12 13) 'foo))
+              returns-value-paired-with-first-true-condition (assert-same "yadda"
+                                                                          (if (is 12 13) 'foo
+                                                                            (is 'foo 'bar) 'toto
+                                                                            (is "a" "a") "yadda"
+                                                                            'doh))
+              default-value-is-returned-when-no-true-condition (assert-same 'doh
+                                                                            (if (is 12 13) 'foo
+                                                                              (is 'foo 'bar) 'toto
+                                                                              'doh)))
 
-        ("quotes its argument"
-          (quote a)
-          a)
-
-        ("quotes a list argument"
-          (quote (1 2 3))
-          (1 2 3))
-
-        ("quotes a list of symbols"
-          (quote (fooble bar))
-          (fooble bar))
-
-        ("quote char as shortcut"
-          'foogle
-          foogle )
-      )
-
-      (suite "quasiquote"
-        ("quasi-quotation"
-          '`qqfoo
-          (quasiquote qqfoo) )
-
-        ("unquote"
-          ',uqfoo
-          (unquote uqfoo)
-        )
-
-        ("unquote-splicing"
-          ',@uqsfoo
-          (unquote-splicing uqsfoo) )
-
-        ("quasi-quotation is just like quotation"
-          `qqqfoo
-          qqqfoo )
-
-        ("quasi-quote quasi-quote"
-          ``double-qq
-          `double-qq )
-
-        ("quasiquotation unquote is identity"
-          ( (fn (x) `,x) "foo" )
-          "foo" )
-
-        ("quasiquotation of list with unquote"
-          `(1 2 ,(+ 1 2))
-          (1 2 3) )
-
-        ("quasiquotation of list with unquote"
-          `(a b c (+ 1 2 ,(+ 1 2)))
-          (a b c (+ 1 2 3)) )
-
-        ("quasiquotation of list with unquote in first position"
-          `(,(+ 1 2) 2 1)
-          (3 2 1) )
-
-        ("quasiquotation of list with unquote-splicing"
-          `(a b c (+ 1 2 ,@(cons 3 (cons 4 nil))))
-          (a b c (+ 1 2 3 4)) )
-
-        ("quasiquotation of list with unquote-splicing in first position"
-          `(,@(cons 3 (cons 4 nil)) a b c ,(+ 0 5))
-          (3 4 a b c 5) )
-
-        ("don't expand nested quasiquotes"
-          `(* 17 ,(plusall 1 2 3) `(+ 1 ,(plusall 1 2 3)))
-          (* 17 6 `(+ 1 ,(plusall 1 2 3))))
-
-        ("quasiquote uses local namespace"
-          ((fn (x) (overwrite (+ x x))) 7)
-          17
-        )
-
-        ("nested quasiquote with double unquote"
-          ((fn (qqq) `(a b qqq ,qqq `(a b qqq ,qqq ,,qqq))) 'qoo)
-          (a b qqq qoo `(a b qqq ,qqq ,qoo)))
-
-        ("more nested quasiquote"
-          ((fn (x) ``,,x) 'y)
-          `,y)
-      )
-    )
-
-    (suite "If"
-      ("returns first argument if only one argument"
-        (if 12)
-        12 )
-
-      ("any non-nil atom is t"
-        (if 'toto 'titi)
-        titi )
-
-      ("returns nil if condition is false"
-        (if (is 12 13) 'foo)
-        nil )
-
-      ("returns value corresponding to first true condition"
-        (if (is 12 13) 'foo
-            (is 'foo 'bar) 'toto
-            (is "a" "a") "yadda"
-            'doh
-        )
-        "yadda" )
-
-      ("returns default value corresponding if no true condition"
-        (if (is 12 13) 'foo
-            (is 'foo 'bar) 'toto
-            'doh
-        )
-        doh )
-    )
-
-    (suite "Function Definition"
-      ("a simple no-args function that returns a string"
-        ( (fn () "foobar") )
-        "foobar")
-
-      ("single rest arg"
-        ( (fn args cdr.args) 'a 'b 'c )
-        (b c))
-
-      ("a simple addition function"
-        ( (fn (x y) (+ x y)) 17 13)
-        30)
-
-      ("a simple addition function with varargs"
-        ( (fn args (apply + args)) 17 13 14 16)
-        60)
-
-      ("a simple function with a rest parameter"
-        ( (fn (a b . c) (* (- a b) (apply + c))) 20 15 19 20 21)
-        300)
-
-      ("set a value inside a function"
-        ( (fn () (assign foo "bar") foo) )
-        "bar")
-
-      ("nested variables are lexically scoped"
-        ( (fn ()
-          ( (fn (x)
-              (assign toto (fn () x))) 99)
-          (toto)) )
-        99)
-
-      ("nested variables are lexically scoped - really"
-        ((fn ()
-          ((fn (a)
-            ((fn (b)
-              ((fn (c)
-                (assign abcfun (fn (x) (+ a b c x)))
-              ) "toto")
-            ) "bar")
-          ) "foo")
-          (abcfun "-foobartoto")
-        ))
-        "foobartoto-foobartoto")
-
-      ("optional arguments fill in missing arguments"
-        ((fn (x y (o z 2))
-          (+ x y z)
-        ) 31 41)
-        74)
-
-      ("optional values ignored if value provided"
-        ((fn (x y (o z 2))
-          (+ x y z)
-        ) 31 41 3)
-        75)
-
-      ("defaults for optionals may be other args"
-        ((fn (x y (o z x))
-          (+ x y z)
-        ) 16 33)
-        65)
-
-      ("optional args evaluated at invocation time, but in lexical scope of fn definition"
-        ((fn (z)
-          (assign test-opt-arg (fn (x (o y z)) (cons x y)))
-          ( (fn (z) (test-opt-arg 2)) 'zoo)
-        ) 'goo)
-        (2 . goo))
-
-      ("optional arg may be invocation"
-        ((fn (z)
-          (assign test-opt-arg (fn (x (o y (+ z z))) (cons x y)))
-          ( (fn (z) (test-opt-arg 2)) 101)
-        ) 25)
-        (2 . 50))
-
-      ("o is not always an optional arg"
-        ((fn ()
-          (assign fioip (fn ((i o ip)) o))
-          (fioip '(ifoo obar "iptoto"))
-        ))
-        obar)
-
-      ("special case: 2nd arg is optional and refers to outer lexical scope"
-        ((fn (x)
-          ( (fn (a (o b x)) nil b) "ignored")
-        ) "expected")
-        "expected")
-
-      ("destructuring-bind params"
-        ((fn (a b (c d e (f g)) h) `(,a ,b ,c ,d ,e ,f ,g ,h)) 1 2 '(3 4 5 (6 7)) 8)
-         (1 2 3 4 5 6 7 8))
-
-      ("destructuring-bind params with nested optional argument"
-        ((fn (a b (c d e (f (o g 22))) h) `(,a ,b ,c ,d ,e ,f ,g ,h)) 1 2 '(3 4 5 (6)) 8)
-         (1 2 3 4 5 6 22 8))
-
-      ("destructuring-bind in first place"
-          ((fn (out)
-            (assign foo (fn ((opt val) . rest) (disp opt) (disp "=") (disp val) (disp " ")  (if (is (car rest) nil) '() (foo (car rest) (cdr rest)))))
-            (call-w/stdout out (fn () (foo '(id 4) '(class "myclass"))))
-            (inside out)
-          ) (outstring))
-        "id=4 class=myclass ")
-
-      ("destructured args are implicitly optional"
-        ( (fn (a (b c d)) (+ a b c d)) "foo" '("bar") )
-        "foobar")
-
-      ("extra destructured args are ignored"
-        ( (fn (a (b c d)) (+ a b c d)) "foo" '("bar" "baz" "toto" "extra" "and some more") )
-        "foobarbaztoto")
-
-      ("empty body returns nil"
-        ((fn ()))
-        nil)
-
-      ("rainbow optimises inline idfn"
-        ( (fn (x) (if x x nil)) "en vacances au sud de france")
-        "en vacances au sud de france")
-
-      ("allow nil as param name"
-        ( (fn (nil) nil) 3)
-        nil)
-    )
-
-    (suite "assign"
-      ("sets a value in the top namespace"
-        ( (fn () (assign earthquake 10.3) earthquake))
-        10.3)
-
-      ("macro-expands first argument"
-        ((fn ()
-            (assign (act-of-god) 8.9)
-            earthquake))
-        8.9)
-
-      ("sets several values at once"
-        ( (fn ()
-              (assign volcano 2.4 (act-of-god) 10.3 tsunami 15.3 avalanche 4.1)
-              `(,tsunami ,volcano ,avalanche ,earthquake)))
-        (15.3 2.4 4.1 10.3))
-    )
-  )))
+       (suite function-definition
+              invoked-no-arg-function (assert-same "foobar"
+                                                   ((fn () "foobar")))
+              single-rest-arg (assert-same '(b c)
+                                           ((fn args cdr.args) 'a 'b 'c ))
+              body-is-addition (assert-same 30
+                                 ((fn (x y) (+ x y)) 17 13))
+              apply-plus-to-rest-arg (assert-same 60
+                                                  ((fn args (apply + args)) 17 13 14 16))
+              rest-arg-with-other-args (assert-same 300
+                                                    ((fn (a b . c) (* (- a b) (apply + c))) 20 15 19 20 21))
+              assign-inside-function (assert-same "bar"
+                                                  ((fn () (assign foo "bar") foo)))
+              nested-variables-are-lexically-scoped (assert-same 99
+                                                                 ((fn ()
+                                                                      ((fn (x)
+                                                                           (assign toto (fn () x))) 99)
+                                                                      (toto))))
+              extremely-nested-variables-are-lexically-scoped (assert-same "foobartoto-foobartoto"
+                                                                           ((fn ()
+                                                                                ((fn (a)
+                                                                                     ((fn (b)
+                                                                                          ((fn (c)
+                                                                                               (assign abcfun (fn (x) (+ a b c x)))
+                                                                                               ) "toto")
+                                                                                          ) "bar")
+                                                                                     ) "foo")
+                                                                                (abcfun "-foobartoto") )))
+              optional-arguments-take-default (assert-same 74
+                                                           ((fn (x y (o z 2))
+                                                                (+ x y z)
+                                                                ) 31 41))
+              optional-arguments-can-have-value-provided (assert-same 75
+                                                                      ((fn (x y (o z 2))
+                                                                           (+ x y z)
+                                                                           ) 31 41 3))
+              optional-argument-default-can-be-other-arg (assert-same 65
+                                                                      ((fn (x y (o z x))
+                                                                           (+ x y z)
+                                                                           ) 16 33))
+              optional-argument-evaluated-at-invocation-time (assert-same '(2 . goo)
+                                                                          ((fn (z)
+                                                                               (assign test-opt-arg (fn (x (o y z)) (cons x y)))
+                                                                               ( (fn (z) (test-opt-arg 2)) 'zoo)
+                                                                               )'goo))
+              optional-argument-default-can-be-function-call (assert-same '(2 . 50)
+                                                                          ((fn (z)
+                                                                               (assign test-opt-arg (fn (x (o y (+ z z))) (cons x y)))
+                                                                               ((fn (z) (test-opt-arg 2)) 101)
+                                                                               ) 25))
+              o-can-be-name-of-argument (assert-same 'obar
+                                                     ((fn ()
+                                                          (assign fioip (fn ((i o ip)) o))
+                                                          (fioip '(ifoo obar "iptoto"))
+                                                          )))
+              optional-argument-can-refer-to-outer-scope (assert-same "expected"
+                                                                      ((fn (x)
+                                                                           ((fn (a (o b x)) nil b) "ignored")
+                                                                           ) "expected"))
+              arguments-can-destructuring-bind (assert-same '(1 2 3 4 5 6 7 8)
+                                                            ((fn (a b (c d e (f g)) h) `(,a ,b ,c ,d ,e ,f ,g ,h)) 1 2 '(3 4 5 (6 7)) 8))
+              optional-arguments-can-destructuring-bind (assert-same '(1 2 3 4 5 6 22 8)
+                                                                     ((fn (a b (c d e (f (o g 22))) h) `(,a ,b ,c ,d ,e ,f ,g ,h)) 1 2 '(3 4 5 (6)) 8))
+              can-have-arguments-after-destructuring-bind (assert-same "id=4 class=myclass "
+                                                                       ((fn (out)
+                                                                            (assign foo (fn ((opt val) . rest) (disp opt) (disp "=") (disp val) (disp " ")  (if (is (car rest) nil) '() (foo (car rest) (cdr rest)))))
+                                                                            (call-w/stdout out (fn () (foo '(id 4) '(class "myclass"))))
+                                                                            (inside out)
+                                                                            ) (outstring)))
+              destructured-args-are-optional (assert-same "foobar"
+                                                          ((fn (a (b c d)) (+ a b c d)) "foo" '("bar")))
+              extra-destructured-args-are-ignored (assert-same "foobarbaztoto"
+                                                    ((fn (a (b c d)) (+ a b c d)) "foo" '("bar" "baz" "toto" "extra" "and some more")))
+              empty-body-is-nil (assert-nil ((fn ())))
+              nil-can-be-argument-name (assert-nil ((fn (nil) nil) 3)))
+       (suite assign
+              sets-value-in-top-namespace (assert-same 10.3
+                                                       ((fn () (assign earthquake 10.3) earthquake)))
+              macro-expands-first-argument (assert-same 8.9
+                                                        ((fn ()
+                                                             (assign (act-of-god) 8.9)
+                                                             earthquake)))
+              sets-several-values-at-once (assert-same '(15.3 2.4 4.1 10.3)
+                                                       ((fn ()
+                                                             (assign volcano 2.4 (act-of-god) 10.3 tsunami 15.3 avalanche 4.1)
+                                                             `(,tsunami ,volcano ,avalanche ,earthquake))))))

@@ -20,6 +20,7 @@
     lib/tests/core-evaluation-test.arc
     lib/tests/core-macros-test.arc
     lib/tests/core-predicates-test.arc
+    lib/tests/core-special-forms-test.arc
 ))
 
 ; check examples
