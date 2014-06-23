@@ -1,7 +1,5 @@
 ; written by Brian J Rubinton
 
-(require "lib/web.arc")
-
 (suite web
        (suite parse-url
               default-resource (assert-same "http"

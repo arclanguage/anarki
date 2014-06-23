@@ -139,15 +139,15 @@
     (socket-connect host port)))
 
 (def receive-response ((o s (stdin)))
-  (list (read-header s) (read-body s)))
+  (list (slurp-header s) (slurp-body s)))
 
-(def read-header ((o s (stdin)))
+(def slurp-header ((o s (stdin)))
   " Read each line from port until a blank line is reached. "
   (accum a
     (whiler line (readline s) blank
       (a line))))
 
-(def read-body ((o s (stdin)))
+(def slurp-body ((o s (stdin)))
   " Read remaining lines from port. "
   (tostring
     (whilet line (readline s)

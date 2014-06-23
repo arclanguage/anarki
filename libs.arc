@@ -10,6 +10,7 @@
     lib/util.arc
     lib/declare.arc
     lib/make-br-fn.arc
+    lib/web.arc
 
     ; webserver stuff
     lib/html.arc
