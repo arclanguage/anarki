@@ -5,7 +5,7 @@
 ; http requests currently capped to upload-limit* bytes
 ; see socket-accept
 
-(= arcdir* "arc/" logdir* "arc/logs/" staticdir* "static/")
+(= srvdir* "www/"  logdir* (+ srvdir* "logs/")  staticdir* "static/")
 
 (= quitsrv* nil breaksrv* nil)
 
@@ -26,7 +26,7 @@
   (w/socket s port (serve-socket s t)))
 
 (def ensure-srvdirs ()
-  (map ensure-dir (list arcdir* logdir* staticdir*)))
+  (map ensure-dir (list srvdir* logdir* staticdir*)))
 
 (def serve-socket (s breaksrv)
   (if breaksrv
@@ -236,7 +236,7 @@
 ;; basic auth for private websites
 
 ; to enable, provide a single common user:pass in the clear for all users in this file:
-(= private-credentials* (errsafe:string:fromfile (+ arcdir* "/private-credentials") (read)))
+(= private-credentials* (errsafe:string:fromfile (+ srvdir* "/private-credentials") (read)))
 
 (def authorized? (req)
   (or no.private-credentials*

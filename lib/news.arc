@@ -70,17 +70,17 @@
 
 ; Load and Save
 
-(= newsdir*  "arc/news/"
-   storydir* "arc/news/story/"
-   profdir*  "arc/news/profile/"
-   votedir*  "arc/news/vote/")
+(= newsdir*  (+ srvdir* "news/")
+   storydir* (+ srvdir* "news/story/")
+   profdir*  (+ srvdir* "news/profile/")
+   votedir*  (+ srvdir* "news/vote/"))
 
 (= votes* (table) profs* (table))
 
 (= initload-users* nil)
 
 (def nsv ((o port 8080))
-  (map ensure-dir (list arcdir* newsdir* storydir* votedir* profdir*))
+  (map ensure-dir (list srvdir* newsdir* storydir* votedir* profdir*))
   (unless stories* (load-items))
   (if (and initload-users* (empty profs*)) (load-users))
   (asv port))
