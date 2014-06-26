@@ -1,340 +1,199 @@
-(register-test '(suite "Foundation Tests"
-  (suite "Typing"
-    (suite "type"
-      ("of nil is symbol"
-        (type nil)
-        sym)
-
-      ("of empty list is also symbol"
-        (type ())
-        sym)
-
-      ("of t is symbol"
-        (type t)
-        sym)
-
-      ("of symbol"
-        (type 'foo)
-        sym)
-
-      ("of string"
-        (type "foo")
-        string)
-
-      ("of integer rational is int"
-        (type 12)
-        int)
-
-      ("of integer rational is int"
-        (type 12/3)
-        int)
-
-      ("of fractional rational is num"
-        (type 1/4)
-        num)
-
-      ("of double is num"
-        (type 3.1415)
-        num)
-
-      ("of integer double is int"
-        (type 3.0)
-        num)
-
-      ("of pair is cons"
-        (type '(a b c))
-        cons)
-
-      ("of procedure is fn"
-        (type (fn (x) x))
-        fn)
-
-      ("of character"
-        (type #\a)
-        char)
-
-      ("of character"
-        (type #\newline)
-        char)
-
-      ("of table"
-        (type (table))
-        table)
-    )
-
-    (suite "coerce"
-      ("nil" ; news url posting requires this somewhere
-        (coerce nil 'string)
-        "")
-
-      (suite "strings"
-        ("list"
-          (coerce "abc" 'cons)
-          (#\a #\b #\c))
-
-        ("sym"
-          (coerce "foo" 'sym)
-          foo)
-
-        ("empty string is ||"
-          (coerce "" 'sym)
-          ||)
-
-        (suite "string->int"
-          ("plain int"
-            (coerce "256" 'int)
-            256)
-
-          ("integer rational"
-            (coerce "12/4" 'int)
-            3)
-
-          ("string->int rounds"
-            (coerce "3/4" 'int)
-            1)
-
-          ("int rounds from rational in another base"
-            (coerce "101/100" 'int 2)
-            1)
-
-          ("rounds floating-point numbers"
-            (coerce "14.2857" 'int)
-            14)
-
-          ("coerces floats with exponent"
-            (coerce "1.3E10" 'int)
-            13000000000)
-
-          ("exponent is case-insensitive"
-            (coerce "1.3e10" 'int)
-            13000000000)
-
-          ("string->int rounds from floating-point in another base"
-            (coerce "10.11" 'int 2)
-            3)
-
-          ("string->int from float in another base with exponent (simpler case)"
-            (coerce "101E100" 'int 2)
-            80)
-
-          ("string of given base to int"
-            (coerce "FF" 'int 16)
-            255)
-
-          ("hexadecimal string containing 'E' to int"
-            (coerce "3E" 'int 16)
-            62)
-
-          ("positive infinity is not an integer"
-            (on-err (fn (ex) "error: can't coerce")
-                    (fn ()   (coerce "+inf.0" 'int)))
-            "error: can't coerce")
-
-          ("negative infinity is not an integer"
-            (on-err (fn (ex) "error: can't coerce")
-                    (fn ()   (coerce "-inf.0" 'int)))
-            "error: can't coerce"))
-
-        (suite "string->num"
-          ("num for non-integers"
-            (coerce "3/4" 'num)
-            3/4)
-
-          ("type of non-integer rational is num"
-            (type (coerce "3/4" 'num))
-            num)
-
-          ("num for integer rationals"
-            (coerce "12/4" 'num)
-            3)
-
-          ("type of integer rational is int even if coerced to num"
-            (type (coerce "12/4" 'num))
-            int)
-
-          ("type of integer float is num"
-            (type (coerce "3.0" 'num))
-            num)
-
-          ("string->num for non-integer in a given base"
-            (coerce "101/100" 'num 2)
-            5/4)
-
-          ("plain floating-point number"
-            (coerce "14.2857" 'num)
-            14.2857)
-
-          ("double with an exponent"
-            (coerce "1.3E10" 'num)
-            13000000000.0)
-
-          ("exponent may have + sign"
-            (coerce "1.3e+10" 'num)
-            13000000000.0)
-
-          ("exponent may have - sign"
-            (< 0.012999 (coerce "1.3e-2" 'num) 0.013001)
-            t)
-
-          ("string->num in another base"
-            (coerce "10.11" 'num 2)
-            2.75)
-
-          ("string->num from float in base 2 with exponent"
-            (coerce "10.11E1010" 'num 2)
-            2816.0)
-
-          ("string->num from float in base 3 with exponent"
-            (coerce "10.11E1010" 'num 3)
-            709180566103791.0)
-
-          ("string->num from float in another base with exponent (simpler case)"
-            (coerce "101E100" 'num 2)
-            80.0)
-
-          ("type of 80.0 is num"
-            (type (coerce "80.0" 'num))
-            num)
-
-          ("positive infinity is a 'num"
-            (coerce "+inf.0" 'num)
-            +inf.0)
-
-          ("negative infinity is a 'num"
-            (coerce "-inf.0" 'num)
-            -inf.0)
-
-          ("not a number (note: can't compare nan to nan; nan is not nan!)"
-            (coerce (coerce "+nan.0" 'num) 'string)
-            "+nan.0")))
-
-      (suite "iso"
-        ("sym"
-          (coerce 'foo 'sym)
-          foo)
-
-        ("string"
-          (coerce "montmartre" 'string)
-          "montmartre")
-
-        ("int"
-          (coerce 2079 'int)
-          2079)
-      )
-
-      ("sym to string"
-        (coerce 'foo 'string)
-        "foo" )
-
-      ("empty sym to string"
-        (coerce '|| 'string)
-        "")
-
-      ("list to string"
-        (coerce '(#\z #\o #\o #\, #\space #\n #\o #\?) 'string)
-        "zoo, no?" )
-
-      ("list to string"
-        (coerce '(#\a #\b #\c #\@ #\e #\x #\a #\m #\p #\l #\e #\. #\c #\o #\m) 'string)
-        "abc@example.com" )
-
-      ("list to string including non-char items"
-        (coerce '(12 #\x 34 #\y 56/17 #\z 3.1415) 'string)
-        "12x34y56/17z3.1415")
-
-      ("list of 1 empty string to string" ; thanks rocketnia, http://arclanguage.org/item?id=12269
-        (coerce '("") 'string)
-        "")
-
-      (suite "characters"
-        ("char to int"
-          (coerce #\A 'int)
-          65)
-
-        ("char to int with unused base arg"
-          (coerce #\n 'int 16)
-          110)
-
-        ("char to string"
-          (coerce #\A 'string)
-          "A")
-
-        ("char to sym"
-          (coerce #\g 'sym)
-          g))
-
-      (suite "numbers"
-        ("int to string"
-          (coerce 66 'string)
-          "66")
-
-        ("int to num"
-          (coerce 0 'num)
-          0)
-
-        ("int to char"
-          (coerce 67 'char)
-          #\C)
-
-        ("int to string of given base"
-          (coerce 63 'string 8)
-          "77")
-
-        ("double to string"
-          (coerce 45.23e-5 'string)
-          "0.0004523")
-
-        ("fraction to string in another base"
-          (coerce 41/13 'string 8)
-          "51/15")
-
-        ("num->int: round to even"
-          (list (coerce 1.5 'int)
-                (coerce 2.5 'int)
-                (coerce 3.5 'int)
-                (coerce 4.5 'int)
-                (coerce 5.5 'int)
-                (coerce 6.5 'int))
-          (2 2 4 4 6 6)
-        )
-
-        ("num->int scheme rounds to even if decimal fraction == 0.5"
-          (list (coerce 3/2 'int)
-                (coerce 5/2 'int)
-                (coerce 7/2 'int)
-                (coerce 9/2 'int)
-                (coerce 11/2 'int)
-                (coerce 13/2 'int))
-          (2 2 4 4 6 6)
-        )
-
-        ("num->int with unused base arg"
-          (list (coerce 3/2 'int 16)
-                (coerce 5/2 'int 16)
-                (coerce 7/2 'int 16)
-                (coerce 9/2 'int 16)
-                (coerce 11/2 'int 16)
-                (coerce 13/2 'int 16))
-          (2 2 4 4 6 6)
-        )
-
-        ("double to int"
-          (coerce 3.14 'int)
-          3 )))
-
-    (suite "Annotation"
-      ("(rep x) == x for builtin types"
-        (rep 'foo)
-        foo)
-
-      ("don't wrap objects already of the given type"
-        (rep (annotate 'a (annotate 'a 'foo)))
-        foo)
-
-      ("get the type of an annotation"
-        (type (annotate 'foo 'bar))
-        foo )
-
-      ("get the value of an annotation"
-        (rep (annotate 'foo 'bar))
-        bar )))))
+(suite types
+       (suite type
+              nil-is-symbol (assert-same 'sym
+                                         (type nil))
+              empty-list-is-symbol (assert-same 'sym
+                                                (type ()))
+              t-is-symbol (assert-same 'sym
+                                       (type t))
+              symbol (assert-same 'sym
+                                  (type 'foo))
+              string (assert-same 'string
+                                  (type "foo"))
+              integer (assert-same 'int
+                                   (type 12))
+              rational-that-is-integer (assert-same 'int
+                                                    (type 12/3))
+              rational (assert-same 'num
+                                    (type 1/4))
+              float (assert-same 'num
+                                 (type 3.1415))
+              double-that-is-integer (assert-same 'num ;;yep, this is different behavior from rationals
+                                                  (type 3.0))
+              list (assert-same 'cons
+                                (type '(a b c)))
+              fn (assert-same 'fn
+                              (type (fn (x) x)))
+              char (assert-same 'char
+                                (type #\a))
+              newline (assert-same 'char
+                                   (type #\newline))
+              table (assert-same 'table
+                                 (type (table))))
+       (suite coerce
+              nil (assert-same ""
+                               (coerce nil 'string))
+              double->int (assert-same 3
+                                       (coerce 3.14 'int))
+              (suite strings
+                     list (assert-same '(#\a #\b #\c)
+                                        (coerce "abc" 'cons))
+                     sym (assert-same 'foo
+                                      (coerce "foo" 'sym))
+                     empty-string (assert-same '||
+                                               (coerce "" 'sym))
+                     (suite string->int
+                            simple-coercion (assert-same 256
+                                                         (coerce "256" 'int))
+                            integer-rational (assert-same 3
+                                                          (coerce "12/4" 'int))
+                            round-rational-to-int (assert-same 1
+                                                      (coerce "3/4" 'int))
+                            round-rational-to-int-in-binary (assert-same 1
+                                                                (coerce "101/100" 'int 2))
+                            round-float-to-int (assert-same 14
+                                                            (coerce "14.2857" 'int))
+                            scientific-notation (assert-same 13000000000
+                                                             (coerce "1.3E10" 'int))
+                            lower-case-scientific-notation (assert-same 13000000000
+                                                                        (coerce "1.3e10" 'int))
+                            round-float-to-int-in-binary (assert-same 3
+                                                                      (coerce "10.11" 'int 2))
+                            scientific-notation-to-binary (assert-same 80
+                                                                       (coerce "101E100" 'int 2))
+                            hex-to-binary (assert-same 255
+                                                       (coerce "FF" 'int 16))
+                            hex-string-with-E (assert-same 62
+                                                           (coerce "3E" 'int 16))
+                            coerce-positive-infinity-to-int (assert-error (coerce "+inf.0" 'int)
+                                                                          "inexact->exact: no exact representation\n  number: +inf.0")
+                            coerce-negative-infinity-to-int (assert-error (coerce "-inf.0" 'int)
+                                                                          "inexact->exact: no exact representation\n  number: -inf.0"))
+
+                     (suite string->num
+                            rational (assert-same 3/4
+                                                  (coerce "3/4" 'num))
+                            rational-is-num (assert-same 'num
+                                                         (type (coerce "3/4" 'num)))
+                            integer-valued-rational (assert-same 3
+                                                                 (coerce "12/4" 'num))
+                            integer-rational-is-int (assert-same 'int
+                                                                 (type (coerce "12/4" 'num)))
+                            integer-float (assert-same 'num
+                                                       (type (coerce "3.0" 'num)))
+                            rational-in-binary (assert-same 5/4
+                                                            (coerce "101/100" 'num 2))
+                            float (assert-same 14.2857
+                                               (coerce "14.2857" 'num))
+                            scientific-notation (assert-same 13000000000.0
+                                                             (coerce "1.3E10" 'num))
+                            scientific-notation-with-plus-sign (assert-same 13000000000.0
+                                                                            (coerce "1.3e+10" 'num))
+                            scientific-notation-with-minus-sign (assert-same t
+                                                                             (< 0.012999 (coerce "1.3e-2" 'num) 0.013001))
+                            binary-float (assert-same 2.75
+                                                      (coerce "10.11" 'num 2))
+                            scientific-notation-binary-float (assert-same 2816.0
+                                                                    (coerce "10.11E1010" 'num 2))
+                            scientific-notation-trinary-float (assert-same 709180566103791.0
+                                                                     (coerce "10.11E1010" 'num 3))
+                            scientific-notation-binary (assert-same 80.0
+                                                                    (coerce "101E100" 'num 2))
+                            type-is-num (assert-same 'num
+                                                     (type (coerce "80.0" 'num)))
+                            positive-infinity (assert-same +inf.0
+                                                           (coerce "+inf.0" 'num))
+                            negative-infinity (assert-same -inf.0
+                                                           (coerce "-inf.0" 'num))
+                            nan (assert-same "+nan.0"
+                                             (coerce (coerce "+nan.0" 'num) 'string)))
+
+                     (suite coercions-to-same-type
+                            symbol (assert-same 'foo
+                                                (coerce 'foo 'sym))
+                            string (assert-same "montmartre"
+                                                (coerce "montmartre" 'string))
+                            int (assert-same 2079
+                                             (coerce 2079 'int)))
+                     sym->string (assert-same "foo"
+                                              (coerce 'foo 'string) )
+                     empty-sym-to-string (assert-same ""
+                                                      (coerce '|| 'string))
+                     list->string (assert-same "zoo, no?"
+                                               (coerce '(#\z #\o #\o #\, #\space #\n #\o #\?) 'string))
+                     list->email-string (assert-same "abc@@example.com"
+                                                     (coerce '(#\a #\b #\c #\@ #\e #\x #\a #\m #\p #\l #\e #\. #\c #\o #\m) 'string))
+                     list->string-with-non-chars (assert-same "12x34y56/17z3.1415"
+                                                              (coerce '(12 #\x 34 #\y 56/17 #\z 3.1415) 'string))
+                     list-including-empty-string (assert-same ""
+                                                              (coerce '("") 'string))
+                     (suite characters
+                            char->int (assert-same 65
+                                                   (coerce #\A 'int))
+                            char->int-with-unused-base-arg (assert-same 110
+                                                                        (coerce #\n 'int 16))
+                            char->string (assert-same "A"
+                                                      (coerce #\A 'string))
+                            char->sym (assert-same 'g
+                                                   (coerce #\g 'sym)))
+                     (suite numbers
+                            int->string (assert-same "66"
+                                                     (coerce 66 'string))
+                            int->num (assert-same 0
+                                                  (coerce 0 'num))
+                            int->char (assert-same #\C
+                                                   (coerce 67 'char))
+                            int->string-with-specified-base (assert-same "77"
+                                                                         (coerce 63 'string 8))
+                            double->string (assert-same "0.0004523"
+                                                        (coerce 45.23e-5 'string))
+                            rational->to-string-in-specified-base (assert-same "51/15"
+                                                                               (coerce 41/13 'string 8))
+                            (suite float-rounds-to-even
+                                   1-and-a-half (assert-same 2
+                                                             (coerce 1.5 'int))
+                                   2-and-a-half (assert-same 2
+                                                             (coerce 2.5 'int))
+                                   3-and-a-half (assert-same 4
+                                                             (coerce 3.5 'int))
+                                   4-and-a-half (assert-same 4
+                                                             (coerce 4.5 'int))
+                                   5-and-a-half (assert-same 6
+                                                             (coerce 5.5 'int))
+                                   6-and-a-half (assert-same 6
+                                                             (coerce 6.5 'int)))
+                            (suite rational-rounds-to-even
+                                   1-and-a-half (assert-same 2
+                                                             (coerce 3/2 'int))
+                                   2-and-a-half (assert-same 2
+                                                             (coerce 5/2 'int))
+                                   3-and-a-half (assert-same 4
+                                                             (coerce 7/2 'int))
+                                   4-and-a-half (assert-same 4
+                                                             (coerce 9/2 'int))
+                                   5-and-a-half (assert-same 6
+                                                             (coerce 11/2 'int))
+                                   6-and-a-half (assert-same 6
+                                                             (coerce 13/2 'int)))
+                            (suite rational-rounds-with-unused-base-arg
+                                   1-and-a-half (assert-same 2
+                                                             (coerce 3/2 'int 16))
+                                   2-and-a-half (assert-same 2
+                                                             (coerce 5/2 'int 16))
+                                   3-and-a-half (assert-same 4
+                                                             (coerce 7/2 'int 16))
+                                   4-and-a-half (assert-same 4
+                                                             (coerce 9/2 'int 16))
+                                   5-and-a-half (assert-same 6
+                                                             (coerce 11/2 'int 16))
+                                   6-and-a-half (assert-same 6
+                                                             (coerce 13/2 'int 16))))))
+       (suite annotation
+              identity (assert-same 'foo
+                                    (rep 'foo))
+              dont-wrap-objects-of-same-type (assert-same 'foo
+                                                          (rep (annotate 'a (annotate 'a 'foo))))
+              can-get-type (assert-same 'foo
+                                        (type (annotate 'foo 'bar)))
+              can-get-value (assert-same 'bar
+                                         (rep (annotate 'foo 'bar)))))

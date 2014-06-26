@@ -21,6 +21,7 @@
     lib/tests/core-macros-test.arc
     lib/tests/core-predicates-test.arc
     lib/tests/core-special-forms-test.arc
+    lib/tests/core-typing-test.arc
 ))
 
 ; check examples
