@@ -1090,6 +1090,10 @@
 
 (xdef system (lambda (s) (tnil (system s))))
 
+(let ((argv (current-command-line-arguments)))
+  (namespace-set-variable-value! (ac-global-name 'argv)
+                                 (vector->list argv)))
+
 (xdef pipe-from (lambda (cmd)
                    (let ((tf (ar-tmpname)))
                      (system (string-append cmd " > " tf))
