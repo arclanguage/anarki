@@ -206,10 +206,8 @@
   (if (no options)
     '()
     (let ((opt val) . rest) options
-      (let meth (if (in opt 'style 'class)
+      (let meth (if (in opt 'style 'class 'id)
                       opstring
-                    (is opt 'id)
-                      opsym
                     :else
                       (opmeth spec opt))
         (if meth
