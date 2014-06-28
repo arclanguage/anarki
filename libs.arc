@@ -19,7 +19,6 @@
     lib/news.arc
 
     ; helpers for the repl
-    lib/test.arc
     lib/ppr.arc
     lib/help.arc
 ))
