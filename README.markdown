@@ -15,7 +15,7 @@ To run, install Racket from http://racket-lang.org, then:
 
     $ git clone http://github.com/arclanguage/anarki
     $ cd arc
-    $ ./arc.sh
+    $ ./arc  # interactive repl
     arc> :a
     $
 
