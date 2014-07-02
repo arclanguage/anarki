@@ -1247,42 +1247,27 @@
                   (x-set-cdr! x val))
               val))
 
-; decide at run-time whether the underlying mzscheme supports
-; set-car! and set-cdr!, since I can't figure out how to do it
-; at compile time.
+; waterhouse's code to modify mzscheme-4's immutable pairs.
+; http://arclanguage.org/item?id=13616
+(require racket/unsafe/ops)
 
-(define (x-set-car! p v)
+(define x-set-car!
   (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))
     (if (procedure? fn)
-        (fn p v)
-        (n-set-car! p v))))
+        fn
+        (lambda (p x)
+          (if (pair? p)
+              (unsafe-set-mcar! p x)
+              (raise-type-error 'set-car! "pair" p))))))
 
-(define (x-set-cdr! p v)
+(define x-set-cdr!
   (let ((fn (namespace-variable-value 'set-cdr! #t (lambda () #f))))
     (if (procedure? fn)
-        (fn p v)
-        (n-set-cdr! p v))))
-
-; Eli's code to modify mzscheme-4's immutable pairs.
-
-;; to avoid a malloc on every call, reuse a single pointer, but make
-;; it thread-local to avoid races
-(define ptr (make-thread-cell #f))
-(define (get-ptr)
-  (or (thread-cell-ref ptr)
-      (let ([p (malloc _scheme 1)]) (thread-cell-set! ptr p) p)))
-
-;; set a pointer to the cons cell, then dereference it as a pointer,
-;; and bang the new value in the given offset
-(define (set-ca/dr! offset who p x)
-  (if (pair? p)
-    (let ([p* (get-ptr)])
-      (ptr-set! p* _scheme p)
-      (ptr-set! (ptr-ref p* _pointer 0) _scheme offset x))
-    (raise-type-error who "pair" p)))
-
-(define (n-set-car! p x) (set-ca/dr! 1 'set-car! p x))
-(define (n-set-cdr! p x) (set-ca/dr! 2 'set-cdr! p x))
+        fn
+        (lambda (p x)
+          (if (pair? p)
+              (unsafe-set-mcdr! p x)
+              (raise-type-error 'set-cdr! "pair" p))))))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
 ; say (if (string? x) (string-replace! x val 1) ...) in scdr, but
