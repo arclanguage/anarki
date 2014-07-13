@@ -988,7 +988,11 @@ element of 'expr'."
 ; Destructuring means ambiguity: are pat vars bound in else? (no)
 
 (mac iflet (var expr . branches)
-"Like [[if]] but also puts the value of 'expr' in 'var', making it available in 'branches'."
+"If 'expr' is not nil, binds 'var' to it before running the first branch.
+Can be given multiple alternating test expressions and branches. The first
+passing test expression is bound to 'var' before running its corresponding branch.
+
+For examples, see [[aif]]."
   (if branches
     (w/uniq gv
       `(let ,gv ,expr
@@ -1002,6 +1006,20 @@ element of 'expr'."
 (mac whenlet (var expr . body)
 "Like [[when]] but also puts the value of 'expr' in 'var' so 'body' can access it."
   `(iflet ,var ,expr (do ,@body)))
+
+(mac let-or (var expr else . body)
+"Like [[iflet]] but provides an immediate escape hatch first if 'expr' is not nil.
+Use let-or for [[iflet]] forms with just one test, many things to do if it
+passes, and a simple expression or error if it fails."
+  `(iflet ,var ,expr
+      (do ,@body)
+      ,else))
+
+(examples let-or
+  (let-or x (+ 3 4)  (err "Error in adding 3 and 4")
+    ++.x
+    (+ x 3))
+  11)
 
 (mac aif (expr . branches)
 "Like [[if]], but also puts the value of 'expr' in variable 'it'."
