@@ -75,5 +75,5 @@
 
 (def print-like-repl (x)
   (if (isa x 'string)
-    (do (write x) (prn))
-    (prn x)))
+    (write x)
+    (pr x)))
