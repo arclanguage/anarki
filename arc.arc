@@ -1008,7 +1008,7 @@ For examples, see [[aif]]."
   `(iflet ,var ,expr (do ,@body)))
 
 (mac let-or (var expr else . body)
-"Like [[iflet]] but provides an immediate escape hatch first if 'expr' is not nil.
+"Like [[iflet]] but provides an immediate escape hatch first if 'expr' is nil.
 Use let-or for [[iflet]] forms with just one test, many things to do if it
 passes, and a simple expression or error if it fails."
   `(iflet ,var ,expr
