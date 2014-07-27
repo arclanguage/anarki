@@ -30,6 +30,16 @@
                                        (let x 1
                                             (do ++.x ++.x 34))))
 
+(suite for
+       iterates (assert-same 6
+                             (ret result 0
+                               (for i 1 (<= i 3) ++.i
+                                 (= result (+ result i)))))
+       multiple-vars (assert-same 6
+                                  (ret result 0
+                                    (for (i j) '(1 2) (<= j 4) (do ++.i ++.j)
+                                      (= result (+ result i))))))
+
 (suite ssyntax
        ssyntax? (assert-nil ($.ssyntax? 'car))
 

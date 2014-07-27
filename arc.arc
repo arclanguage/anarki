@@ -923,7 +923,9 @@ out of either of them by calling (break-i), (break-j), etc."
                    (let ,(sym:string "continue-" var) continue
                      ,@body))
                  ,update
-                 (recur ,var)))))))
+                 ,(if (acons var)
+                    `(recur (list ,@var))
+                    `(recur ,var))))))))
 
 (mac up (v init max . body)
 "Counts 'v' up from 'init' (inclusive) to 'max' (exclusive), running 'body'
