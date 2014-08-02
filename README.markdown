@@ -14,10 +14,17 @@ depending on who takes an interest.
 To run, install Racket from http://racket-lang.org, then:
 
     $ git clone http://github.com/arclanguage/anarki
-    $ cd arc
+    $ cd anarki
     $ ./arc  # interactive repl
     arc> :a
     $
+
+Anarki has thorough automated tests. To run them, install mercurial, then:
+
+    # start in the anarki directory
+    $ hg clone https://bitbucket.org/zck/unit-test.arc
+    $ ./arc
+    arc> (load "tests.arc")
 
 If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://arclanguage.org/forum
 

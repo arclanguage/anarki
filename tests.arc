@@ -1,4 +1,5 @@
-; tests based on https://bitbucket.org/zck/unit-test.arc
+; first hg clone https://bitbucket.org/zck/unit-test.arc
+(load "unit-test.arc/unit-test.arc")
 (map load:string '(
     arc.arc.t
     lib/app.arc.t
@@ -24,6 +25,7 @@
     lib/tests/core-special-forms-test.arc
     lib/tests/core-typing-test.arc
 ))
+(run-all-suites)
 
 ; check examples
 (prn "checking examples interspersed in the codebase")
