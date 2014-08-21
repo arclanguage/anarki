@@ -33,18 +33,25 @@
     `(defmacro ,name ,args
        ,@(subst auto
                 [or= uniqs._ uniq._]
-                tree.body))))
+                (tree:map maybe-ssexpand
+                          tree.body)))))
 
 (redefmacro mac! (name args . body)
   (let uniqs (table)
     `(redefmacro ,name ,args
        ,@(subst auto
                 [or= uniqs._ uniq._]
-                tree.body))))
+                (tree:map maybe-ssexpand
+                          tree.body)))))
 
 (def auto (exp)
   "Tests whether an expression should be autogensymed"
   (and exp (isa exp 'sym) (endmatch "@" (string exp))))
+
+(def maybe-ssexpand (s)
+  (if (ssyntax s)
+    (ssexpand s)
+    s))
 
 ; miscellaneous
 

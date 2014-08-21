@@ -254,9 +254,11 @@
 
 (mac foo-good (x) `(let y@ (+ ,x 1) (+ y@ ,x)))
 (mac foo-bad (x) `(let y (+ ,x 1) (+ y ,x)))
+(mac foo-ssyntax () `(let y@ (list 1 2 3) y@.1))
 
 (suite gensyms
        gensyms-dont-capture-variables (assert-same 7
                                                    (let y@ 3 (foo-good y@)))
        no-gensyms-capture-variables (assert-same 8  ; probably not what you want
-                                                 (let y 3 (foo-bad y))))
+                                                 (let y 3 (foo-bad y)))
+       gensyms-mix-with-ssyntax (assert-same 2 (foo-ssyntax)))
