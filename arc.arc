@@ -75,8 +75,8 @@ Or come ask questions at http://arclanguage.org/forum"
   `((fn () (warn-if-bound ,name)
            (document mac ,name ,parms
                        ,@(if (is (type car.body) 'string)
-                            body
-                            (cons nil body)))
+                           body
+                           (cons nil body)))
            (remac ,name ,parms ,@body))))
 
 (assign examples* (table))
@@ -147,8 +147,8 @@ Or come ask questions at http://arclanguage.org/forum"
   `(do (warn-if-bound ,name)
        (document def ,name ,parms
                    ,@(if (is (type car.body) 'string)
-                        body
-                        (cons nil body)))
+                       body
+                       (cons nil body)))
        (assign ,name (fn ,parms ,@body))))
 
 (mac redef (name parms . body)
@@ -156,8 +156,8 @@ Or come ask questions at http://arclanguage.org/forum"
   `(do (if (~help* ',name)  ; assume any existing help is still accurate
          (document redef ,name ,parms
                        ,@(if (is (type car.body) 'string)
-                            body
-                            (cons nil body))))
+                           body
+                           (cons nil body))))
        (assign ,name (fn ,parms ,@body))))
 
 (document builtin cons (x xs) "Returns a new list with element 'x' added to the start of list 'xs'.")
@@ -264,8 +264,8 @@ For example, [car _] => (make-br-fn (car _)) => (fn (_) (car _))"
 "Stops at the first argument to fail (return nil). Returns the last argument before stopping."
   (if args
     (if (cdr args)
-        `(if ,(car args) (and ,@(cdr args)))
-        (car args))
+      `(if ,(car args) (and ,@(cdr args)))
+      (car args))
     t))
 
 (def assoc (key al)
@@ -841,11 +841,11 @@ table, or other user-defined type) to 'value'.")
   (let expr (macex expr0)
     (if (isa expr 'sym)
          (if (ssyntax expr)
-             (setforms (ssexpand expr))
-             (w/uniq (g h)
-               (list (list g expr)
-                     g
-                     `(fn (,h) (assign ,expr ,h)))))
+           (setforms (ssexpand expr))
+           (w/uniq (g h)
+             (list (list g expr)
+                   g
+                   `(fn (,h) (assign ,expr ,h)))))
         ; make it also work for uncompressed calls to compose
         (and (acons expr) (metafn (car expr)))
          (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
@@ -853,17 +853,17 @@ table, or other user-defined type) to 'value'.")
          (setforms (list (cadr expr) (cadr (car expr))))
          (let f (setter (car expr))
            (if f
-               (f expr)
-               ; assumed to be data structure in fn position
-               (do (when (caris (car expr) 'fn)
-                     (warn "Inverting what looks like a function call"
-                           expr0 expr))
-                   (w/uniq (g h)
-                     (let argsyms (map [uniq] (cdr expr))
-                        (list (+ (list g (car expr))
-                                 (mappend list argsyms (cdr expr)))
-                              `(,g ,@argsyms)
-                              `(fn (,h) (sref ,g ,h ,(car argsyms))))))))))))
+             (f expr)
+             ; assumed to be data structure in fn position
+             (do (when (caris (car expr) 'fn)
+                   (warn "Inverting what looks like a function call"
+                         expr0 expr))
+                 (w/uniq (g h)
+                   (let argsyms (map [uniq] (cdr expr))
+                      (list (+ (list g (car expr))
+                               (mappend list argsyms (cdr expr)))
+                            `(,g ,@argsyms)
+                            `(fn (,h) (sref ,g ,h ,(car argsyms))))))))))))
 
 (def metafn (x)
   (or (ssyntax x)
@@ -885,11 +885,11 @@ table, or other user-defined type) to 'value'.")
 
 (def expand= (place val)
   (if (and (isa place 'sym) (~ssyntax place))
-      `(assign ,place ,val)
-      (let (vars prev setter) (setforms place)
-        (w/uniq g
-          `(atwith ,(+ vars (list g val))
-             (,setter ,g))))))
+    `(assign ,place ,val)
+    (let (vars prev setter) (setforms place)
+      (w/uniq g
+        `(atwith ,(+ vars (list g val))
+           (,setter ,g))))))
 
 (def expand=list (terms)
   `(do ,@(map (fn ((p v)) (expand= p v))  ; [apply expand= _]
@@ -1014,8 +1014,8 @@ For examples, see [[aif]]."
 Use let-or for [[iflet]] forms with just one test, many things to do if it
 passes, and a simple expression or error if it fails."
   `(iflet ,var ,expr
-      (do ,@body)
-      ,else))
+     (do ,@body)
+     ,else))
 
 (examples let-or
   (let-or x (+ 3 4)  (err "Error in adding 3 and 4")
@@ -1684,12 +1684,11 @@ protocol requires them."
 
 (def best (f seq)
 "Maximizes comparator function 'f' throughout seq."
-  (if (no seq)
-    nil
-    (let wins (car seq)
-      (each elt (cdr seq)
-        (if (f elt wins) (= wins elt)))
-      wins)))
+  (whenlet wins carif.seq
+    (each elt cdr.seq
+      (if (f elt wins)
+        (= wins elt)))
+    wins))
 
 (examples best
   (best > '(3 1 4 5 9 6))
@@ -1786,8 +1785,8 @@ by args passed in, so that future calls with the same inputs can save work."
   `(do (warn-if-bound ,name)
        (document defmemo ,name ,parms
                    ,@(if (is (type car.body) 'string)
-                        body
-                        (cons nil body)))
+                       body
+                       (cons nil body)))
        (assign ,name (memo (fn ,parms ,@body)))))
 
 (def <= args
