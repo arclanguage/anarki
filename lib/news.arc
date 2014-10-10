@@ -10,7 +10,7 @@
    border-color* (color 180 180 180)
    prefer-url*   t)
 
-; these settings might improve performance when you need them
+; these settings might improve performance when you need it
 
 ;(= static-max-age* 7200)    ; browsers can cache static files for 7200 sec
 
