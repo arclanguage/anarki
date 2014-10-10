@@ -52,6 +52,7 @@ Don't worry about "user break" or "error writing" messages.
 To customize News, change the variables at the top of news.arc. To change the
 port your server runs at, modify lib/run-news.
 
-Any interactive changes to the prompt will be reflected in the server. (Don't
-forget to add them to the .arc files as appropriate, otherwise they'll be lost
-when you stop the server, or it dies for some reason.)
+Any interactive changes to the prompt will be reflected immediately in the
+server, without needing to restart it. Don't forget to add them to the .arc
+files as appropriate, otherwise they'll be lost when you stop the server or it
+dies for some reason.
