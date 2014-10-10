@@ -44,8 +44,8 @@ Now bring up the news server:
 There'll be a pause while the server loads up, with some messages, then you'll
 see the 'arc> ' prompt.
 
-Go to http://localhost:8080. Click on login, and create the account for your
-username. You should now be logged in as an admin.
+Go to [http://localhost:8080](http://localhost:8080). Click on login, and
+create the account for your username. You should now be logged in as an admin.
 
 Don't worry about "user break" or "error writing" messages.
 
