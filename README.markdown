@@ -37,7 +37,7 @@ To run the HN server, first pick your (the admin's) username:
 
 (You can have multiple admins. Add them all to www/admins, separated by whitespace.)
 
-Now bring up the news server:
+Now bring up the server:
 
     $ ./run-news
 
@@ -49,7 +49,8 @@ create the account for your username. You should now be logged in as an admin.
 
 Don't worry about "user break" or "error writing" messages.
 
-To customize News, change the variables at the top of news.arc.
+To customize News, change the variables at the top of news.arc. To change the
+port your server runs at, modify lib/run-news.
 
 Any interactive changes to the prompt will be reflected in the server. (Don't
 forget to add them to the .arc files as appropriate, otherwise they'll be lost
