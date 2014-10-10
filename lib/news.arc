@@ -1,10 +1,4 @@
-; News.  2 Sep 06.
-
-; to run news: (nsv), then go to http://localhost:8080
-; put usernames of admins, separated by whitespace, in arc/admins
-
-; bug: somehow (+ votedir* nil) is getting evaluated.
-
+; things to customize
 (declare 'atstrings t)
 
 (= this-site*    "My Forum"
@@ -16,6 +10,14 @@
    border-color* (color 180 180 180)
    prefer-url*   t)
 
+; these settings might improve performance when you need them
+
+;(= static-max-age* 7200)    ; browsers can cache static files for 7200 sec
+
+;(declare 'direct-calls t)   ; you promise not to redefine fns as tables
+
+;(declare 'explicit-flush t) ; you take responsibility for flushing output
+                            ; (all existing news code already does)
 
 ; Structures
 

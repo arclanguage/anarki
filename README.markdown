@@ -28,4 +28,29 @@ Anarki has thorough automated tests. To run them, install mercurial, then:
 
 If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://arclanguage.org/forum
 
-To run the HN server: lib/how-to-run-news
+---
+
+To run the HN server, first pick your (the admin's) username:
+
+    $ mkdir www
+    $ echo __username__ > www/admins
+
+(You can have multiple admins. Add them all to www/admins, separated by whitespace.)
+
+Now bring up the news server:
+
+    $ ./run-news
+
+There'll be a pause while the server loads up, with some messages, then you'll
+see the 'arc> ' prompt.
+
+Go to http://localhost:8080. Click on login, and create the account for your
+username. You should now be logged in as an admin.
+
+Don't worry about "user break" or "error writing" messages.
+
+To customize News, change the variables at the top of news.arc.
+
+Any interactive changes to the prompt will be reflected in the server. (Don't
+forget to add them to the .arc files as appropriate, otherwise they'll be lost
+when you stop the server, or it dies for some reason.)
