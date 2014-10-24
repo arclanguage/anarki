@@ -25,10 +25,7 @@
        (defarc arc-name scheme-name)))
     ((defarc arc-name scheme-name)
      (define (scheme-name . args)
-
-       ; The following 'parameterize has been added. See the note at
-       ; 'arc-exec, below.
-       ;
+       ; support arc-exec
        (apply (parameterize ((current-namespace main-namespace))
                 (namespace-variable-value (ac-global-name 'arc-name)))
               args)))
@@ -441,11 +438,7 @@
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
                      ((ac-defined-var? a) `(,(ac-global-name a) zz))
-
-                     ; The following has been changed from
-                     ; 'namespace-set-variable-value! to 'set!. See
-                     ; the note at 'arc-exec, below.
-                     ;
+                     ; support arc-exec
                      (#t `(set! ,(ac-global-name a) zz)))
                'zz))
       (err "First arg to set must be a symbol" a)))
@@ -496,11 +489,7 @@
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
           ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
-
-                ; The following has been changed from using
-                ; 'namespace-variable-value to using 'arc-eval. See
-                ; the note at 'arc-exec, below.
-                ;
+                ; support arc-exec
                 (procedure? (arc-eval fn)))
            (ac-global-call fn args env))
           (#t
@@ -516,18 +505,14 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-
-      ; The following has been changed from using
-      ; 'namespace-variable-value to using 'bound? and 'arc-eval. See
-      ; the note at 'arc-exec, below.
-      ;
-      (let ((v (and (bound? fn) (arc-eval fn))))
-        (if (and v
-                 (ar-tagged? v)
-                 (eq? (ar-type v) 'mac))
-            (ar-rep v)
-            #f))
-      #f))
+    ; support arc-exec
+    (let ((v (and (bound? fn) (arc-eval fn))))
+      (if (and v
+               (ar-tagged? v)
+               (eq? (ar-type v) 'mac))
+          (ar-rep v)
+          #f))
+    #f))
 
 ; macroexpand the outer call of a form as much as possible
 
@@ -1196,7 +1181,6 @@
 ; the main namespace. Another utility changed in this spirit is
 ; 'bound?, which should now be able to see variables which are bound
 ; as Racket syntax.
-;
 (define (arc-exec racket-expr)
   (eval (parameterize ((compile-allow-set!-undefined #t))
           (compile racket-expr))))
@@ -1239,10 +1223,7 @@
               (when interactive?
                 (write (ac-denil val))
                 (newline))
-
-              ; The following 'parameterize has been added. See the
-              ; note at 'arc-exec, above.
-              ;
+              ; support arc-exec
               (parameterize ((current-namespace main-namespace))
                 (namespace-set-variable-value! '_that val)
                 (namespace-set-variable-value! '_thatexpr expr))
