@@ -33,28 +33,28 @@
     (err "bad tree")))
 
 ; Get a list of numbers shuffled in a random order.
-(prn "Generating values")
+(ero "Generating 1000 values")
 (= shuffle (compose $.ac-niltree $.shuffle $.ar-denil-last))
 (= numbers (shuffle (range 0 1000)))
 
 ; And now let's create an AVL tree by inserting the numbers into it, in sorted
 ; order.
-(prn "Adding to tree")
+(ero "Adding them to a tree")
 (= n 0)
 (= tree
    (foldl (fn (x y)
-            (if (is 0 (mod n 100)) prn.n)
+            (if (is 0 (mod n 100)) ero.n)
             (++ n)
             (verify (ainsert < y x)))
           nil
           numbers))
 
 ; Now let's try removing the elements from the tree.
-(prn "Removing everything from tree")
+(ero "Removing everything from the tree")
 (= n 0)
 (= tree
   (foldl (fn (x y)
-            (if (is 0 (mod n 100)) prn.n)
+            (if (is 0 (mod n 100)) ero.n)
             (++ n)
            (verify (aremove < y x)))
          tree

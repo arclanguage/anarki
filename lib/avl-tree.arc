@@ -60,10 +60,10 @@
 ; I'll use nil as an empty AVL node.
 
   (def node (d x y)
-    (obj dt d ;datum, left, right, depth
-         lf x
-         rt y
-         dp (inc:max depth.x depth.y)))
+    (obj dt  d  ; datum, left, right, depth
+         lf  x
+         rt  y
+         dp  (inc:max depth.x depth.y)))
 
   (def depth (node)
     (if node
@@ -104,16 +104,17 @@
 
 (def node/r (d x y) ;like node but rebalances
   (if (> depth.x (inc depth.y))
-      (if (< (depth x!lf) (depth x!rt))
+        (if (< (depth x!lf) (depth x!rt))
           (node x!rt!dt (node x!dt x!lf x!rt!lf)
                 (node d x!rt!rt y))
           (node x!dt x!lf (node d x!rt y)))
       (> depth.y (inc depth.x))
-      (if (< (depth y!rt) (depth y!lf))
+        (if (< (depth y!rt) (depth y!lf))
           (node y!lf!dt (node d x y!lf!lf)
                 (node y!dt y!lf!rt y!rt))
           (node y!dt (node d x y!lf) y!rt))
-      (node d x y)))
+      :else
+        (node d x y)))
 
 ; Note that, up to this point, we haven't needed to compare any elements, and
 ; in fact I had forgotten I would have to do that. This realization pleases
@@ -121,38 +122,43 @@
 
 (def ainsert (less x tree)
   (if no.tree
-      (node x nil nil)
+        (node x nil nil)
       (less x tree!dt)
-      (node/r tree!dt
-              (ainsert less x tree!lf)
-              tree!rt)
-      (node/r tree!dt
-              tree!lf
-              (ainsert less x tree!rt))))
+        (node/r tree!dt
+                (ainsert less x tree!lf)
+                tree!rt)
+      :else
+        (node/r tree!dt
+                tree!lf
+                (ainsert less x tree!rt))))
 
 (def aremove (less test tree)
   (if no.tree
-      (err "aremove: failed to find" test "in" tree)
+        (err "aremove: failed to find" test "in" tree)
       (is test tree!dt)
-      (amerge tree!lf tree!rt)
+        (amerge tree!lf tree!rt)
       (less test tree!dt)
-      (node/r tree!dt
-              (aremove less test tree!lf)
-              tree!rt)
-      (node/r tree!dt
-              tree!lf
-              (aremove less test tree!rt))))
+        (node/r tree!dt
+                (aremove less test tree!lf)
+                tree!rt)
+      :else
+        (node/r tree!dt
+                tree!lf
+                (aremove less test tree!rt))))
 
-(def amerge (a b) ;not a general merge; assumes [all of a] ≤ [all of b]
-  (if no.a b
-      no.b a
+(def amerge (a b) ; not a general merge; assumes [all of a] ≤ [all of b]
+  (if no.a
+        b
+      no.b
+        a
       (< depth.a depth.b)
-      (node/r b!dt
-              (amerge a b!lf)
-              b!rt)
-      (node/r a!dt
-              a!lf
-              (amerge a!rt b))))
+        (node/r b!dt
+                (amerge a b!lf)
+                b!rt)
+      :else
+        (node/r a!dt
+                a!lf
+                (amerge a!rt b))))
 
 ;; Time for a pretty picture:
 ;
@@ -196,7 +202,7 @@
     (thread:system:string
        "dot -Tpng " fname " -o " fname ".png && open -nW " fname ".png"
        (if no.name
-           (string " && rm " fname " " fname ".png")))))
+         (string " && rm " fname " " fname ".png")))))
 
 ; -------
 ; 
@@ -313,19 +319,19 @@
 ; 
 ;   (def insert-sorted (< x xs)
 ;     (if (or no.xs (< x car.xs))
-;         (cons x xs)
-;         (cons car.xs (insert-sorted < x cdr.xs))))
+;       (cons x xs)
+;       (cons car.xs (insert-sorted < x cdr.xs))))
 ; 
 ; is simpler than this:
 ; 
 ;   (def ninsert-sorted (< x xs)
 ;     (if (or no.xs (< x car.xs))
-;         (cons x xs)
-;         (do (xloop (xs xs)
-;               (if (or (no cdr.xs) (< x cadr.xs))
-;                   (= cdr.xs (cons x cdr.xs))
-;                   (next cdr.xs)))
-;             xs)))
+;       (cons x xs)
+;       (do (loop (xs xs)
+;             (if (or (no cdr.xs) (< x cadr.xs))
+;               (= cdr.xs (cons x cdr.xs))
+;               (recur cdr.xs)))
+;           xs)))
 ; 
 ; [4] I took my code and replaced, e.g., depth:x!lf with (depth x!lf) so this
 ; works without super-awesome ssyntax. Ad hoc shell scripts are fun.
