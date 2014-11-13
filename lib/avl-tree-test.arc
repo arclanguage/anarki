@@ -1,5 +1,7 @@
 ;; Fuzz testing for AVL trees - by Pauan - http://arclanguage.org/item?id=18936
 
+(load "lib/avl-tree.arc")
+
 ; Depth must be correct
 (def verify-depth (tree)
   (is (depth tree)
@@ -30,22 +32,30 @@
     tree
     (err "bad tree")))
 
-($:namespace-require 'racket/list)
-
-; Get a list of numbers from 0 - 1000, but shuffled in a random order.
-(= numbers ($.shuffle (range 0 1000)))
+; Get a list of numbers shuffled in a random order.
+(prn "Generating values")
+(= shuffle (compose $.ac-niltree $.shuffle $.ar-denil-last))
+(= numbers (shuffle (range 0 1000)))
 
 ; And now let's create an AVL tree by inserting the numbers into it, in sorted
 ; order.
+(prn "Adding to tree")
+(= n 0)
 (= tree
    (foldl (fn (x y)
+            (if (is 0 (mod n 100)) prn.n)
+            (++ n)
             (verify (ainsert < y x)))
           nil
           numbers))
 
 ; Now let's try removing the elements from the tree.
+(prn "Removing everything from tree")
+(= n 0)
 (= tree
   (foldl (fn (x y)
+            (if (is 0 (mod n 100)) prn.n)
+            (++ n)
            (verify (aremove < y x)))
          tree
          numbers))

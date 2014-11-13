@@ -104,15 +104,15 @@
 
 (def node/r (d x y) ;like node but rebalances
   (if (> depth.x (inc depth.y))
-      (if (> (depth x!lf) (depth x!rt))
-          (node x!dt x!lf (node d x!rt y))
+      (if (< (depth x!lf) (depth x!rt))
           (node x!rt!dt (node x!dt x!lf x!rt!lf)
-                (node d x!rt!rt y)))
+                (node d x!rt!rt y))
+          (node x!dt x!lf (node d x!rt y)))
       (> depth.y (inc depth.x))
-      (if (> (depth y!rt) (depth y!lf))
-          (node y!dt (node d x y!lf) y!rt)
+      (if (< (depth y!rt) (depth y!lf))
           (node y!lf!dt (node d x y!lf!lf)
-                (node y!dt y!lf!rt y!rt)))
+                (node y!dt y!lf!rt y!rt))
+          (node y!dt (node d x y!lf) y!rt))
       (node d x y)))
 
 ; Note that, up to this point, we haven't needed to compare any elements, and
@@ -132,10 +132,10 @@
 
 (def aremove (less test tree)
   (if no.tree
-      (err "aremove: failed to find" x "in" tree)
-      (test tree)
+      (err "aremove: failed to find" test "in" tree)
+      (is test tree!dt)
       (amerge tree!lf tree!rt)
-      (less x tree!dt)
+      (less test tree!dt)
       (node/r tree!dt
               (aremove less test tree!lf)
               tree!rt)
