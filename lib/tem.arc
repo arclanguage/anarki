@@ -28,10 +28,10 @@ from template 'tem-type'."
                        (memtable (map car (keep no:cadr pair.args))))))
 
 (defextend sref (tem v k) (isa tem 'tem)
-  (sref rep.tem.1 v k)
   (if v
     (wipe rep.tem.2.k)
-    (set rep.tem.2.k)))
+    (set rep.tem.2.k))
+  (sref rep.tem.1 v k))
 
 (defcall tem (tem k)
   (or rep.tem.1.k

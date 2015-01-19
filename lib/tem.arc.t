@@ -14,6 +14,8 @@
                                           'changed)
                                        (assert-same 'changed
                                                     tem-with-default!field1))
+               assigning-returns-value (assert-same (= tem-with-default!field2 'changed)
+                                                    'changed)
                empty-template (assert-nil empty-instance!field1)
                assigning-nil (do (wipe tem-with-default!field1)
                                  (assert-nil tem-with-default!field1))
