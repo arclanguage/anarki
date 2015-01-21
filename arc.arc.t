@@ -262,3 +262,9 @@
        no-gensyms-capture-variables (assert-same 8  ; probably not what you want
                                                  (let y 3 (foo-bad y)))
        gensyms-mix-with-ssyntax (assert-same 2 (foo-ssyntax)))
+
+(suite sort
+       doesnt-alter-elements-of-list (let x '((1) (2) (3))
+                                       (assert (is car.x
+                                                   (car:sort (compare < car) x))
+                                               "elements should be untouched after sort")))

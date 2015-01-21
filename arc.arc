@@ -1946,6 +1946,12 @@ of tables."
 "Writes table as an association list to stream 'o' (stdout by default)."
   (write tablist.h o))
 
+(def copylist (xs)
+  (if acons.xs
+    (cons car.xs
+          (copylist cdr.xs))
+    xs))
+
 (def copy (x)
 "Creates a deep copy of 'x'. Future changes to any part of 'x' are guaranteed
 to be isolated from the copy."
@@ -2022,7 +2028,7 @@ barring the sign."
 (def sort (test seq)
 "Orders a list 'seq' by comparing its elements using 'test'."
   (if (alist seq)
-    (mergesort test (copy seq))
+    (mergesort test (copylist seq))
     (coerce (mergesort test (coerce seq 'cons)) (type seq))))
 
 (examples sort
