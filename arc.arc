@@ -588,9 +588,9 @@ This is the most reliable way to check for presence, even when searching for nil
 
 (def isa (x y)
 "Is 'x' of type 'y'?"
-  (if (is type.x y) t
+  (if (is (type x) y) t
       (let valid nil
-	(maptable (fn (k v) (if (is k y) (= valid t))) types*)
+	(maptable (fn (k v) (if (is k y) (assign valid t))) types*)
 	(and valid ((types* y) x)))))
 
 (document builtin coerce (x type)
