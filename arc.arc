@@ -578,20 +578,9 @@ This is the most reliable way to check for presence, even when searching for nil
   (mem 6 '(2 4 5 6 7))
   (6 7))
 
-; Optional predicate-based typing
-
-(assign types* (table))
-
-(mac deftype (name . body)
-"Declares a new predicate-based type that can be checked with 'isa'."
-  `(= (types* ',name) (fn (_) ,@body)))
-
-(def isa (x y)
+(def isa (x y)  ; bootstrap version; overloaded below
 "Is 'x' of type 'y'?"
-  (if (is (type x) y) t
-      (let valid nil
-	(maptable (fn (k v) (if (is k y) (assign valid t))) types*)
-	(and valid ((types* y) x)))))
+  (is (type x) y))
 
 (document builtin coerce (x type)
 "Try to turn 'x' into a value of a different 'type'.")
@@ -1956,6 +1945,21 @@ of tables."
 (def write-table (h (o o (stdout)))
 "Writes table as an association list to stream 'o' (stdout by default)."
   (write tablist.h o))
+
+; Optional predicate-based typing
+
+(assign types* (table))
+
+(mac deftype (name . body)
+"Declares a new predicate-based type that can be checked with 'isa'."
+  `(= (types* ',name) (fn (_) ,@body)))
+
+(redef isa (x y)
+"Is 'x' of type 'y'?"
+  (if (is (type x) y) t
+      (let valid nil
+	(maptable (fn (k v) (if (is k y) (set valid))) types*)
+	(and valid ((types* y) x)))))
 
 (def copylist (xs)
   (if acons.xs

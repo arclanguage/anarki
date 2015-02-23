@@ -88,6 +88,17 @@
                                         (if (> i 2) (continue))
                                         (acc 'x)))))
 
+(suite isa
+       checks-type (isa "abc" 'string)
+       checks-type-predicate (do (assert-nil (isa 1 'positive-num))
+                                 (deftype positive-num
+                                   (and (or (isa _ 'num) (isa _ 'int))
+                                        (> _ 0)))
+                                 (assert (isa 1 'positive-num) "isa supports predicate types")
+                                 ; cleanup
+                                 (wipe (types* 'positive-num))
+                                 (assert-nil (isa 1 'positive-num) "isa test suite failed to cleanup")))
+
 (suite coerce
        nil-to-cons (assert-nil (as cons nil)))
 
