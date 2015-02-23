@@ -1948,18 +1948,17 @@ of tables."
 
 ; Optional predicate-based typing
 
-(assign types* (table))
+(= type-predicates* (table))
 
-(mac deftype (name . body)
+(mac def-isa (name . body)
 "Declares a new predicate-based type that can be checked with 'isa'."
-  `(= (types* ',name) (fn (_) ,@body)))
+  `(= (type-predicates* ',name) (fn (_) ,@body)))
 
 (redef isa (x y)
-"Is 'x' of type 'y'?"
-  (if (is (type x) y) t
-      (let valid nil
-	(maptable (fn (k v) (if (is k y) (set valid))) types*)
-	(and valid ((types* y) x)))))
+"Is 'x' of type 'y'? Also checks for predicate matches in types* table."
+  (or (is type.x y)
+      (aand (type-predicates* y)
+            (it x))))
 
 (def copylist (xs)
   (if acons.xs

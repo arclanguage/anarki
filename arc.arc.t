@@ -91,12 +91,12 @@
 (suite isa
        checks-type (isa "abc" 'string)
        checks-type-predicate (do (assert-nil (isa 1 'positive-num))
-                                 (deftype positive-num
+                                 (def-isa positive-num
                                    (and (or (isa _ 'num) (isa _ 'int))
                                         (> _ 0)))
                                  (assert (isa 1 'positive-num) "isa supports predicate types")
                                  ; cleanup
-                                 (wipe (types* 'positive-num))
+                                 (wipe (type-predicates* 'positive-num))
                                  (assert-nil (isa 1 'positive-num) "isa test suite failed to cleanup")))
 
 (suite coerce
