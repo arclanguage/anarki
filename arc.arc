@@ -583,9 +583,11 @@ This is the most reliable way to check for presence, even when searching for nil
 (assign types* (table))
 
 (mac deftype (name . body)
+"Declares a new predicate-based type that can be checked with 'isa'."
   `(= (types* ',name) (fn (_) ,@body)))
 
 (def isa (x y)
+"Is 'x' of type 'y'?"
   (if (is type.x y) t
       (let valid nil
 	(maptable (fn (k v) (if (is k y) (= valid t))) types*)
