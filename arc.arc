@@ -1954,11 +1954,9 @@ of tables."
 "Declares a new predicate-based type that can be checked with 'isa'."
   `(= (type-predicates* ',name) (fn (_) ,@body)))
 
-(redef isa (x y)
-"Is 'x' of type 'y'? Also checks for predicate matches in types* table."
-  (or (is type.x y)
-      (aand (type-predicates* y)
-            (it x))))
+(defextend isa (x y) (~is type.x y)
+  (aand (type-predicates* y)
+        (it x)))
 
 (def copylist (xs)
   (if acons.xs
