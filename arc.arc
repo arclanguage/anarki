@@ -578,7 +578,7 @@ This is the most reliable way to check for presence, even when searching for nil
   (mem 6 '(2 4 5 6 7))
   (6 7))
 
-(def isa (x y)  ; bootstrap version; overloaded below
+(def isa (x y)
 "Is 'x' of type 'y'?"
   (is (type x) y))
 
