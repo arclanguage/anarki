@@ -1,0 +1,6 @@
+--langdef=arc
+--langmap=arc:.arc
+--regex-arc=/^\(def[ \t]+([^ \t\(]+)/\1/d,definition/
+--regex-arc=/^\(defextend[ \t]+([^ \t\(]+)/\1/d,definition/
+--regex-arc=/^\(mac[ \t]+([^ \t\(]+)/\1/d,definition/
+--regex-arc=/^\(=[ \t]+([^ \t\(]+)/\1/d,definition/
