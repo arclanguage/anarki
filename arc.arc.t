@@ -279,3 +279,10 @@
                                        (assert (is car.x
                                                    (car:sort (compare < car) x))
                                                "elements should be untouched after sort")))
+
+(suite vector
+       ; creation, write, read, and value of uninitialized location
+       get-set (assert-same '(0 12)
+                 (let x vec.20
+                   (= x.4 12)
+                   (list x.3 x.4))))

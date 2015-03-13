@@ -826,6 +826,7 @@
         ((string? x)        'string)
         ((exint? x)         'int)
         ((number? x)        'num)     ; unsure about this
+        ((vector? x)        'vector)
         ((hash-table? x)    'table)
         ((output-port? x)   'output)
         ((input-port? x)    'input)
@@ -967,7 +968,8 @@
             (string ,(lambda (s) (lambda (i) (string-ref s i))))
             (table  ,(lambda (h) (case-lambda
                                   ((k) (hash-table-get h k 'nil))
-                                  ((k d) (hash-table-get h k d))))))
+                                  ((k d) (hash-table-get h k d)))))
+            (vector ,(lambda (v) (lambda (i) (vector-ref v i)))))
 
    (string  (int    ,number->string)
             (num    ,number->string)
@@ -1362,6 +1364,7 @@
                                   (hash-table-put! com ind val)))
           ((string? com) (string-set! com ind val))
           ((pair? com)   (nth-set! com ind val))
+          ((vector? com)  (vector-set! com ind val))
           (#t (err "Can't set reference " com ind val)))
     val))
 
@@ -1379,6 +1382,8 @@
 (xdef newstring make-string)
 
 (xdef trunc (lambda (x) (inexact->exact (truncate x))))
+
+(xdef vec make-vector)
 
 ; bad name
 
