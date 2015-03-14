@@ -286,3 +286,14 @@
                  (let x vec.20
                    (= x.4 12)
                    (list x.3 x.4))))
+
+(suite readline
+       stops-at-newlines  (assert-same '("a" "b" "c")
+                                       (fromstring "a\nb\nc\n"
+                                         (drain (readline))))
+       stops-at-eof  (assert-same '("a" "b" "c")
+                                  (fromstring "a\nb\nc"
+                                    (drain (readline))))
+       handles-empty-lines  (assert-same '("" "" "a" "c" "" "d")
+                                         (fromstring "\n\na\nc\n\nd"
+                                           (drain (readline)))))
