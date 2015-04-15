@@ -38,7 +38,8 @@
        multiple-vars (assert-same 6
                                   (ret result 0
                                     (for (i j) '(1 2) (<= j 4) (do ++.i ++.j)
-                                      (= result (+ result i))))))
+                                      (= result (+ result i)))))
+       returns-nil (assert-nil (for i 1 (<= i 3) ++.i 1)))
 
 (suite ssyntax
        ssyntax? (assert-nil ($.ssyntax? 'car))

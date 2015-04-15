@@ -922,15 +922,16 @@ See [[atomic]]."
 (mac for (var init test update . body)
 "Loops through expressions in 'body' as long as 'test' passes, first binding 'var' to 'init'. At the end of each iteration it runs 'update', which usually will modify 'var'.
 Can also be terminated from inside 'body' by calling '(break)', or interrupt a single iteration by calling '(continue)'.
-If you nest multiple loops with different 'var's like i and j, you can break
-out of either of them by calling (break-i), (break-j), etc.
+If you nest multiple loops with different 'var's like i and j, you can break out of either of them by calling (break-i), (break-j), etc.
+Always returns nil.
 
 Incompatibility alert: 'for' is different in anarki from vanilla arc. To get vanilla arc's behavior, use [[up]]. For more information, see CHANGES/for."
   `(point break
      (let ,(sym:string "break-" var) break
        (loop (,var ,init)
           (when ,test
-            (do1 (point continue
+            (do1 nil
+                 (point continue
                    (let ,(sym:string "continue-" var) continue
                      ,@body))
                  ,update
