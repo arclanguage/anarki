@@ -1015,7 +1015,7 @@
       (lambda (var val thunk)
         (parameterize ((var val)) (thunk))))
 
-(xdef open-socket 
+(xdef open-socket
       (lambda (port)
         (if (pair? port)
             (tcp-listen (cadr port) 50 #t (car port))
@@ -1203,7 +1203,7 @@
 (define (tl)
   (let ((interactive? (terminal-port? (current-input-port))))
     (when interactive?
-      (display 
+      (display
 "
 Type (quit) or ^D to quit,
 (help _sym_) for docs and examples,
