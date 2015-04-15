@@ -926,6 +926,10 @@ If you nest multiple loops with different 'var's like i and j, you can break out
 Always returns nil.
 
 Incompatibility alert: 'for' is different in anarki from vanilla arc. To get vanilla arc's behavior, use [[up]]. For more information, see CHANGES/for."
+  ; simple heuristic to alert on the incompatibility at call time. If you need
+  ; to check a flag variable you should probably be using 'while' anyway.
+  (unless (acons test)
+    (err "`for` has changed in anarki. See (help for) for more information."))
   `(point break
      (let ,(sym:string "break-" var) break
        (loop (,var ,init)
