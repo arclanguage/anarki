@@ -923,7 +923,9 @@ See [[atomic]]."
 "Loops through expressions in 'body' as long as 'test' passes, first binding 'var' to 'init'. At the end of each iteration it runs 'update', which usually will modify 'var'.
 Can also be terminated from inside 'body' by calling '(break)', or interrupt a single iteration by calling '(continue)'.
 If you nest multiple loops with different 'var's like i and j, you can break
-out of either of them by calling (break-i), (break-j), etc."
+out of either of them by calling (break-i), (break-j), etc.
+
+Incompatibility alert: 'for' is different in anarki from vanilla arc. To get vanilla arc's behavior, use [[up]]. For more information, see CHANGES/for."
   `(point break
      (let ,(sym:string "break-" var) break
        (loop (,var ,init)

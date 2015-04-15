@@ -1,19 +1,21 @@
 Anarki renames Vanilla arc 3.1's `for` loop to `up` (in symmetry with the
-existing `down`) and makes `for` more C like. Type `(help for)` at the arc
-prompt for more details.
+existing `down`) and makes `for` more C like.
 
-
-Anarki's implementation of 'for' is on the form
-    (for [var] [init] [test] [update] . [body])
-
-This is a 'for' loop in vanilla arc ( from tutorial http://old.ycombinator.com/arc/tut.txt )
-    arc> (for i 1 10 
-        (pr i " "))
+For example, consider this `for` loop in vanilla arc (from http://old.ycombinator.com/arc/tut.txt)
+    arc> (for i 1 10
+           (pr i " "))
     1 2 3 4 5 6 7 8 9 10 nil
 
-The corresponding version in Anarki using 'for'  would be
-    arc> (for i 1 (< i 11) (= i (+ i 1))
-        (pr i " "))
+To translate it to anarki, use `up`:
+    arc> (up i 1 10
+           (pr i " "))
+    1 2 3 4 5 6 7 8 9 10 nil
+
+The corresponding version using anarki's `for` would be:
+    arc> (for i 1 (<= i 10) ++.i
+           (pr i " "))
     1 2 3 4 5 6 7 8 9 10 1
 
+(Though the return value changes.)
 
+Type `(help for)` at the arc prompt for more details.
