@@ -4,8 +4,8 @@ The intention is to be extremely permissive in accepting patches. For commit
 privileges, just submit your first pull request or ask on http://arclanguage.org/forum.
 
 *Important*: If you are already running a HN-like site, migrating to this fork
-might mess up your site's data. Come talk to us first, and be sure to make a
-backup before the migration.
+might mess up your site's data. Come [talk to us](http://arclanguage.org/forum)
+first, and be sure to make a backup before the migration.
 
 To run, install Racket from http://racket-lang.org, then:
 
