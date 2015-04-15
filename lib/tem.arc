@@ -1,7 +1,13 @@
 (= templates* (table))
 
 (mac deftem (tem . fields)
-"Defines a _template_, a table with defaults defined for various keys."
+"Defines a _template_, a table with defaults defined for various keys.
+
+Templates can be read from or written to file. See https://arclanguage.github.io/ref/template.html.
+
+When you read back a template that you wrote to a file, the results can be
+subtly different from (and hopefully better than) arc3.1. For a summary of the
+differences, compare lib/tem-report.arc3.1 and lib/tem-report.curr."
   (withs (name (carif tem) includes (if (acons tem) (cdr tem)))
     `(= (templates* ',name)
         (+ (mappend templates* ',(rev includes))

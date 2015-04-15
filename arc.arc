@@ -21,6 +21,15 @@
 ;  not sure this is a mistake; strings may be subtly different from
 ;  lists of chars
 
+(assign incompatibilities (fn () (disp
+"The following behave differently from arc 3.1:
+
+1. `for`. See (help for).
+2. Templates (arc's lightweight object database system). See (help deftem).
+
+If you find others, please report them at http://arclanguage.org/forum.
+")))
+
 (assign current-load-file* "arc.arc")
 (assign source-file* (table))
 (assign source* (table))

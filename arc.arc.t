@@ -73,7 +73,7 @@
        expand-ssyntax-&-infix (assert-same '(andf f g)
                                            ($.expand-ssyntax 'f&g)))
 
-(suite for-goto
+(suite break-continue
        break (assert-same '(1 x 2 x 3)
                           (accum acc
                                  (up i 1 6
