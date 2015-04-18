@@ -1,0 +1,3 @@
+To call racket functions in anarki:
+  arc> ($.pair? '(1))
+  #t
