@@ -2680,14 +2680,15 @@ when it's ready to be interrupted."
 "Applies each function in 'fs' to 'x', letting the functions recurse on parts
 of 'x' by calling 'self'."
   (w/uniq g
-    `(loop (,g ,x)
-       (when ,g
-         ,@(map [list _ g] fs)))))
+    `((afn (,g)
+        (when ,g
+          ,@(map [list _ g] fs)))
+      ,x)))
 
 (examples trav
   (accum acc
     (trav '(1 2 3 4) [acc _]
-                     [recur cdr._]))
+                     [self cdr._]))
   ((1 2 3 4)
    (2 3 4)
    (3 4)
