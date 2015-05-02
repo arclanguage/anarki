@@ -1207,7 +1207,7 @@
 "
 Type (quit) or ^D to quit,
 (help _sym_) for docs and examples,
-(incompatibilities) for a list of difference with arc 3.1.
+(incompatibilities) for a list of differences with arc 3.1.
 
 If you have questions or get stuck, come to http://arclanguage.com/forum.
 Arc 3.1 documentation: https://arclanguage.github.io/ref.
