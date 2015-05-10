@@ -1205,9 +1205,17 @@
     (when interactive?
       (display
 "
-Type (quit) or ^D to quit,
-(help _sym_) for docs and examples,
-(incompatibilities) for a list of differences with arc 3.1.
+To quit:
+  arc> (quit)
+  (or press ctrl and 'd' at once)
+For help on say 'string':
+  arc> (help string)
+For a list of differences with arc 3.1:
+  arc> (incompatibilities)
+To run all automatic tests:
+  $ hg clone https://bitbucket.org/zck/unit-test.arc
+  $ ./arc
+  arc> (load \"tests.arc\")
 
 If you have questions or get stuck, come to http://arclanguage.com/forum.
 Arc 3.1 documentation: https://arclanguage.github.io/ref.

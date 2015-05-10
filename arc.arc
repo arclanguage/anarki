@@ -613,7 +613,7 @@ More convenient form of [[coerce]] with arguments reversed; doesn't need
   ($.exact->inexact x))
 
 (def string args
-"Converts all 'args' into strings and concatenate the result."
+"Converts all 'args' into strings and concatenates the results."
   (apply + "" (map [coerce _ 'string] args)))
 
 ; Possible to write map without map1, but makes News 3x slower.
