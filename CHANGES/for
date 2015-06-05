@@ -6,8 +6,8 @@ For example, consider this `for` loop in vanilla arc (from http://old.ycombinato
            (pr i " "))
     1 2 3 4 5 6 7 8 9 10 nil
 
-To translate it to anarki, use `up`:
-    arc> (up i 1 10
+To translate it to anarki, use `up` and adjust the upper bound:
+    arc> (up i 1 11
            (pr i " "))
     1 2 3 4 5 6 7 8 9 10 nil
 

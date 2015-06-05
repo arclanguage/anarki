@@ -943,11 +943,21 @@ Incompatibility alert: 'for' is different in anarki from vanilla arc. To get van
                     `(recur (list ,@var))
                     `(recur ,var))))))))
 
+(examples for
+  (for i 1 (<= i 10) ++.i
+    (pr i " "))
+  _)
+
 (mac up (v init max . body)
 "Counts 'v' up from 'init' (inclusive) to 'max' (exclusive), running 'body'
 with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
   `(for ,v ,init (< ,v ,max) (assign ,v (+ ,v 1))
      ,@body))
+
+(examples up
+  (up i 1 11
+    (pr i " "))
+  _)
 
 (mac down (v init min . body)
 "Counts 'v' down from 'init' (inclusive) to 'min' (exclusive), running 'body'
