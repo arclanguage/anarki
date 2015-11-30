@@ -51,8 +51,8 @@ create the account for your username. You should now be logged in as an admin.
 
 Don't worry about "user break" or "error writing" messages.
 
-To customize News, change the variables at the top of lib/news.arc. To change the
-port your server runs at, modify lib/run-news.
+To customize News, change the variables at the top of `lib/news.arc`. To
+change the port your server runs at, modify `lib/run-news.arc`.
 
 Any interactive changes to the prompt will be reflected immediately in the
 server, without needing to restart it. Don't forget to add them to the .arc
