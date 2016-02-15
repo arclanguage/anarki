@@ -87,7 +87,7 @@
                     :else  (= (ans (map (fn (k i) (if (> k i) (- k 1) k)) key indices)) val)))
               mat)
     (if table? ans
-      (table-to-mat ans)))))
+      (table-to-mat ans))))
 
 (def det (mat)
   "calculates the determinant of a matrix by cramer's rule: det(A)=sum_over_i(A(i,j) * det(A_minor(i,j)) * -1^(i+j)); det(scalar)=scalar"
