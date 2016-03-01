@@ -1,9 +1,11 @@
+Anarki
+===
 Anarki: a publicly modifiable 'wiki-like' fork of Arc Lisp (http://www.paulgraham.com/arc.html)
 
 The intention is to be extremely permissive in accepting patches. For commit
 privileges, just submit your first pull request or ask on http://arclanguage.org/forum.
-
-*Important*: If you are already running a HN-like site, migrating to this fork
+# Installation
+**Warning**: If you are already running a HN-like site, migrating to this fork
 might mess up your site's data. Come [talk to us](http://arclanguage.org/forum)
 first, and be sure to make a backup before the migration.
 
@@ -14,7 +16,7 @@ To run, install Racket from http://racket-lang.org, then:
     $ ./arc  # interactive repl
     arc> (quit)
     $
-
+#### Tests:
 Anarki has thorough automated tests. To run them, install mercurial, then:
 
     # start in the anarki directory
@@ -32,6 +34,9 @@ If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://ar
 
 ---
 
+
+### Hacker News Site
+anarki comes bundled with a [Hacker News](https://news.ycombinator.com) style app.
 To run the HN server, first pick your (the admin's) username:
 
     $ mkdir www
