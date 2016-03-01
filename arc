@@ -30,7 +30,12 @@ EXAMPLES
 
 if [ $(uname) = "Darwin" ]; then
   if which -s greadlink; then
-    arc_dir=$(dirname "$(greadlink -f "$0")")
+    if which -s racket; then
+        arc_dir=$(dirname "$(greadlink -f "$0")")
+    else
+        echo 'Please do "brew install racket && raco pkg install --auto drracket"'
+        exit 1
+    fi
   else
     echo 'Please do "brew install coreutils".'
     exit 1
