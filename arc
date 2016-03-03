@@ -3,7 +3,27 @@
 # Put a symlink to it somewhere in your path.
 # Without args, starts up a repl.
 
-function usage {
+# argument parsing
+RLWRAP=true
+DO_HELP=false
+while getopts nh opt; do
+    case $opt in
+        n)
+            RLWRAP=false
+            ;;
+        h)
+            DO_HELP=true
+            ;;
+        \? )
+            exit 1
+            ;;
+    esac
+done
+
+# remove options from the arguments
+shift $((OPTIND - 1))
+
+if [[ $DO_HELP == true ]] ; then
     echo "
 arc [-n] [-h] [<file> [<file_args>]]
 
@@ -26,7 +46,7 @@ EXAMPLES
         arc file-to-run.arc 3
 "
     exit 1
-}
+fi
 
 if [ $(uname) = "Darwin" ]; then
   if which greadlink >&/dev/null; then
@@ -44,22 +64,6 @@ else
   arc_dir=$(dirname "$(readlink -f "$0")")
 fi
 
-RLWRAP=true
-DO_HELP=false
-while getopts nh opt; do
-    case $opt in
-        n)
-            RLWRAP=false
-            ;;
-        h)
-            DO_HELP=true
-            ;;
-        \? )
-            exit 1
-            ;;
-    esac
-done
-
 # useful error if rlwrap is enabled but not yet installed
 if $RLWRAP && [ ! `which rlwrap 2>/dev/null` ]
 then
@@ -69,13 +73,6 @@ then
   fi
   echo "or run arc without rlwrap: \"./arc -n\""
   exit 1
-fi
-
-#remove options from the arguments
-shift $((OPTIND - 1))
-
-if [[ $DO_HELP == true ]] ; then
-    usage
 fi
 
 if [[ $RLWRAP == "true" ]] ; then
