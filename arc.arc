@@ -2679,12 +2679,16 @@ when it's ready to be interrupted."
 (def thread-rewind-receive args
   (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
 
-(= tmpdir* 'nil) ;default tmp directory
+(= tmpdir* scheme-f)  ; default tmp directory
 (def mktemp ((o prefix "arc") (o dir tmpdir*))
-  (let f scheme-f
-      ($ (make-temporary-file (string-append prefix ".~a")
-                              f
-                              (if (eq? dir 'nil) f dir)))))
+  (with (postproc  (if (is 'windows ($.system-type 'os))
+                     idfn
+                     ; otherwise it's unix or macosx
+                     $.path->string)
+         scheme-f  scheme-f)  ; otherwise racket doesn't see the 'scheme-f' below
+    (postproc:$ (make-temporary-file (string-append prefix ".~a")
+                                     scheme-f  ; file starts out empty
+                                     dir))))
 
 (mac trav (x . fs)
 "Applies each function in 'fs' to 'x', letting the functions recurse on parts
