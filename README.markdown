@@ -32,10 +32,14 @@ update this list.
 
 If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://arclanguage.org/forum
 
+# Documentation
+
+https://arclanguage.github.io/ref/
+
 ---
 
 
-### Hacker News Site
+## Hacker News Site
 anarki comes bundled with a [Hacker News](https://news.ycombinator.com) style app.
 To run the HN server, first pick your (the admin's) username:
 
