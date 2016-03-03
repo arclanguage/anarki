@@ -2679,7 +2679,8 @@ when it's ready to be interrupted."
 (def thread-rewind-receive args
   (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
 
-(= tmpdir* scheme-f)  ; default tmp directory
+(ensure-dir "tmp")
+(= tmpdir* "tmp")  ; tmp directory
 (def mktemp ((o prefix "arc") (o dir tmpdir*))
   (with (postproc  (if (is 'windows ($.system-type 'os))
                      idfn
