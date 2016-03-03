@@ -9,7 +9,7 @@ arc [-n] [-h] [<file> [<file_args>]]
 
 OPTIONS
     -n
-        No rlwrap
+        No rlwrap for line-editing
 
     -h
         Print help and exit
@@ -18,9 +18,9 @@ OPTIONS
         Don't start up a REPL; instead, execute the file, passing to it any file_args. When the file finishes executing, exit Arc.
 
 EXAMPLES
-    Start the Arc REPL.
+    Start the Arc REPL:
         arc
-    Start the Arc REPL without rlwrap
+    Start the Arc REPL without any line-editing smarts:
         arc -n
     Run the file \"file-to-run.arc\", passing to it the argument 3
         arc file-to-run.arc 3
