@@ -15,7 +15,8 @@ while getopts nh opt; do
             DO_HELP=true
             ;;
         \? )
-            exit 1
+            # error; show usage anyway
+            DO_HELP=true
             ;;
     esac
 done
