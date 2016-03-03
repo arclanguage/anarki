@@ -59,14 +59,14 @@ case $(uname) in
         fi
         if ! which racket >&/dev/null
         then
-          echo 'Please do "brew install racket && raco pkg install --auto drracket"'
+          echo 'Please run "brew install racket && raco pkg install --auto drracket"'
           exit 1
         fi
         arc_dir=$(dirname "$(greadlink -f "$0")")
  
         if $RLWRAP && ! which rlwrap >&/dev/null
         then
-          echo 'Please do "brew install rlwrap"'
+          echo 'Please run "brew install rlwrap"'
           echo 'Or run arc without rlwrap: "./arc -n"'
           exit 1
         fi
@@ -75,7 +75,8 @@ case $(uname) in
     "Linux")
         if ! which racket >&/dev/null
         then
-          echo "Please install racket with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.) or go to http://racket-lang.org for more detailed instructions."
+          echo "Please install racket with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
+          echo "Or go to http://racket-lang.org for more detailed instructions."
           exit 1
         fi
         arc_dir=$(dirname "$(readlink -f "$0")")
