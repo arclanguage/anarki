@@ -29,8 +29,8 @@ EXAMPLES
 }
 
 if [ $(uname) = "Darwin" ]; then
-  if which -s greadlink; then
-    if which -s racket; then
+  if which greadlink >&/dev/null; then
+    if which racket >&/dev/null; then
         arc_dir=$(dirname "$(greadlink -f "$0")")
     else
         echo 'Please do "brew install racket && raco pkg install --auto drracket"'
@@ -61,12 +61,14 @@ while getopts nh opt; do
 done
 
 # useful error if rlwrap is enabled but not yet installed
-if $RLWRAP && [ ! `which rlwrap` ]
-  then if [ `uname` = "Darwin" ]
+if $RLWRAP && [ ! `which rlwrap 2>/dev/null` ]
+then
+  if [ `uname` = "Darwin" ]
     then echo "Please run: \"brew install rlwrap\""
     else echo "Please install rlwrap"
-    fi
-    echo "or run arc without rlwrap: \"./arc -n\""
+  fi
+  echo "or run arc without rlwrap: \"./arc -n\""
+  exit 1
 fi
 
 #remove options from the arguments
