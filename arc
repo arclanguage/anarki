@@ -60,6 +60,15 @@ while getopts nh opt; do
     esac
 done
 
+# useful error if rlwrap is enabled but not yet installed
+if $RLWRAP && [ ! `which rlwrap` ]
+  then if [ `uname` = "Darwin" ]
+    then echo "Please run: \"brew install rlwrap\""
+    else echo "Please install rlwrap"
+    fi
+    echo "or run arc without rlwrap: \"./arc -n\""
+fi
+
 #remove options from the arguments
 shift $((OPTIND - 1))
 
