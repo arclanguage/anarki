@@ -416,6 +416,14 @@ stdout, returns a url to redirect requests to after processing."
 
 ;(mac testop (name . args) `((srvops* ',name) ,@args))
 
+(def reassemble-args (req)
+  (aif req!args
+    (apply string "?" (intersperse '&
+                                   (map (fn ((k v))
+                                          (string k '= v))
+                                        it)))
+    ""))
+
 (= fns* (table) fnids* nil timed-fnids* nil)
 
 ; count on huge (expt 64 10) size of fnid space to avoid clashes
