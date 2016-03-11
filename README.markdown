@@ -36,6 +36,9 @@ If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://ar
 
 https://arclanguage.github.io/ref/
 
+# Racket interop
+**Racket** expressions can be evaluated with the `$` function, e.g. `($ (print 'hello))` uses the `print` function in **Racket**.
+
 ---
 
 
