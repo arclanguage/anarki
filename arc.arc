@@ -443,6 +443,22 @@ For example, this is always true:
   (rev '(1 (2 3) 4))
   (4 (2 3) 1))
 
+(mac q-with args
+"Returns an Arc expression which will hygienically run a given piece
+of Arc code with the results of some given Arc expressions.
+
+For example, [[n-of]] usually generates code that looks up the caller's local variables [[rev]], [[<]], [[+]], and [[cons]]. This alternative definition always uses the global bindings regardless of whether local bindings exist at the call site:
+
+  (mac n-of (n expr)
+    (q-with n `(fn (break recur) ,n)
+            expr `(fn (break recur continue) ,expr)
+      (let a nil
+        (repeat (n break recur) (push (expr break recur continue) a))
+        rev.a)))"
+  (let (body . rev-bindings) rev.args
+    (let (vars vals) (apply map list (pair rev.rev-bindings))
+      `(',list `',(fn ,vars ,body) ,@vals))))
+
 (def isnt (x y) (no (is x y)))
 
 (mac or args
