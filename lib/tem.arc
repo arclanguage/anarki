@@ -1,3 +1,5 @@
+($:require (only racket vector-map))
+
 (= templates* (table))
 
 (mac deftem (tem . fields)

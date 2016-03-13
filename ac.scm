@@ -3,14 +3,23 @@
 (module ac mzscheme
 
 (provide (all-defined))
+(require
+  (only racket/base
+    define-namespace-anchor
+    namespace-anchor->namespace))
 (require openssl)
 (require (lib "port.ss"))
 (require (lib "process.ss"))
 (require (lib "pretty.ss"))
-(require (lib "foreign.ss"))
-(unsafe!)
 
-(define main-namespace (current-namespace))
+; This defines names like _list, so it would conflict with the naming
+; convention for Arc global variables if we didn't prefix it.
+(require (prefix ffi: ffi/unsafe))
+
+
+(define-namespace-anchor main-namespace-anchor)
+(define (main-namespace)
+  (namespace-anchor->namespace main-namespace-anchor))
 
 (define (ac-global-name s)
   (string->symbol (string-append "_" (symbol->string s))))
@@ -25,8 +34,7 @@
        (defarc arc-name scheme-name)))
     ((defarc arc-name scheme-name)
      (define (scheme-name . args)
-       ; support arc-exec
-       (apply (parameterize ((current-namespace main-namespace))
+       (apply (parameterize ((current-namespace (main-namespace)))
                 (namespace-variable-value (ac-global-name 'arc-name)))
               args)))
     ((defarc name)
@@ -438,7 +446,6 @@
                      ((eqv? a 't) (err "Can't rebind t"))
                      ((lex? a env) `(set! ,a zz))
                      ((ac-defined-var? a) `(,(ac-global-name a) zz))
-                     ; support arc-exec
                      (#t `(set! ,(ac-global-name a) zz)))
                'zz))
       (err "First arg to set must be a symbol" a)))
@@ -489,7 +496,6 @@
           ((and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
           ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
-                ; support arc-exec
                 (procedure? (arc-eval fn)))
            (ac-global-call fn args env))
           (#t
@@ -505,7 +511,6 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-    ; support arc-exec
     (let ((v (and (bound? fn) (arc-eval fn))))
       (if (and v
                (ar-tagged? v)
@@ -607,7 +612,8 @@
     ((xxdef a b)
      (let ((nm (ac-global-name 'a))
            (a b))
-       (namespace-set-variable-value! nm a)
+       (parameterize ((current-namespace (main-namespace)))
+         (namespace-set-variable-value! nm a))
        a))))
 
 (define sig* (make-hash-table 'equal))  ;; fn/macro name -> params
@@ -1058,7 +1064,8 @@
 
 ; allow Arc to give up root privileges after it
 ; calls open-socket. thanks, Eli!
-(define setuid (get-ffi-obj 'setuid #f (_fun _int -> _int)
+(define setuid (ffi:get-ffi-obj 'setuid #f
+                 (ffi:_fun ffi:_int ffi:-> ffi:_int)
                  ; If we're on Windows, there is no setuid, so we make
                  ; a dummy version. See "Arc 3.1 setuid problem on
                  ; Windows," http://arclanguage.org/item?id=10625.
@@ -1078,8 +1085,9 @@
 (xdef system (lambda (s) (tnil (system s))))
 
 (let ((argv (current-command-line-arguments)))
-  (namespace-set-variable-value! (ac-global-name 'argv)
-                                 (vector->list argv)))
+  (parameterize ((current-namespace (main-namespace)))
+    (namespace-set-variable-value! (ac-global-name 'argv)
+                                   (vector->list argv))))
 
 (xdef pipe-from (lambda (cmd)
                    (let ((tf (ar-tmpname)))
@@ -1183,12 +1191,18 @@
 ; the main namespace. Another utility changed in this spirit is
 ; 'bound?, which should now be able to see variables which are bound
 ; as Racket syntax.
-(define (arc-exec racket-expr)
-  (eval (parameterize ((compile-allow-set!-undefined #t))
-          (compile racket-expr))))
+(define (arc-exec racket-expr . namespace)
+  (parameterize ((current-namespace
+                  (if (pair? namespace)
+                    (car namespace)
+                    (main-namespace))))
+    (eval (parameterize ((compile-allow-set!-undefined #t))
+            (compile racket-expr)))))
 
 (define (arc-eval expr)
-  (arc-exec (ac expr '())))
+  (arc-exec
+    (parameterize ((current-namespace (main-namespace)))
+      (ac expr '()))))
 
 (define (tle)
   (display "Arc> ")
@@ -1241,8 +1255,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
               (when interactive?
                 (write (ac-denil val))
                 (newline))
-              ; support arc-exec
-              (parameterize ((current-namespace main-namespace))
+              (parameterize ((current-namespace (main-namespace)))
                 (namespace-set-variable-value! '_that val)
                 (namespace-set-variable-value! '_thatexpr expr))
               (tl2 interactive?)))))))
@@ -1279,7 +1292,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (let ((x (read ip)))
     (if (eof-object? x)
         #t
-        (let ((scm (ac x '())))
+        (let ((scm
+               (parameterize ((current-namespace (main-namespace)))
+                 (ac x '()))))
           (arc-exec scm)
           (pretty-print scm op)
           (newline op)
@@ -1340,7 +1355,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 ; waterhouse's code to modify mzscheme-4's immutable pairs.
 ; http://arclanguage.org/item?id=13616
-(require racket/unsafe/ops)
+(require (only racket/unsafe/ops unsafe-set-mcar! unsafe-set-mcdr!))
 
 (define x-set-car!
   (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))

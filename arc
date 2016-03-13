@@ -102,8 +102,8 @@ fi
 
 if [ $# -gt 0 ]; then
     # there's a file given, execute it
-    exec racket -f $arc_dir/boot.scm -e '(aload (vector-ref (current-command-line-arguments) 0))' "$@"
+    exec racket -t $arc_dir/boot.scm -e '(aload (vector-ref (current-command-line-arguments) 0))' "$@"
 else
     #no file, start the REPL
-    $rl racket -f $arc_dir/boot.scm -e '(tl)'
+    $rl racket -t $arc_dir/boot.scm -e '(tl)'
 fi

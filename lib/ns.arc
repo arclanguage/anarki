@@ -49,6 +49,13 @@
 ; command is compiled using 'compile-allow-set!-undefined. See
 ; 'arc-exec in ac.scm for more details about how this helps.
 
+($:require
+  (only racket/base
+    local-require
+    make-derived-parameter
+    namespace-anchor?
+    namespace-anchor->empty-namespace))
+
 
 (defextend type (x) $.namespace?.x
   'rns)
@@ -387,7 +394,7 @@
   (def rns-set (var val (o rns current-rns))
     " Sets a variable in a Racket namespace using Racket's 'set!. "
     (let (var rns) (rep:rns-var var rns)
-      (w/current-rns rns ($.arc-exec:$.list set var embed.val)))
+      ($.arc-exec ($.list set var embed.val) rns))
     val)
 
   (def ns-set (var val (o ns current-ns))

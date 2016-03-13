@@ -1632,11 +1632,8 @@ protocol requires them."
 ; for when we can't use assign
 
 (mac ac-set-global (name val)
-  (w/uniq (gname v)
-    `(with (,gname (ac-global-name ,name)
-            ,v ,val)
-       ($ (namespace-set-variable-value! ,gname ,v))
-       nil)))
+  `(do (eval `($ (set! ,(ac-global-name ,name) ',,val)))
+       nil))
 
 (= scheme-f (read "#f"))
 (= scheme-t (read "#t"))
