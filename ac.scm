@@ -4,9 +4,13 @@
 
 (provide (all-defined))
 (require
-  (only racket/base
+  (only racket
     define-namespace-anchor
-    namespace-anchor->namespace))
+    make-temporary-file
+    namespace-anchor->namespace
+    thread-receive
+    thread-send
+    thread-try-receive))
 (require openssl)
 (require (lib "port.ss"))
 (require (lib "process.ss"))
