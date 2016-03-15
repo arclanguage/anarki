@@ -26,3 +26,8 @@
       '(tl aload main-namespace ac-global-name))))
 
 (provide (except-out (all-defined-out) boot-scm-path))
+
+; launch anarki repl from the anarki package folder
+(define (anarki)
+  (parameterize ((current-directory anarki-path)) (anarki-repl)))
+
