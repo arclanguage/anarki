@@ -10,13 +10,14 @@
     lib/util.arc
     lib/declare.arc
     lib/make-br-fn.arc
-    lib/web.arc
 
     ; webserver stuff
     lib/html.arc
     lib/srv.arc
     lib/app.arc
     lib/news.arc
+
+    lib/client.arc
 
     ; helpers for the repl
     lib/ppr.arc

@@ -1,4 +1,4 @@
-;;; web.arc: a web toolkit
+;;; second web toolkit (after the 'official' srv.arc+app.arc)
 
 ;; Paths
 ; (defpath /hello (req)  (prs "hello" req!ip "you are visiting" req!path))

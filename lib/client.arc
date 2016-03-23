@@ -1,4 +1,5 @@
-; written by Mark Huetsch and Brian J Rubinton
+; http client library
+; by Mark Huetsch and Brian J Rubinton
 ; same license as Arc
 ;
 ; Primary interface:

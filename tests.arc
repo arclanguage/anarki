@@ -15,7 +15,7 @@
     lib/tem.arc.t
     lib/tests/core-lists-test.arc
     lib/tests/core-maths-test.arc
-    lib/web.arc.t
+    lib/client.arc.t
 
     ; tests from conanite's rainbow
     lib/tests/core-errors-continuations-test.arc
