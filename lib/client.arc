@@ -159,6 +159,7 @@
 (def get-url (url)
   (cdr (mkreq url)))
 
+; (post-url "url" (list 'arg1 arg1 'arg2 arg2 'arg3 arg3))
 (def post-url (url args)
   (cdr (mkreq url args "POST")))
 
