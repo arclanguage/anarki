@@ -70,6 +70,9 @@ If you find others, please report them at http://arclanguage.org/forum.
 (document builtin bound (x)
 "Does variable 'x' currently have a value?")
 
+(document builtin $ (expr)
+"Evaluates 'expr' using the underlying Racket implementation.")
+
 (remac warn-if-bound (var)
   `(if (bound ',var)
      ((fn () (disp "*** redefining " (stderr))
