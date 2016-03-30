@@ -1945,6 +1945,10 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
 [[listtab]]."
   (accum a (maptable (fn args (a args)) h)))
 
+(examples listtab
+  (listtab '((a 1) (b 2)))
+  (valueof (obj a 1 b 2)))
+
 (def listtab (al)
 "Converts association list 'al' of (key value) pairs into a table. Reverse of
 [[tablist]]."
