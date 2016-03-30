@@ -1946,8 +1946,8 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
   (accum a (maptable (fn args (a args)) h)))
 
 (examples listtab
-  (listtab '((a 1) (b 2)))
-  (valueof (obj a 1 b 2)))
+  (tablist (obj a 1 b 2))
+  ((a 1) (b 2)))
 
 (def listtab (al)
 "Converts association list 'al' of (key value) pairs into a table. Reverse of
@@ -1956,6 +1956,10 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
     (map (fn ((k v)) (= (h k) v))
          al)
     h))
+
+(examples listtab
+  (listtab '((a 1) (b 2)))
+  (valueof (obj a 1 b 2)))
 
 (mac obj args
 "Creates a table out of a list of alternating keys and values."
