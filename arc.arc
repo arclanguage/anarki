@@ -1948,7 +1948,7 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
 [[listtab]]."
   (accum a (maptable (fn args (a args)) h)))
 
-(examples listtab
+(examples tablist
   (tablist (obj a 1 b 2))
   ((a 1) (b 2)))
 
