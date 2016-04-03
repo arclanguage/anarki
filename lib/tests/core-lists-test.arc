@@ -36,5 +36,8 @@
        set-element (assert-same '(x b c)
                                 (ret lst '(a b c)
                                      (sref lst 'x 0)))
-       get-element (assert-same 'c
-                                ('(a b c d) 2)))
+
+       (suite get-element
+              index-exists (assert-same 'c
+                                        ('(a b c d) 2))
+              index-out-of-bounds (assert-nil ('(a b) 4))))

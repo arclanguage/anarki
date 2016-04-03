@@ -713,11 +713,8 @@ Generalizes [[map1]] to functions with more than one argument."
 "Returns the last 'n' elements of 'xs'."
   (rev:firstn n rev.xs))
 
-(def nthcdr (n xs)
-"Returns all but the first 'n' elements of 'xs'."
-  (if (no n)  xs
-      (> n 0) (nthcdr (- n 1) (cdr xs))
-              xs))
+(document function nthcdr (n xs)
+"Returns all but the first 'n' elements of 'xs'.")
 
 (examples nthcdr
   (nthcdr 0 '(1 2 3))

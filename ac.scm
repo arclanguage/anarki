@@ -379,12 +379,12 @@
                         env
                         (if is-params
                             `(car ,ra)
-                            `(ar-xcar ,ra))
+                            `(ar-car ,ra))
                         #f)))
                 (xa (ac-complex-getargs x)))
            (append x (ac-complex-args (cdr args)
                                       (append xa env)
-                                      `(ar-xcdr ,ra)
+                                      `(ar-cdr ,ra)
                                       is-params))))
         (#t (err "Can't understand fn arg list" args))))
 
@@ -631,20 +631,6 @@
   (hash-table-put! sig* a (list parms))
   b)
 
-; versions of car and cdr for parsing arguments for optional
-; parameters, that yield nil for nil. maybe we should use
-; full Arc car and cdr, so we can destructure more things
-
-(define (ar-xcar x)
-  (if (or (eqv? x 'nil) (eqv? x '()))
-      'nil
-      (car x)))
-
-(define (ar-xcdr x)
-  (if (or (eqv? x 'nil) (eqv? x '()))
-      'nil
-      (cdr x)))
-
 ; convert #f from a Scheme predicate to NIL.
 
 (define (ar-nill x)
@@ -705,17 +691,25 @@
 
 (xdef cons cons)
 
-(xdef car (lambda (x)
-             (cond ((pair? x)     (car x))
-                   ((eqv? x 'nil) 'nil)
-                   ((eqv? x '())  'nil)
-                   (#t            (err "Can't take car of" x)))))
+(define (ar-car x)
+  (cond ((pair? x)     (car x))
+        ((eqv? x 'nil) 'nil)
+        ((eqv? x '())  'nil)
+        (#t            (err "Can't take car of" x))))
+(xdef car ar-car)
 
-(xdef cdr (lambda (x)
-             (cond ((pair? x)     (cdr x))
-                   ((eqv? x 'nil) 'nil)
-                   ((eqv? x '())  'nil)
-                   (#t            (err "Can't take cdr of" x)))))
+(define (ar-cdr x)
+  (cond ((pair? x)     (cdr x))
+        ((eqv? x 'nil) 'nil)
+        ((eqv? x '())  'nil)
+        (#t            (err "Can't take cdr of" x))))
+(xdef cdr ar-cdr)
+
+(define (ar-nthcdr n xs)
+  (cond ((ar-false? xs)  xs)
+        ((> n 0)  (ar-nthcdr (- n 1) (cdr xs)))
+        (#t  xs)))
+(xdef nthcdr ar-nthcdr)
 
 (define (tnil x) (if x 't 'nil))
 
@@ -974,7 +968,7 @@
               (for-each
                (lambda (x) (hash-table-put! conversions (car x) (cadr x)))
                (cdr e))))
- `((fn      (cons   ,(lambda (l) (lambda (i) (list-ref l i))))
+ `((fn      (cons   ,(lambda (l) (lambda (i) (ar-car (ar-nthcdr i l)))))
             (string ,(lambda (s) (lambda (i) (string-ref s i))))
             (table  ,(lambda (h) (case-lambda
                                   ((k) (hash-table-get h k 'nil))
