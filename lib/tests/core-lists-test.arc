@@ -33,11 +33,19 @@
 
        size (assert-same 7
                          (len '(a b c d e f g)))
-       set-element (assert-same '(x b c)
-                                (ret lst '(a b c)
-                                     (sref lst 'x 0)))
+
+       (suite set-element
+              index-exists (assert-same '(x b c)
+                                        (ret lst '(a b c)
+                                          (sref lst 'x 0)))
+              index-negative (assert-same '(a b x)
+                                          (ret lst '(a b c)
+                                            (sref lst 'x -1))))
 
        (suite get-element
               index-exists (assert-same 'c
                                         ('(a b c d) 2))
-              index-out-of-bounds (assert-nil ('(a b) 4))))
+              index-out-of-bounds (assert-nil ('(a b) 4))
+              index-negative (assert-same 'd
+                                          ('(a b c d) -1))
+              index-very-negative (assert-nil ('(a b c d) -100))))

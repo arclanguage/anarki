@@ -968,7 +968,14 @@
               (for-each
                (lambda (x) (hash-table-put! conversions (car x) (cadr x)))
                (cdr e))))
- `((fn      (cons   ,(lambda (l) (lambda (i) (ar-car (ar-nthcdr i l)))))
+ `((fn      (cons   ,(lambda (l) (lambda (i)
+                                   (ar-car (ar-nthcdr (if (< i 0)
+                                                        (let* ((l (ar-denil-last l))
+                                                               (len (length l))
+                                                               (i (+ len i)))
+                                                          (if (< i 0) len i))
+                                                        i)
+                                                      l)))))
             (string ,(lambda (s) (lambda (i) (string-ref s i))))
             (table  ,(lambda (h) (case-lambda
                                   ((k) (hash-table-get h k 'nil))
@@ -1398,7 +1405,11 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     val))
 
 (define (nth-set! lst n val)
-  (x-set-car! (list-tail lst n) val))
+  (x-set-car! (list-tail lst
+                         (if (< n 0)
+                           (+ (length (ar-denil-last lst)) n)
+                           n))
+              val))
 
 (define (bound? arcname)
   (with-handlers ((exn:fail:syntax? (lambda (e) #t))
