@@ -152,7 +152,7 @@
 (def author (u i) (is u i!by))
 
 
-(= stories* nil comments* nil
+(= stories* nil ranked-stories* nil comments* nil
    items* (table) url->story* (table)
    maxid* 0 initload* 15000)
 
