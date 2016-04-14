@@ -16,7 +16,7 @@
        suffix-3 (assert-same '(2 3)
                              (do (append one-element (list 2))
                                  (append one-element (list 3))
-                                        (suffix one-element)))
+                                 (suffix one-element)))
        splicing-without-suffix (assert-same '(1)
                                             (splice three-elements))
        suffix-4 (assert-same '(3 4)

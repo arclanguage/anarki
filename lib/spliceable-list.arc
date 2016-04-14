@@ -1,6 +1,14 @@
 ;; append elems to it, check n-elem suffix for a match, then splice the suffix out
 
 (def spliceable-list (n (o init))
+"Create a spliceable list with a constant suffix length of n. A spliceable
+list is a special data structure that efficiently supports the following
+operations:
+
+1. Appending items using [[append]].
+2. Returning the last n items appended using [[suffix]] if there are at least
+n items to return.
+3. Dropping the last n items appended, and returning everything else. [[splice]]"
   ++.n
   (annotate 'spliceable-list (obj contents init
                                   last lastcons.init
@@ -40,17 +48,40 @@
 (defextend sref (l v i) (isa l 'spliceable-list)
   (sref rep.l!contents v i))
 
-; returns all but the suffix; corrupts the suffix list
 (def splice (l)
+"Clears up to the last n items of a [[spliceable-list]] defined with a suffix
+length of n, and returns everything else."
   (when rep.l!suffix
     (wipe (cdr rep.l!suffix))
     rep.l!contents))
 
-; return last n elems of l -- as long as there are at least that many
+(examples splice
+  (splice (spliceable-list 3))
+  nil
+  (splice (spliceable-list 3 '(1)))
+  nil
+  (splice (spliceable-list 3 '(1 2)))
+  nil
+  (splice (spliceable-list 3 '(1 2 3)))
+  nil
+  (splice (spliceable-list 3 '(1 2 3 4)))
+  (1))
+
 (def suffix (n l)
+"Computes the last n elements of l -- as long as there are at least that many."
   (let max len.l
     (if (>= max n)
       (nthcdr (- max n) l))))
+
+(examples suffix
+  (suffix 3 '(1))
+  nil
+  (suffix 3 '(1 2))
+  nil
+  (suffix 3 '(1 2 3))
+  (1 2 3)
+  (suffix 3 '(1 2 3 4))
+  (2 3 4))
 
 (defextend suffix (l) (isa l 'spliceable-list)
   (aif
