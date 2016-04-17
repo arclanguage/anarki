@@ -1241,6 +1241,14 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 "))
     (tl2 interactive?)))
 
+
+(define (trash-whitespace)
+  (if (char-ready?)
+    (if (not (char-whitespace? (peek-char)))
+      '()
+      (begin (read-char)
+             (trash-whitespace)))))
+
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
   (on-err (lambda (c)
@@ -1251,6 +1259,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
             (tl2 interactive?))
     (lambda ()
       (let ((expr (read)))
+        (trash-whitespace)          ; throw away until we hit non-white or leading newline
         (if (eof-object? expr)
              (begin (when interactive? (newline))
                     (exit)))
