@@ -1241,14 +1241,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 "))
     (tl2 interactive?)))
 
+
 (define (trash-whitespace)
   (if (char-ready?)
-    (let ((c (peek-char)))
-      (if (or (not (char-whitespace? c))
-              (equal? c #\newline))
-        '()
-        (begin (read-char)
-               (trash-whitespace))))))
+    (if (not (char-whitespace? (peek-char)))
+      '()
+      (begin (read-char)
+             (trash-whitespace)))))
 
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
