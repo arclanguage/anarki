@@ -20,7 +20,7 @@
 (def print (x)
   " Print an expression on one line, replacing quote, unquote,
     quasiquote, unquote-splicing, and make-br-fn with their respective symbols. " 
-  (do (aif (or atom.x dotted.x)
+  (do (aif (or atom.x dotted.x (isa x 'string))
              write.x
            (pprsyms* car.x)
              (do pr.it
