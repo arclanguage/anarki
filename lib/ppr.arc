@@ -94,10 +94,10 @@
             (indent-pairs xs (+ col 2 l))
           (indent-wave xs (+ col 2 l)))))
 
-(def indent-with (l)
+(def indent-with (len-fn)
   (fn (xs (o col 0))
       (pr "(")
-      (indent-pairs car.xs (+ col 3 l))
+      (indent-pairs car.xs (+ col (len "(") len-fn (len " (")))
       (pr ")")
       (indent-block cdr.xs (+ col 3))))
 
@@ -119,16 +119,16 @@
 
 (= indent-rules* 
    (fill-table (table)
-     `(if      ,(indent-if 2)
-       aif     ,(indent-if 3)
-       with    ,(indent-with 4)
-       withs   ,(indent-with 5)
+     `(if      ,(indent-if (len "if"))
+       aif     ,(indent-if (len "aif"))
+       with    ,(indent-with (len "with"))
+       withs   ,(indent-with (len "withs"))
        def     ,indent-def
        mac     ,indent-def
-       do      ,[indent-basic _ 2 _2]
-       and     ,[indent-basic _ 3 _2]
-       or      ,[indent-basic _ 2 _2]
-       nor     ,[indent-basic _ 3 _2]
+       do      ,[indent-basic _ (len "do") _2]
+       and     ,[indent-basic _ (len "and") _2]
+       or      ,[indent-basic _ (len "or") _2]
+       nor     ,[indent-basic _ (len "nor") _2]
        case    ,(indent-case 1)
        caselet ,(indent-case 2)
        fn      ,[indent-mac _ 1 _2])))
