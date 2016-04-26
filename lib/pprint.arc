@@ -1,4 +1,5 @@
-; Pretty-Printing.  Spun off 4 Aug 06.
+; confusingly, there's another pretty-printer at ppr.arc
+; this one is the original Arc 3.1 pretty-printer, but not loaded by default
 
 ; todo: indentation of long ifs; quasiquote, unquote, unquote-splicing
 

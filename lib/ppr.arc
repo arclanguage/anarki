@@ -1,3 +1,6 @@
+; confusingly, there's another pretty-printer at pprint.arc
+; this one is loaded by default, but not the original Arc 3.1 pretty-printer
+
 (= pprsyms* (fill-table (table) 
                         '(quote "'" 
                           quasiquote "`"
