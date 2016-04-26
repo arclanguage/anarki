@@ -253,6 +253,8 @@
        nil (assert-nil (unserialize:serialize ()))
        lists (assert-same '(1 2 3)
                           (unserialize:serialize '(1 2 3)))
+       quoted-lists (assert-same ''(tagged table ((1 2) (3 4)))
+                                 (unserialize ''(tagged table ((1 2) (3 4)))))
        strings (assert-same "abc"
                             (unserialize:serialize "abc"))
        empty-tables (assert-same (table)

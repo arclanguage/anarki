@@ -2827,7 +2827,8 @@ of 'x' by calling 'self'."
                 x))))
 
 (def unserialize (x)
-  (if (acons x)
+  (if (and (acons x)
+           (~is 'quote car.x))
     (cons (unserialize car.x)
           (unserialize cdr.x))
     x))
