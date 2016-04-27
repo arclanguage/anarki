@@ -13,11 +13,11 @@
     lib/streams.arc.t
     lib/srv.arc.t
     lib/tem.arc.t
-    lib/tests/core-lists-test.arc
-    lib/tests/core-maths-test.arc
     lib/client.arc.t
 
     ; tests from conanite's rainbow
+    lib/tests/core-lists-test.arc
+    lib/tests/core-maths-test.arc
     lib/tests/core-errors-continuations-test.arc
     lib/tests/core-evaluation-test.arc
     lib/tests/core-macros-test.arc
