@@ -1,0 +1,8 @@
+Arc Streams (based on Racket Ports: https://docs.racket-lang.org/reference/ports.html)
+are for dealing with sources and sinks to data, whether backed by files,
+sockets or just in-memory strings.
+
+In addition to the Arc 3.1 primitives for streams documented at
+https://arclanguage.github.io/ref/io.html, Anarki provides several macros that
+help in some common situations: `fromfile`, `tofile`, `ontofile` and
+`reading`. Read more about them using the `help` command.

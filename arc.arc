@@ -1537,6 +1537,7 @@ nothing to read. Caller is responsible for picking an unambiguous 'eof' indicato
   `(ifread-fn ,port (fn (,var) ,then) (fn () ,else)))
 
 (mac reading (var port . body)
+"Call (read) on a port, store the result in `var`, and do something with it."
   `(ifread ,var ,port (do ,@body)))
 
 (mac fromfile (f . body)
