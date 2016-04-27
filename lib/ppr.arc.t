@@ -13,13 +13,13 @@
 (suite pretty-print
   if-2  (assert-same "
 (if abc
-    def)
+  def)
 "
                      (collect-pretty-print '(if abc def)))
   if-3  (assert-same "
 (if abc
-    def
-    ghi)
+  def
+  ghi)
 "
                      (collect-pretty-print '(if abc def ghi)))
   if-5  (assert-same "
@@ -40,7 +40,7 @@
   with (assert-same "
 (with (a b
        c d)
-   (e f g))
+  (e f g))
 "
                     (collect-pretty-print '(with (a b c d) (e f g))))
 )

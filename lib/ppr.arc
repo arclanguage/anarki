@@ -85,7 +85,7 @@
       (if (< len.xs 4)
             (on x xs 
                 (if (~is index 0) (prn))
-                (ppr-main x (+ col 2 l) (is index 0)))
+                (ppr-main x (+ col 2) (is index 0)))
           (all [< (len:tostring print._) ifline*]
                pair.xs)
             (indent-pairs xs (+ col 2 l))
@@ -96,7 +96,7 @@
       (pr "(")
       (indent-pairs car.xs (+ col (len "(") len-fn (len " (")))
       (pr ")")
-      (indent-block cdr.xs (+ col 3))))
+      (indent-block cdr.xs (+ col 2))))
 
 (def indent-def (xs (o col 0))
   (print-spaced (firstn 2 xs))
