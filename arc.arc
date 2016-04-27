@@ -79,6 +79,16 @@ If you find others, please report them at http://arclanguage.org/forum.
              (disp ',var (stderr))
              (disp #\newline (stderr))))))
 
+(remac assign-and-warn (var val)
+"Like assign for just a single variable, but warn if any of the variables
+being assigned to already contains a function."
+  `((fn () (if (bound ',var)
+             (if (is (type ,var) 'fn)
+               ((fn () (disp "*** redefining " (stderr))
+                       (disp ',var (stderr))
+                       (disp #\newline (stderr))))))
+           (assign ,var ,val))))
+
 (remac mac (name parms . body)
 "Defines a new *macro*, or abbreviation for some more complex code.
 Macros are the hallmark of lisp, the ability to program on programs.
@@ -91,7 +101,7 @@ Or come ask questions at http://arclanguage.org/forum"
                            (cons nil body)))
            (remac ,name ,parms ,@body))))
 
-(assign examples* (table))
+(assign-and-warn examples* (table))
 
 (mac examples (name . tests-and-expected-results)
 "Shows some example calls of a function as an enhancement of its docstring.
@@ -870,7 +880,7 @@ table, or other user-defined type) to 'value'.")
            (w/uniq (g h)
              (list (list g expr)
                    g
-                   `(fn (,h) (assign ,expr ,h)))))
+                   `(fn (,h) (assign-and-warn ,expr ,h)))))
         ; make it also work for uncompressed calls to compose
         (and (acons expr) (metafn (car expr)))
          (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
@@ -910,7 +920,7 @@ table, or other user-defined type) to 'value'.")
 
 (def expand= (place val)
   (if (and (isa place 'sym) (~ssyntax place))
-    `(assign ,place ,val)
+    `(assign-and-warn ,place ,val)
     (let (vars prev setter) (setforms place)
       (w/uniq g
         `(atwith ,(+ vars (list g val))
