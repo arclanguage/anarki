@@ -853,6 +853,8 @@
 
 (xdef ccc call-with-current-continuation)
 
+(xdef call/ec call-with-escape-continuation)
+
 (xdef infile  open-input-file)
 
 (xdef outfile (lambda (f . args)
