@@ -410,9 +410,9 @@ For example, this prints numbers ad infinitum:
 (mac point (name . body)
 "Like [[do]], but may be exited by calling 'name' from within 'body'."
   (w/uniq (g p)
-    `(ccc (fn (,g)
-            (let ,name (fn ((o ,p)) (,g ,p))
-              ,@body)))))
+    `(call/ec (fn (,g)
+                (let ,name (fn ((o ,p)) (,g ,p))
+                  ,@body)))))
 
 ; Ac expands x:y:z into (compose x y z)
 ; The last arg (z above) cannot be a macro unless the form is in functional
@@ -3022,4 +3022,3 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
 ; crazy that finding the top 100 nos takes so long:
 ;  (let bb (n-of 1000 (rand 50)) (time10 (bestn 100 > bb)))
 ;  time: 2237 msec.  -> now down to 850 msec
-
