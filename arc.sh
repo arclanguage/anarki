@@ -1,46 +1,46 @@
-#!/bin/sh
+#!/bin/bash
+# Put a symlink to this script somewhere in your path.
 
-arc_dir=$(dirname "$(readlink -f "$0")")
+# try to suggest solutions to the most common issues people run into
+case $(uname) in
+    "Darwin")
+        if ! which greadlink >&/dev/null
+        then
+          echo 'Please do "brew install coreutils."'
+          exit 1
+        fi
+        if ! which racket >&/dev/null
+        then
+          echo 'Please run "brew install racket && raco pkg install --auto drracket"'
+          exit 1
+        fi
+        arc_dir=$(dirname "$(greadlink -f "$0")")
 
-if [ "$1" = "--no-rl" ]; then
-    shift
-elif [ "$(type -p rlwrap)" ]; then
-    rl="rlwrap -C arc"
-fi
+        if ! which rlwrap >&/dev/null
+        then
+          echo 'Please run "brew install rlwrap"'
+          echo 'Running without rlwrap; some keys on your keyboard may not work as expected'
+        else
+          rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+        fi
+        ;;
 
-# I wish there were some cleaner way to do this
-case "$(mzscheme --version)" in
-    *v4.*) plt4=yes;;
-    *) plt4=no;;
+    *)
+        if ! which racket >&/dev/null
+        then
+          echo "Please install racket with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
+          echo "Or go to http://racket-lang.org for more detailed instructions."
+          exit 1
+        fi
+        arc_dir=$(dirname "$(readlink -f "$0")")
+
+        if ! which rlwrap >&/dev/null
+        then
+          echo "Please install rlwrap with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
+          echo 'Running without rlwrap; some keys on your keyboard may not work as expected'
+        else
+          rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+        fi
 esac
 
-if [ $# -gt 0 ]
-then repl='#f'
-else
-    # It seems like there ought to be a program for determining whether standard
-    # input is a tty, but I can't find one; so we use mzscheme instead.
-    if [ $plt4 = yes ]
-    then repl=$(mzscheme -e '(terminal-port? (current-input-port))')
-    else repl=$(mzscheme -mve '(display (terminal-port? (current-input-port)))')
-    fi
-fi
-
-opts="--no-init-file"
-
-if [ $plt4 = yes ]; then
-    if [ $repl = '#t' ]
-    then
-        # AFAICT, there is no equivalent of --mute-banner for mzscheme v4.
-        # Please do NOT add -r/--script here, this removes the ability to access
-        # the Scheme REPL. See http://arclanguage.org/item?id=10356.
-        opts="$opts --repl --load"
-    else opts="$opts --script"
-    fi
-else
-    if [ $repl = '#t' ]
-    then opts="$opts --mute-banner --load"
-    else opts="$opts --script"
-    fi
-fi
-
-$rl mzscheme $opts $arc_dir/as.scm $@
+$rl racket -f $arc_dir/as.scm
