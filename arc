@@ -30,7 +30,7 @@ arc [-n] [-h] [<file> [<file_args>]]
 
 OPTIONS
     -n
-        No rlwrap for line-editing
+        No rlwrap for line-editing (useful inside emacs)
 
     -h
         Print help and exit
@@ -63,7 +63,6 @@ case $(uname) in
           exit 1
         fi
         arc_dir=$(dirname "$(greadlink -f "$0")")
- 
         if $RLWRAP && ! which rlwrap >&/dev/null
         then
           echo 'Please run "brew install rlwrap"'
@@ -80,7 +79,6 @@ case $(uname) in
           exit 1
         fi
         arc_dir=$(dirname "$(readlink -f "$0")")
- 
         if $RLWRAP && ! which rlwrap >&/dev/null
         then
           echo "Please install rlwrap with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
