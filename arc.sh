@@ -1,6 +1,41 @@
 #!/bin/bash
 # Put a symlink to this script somewhere in your path.
 
+# argument parsing
+RLWRAP=true
+DO_HELP=false
+while getopts nh opt; do
+    case $opt in
+        n)
+            RLWRAP=false
+            ;;
+        h)
+            DO_HELP=true
+            ;;
+        \? )
+            # error; show usage anyway
+            DO_HELP=true
+            ;;
+    esac
+done
+
+# remove options from the arguments
+shift $((OPTIND - 1))
+
+if [[ $DO_HELP == true ]] ; then
+    echo "
+arc [-n] [-h]
+
+OPTIONS
+    -n
+        No rlwrap for line-editing (useful inside emacs)
+
+    -h
+        Print help and exit
+"
+    exit 1
+fi
+
 # try to suggest solutions to the most common issues people run into
 case $(uname) in
     "Darwin")
@@ -16,16 +51,15 @@ case $(uname) in
         fi
         arc_dir=$(dirname "$(greadlink -f "$0")")
 
-        if ! which rlwrap >&/dev/null
+        if $RLWRAP && ! which rlwrap >&/dev/null
         then
           echo 'Please run "brew install rlwrap"'
-          echo 'Running without rlwrap; some keys on your keyboard may not work as expected'
-        else
-          rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+          echo 'Or run arc without rlwrap: "./arc -n"'
+          exit 1
         fi
         ;;
 
-    *)
+    "Linux")
         if ! which racket >&/dev/null
         then
           echo "Please install racket with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
@@ -33,14 +67,23 @@ case $(uname) in
           exit 1
         fi
         arc_dir=$(dirname "$(readlink -f "$0")")
-
-        if ! which rlwrap >&/dev/null
+        if $RLWRAP && ! which rlwrap >&/dev/null
         then
           echo "Please install rlwrap with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
-          echo 'Running without rlwrap; some keys on your keyboard may not work as expected'
-        else
-          rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+          echo 'Or run arc without rlwrap: "./arc -n"'
+          exit 1
         fi
+        ;;
+
+    *)
+        echo "Sorry, this script doesn't run on your platform $(uname) yet. Please create a new issue at https://github.com/arclanguage/anarki/issues."
+        exit 1
 esac
+
+if [[ $RLWRAP == "true" ]] ; then
+    rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+else
+    rl=''
+fi
 
 $rl racket -f $arc_dir/as.scm
