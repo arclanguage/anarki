@@ -92,7 +92,7 @@
     (define-key m "\C-c\C-l" 'arc-load-file)
     m))
 
-(defvar arc-program-name "arc -n"
+(defvar arc-program-name "arc.sh -n"
   "The name of the program used to run Arc.")
 
 ;; Install the process communication commands in the arc-mode keymap.
