@@ -13,7 +13,7 @@ To run, install Racket from http://racket-lang.org, then:
 
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
-    $ ./arc  # interactive repl
+    $ ./arc.sh  # interactive repl
     arc> (quit)
     $
 #### Tests:
@@ -21,7 +21,7 @@ Anarki has thorough automated tests. To run them, install mercurial, then:
 
     # start in the anarki directory
     $ hg clone https://bitbucket.org/zck/unit-test.arc
-    $ ./arc
+    $ ./arc.sh
     arc> (load "tests.arc")
 
 Anarki is explicitly not constrained to maintain compatibility with upstream
