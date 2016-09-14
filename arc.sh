@@ -66,7 +66,7 @@ case $(uname) in
         if $RLWRAP && ! which rlwrap >&/dev/null
         then
           echo 'Please run "brew install rlwrap"'
-          echo 'Or run arc without rlwrap: "./arc -n"'
+          echo 'Or run arc without rlwrap: "./arc.sh -n"'
           exit 1
         fi
         ;;
@@ -82,7 +82,7 @@ case $(uname) in
         if $RLWRAP && ! which rlwrap >&/dev/null
         then
           echo "Please install rlwrap with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
-          echo 'Or run arc without rlwrap: "./arc -n"'
+          echo 'Or run arc without rlwrap: "./arc.sh -n"'
           exit 1
         fi
         ;;
