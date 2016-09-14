@@ -26,7 +26,7 @@ shift $((OPTIND - 1))
 
 if [[ $DO_HELP == true ]] ; then
     echo "
-arc [-n] [-h] [<file> [<file_args>]]
+arc.sh [-n] [-h] [<file> [<file_args>]]
 
 OPTIONS
     -n
@@ -40,11 +40,11 @@ OPTIONS
 
 EXAMPLES
     Start the Arc REPL:
-        arc
+        arc.sh
     Start the Arc REPL without any line-editing smarts:
-        arc -n
+        arc.sh -n
     Run the file \"file-to-run.arc\", passing to it the argument 3
-        arc file-to-run.arc 3
+        arc.sh file-to-run.arc 3
 "
     exit 1
 fi
