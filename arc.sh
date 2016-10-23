@@ -86,4 +86,4 @@ else
     rl=''
 fi
 
-$rl racket -f $arc_dir/as.scm
+$rl racket -f "$arc_dir/as.scm"
