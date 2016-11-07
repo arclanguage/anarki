@@ -1150,6 +1150,10 @@ negative to count backwards from the end."
   (last '(1 2 3))
   3)
 
+(def butlast (x)
+"Returns all elements of 'x' except the last."
+  (cut x 0 (- len.x 1)))
+
 (def rem (test seq)
 "Returns all elements of 'seq' except those satisfying 'test'."
   (let f (testify test)
@@ -2941,10 +2945,6 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
   (if (empty xs)
     0
     (/ (count test xs) len.xs)))
-
-(def butlast (x)
-"Returns all elements of 'x' except the last."
-  (cut x 0 (- len.x 1)))
 
 (mac between (var expr within . body)
 "Like [[each]] but run 'within' between iterations."
