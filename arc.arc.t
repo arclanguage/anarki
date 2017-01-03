@@ -299,4 +299,7 @@
                                     (drain (readline))))
        handles-empty-lines  (assert-same '("" "" "a" "c" "" "d")
                                          (fromstring "\n\na\nc\n\nd"
-                                           (drain (readline)))))
+                                           (drain (readline))))
+       returns-custom-eof  (assert-same 'foo
+                                        (fromstring ""
+                                          (readline (stdin) 'foo))))

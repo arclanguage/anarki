@@ -1881,23 +1881,26 @@ by args passed in, so that future calls with the same inputs can save work."
 "Is 'c' a punctuation char?"
   ($.char-punctuation? c))
 
-; a version of readline that accepts both lf and crlf endings
-; adapted from Andrew Wilcox's code (http://awwx.ws/readline) by Michael
-; Arntzenius <daekharel@gmail.com>
-
-(def readline ((o str (stdin)))
+; adapted from http://awwx.ws/readline
+(def readline ((o str (stdin)) (o eof))
 "Reads a string terminated by a newline from the stream 'str'."
-  (awhen readc.str
-    (tostring
-      (loop (c it)
-        (if (is c #\return)
-             (if (is peekc.str #\newline)
-               readc.str)
-            (is c #\newline)
-             nil
-            :else
-             (do writec.c
-                 (aif readc.str recur.it)))))))
+  (let c readc.str
+    (if no.c
+      eof
+      (tostring
+        (loop (c c)
+          (if (is c #\return)
+               (if (is peekc.str #\newline)
+                 readc.str)
+              (is c #\newline)
+               nil
+              no.c  ; eof
+               nil
+              :else
+               (do writec.c
+                   (let c readc.str
+                     (if c
+                       recur.c)))))))))
 
 (def readlines ((o str (stdin)))
 "Slurps contents of stream 'str' as a list of lines."
