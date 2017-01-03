@@ -947,9 +947,14 @@
 (xdef swrite (lambda args (printwith write args)))
 (xdef disp  (lambda args (printwith display args)))
 
+; a special end-of-file uninterned symbol guaranteed never to be equal to the
+; result of any call to `(read)` or similar.
+(define eof (gensym 'eof))
+(xdef eof eof)
+
 ; sread = scheme read. eventually replace by writing read
 
-(xdef sread (lambda (p eof)
+(xdef sread (lambda (p)
                (let ((expr (read p)))
                  (if (eof-object? expr) eof expr))))
 

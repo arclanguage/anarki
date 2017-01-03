@@ -59,7 +59,7 @@ from template 'tem-type'."
   (w/infile i file (temread tem i)))
 
 (def temloadall (tem file)
-  (w/infile i file (drain:temread tem i)))
+  (fromfile file (drain:temread tem)))
 
 (def temstore (tem val file)
   (writefile (temlist tem val) file))

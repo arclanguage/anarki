@@ -1,11 +1,11 @@
 ; drainf and pump taken from cchooper's post on http://arclanguage.org/item?id=4220
 
-(mac drainf (expr f (o eof nil))
+(mac drainf (expr f)
   (w/uniq (gdone gres)
     `(let ,gdone nil
        (while (no ,gdone)
 	      (let ,gres ,expr
-		(if (is ,gres ,eof)
+		(if (is ,gres eof)
 		    (= ,gdone t)
 		    (,f ,gres)))))))
 

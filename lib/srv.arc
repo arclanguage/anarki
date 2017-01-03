@@ -163,6 +163,7 @@
       (if (is c #\newline)
         (++ nls)
         (= nls 0))
+      ; stop after two contiguous newlines
       (when (>= nls 2)
         (break))
       (if (is c #\newline)

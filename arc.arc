@@ -1527,32 +1527,23 @@ read from the stream 'str'."
      (tostring ,@body)
      ,dest))
 
-(def readstring1 (s (o eof nil))
-"Reads a single expression from string 's'. Returns 'eof' if there's nothing to read.
-Caller is responsible for picking an unambiguous 'eof' indicator."
-  (w/instring i s (read i eof)))
+(def readstring1 (s)
+"Reads a single expression from string 's'. Returns the uninterned symbol
+stored as the global value of 'eof' if there's nothing left to read."
+  (w/instring i s (read i)))
 
-(def read ((o x (stdin)) (o eof nil))
-"Reads a single expression from string or stream 'x'. Returns 'eof' if there's
-nothing to read. Caller is responsible for picking an unambiguous 'eof' indicator."
+(def read ((o x (stdin)))
+"Reads a single expression from string or stream 'x'. Returns the uninterned
+symbol stored as the global value of 'eof' if there's nothing left to read."
   (if (isa x 'string)
-    (readstring1 x eof)
-    (sread x eof)))
-
-; encapsulate eof management
-(def ifread-fn (port then else)
-  (withs (eof list.nil          ; a unique value
-          val (read port eof))
-   (if (is eof val)
-     (else)
-     then.val)))
-
-(mac ifread (var port then (o else))
-  `(ifread-fn ,port (fn (,var) ,then) (fn () ,else)))
+    (readstring1 x)
+    (sread x)))
 
 (mac reading (var port . body)
 "Call (read) on a port, store the result in `var`, and do something with it."
-  `(ifread ,var ,port (do ,@body)))
+  `(let ,var (read ,port)
+     (unless (is ,var eof)
+       ,@body)))
 
 (mac fromfile (f . body)
 "Redirects standard input from the file 'f' within 'body'."
@@ -1580,7 +1571,7 @@ nothing to read. Caller is responsible for picking an unambiguous 'eof' indicato
 "Slurps the entire contents of file 'name' using [[read]] and returns the
 expressions  as a list."
   (fromfile name
-    (drain:read)))
+    (drain (read) eof)))
 
 (def readfile1 (name)
 "Returns the first expression [[read]] from file 'name'."
@@ -1592,18 +1583,17 @@ expressions  as a list."
   (tofile name
     (write val)))
 
-(def readall (src (o eof nil))
+(def readall (src)
 "Like [[readfile]], but can also accept a string 'src'."
   (loop (in (if (isa src 'string)
               instring.src
               src))
-    (let x (read in eof)
-      (if (is x eof)
-        nil
+    (let x (read in)
+      (unless (is x eof)
         (cons x recur.in)))))
 
 (def allchars (str)
-  (tostring (whiler c (readc str nil) no
+  (tostring (whilet c (readc str)
               (writec c))))
 
 (def filechars (name)
@@ -1882,25 +1872,20 @@ by args passed in, so that future calls with the same inputs can save work."
   ($.char-punctuation? c))
 
 ; adapted from http://awwx.ws/readline
-(def readline ((o str (stdin)) (o eof))
+(def readline ((o str (stdin)))
 "Reads a string terminated by a newline from the stream 'str'."
-  (let c readc.str
-    (if no.c
-      eof
-      (tostring
-        (loop (c c)
-          (if (is c #\return)
-               (if (is peekc.str #\newline)
-                 readc.str)
-              (is c #\newline)
-               nil
-              no.c  ; eof
-               nil
-              :else
-               (do writec.c
-                   (let c readc.str
-                     (if c
-                       recur.c)))))))))
+  (whenlet c readc.str
+    (tostring
+      (loop (c c)
+        (if (is c #\return)
+             (if (is peekc.str #\newline)
+               readc.str)
+            (is c #\newline)
+             nil
+            :else
+             (do writec.c
+                 (iflet c readc.str
+                   (recur c))))))))
 
 (def readlines ((o str (stdin)))
 "Slurps contents of stream 'str' as a list of lines."
@@ -1985,22 +1970,21 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
                            `(list ',k ,v))
                          (pair args)))))
 
-(def load-table (file (o eof))
+(def load-table (file)
 "Reads an association list from 'file' and turns it into a table."
-  (w/infile i file (read-table i eof)))
+  (w/infile i file (read-table i)))
 
-(def read-table ((o i (stdin)) (o eof))
+(def read-table ((o i (stdin)))
 "Reads an association list from a stream 'i' (stdin by default) and turns it
 into a table."
-  (let e (read i eof)
+  (let e (read i)
     (if (alist e) (listtab e) e)))
 
 (def load-tables (file)
 "Reads multiple association lists from 'file' and returns a corresponding list
 of tables."
   (w/infile i file
-    (w/uniq eof
-      (drain (read-table i eof) eof))))
+    (drain (read-table i) eof)))
 
 (def save-table (h file)
 "Writes table 'h' to 'file'."
@@ -2577,9 +2561,8 @@ successive elements of 'args'."
   (push current-load-file* load-file-stack*)
   (= current-load-file* file)
   (after (w/infile f file
-           (w/uniq eof
-             (whiler e (sread f eof) eof
-               (eval e))))
+           (whiler e (sread f) eof
+             (eval e)))
     (= current-load-file* (pop load-file-stack*))))
 
 (def positive (x)
@@ -2873,10 +2856,10 @@ of 'x' by calling 'self'."
     (map (fn ((k v)) (= h.k unserialize.v))
          rep*.x)))
 
-(redef read ((o x (stdin)) (o eof nil))
+(redef read ((o x (stdin)))
   (if (isa x 'string)
-    (readstring1 x eof)
-    (unserialize:sread x eof)))
+    (readstring1 x)
+    (unserialize:sread x)))
 
 (def write (x (o port (stdout)))
   (swrite serialize.x port))
@@ -2967,10 +2950,9 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
 
 (def load-just (file name)
   (w/infile f file
-    (w/uniq eof
-      (whiler e (read f eof) eof
-        (if (is e.1 name)
-          (eval e))))))
+    (whiler e (read f) eof
+      (if (is e.1 name)
+        (eval e)))))
 
 (def l (f)
   (load (+ string.f ".arc")))
