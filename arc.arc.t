@@ -300,6 +300,9 @@
        handles-empty-lines  (assert-same '("" "" "a" "c" "" "d")
                                          (fromstring "\n\na\nc\n\nd"
                                            (drain (readline))))
+       handles-cr-lf  (assert-same '("" "" "a" "c" "" "d")
+                                   (fromstring "\r\n\r\na\r\nc\r\n\r\nd"
+                                     (drain (readline))))
        returns-custom-eof  (assert-same 'foo
                                         (fromstring ""
                                           (readline (stdin) 'foo))))
