@@ -304,12 +304,3 @@
                                    (fromstring "\r\n\r\na\r\nc\r\n\r\nd"
                                      (drain (readline))))
        returns-eof  (assert-nil (fromstring "" (readline))))
-
-(suite reading
-       basic-operation  (assert-same 35
-                                     (fromstring "34"
-                                       (reading x (stdin)
-                                         (+ x 1))))
-       eof  (assert-nil (fromstring ""
-                          (reading x (stdin)
-                            (+ x 1)))))

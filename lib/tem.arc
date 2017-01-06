@@ -65,8 +65,9 @@ from template 'tem-type'."
   (writefile (temlist tem val) file))
 
 (def temread (tem (o str (stdin)))
-  (reading fields str
-    (listtem tem fields)))
+  (let fields (read str)
+    (unless (is fields eof)
+      (listtem tem fields))))
 
 (def temwrite (tem val (o o (stdout)))
   (write (temlist tem val) o))

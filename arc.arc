@@ -1539,12 +1539,6 @@ symbol stored as the global value of 'eof' if there's nothing left to read."
     (readstring1 x)
     (sread x)))
 
-(mac reading (var port . body)
-"Call (read) on a port, store the result in `var`, and do something with it."
-  `(let ,var (read ,port)
-     (unless (is ,var eof)
-       ,@body)))
-
 (mac fromfile (f . body)
 "Redirects standard input from the file 'f' within 'body'."
   (w/uniq gf
