@@ -1123,6 +1123,8 @@ negative to count backwards from the end."
 (examples cut
   (cut '(a b c d e) 2)
   (c d e)
+  (cut '(a b c d e) 2 -1)
+  (c d)
   (cut "abcde" 2 4)
   "cd")
 
