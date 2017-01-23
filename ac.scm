@@ -1168,6 +1168,16 @@
 (xdef dir-exists (lambda (name)
                      (if (directory-exists? name) name 'nil)))
 
+(require racket/path)
+(xdef basename (lambda (name)
+                 (path->string (file-name-from-path (string->path name)))))
+(xdef dirname (lambda (name)
+                (or (path->string (path-only (string->path name)))
+                    ".")))
+; normalize-path will only work for a path that actually exists
+(xdef absolute-path (lambda (name)
+                      (path->string (normalize-path (string->path name)))))
+
 (xdef rmfile (wrapnil delete-file))
 
 (xdef mvfile (lambda (old new)

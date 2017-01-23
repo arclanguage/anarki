@@ -1551,7 +1551,7 @@ symbol stored as the global value of 'eof' if there's nothing left to read."
 (mac tofile (f . body)
 "Redirects stdout to the file 'f' within 'body'."
   (w/uniq (gf gs)
-    `(let ,gs (mktemp:basename ,f)
+    `(let ,gs (mktemp (basename ,f) (dirname (absolute-path ,f)))
        (w/outfile ,gf ,gs
          (w/stdout ,gf
            ,@body))
@@ -1708,9 +1708,6 @@ protocol requires them."
                (= (s i) (c (mod x nc)))
                (++ i)))))
       s)))
-
-(def basename (s)
-  (last:tokens s #\/))
 
 (mac on (var s . body)
 "Like [[each]], but also maintains a variable calles 'index' counting the iterations."
