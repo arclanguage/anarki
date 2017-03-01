@@ -1253,7 +1253,7 @@ To run all automatic tests:
   $ ./arc
   arc> (load \"tests.arc\")
 
-If you have questions or get stuck, come to http://arclanguage.com/forum.
+If you have questions or get stuck, come to http://arclanguage.org/forum.
 Arc 3.1 documentation: https://arclanguage.github.io/ref.
 "))
     (tl2 interactive?)))
