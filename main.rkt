@@ -8,7 +8,7 @@
 
 ; Loading Anarki is expensive, so we do it on demand, and the
 ; (anarki-init) function is dedicated to doing so. Fortunately, we pay
-; the initialization cost only once even though we're loading
+; the initialization cost only once even though we're running
 ; `dynamic-require` multiple times.
 
 (define (anarki-init)
@@ -17,17 +17,24 @@
   (dynamic-require boot-scm-path 'tl)
   (void))
 
-(define-values
-  (anarki-repl anarki-load anarki-namespace anarki-global-name)
-  (apply values
-    (map (lambda (var)
-           (lambda args
-             (apply (dynamic-require boot-scm-path var) args)))
-      '(tl aload main-namespace ac-global-name))))
+(define-syntax provide-functions-from-anarki
+  (syntax-rules ()
+    [(_ [internal-name external-name] ...)
+      (begin (begin (define (external-name . args)
+                      (apply (dynamic-require boot-scm-path
+                               'internal-name)
+                        args))
+                    (provide external-name))
+             ...)]))
 
-(provide (except-out (all-defined-out) boot-scm-path))
+(provide-functions-from-anarki
+  [tl anarki-repl]
+  [aload anarki-load]
+  [arc-eval anarki-eval])
 
 ; launch anarki repl from the anarki package folder
 (define (anarki)
-  (parameterize ((current-directory anarki-path)) (anarki-repl)))
+  (parameterize ([current-directory anarki-path])
+    (anarki-repl)))
 
+(provide anarki-path anarki-init anarki)
