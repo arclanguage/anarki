@@ -22,9 +22,6 @@ IF "%optionkey%"=="/h" (
   EXIT /B 0
 )
 
-SET arglen=0
-FOR %%X IN (%*) DO SET /A arglen+=1
-
 racket -f "%arc_dir%/as.scm" %*
 
 ENDLOCAL
