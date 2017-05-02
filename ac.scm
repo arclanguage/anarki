@@ -1108,20 +1108,13 @@
                        (system (string-append "rm -f " tf))
                        str))))
 
+(require racket/random)
 (define (ar-tmpname)
-  (call-with-input-file "/dev/urandom"
-    (lambda (rstr)
-      (do ((s "/tmp/")
-           (c (read-char rstr) (read-char rstr))
-           (i 0 (+ i 1)))
-          ((>= i 16) s)
-        (set! s (string-append s
-                               (string
-                                 (integer->char
-                                   (+ (char->integer #\a)
-                                      (modulo
-                                        (char->integer (read-char rstr))
-                                        26))))))))))
+  (string-append "/tmp/"
+    (list->string
+      (map (lambda (byte)
+             (integer->char (+ (char->integer #\a) (modulo byte 26))))
+        (bytes->list (crypto-random-bytes 16))))))
 
 ; PLT scheme provides only eq? and equal? hash tables,
 ; we need the latter for strings.
@@ -1158,9 +1151,10 @@
 (xdef dir (lambda (name)
             (ac-niltree (map path->string (directory-list name)))))
 
-; Would def mkdir in terms of make-directory and call that instead
-; of system in ensure-dir, but make-directory is too weak: it doesn't
-; create intermediate directories like mkdir -p.
+(require racket/file)
+(xdef ensure-dir (lambda (path)
+                   (make-directory* path)
+                   'nil))
 
 (xdef file-exists (lambda (name)
                      (if (file-exists? name) name 'nil)))

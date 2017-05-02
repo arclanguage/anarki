@@ -1701,12 +1701,11 @@ protocol requires them."
 "Generates a random string of letters and numbers."
   (let c "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     (with (nc 62 s (newstring n) i 0)
-      (w/infile str "/dev/urandom"
-        (while (< i n)
-          (let x (readb str)
-             (unless (> x 247)
-               (= (s i) (c (mod x nc)))
-               (++ i)))))
+      (while (< i n)
+        (let x ($.bytes-ref ($.crypto-random-bytes 1) 0)
+           (unless (> x 247)
+             (= (s i) (c (mod x nc)))
+             (++ i))))
       s)))
 
 (mac on (var s . body)
@@ -1942,8 +1941,8 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
   (accum a (maptable (fn args (a args)) h)))
 
 (examples tablist
-  (tablist (obj a 1 b 2))
-  ((a 1) (b 2)))
+  (listtab (map rev (tablist (obj a 1 b 2))))
+  (valueof (obj 1 'a 2 'b)))
 
 (def listtab (al)
 "Converts association list 'al' of (key value) pairs into a table. Reverse of
@@ -2266,10 +2265,8 @@ determined by calling 'timef' rather than directly passing in a number."
   (on-err (fn (c) (table))
           (fn () (load-table filename))))
 
-(def ensure-dir (path)
-"Creates the directory 'path' if it doesn't exist."
-  (unless (dir-exists path)
-    (system (string "mkdir -p " path))))
+(document builtin ensure-dir (path)
+"Creates the directory 'path' if it doesn't exist.")
 
 (def date ((o s (seconds)))
 "Converts time in seconds-since-epoch (now by default) into a list '(year month date)."
