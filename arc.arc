@@ -2694,14 +2694,9 @@ when it's ready to be interrupted."
 (= tmpdir* "tmp")  ; default tmp directory -- use scheme-f for system default, but renames then fail on some platforms because /tmp can be a special filesystem
 (def mktemp ((o prefix "arc") (o dir tmpdir*))
   (ensure-dir dir)
-  (with (postproc  (if (is 'windows ($.system-type 'os))
-                     idfn
-                     ; otherwise it's unix or macosx
-                     $.path->string)
-         scheme-f  scheme-f)  ; otherwise racket doesn't see the 'scheme-f' below
-    (postproc:$ (make-temporary-file (string-append prefix ".~a")
-                                     scheme-f  ; file starts out empty
-                                     dir))))
+  ($.path->string:$.make-temporary-file (string prefix ".~a")
+                                        scheme-f  ; file starts out empty
+                                        dir))
 
 (mac trav (x . fs)
 "Applies each function in 'fs' to 'x', letting the functions recurse on parts

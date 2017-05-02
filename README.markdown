@@ -67,7 +67,9 @@ To run the HN server, first pick your (the admin's) username:
     $ mkdir www
     $ echo __username__ > www/admins
 
-(You can have multiple admins. Add them all to www/admins, separated by whitespace.)
+You can have multiple admins. Add them all to www/admins, separated by whitespace.
+
+The HN server will use the `openssl` command. If you're on Windows, first install OpenSSL and make sure it's on your `PATH`. Other systems should be distributed with OpenSSL already.
 
 Now bring up the server:
 

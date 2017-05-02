@@ -1,5 +1,7 @@
 # The Arc server generates this directory to hold its data.
 /www/
+# It generates this directory to hold some temporary files.
+/tmp/
 
 # Let's not commit the unit-test.arc repo to the Anarki repo by
 # accident.

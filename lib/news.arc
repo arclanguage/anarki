@@ -166,7 +166,9 @@
 ; Could be smarter about preloading by keeping track of popular pages.
 
 (def load-items ()
-  (system (+ "rm " storydir* "*.tmp"))
+  (each file (dir storydir*)
+    (if (endmatch ".tmp" file)
+      (rmfile (+ storydir* file))))
   (pr "load items: ")
   (with (items (table)
          ids   (sort > (map int (dir storydir*))))
