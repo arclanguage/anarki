@@ -41,7 +41,21 @@ If you run into trouble: http://sites.google.com/site/arclanguagewiki; http://ar
 https://arclanguage.github.io/ref/
 
 # Racket interop
-**Racket** expressions can be evaluated with the `$` function, e.g. `($ (print 'hello))` uses the `print` function in **Racket**.
+
+**Racket** expressions can be evaluated with the `($ ...)` syntax. For instance, `(($ crypto-random-bytes) 16)` obtains the `crypto-random-bytes` function from **Racket** and makes a call to it.
+
+If you write lots of Racket code and you just want to use Anarki for part of a bigger project, you can `raco pkg install anarki` and use Anarki to write Racket modules:
+
+    #lang anarki
+    (:provide function-for-use-in-racket)
+    
+    (= racket-import ($.dynamic-require ...))
+    (load "relative/path.arc")
+    
+    (def utility-for-use-in-racket (x)
+      (* x (racket-import x))
+
+Note that Anarki does not have private module scopes; the `(:provide ...)` section is just there to make it easy to `require` an Anarki-based library from Racket.
 
 ---
 
