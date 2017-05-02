@@ -9,6 +9,7 @@ branches:
 env:
   global:
     - RACKET_DIR=~/racket
+    - TRAVIS_RACKET_DIR=~/travis-racket
   matrix:
 #    - RACKET_VERSION=6.6
 #    - RACKET_VERSION=6.7
@@ -30,8 +31,8 @@ matrix:
 
 before_install:
   # We install Racket.
-  - git clone https://github.com/greghendershott/travis-racket.git
-  - cat travis-racket/install-racket.sh | bash
+  - git clone https://github.com/greghendershott/travis-racket.git "${TRAVIS_RACKET_DIR}"
+  - cat "${TRAVIS_RACKET_DIR}/travis-racket/install-racket.sh" | bash
   - export PATH="${RACKET_DIR}/bin:${PATH}"
 
 install:
@@ -40,13 +41,14 @@ install:
 
 
 script:
-  # We run the unit tests.
-  - ./arc.sh tests.arc
+  # We run the unit tests. While doing so, we disable rlwrap using
+  # `-n`.
+  - ./arc.sh -n tests.arc
 
 
   # We do a sanity checks to be sure the Racket package works. This
   # (and most of the rest of this file) is taken from the sample
-  # .travis.yml at https://github.com/greghendershott/travis-racket
+  # .travis.yml at <https://github.com/greghendershott/travis-racket>.
 
   # We install the current directory as a linked package, and we
   # automatically fetch all the dependencies.
