@@ -32,7 +32,7 @@ matrix:
 before_install:
   # We install Racket.
   - git clone https://github.com/greghendershott/travis-racket.git "${TRAVIS_RACKET_DIR}"
-  - cat "${TRAVIS_RACKET_DIR}/travis-racket/install-racket.sh" | bash
+  - cat "${TRAVIS_RACKET_DIR}/install-racket.sh" | bash
   - export PATH="${RACKET_DIR}/bin:${PATH}"
 
 install:
