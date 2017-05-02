@@ -1152,9 +1152,7 @@
             (ac-niltree (map path->string (directory-list name)))))
 
 (require racket/file)
-(xdef ensure-dir (lambda (path)
-                   (make-directory* path)
-                   'nil))
+(xdef ensure-dir (wrapnil make-directory*))
 
 (xdef file-exists (lambda (name)
                      (if (file-exists? name) name 'nil)))
