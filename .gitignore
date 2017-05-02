@@ -1,3 +1,6 @@
+# The Arc server generates this directory to hold its data.
+/www/
+
 # Let's not commit the unit-test.arc repo to the Anarki repo by
 # accident.
 /unit-test.arc/
