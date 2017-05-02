@@ -1,5 +1,9 @@
 Anarki
 ===
+
+[![Travis build](https://travis-ci.org/arclanguage/anarki.svg?branch=master)](https://travis-ci.org/arclanguage/anarki)
+
+
 Anarki: a publicly modifiable 'wiki-like' fork of Arc Lisp (http://www.paulgraham.com/arc.html)
 
 The intention is to be extremely permissive in accepting patches. For commit
