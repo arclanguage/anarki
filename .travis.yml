@@ -1,0 +1,68 @@
+language: c
+
+sudo: false
+
+branches:
+  only:
+  - master
+
+env:
+  global:
+    - RACKET_DIR=~/racket
+  matrix:
+#    - RACKET_VERSION=6.6
+#    - RACKET_VERSION=6.7
+    - RACKET_VERSION=6.8
+#    - RACKET_VERSION=HEAD
+
+matrix:
+  allow_failures:
+    - env: RACKET_VERSION=HEAD
+  # Fast finish: The overall build result is determined as soon as any
+  # of the rows have failed or all of the rows that aren't allowed to
+  # fail have succeeded.
+  fast_finish: true
+
+
+
+# Build lifecycle steps
+
+
+before_install:
+  # We install Racket.
+  - git clone https://github.com/greghendershott/travis-racket.git
+  - cat travis-racket/install-racket.sh | bash
+  - export PATH="${RACKET_DIR}/bin:${PATH}"
+
+install:
+  # We obtain the unit test dependencies.
+  - hg clone https://bitbucket.org/zck/unit-test.arc
+
+
+script:
+  # We run the unit tests.
+  - ./arc.sh tests.arc
+
+
+  # We do a sanity checks to be sure the Racket package works. This
+  # (and most of the rest of this file) is taken from the sample
+  # .travis.yml at https://github.com/greghendershott/travis-racket
+
+  # We install the current directory as a linked package, and we
+  # automatically fetch all the dependencies.
+  - raco pkg install --deps search-auto
+
+  # We recompile every dependency of Anarki, but we don't recompile
+  # their documentation. (TODO: Why? Is there a chance `raco setup`
+  # fails when `raco pkg install` doesn't?)
+  - raco setup --no-docs --check-pkg-deps anarki
+
+  # We run any 'test submodules of any Racket module files existing
+  # recursively under this package. If 'test is not present, we don't
+  # fall back to running the whole file; we just skip the file.
+  - raco test --no-run-if-absent --package anarki
+
+
+after_success:
+  # TODO: Automatically build and deploy the arcfn docs using
+  # https://github.com/arclanguage/arclanguage.github.io/blob/master/_ref/generate.sh
