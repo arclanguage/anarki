@@ -25,14 +25,20 @@
     lib/tests/core-special-forms-test.arc
     lib/tests/core-typing-test.arc
 ))
-(run-all-suites)
+(= exit-code*
+   (let (passes tests) (run-all-suites)
+     (if (is passes tests) 0 1)))
 
 ; check examples
 (prn "checking examples interspersed in the codebase")
 (each (name examples-and-expected) examples*
   (each (example expected) pair.examples-and-expected
-    (if (and (~is expected '_)
-             (~iso eval.example expected)
-             (~and (caris expected 'valueof)
-                   (iso eval.example (eval cadr.expected))))
+    (when (and (~is expected '_)
+               (~iso eval.example expected)
+               (~and (caris expected 'valueof)
+                     (iso eval.example (eval cadr.expected))))
+      (= exit-code* 1)
       (prn "error in example for " name ": " example))))
+
+(unless (is exit-code* 0)
+  (quit exit-code*))
