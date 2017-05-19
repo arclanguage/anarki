@@ -304,3 +304,11 @@
                                    (fromstring "\r\n\r\na\r\nc\r\n\r\nd"
                                      (drain (readline))))
        returns-eof  (assert-nil (fromstring "" (readline))))
+
+(suite at-string
+       interpolates  (assert-same '"abc foo"
+                                  (let x 'foo "abc @x"))
+       escapes-at  (assert-same '"abc @x"
+                                (let x 'foo "abc @@x"))
+       interpolate-with-escape  (assert-same '"abc foo @x"
+                                             (let x 'foo "abc @x @@x")))

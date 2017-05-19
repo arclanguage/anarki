@@ -78,13 +78,19 @@
 (define (ac-string s env)
   (if (ar-bflag 'atstrings)
       (if (atpos s 0)
-          (ac (cons 'string (map (lambda (x)
-                                   (if (string? x)
-                                       (unescape-ats x)
-                                       x))
-                                 (codestring s)))
-              env)
-          (list string-copy (unescape-ats s)))
+        ; evaluate at-expressions without further expanding atstrings and
+        ; interpolate them in
+        (let ((target-expression
+                (cons 'string (map (lambda (x)
+                                     (if (string? x)
+                                         (unescape-ats x)
+                                         x))
+                                   (codestring s)))))
+          (hash-table-put! ar-declarations 'atstrings 'nil)
+          (let ((result (ac target-expression env)))
+            (hash-table-put! ar-declarations 'atstrings 't)
+            result))
+        (list string-copy (unescape-ats s)))
       (list string-copy s)))     ; avoid immutable strings
 
 (defarc ac-literal (literal? x)
