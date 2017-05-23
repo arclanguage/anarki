@@ -1,6 +1,4 @@
 ; things to customize
-(declare 'atstrings t)
-
 (= this-site*    "My Forum"
    site-url*     "http://news.yourdomain.com/"
    parent-url*   "http://www.yourdomain.com"
@@ -20,6 +18,9 @@
                             ; (all existing news code already does)
 
 ; Structures
+
+; enable string interpolation just in this file
+(declare 'atstrings t)
 
 ; Could add (html) types like choice, yesno to profile fields.  But not
 ; as part of deftem, which is defstruct.  Need another mac on top of
@@ -2613,4 +2614,6 @@ first asterisk isn't whitespace.
       (each c (dedup (map downcase (trues [uvar _ topcolor] (users))))
         (tr (td c) (tdcolor (hex>color c) (hspace 30)))))))
 
-
+; since Arc has no modules we have to turn off global settings turned on just
+; in this file
+(declare 'atstrings nil)

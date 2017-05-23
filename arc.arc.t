@@ -305,6 +305,8 @@
                                      (drain (readline))))
        returns-eof  (assert-nil (fromstring "" (readline))))
 
+; TODO: minimally turn on atstrings once unit-test.arc has support for suite
+; setup/teardown functions
 (suite at-string
        interpolates  (assert-same '"abc foo"
                                   (let x 'foo "abc @x"))

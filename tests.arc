@@ -1,5 +1,11 @@
 ; first hg clone https://bitbucket.org/zck/unit-test.arc
 (load "unit-test.arc/unit-test.arc")
+
+; tests currently rely on atstrings
+; TODO: minimally turn on atstrings once unit-test.arc has support for suite
+; setup/teardown functions
+(declare 'atstrings t)
+
 (map load:string '(
     arc.arc.t
     lib/app.arc.t
@@ -42,3 +48,7 @@
 
 (unless (is exit-code* 0)
   (quit exit-code*))
+
+; since Arc has no modules we have to turn off global settings turned on just
+; in this file
+(declare 'atstrings nil)
