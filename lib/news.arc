@@ -990,7 +990,6 @@ function vote(node) {
     (if (cansee user s)
       (do (deadmark s user)
           (titlelink s url user)
-          url
           (awhen (sitename url)
             (spanclass comhead
               (pr " (" )
