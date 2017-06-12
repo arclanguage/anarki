@@ -69,6 +69,12 @@ To run the HN server, first pick your (the admin's) username:
 
 You can have multiple admins. Add them all to www/admins, separated by whitespace.
 
+By clicking on the domain name of a submitted link admins may tag the domain. The color of a domain name indicates its tag:
+
+* *gray* default
+* *darkred* ignore
+* *darkblue* kill
+
 The HN server will use the `openssl` command. If you're on Windows, first install OpenSSL and make sure it's on your `PATH`. Other systems should be distributed with OpenSSL already.
 
 Now bring up the server:
