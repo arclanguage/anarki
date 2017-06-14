@@ -38,7 +38,9 @@ before_install:
 install:
   # We obtain the unit test dependencies.
   - hg clone https://bitbucket.org/zck/unit-test.arc
-
+  - cd unit-test.arc
+  - hg update v1.0
+  - cd ..
 
 script:
   # We run the unit tests. While doing so, we disable rlwrap using
