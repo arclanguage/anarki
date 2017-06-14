@@ -32,7 +32,7 @@
     lib/tests/core-typing-test.arc
 ))
 (= exit-code*
-   (let (passes tests) (run-all-suites)
+   (let (passes tests) (test)
      (if (is passes tests) 0 1)))
 
 ; check examples

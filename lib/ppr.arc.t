@@ -1,48 +1,26 @@
-; narrow lines for simpler test cases
-
-; running this test messes up the pretty-printer
 (load "unit-test.arc/unit-test.arc")
+
 (= oneline* 5 ifline* 7)
 
-; helper
 (def collect-pretty-print (expr)
-  (+ "\n"  ; so expected string can start on an unindented line
-     (tostring
-       (ppr expr))))
+  (+ "\n" (tostring (ppr expr))))
 
 (suite pretty-print
-  if-2  (assert-same "
-(if abc
-  def)
-"
-                     (collect-pretty-print '(if abc def)))
-  if-3  (assert-same "
-(if abc
-  def
-  ghi)
-"
-                     (collect-pretty-print '(if abc def ghi)))
-  if-5  (assert-same "
-(if a b
-    c d
-      e)
-"
-                     (collect-pretty-print '(if a b c d e)))
-  if-5-wide-and-wavy  (assert-same "
-(if abcdef
-      ghi
-    jkl
-      mno
-    pqr)
-"
-                                   (collect-pretty-print '(if abcdef ghi jkl mno pqr)))
-
-  with (assert-same "
-(with (a b
-       c d)
-  (e f g))
-"
-                    (collect-pretty-print '(with (a b c d) (e f g))))
-)
+       (test if-2
+             (assert-same "\n(if abc\n  def)\n"
+                          (collect-pretty-print '(if abc def))))
+       (test if-3
+             (assert-same "\n(if abc\n  def\n  ghi)\n"
+                          (collect-pretty-print '(if abc def ghi))))
+       (test if-5
+             (assert-same "\n(if a b\n    c d\n      e)\n"
+                          (collect-pretty-print '(if a b c d e))))
+       (test if-5-wide-and-wavy
+             (assert-same "\n(if abcdef\n      ghi\n    jkl\n      mno\n    pqr)\n"
+                          (collect-pretty-print '(if abcdef ghi jkl mno pqr))))
+       (test with
+             (assert-same "\n(with (a b\n       c d)\n  (e f g))\n"
+                          (collect-pretty-print '(with (a b c d) (e f g))))))
 
 (run-all-suites)
+

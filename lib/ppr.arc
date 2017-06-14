@@ -114,6 +114,21 @@
       (sp (+ col 2))
       (indent-pairs (nthcdr n xs) (+ col 2))))
 
+; Support for the 'suite macro in https://bitbucket.org/zck/unit-test.arc
+(def indent-suite (xs (o col 0))
+  (print-spaced (firstn 1 xs))
+  (let suite-name-len (len xs.0)
+    (if (and (acons xs.1)
+             (is 'setup (car xs.1)))
+      (do
+        (prn)
+        (sp (+ col (len "(suite ") suite-name-len))
+        (pr "(setup ")
+        (indent-pairs (cdr xs.1) (+ col (len "(suite (setup ")))
+        (pr ")")
+        (indent-block (nthcdr 2 xs) (+ col (len "(suite "))))
+      (indent-block (cdr xs) (+ col (len "(suite "))))))
+
 (= indent-rules* 
    (fill-table (table)
      `(if      ,(indent-if (len "if"))
@@ -128,7 +143,8 @@
        nor     ,[indent-basic _ (len "nor") _2]
        case    ,(indent-case 1)
        caselet ,(indent-case 2)
-       fn      ,[indent-mac _ 1 _2])))
+       fn      ,[indent-mac _ 1 _2]
+       suite   ,indent-suite)))
 
 (def ppr-main (x (o col 0) (o noindent nil))
   " Recursive main body of the ppr function. "
