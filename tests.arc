@@ -46,9 +46,9 @@
       (= exit-code* 1)
       (prn "error in example for " name ": " example))))
 
-(unless (is exit-code* 0)
-  (quit exit-code*))
-
 ; since Arc has no modules we have to turn off global settings turned on just
 ; in this file
 (declare 'atstrings nil)
+
+; if we ran in batch mode (say for CI), signal any failures to the calling process
+exit-code*
