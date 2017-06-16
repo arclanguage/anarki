@@ -377,3 +377,7 @@
              (assert-same '"abc foo @x"
                           (let x 'foo "abc @x @@x"))))
 
+
+(suite this-will-fail
+       (test failing
+             (assert-same 2 3)))
