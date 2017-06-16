@@ -96,3 +96,5 @@ Any interactive changes to the prompt will be reflected immediately in the
 server, without needing to restart it. Don't forget to add them to the .arc
 files as appropriate, otherwise they'll be lost when you stop the server or it
 dies for some reason.
+
+a simple change to get tests to run.
