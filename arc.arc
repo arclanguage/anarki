@@ -2735,23 +2735,11 @@ of 'x' by calling 'self'."
   (iso ($.vector->list a)
        ($.vector->list b)))
 
-(defextend len (x) (isa x 'cons)
-  (if
-    (acons cdr.x)   (+ 1 (len cdr.x))
-    (no cdr.x)  1
-                2)) ; dotted list
-
 (defextend len (x) (isa x 'sym)
   0)
 
 (defextend len (x) (isa x 'vector)
   ($.vector-length x))
-
-(defextend len (x) (isa x 'string)
-  ($.string-length x))
-
-(defextend len (x) (isa x 'table)
-  ($.hash-table-count x))
 
 ; most types need define just len
 (def empty (seq)
