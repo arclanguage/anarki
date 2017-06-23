@@ -139,8 +139,6 @@
 
 (suite len
        (test lists (assert-same 3 (len '(1 2 3))))
-       (test improper-lists
-             (assert-same 3 (len '(1 2 . 3))))
        (test symbols (assert-same 0 (len 'a))))
 
 (suite find
