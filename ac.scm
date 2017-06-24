@@ -1613,4 +1613,10 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                                      (cons (car cs) (unesc (cdr cs))))))))
                   (unesc (string->list s)))))
 
+(define (range start end)
+  (if (> start end)
+    'nil
+    (cons start (range (+ start 1) end))))
+(xdef range range)
+
 )
