@@ -31,9 +31,8 @@
     lib/tests/core-special-forms-test.arc
     lib/tests/core-typing-test.arc
 ))
-(= exit-code*
-   (let (passes tests) (test)
-     (if (is passes tests) 0 1)))
+(test)
+;(test-and-error-on-failures)
 
 ; check examples
 (prn "checking examples interspersed in the codebase")
@@ -43,12 +42,8 @@
                (~iso eval.example expected)
                (~and (caris expected 'valueof)
                      (iso eval.example (eval cadr.expected))))
-      (= exit-code* 1)
       (prn "error in example for " name ": " example))))
 
 ; since Arc has no modules we have to turn off global settings turned on just
 ; in this file
 (declare 'atstrings nil)
-
-; if we ran in batch mode (say for CI), signal any failures to the calling process
-exit-code*

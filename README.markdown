@@ -13,7 +13,7 @@ privileges, just submit your first pull request or ask on http://arclanguage.org
 might mess up your site's data. Come [talk to us](http://arclanguage.org/forum)
 first, and be sure to make a backup before the migration.
 
-To run, install Racket from http://racket-lang.org, then:
+To run, install Racket (v6.8 or later) from http://racket-lang.org, then:
 
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
