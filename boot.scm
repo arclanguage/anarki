@@ -1,8 +1,5 @@
 (module boot mzscheme ; promise we won't redefine mzscheme bindings
 
-(parameterize ((current-output-port (current-error-port)))
-  (display "initializing arc.. (takes ~4s)")(newline))
-
 (require (only racket path-only))
 (require (only racket/runtime-path define-runtime-path))
 
