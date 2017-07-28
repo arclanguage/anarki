@@ -1289,18 +1289,33 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                 (namespace-set-variable-value! '_thatexpr expr))
               (tl2 interactive?)))))))
 
-; eval a series of forms from an input port, and return the value of the last
-(define (aload1 p last)
+(define (aload1 p)
   (let ((x (read p)))
     (if (eof-object? x)
-        last
-        (let ((curr (arc-eval x)))
-          (aload1 p curr)))))
+        #t
+        (begin
+          (arc-eval x)
+          (aload1 p)))))
+
+(define (atests1 p)
+  (let ((x (read p)))
+    (if (eof-object? x)
+        #t
+        (begin
+          (write x)
+          (newline)
+          (let ((v (arc-eval x)))
+            (if (ar-false? v)
+                (begin
+                  (display "  FAILED")
+                  (newline))))
+          (atests1 p)))))
 
 (define (aload filename)
-  (call-with-input-file filename
-    (lambda (p)
-      (aload1 p '()))))
+  (call-with-input-file filename aload1))
+
+(define (test filename)
+  (call-with-input-file filename atests1))
 
 (define (acompile1 ip op)
   (let ((x (read ip)))
