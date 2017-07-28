@@ -1,5 +1,3 @@
-(load "unit-test.arc/unit-test.arc")
-
 (= oneline* 5 ifline* 7)
 
 (def collect-pretty-print (expr)
@@ -27,5 +25,3 @@
        (test custom-macro
              (assert-same "\n(ppr-test-macro (a b) (c d) (e f)\n  (g h i))\n"
                           (collect-pretty-print '(ppr-test-macro (a b) (c d) (e f) (g h i))))))
-
-(test)

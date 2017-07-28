@@ -17,6 +17,7 @@
     lib/spliceable-list.arc.t
     lib/strings.arc.t
     lib/streams.arc.t
+    lib/ppr.arc.t
     lib/srv.arc.t
     lib/tem.arc.t
     lib/client.arc.t
