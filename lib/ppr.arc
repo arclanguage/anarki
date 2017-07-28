@@ -165,7 +165,6 @@
          (pr "(")
          (withs (proc car.x
                  args sig*.proc
-                 n    len.args
                  str  (tostring:print proc)
                  l    len.str
                  xs   cdr.x)
@@ -178,8 +177,8 @@
                      (aif indent-rules*.proc
                             (it xs col)
                           (and (isa proc 'sym) (bound proc) (isa (eval proc) 'mac))
-                            (if (or dotted.args (and args (~acons args)))
-                                (indent-mac xs (- len.args 1) col)
+                            (if dotted.args
+                                (indent-mac xs (- len-dotted.args 1) col)
                                 (indent-mac xs 0 col))
                           (indent-basic xs l col)))))
            (pr ")")))))
