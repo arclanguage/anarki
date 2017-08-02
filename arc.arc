@@ -2738,12 +2738,6 @@ of 'x' by calling 'self'."
 (defextend len (x) (isa x 'vector)
   ($.vector-length x))
 
-; slower version for dotted lists
-(def len-dotted (x)
-  (if (no x)  0
-      (~acons x)  1
-      :else  (+ 1 (len-dotted cdr.x))))
-
 ; most types need define just len
 (def empty (seq)
 "Is 'seq' an empty container? Usually checks 'seq's [[len]]."

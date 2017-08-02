@@ -27,6 +27,18 @@
            (do (pr "(") print-spaced.x (pr ")")))
       x))
 
+(def len-dotted (x)
+"[[len]] for dotted lists"
+  (if (no x)  0
+      (~acons x)  1
+      :else  (+ 1 (len-dotted cdr.x))))
+
+(examples len-dotted
+  (len-dotted '(1 2 3))
+  3
+  (len-dotted '(1 2 . 3))
+  3)
+
 (= oneline* 45)
 
 (mac ppr-sub body
