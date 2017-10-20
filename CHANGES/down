@@ -1,0 +1,17 @@
+Anarki changes Arc 3.1's `down` loop to stop *before* the third `min` argument
+rather than `after`.
+
+For example, this loop in Arc 3.1:
+    arc> (down i 10 1
+           (pr i " "))
+    10 9 8 7 6 5 4 3 2 1
+
+Behaves like this in Anarki:
+    arc> (down i 10 1
+           (pr i " "))
+    10 9 8 7 6 5 4 3 2
+
+A correct port to Anarki must adjust the bound:
+    arc> (down i 10 0  ; <== 1 became 0
+           (pr i " "))
+    10 9 8 7 6 5 4 3 2 1

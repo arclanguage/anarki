@@ -25,7 +25,8 @@
 "The following behave differently from arc 3.1:
 
 1. `for`. See (help for).
-2. Templates (arc's lightweight object database system). See (help deftem).
+2. `down` has subtly different behavior.
+3. Templates (arc's lightweight object database system). See (help deftem).
 
 If you find others, please report them at http://arclanguage.org/forum.
 ")))
@@ -951,7 +952,9 @@ Can also be terminated from inside 'body' by calling '(break)', or interrupt a s
 If you nest multiple loops with different 'var's like i and j, you can break out of either of them by calling (break-i), (break-j), etc.
 Always returns nil.
 
-Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc 3.1's behavior, use [[up]]. For more information, see CHANGES/for."
+Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc
+3.1's behavior, use [[up]] (though you'll need to adjust the upper bound). For
+more information, see CHANGES/for."
   ; simple heuristic to alert on the incompatibility at call time. If you need
   ; to check a flag variable you should probably be using 'while' anyway.
   (unless (acons test)
@@ -987,7 +990,11 @@ with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
 
 (mac down (v init min . body)
 "Counts 'v' down from 'init' (inclusive) to 'min' (exclusive), running 'body'
-with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
+with each value. Can also (break) and (continue) inside 'body'; see [[for]].
+
+Incompatibility alert: 'down' is different in Anarki from Arc 3.1. 
+The version from Arc 3.1 runs to 'min' inclusive. For more information, see
+CHANGES/down."
   `(for ,v ,init (> ,v ,min) (assign ,v (- ,v 1))
      ,@body))
 
