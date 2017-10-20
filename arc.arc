@@ -951,7 +951,7 @@ Can also be terminated from inside 'body' by calling '(break)', or interrupt a s
 If you nest multiple loops with different 'var's like i and j, you can break out of either of them by calling (break-i), (break-j), etc.
 Always returns nil.
 
-Incompatibility alert: 'for' is different in anarki from vanilla arc. To get vanilla arc's behavior, use [[up]]. For more information, see CHANGES/for."
+Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc 3.1's behavior, use [[up]]. For more information, see CHANGES/for."
   ; simple heuristic to alert on the incompatibility at call time. If you need
   ; to check a flag variable you should probably be using 'while' anyway.
   (unless (acons test)

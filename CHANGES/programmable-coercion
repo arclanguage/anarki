@@ -1,5 +1,5 @@
-In vanilla arc, all coercions are hard-coded in ac.scm. Anarki instead bases
-coercion on a double hashtable lookup, and exposes the table used to arc as
+In Arc 3.1, all coercions are hard-coded in ac.scm. Anarki instead bases
+coercion on a double hashtable lookup, and exposes the table used as
 'coerce*. This allows arc-defined coercions between types. In addition, it adds
 coercions to 'fn, which do exactly what you would expect: return a fn that does
 what the coerced object would in functional position. Moreover, this

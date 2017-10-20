@@ -1,4 +1,4 @@
-Arc Streams (based on Racket Ports: https://docs.racket-lang.org/reference/ports.html)
+Arc streams (based on Racket Ports: https://docs.racket-lang.org/reference/ports.html)
 are for dealing with sources and sinks to data, whether backed by files,
 sockets or just in-memory strings.
 

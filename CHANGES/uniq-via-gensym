@@ -5,7 +5,7 @@ symbol:
     arc> (= s (uniq))
     g1831
     arc> (is s 'g1831)
-    nil  ; in vanilla arc, this would be t
+    nil  ; in Arc 3.1, this would be t
 
 Second, 'uniq takes an optional argument. If present, this argument must be a
 symbol or string, and will be used as the prefix for the gensym:

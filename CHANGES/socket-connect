@@ -1,6 +1,6 @@
 From http://arclanguage.org/item?id=10123:
 
-Vanilla arc3 has the 'open-socket and 'socket-accept functions for receiving
+Arc 3.1 has the 'open-socket and 'socket-accept functions for receiving
 connections. Anarki also defines 'socket-connect to establish outgoing
 connections:
 
