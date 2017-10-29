@@ -37,7 +37,7 @@
                     (assert-same "Cookie: name=value; name2=value2; Expires=Wed, 09 Jun 2021;"
                                  (encode-cookies (list "name" "value" "name2" "value2" "Expires" "Wed, 09 Jun 2021")))))
        (suite send-request
-              (test ping-google
-                    (assert-same "HTTP/1.0 200 OK"
-                                 (caar (mkreq "www.google.com"))))))
+              (test ping-httpbin
+                    (assert-same "HTTP/1.1 200 OK"
+                                 (caar (mkreq "www.httpbin.org/status/200"))))))
 
