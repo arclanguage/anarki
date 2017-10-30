@@ -67,6 +67,9 @@ Note that Anarki does not have private module scopes; the `(:provide ...)` secti
 ## Hacker News Site
 
 Anarki comes bundled with a [Hacker News](https://news.ycombinator.com) style app.
+
+### Admins
+
 To run the HN server, first pick your (the admin's) username:
 
     $ mkdir www
@@ -74,13 +77,7 @@ To run the HN server, first pick your (the admin's) username:
 
 You can have multiple admins. Add them all to www/admins, separated by whitespace.
 
-By clicking on the domain name of a submitted link admins may tag the domain. The color of a domain name indicates its tag:
-
-* *gray* default
-* *darkred* ignore
-* *darkblue* kill
-
-The HN server will use the `openssl` command. If you're on Windows, first install OpenSSL and make sure it's on your `PATH`. Other systems should be distributed with OpenSSL already.
+### Starting the server
 
 Now bring up the server:
 
@@ -92,7 +89,10 @@ see the 'arc> ' prompt.
 Go to [http://localhost:8080](http://localhost:8080). Click on login, and
 create the account for your username. You should now be logged in as an admin.
 
-Don't worry about "user break" or "error writing" messages.
+(Don't worry about "user break" or "error writing" messages.)
+
+
+### Customization
 
 To customize News, change the variables at the top of `lib/news.arc`. To
 change the port your server runs at, modify `lib/run-news.arc`.
@@ -101,3 +101,22 @@ Any interactive changes to the prompt will be reflected immediately in the
 server, without needing to restart it. Don't forget to add them to the .arc
 files as appropriate, otherwise they'll be lost when you stop the server or it
 dies for some reason.
+
+
+### Submissions
+
+By clicking on the domain name of a submitted link admins may tag the domain. The color of a domain name indicates its tag:
+
+* *gray* default
+* *darkred* ignore
+* *darkblue* kill
+
+### Polls
+
+To create a poll, go to [http://localhost:8080/newpoll](http://localhost:8080/newpoll). By default you need 20 *karma* to create a poll. This can be changed by setting `poll-threshold*` to a different value.
+
+
+### Windows specific
+
+The HN server will use the `openssl` command. If you're on Windows, first install OpenSSL and make sure it's on your `PATH`. Other systems should be distributed with OpenSSL already.
+
