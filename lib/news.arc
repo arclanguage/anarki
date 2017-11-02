@@ -468,29 +468,29 @@
 
 (defop news.css req
   (pr "
-body  { font-family:Verdana; font-size:10pt; color:#828282; }
-td    { font-family:Verdana; font-size:10pt; color:#828282; }
+body  { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
+td    { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
 
-.admin td   { font-family:Verdana; font-size:8.5pt; color:#000000; }
-.subtext td { font-family:Verdana; font-size:  7pt; color:#828282; }
+.admin td   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
+.subtext td { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
 
-input    { font-family:Courier; font-size:10pt; color:#000000; }
-input[type=\"submit\"] { font-family:Verdana; }
-textarea { font-family:Courier; font-size:10pt; color:#000000; }
+input    { font-family:Courier, monospace; font-size:10pt; color:#000000; }
+input[type=\"submit\"] { font-family:Verdana, sans-serif; }
+textarea { font-family:Courier, monospace; font-size:10pt; color:#000000; }
 
 a:link    { color:#000000; text-decoration:none; }
 a:visited { color:#828282; text-decoration:none; }
 
-.default { font-family:Verdana; font-size: 10pt; color:#828282; }
-.admin   { font-family:Verdana; font-size:8.5pt; color:#000000; }
-.title   { font-family:Verdana; font-size: 10pt; color:#828282; }
-.adtitle { font-family:Verdana; font-size:  9pt; color:#828282; }
-.subtext { font-family:Verdana; font-size:  7pt; color:#828282; }
-.yclinks { font-family:Verdana; font-size:  8pt; color:#828282; }
-.pagetop { font-family:Verdana; font-size: 10pt; color:#222222; }
-.comhead { font-family:Verdana; font-size:  8pt; color:#828282; }
-.comment { font-family:Verdana; font-size:  9pt; }
-.dead    { font-family:Verdana; font-size:  9pt; color:#dddddd; }
+.default { font-family:Verdana, sans-serif; font-size: 10pt; color:#828282; }
+.admin   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
+.title   { font-family:Verdana, sans-serif; font-size: 10pt; color:#828282; }
+.adtitle { font-family:Verdana, sans-serif; font-size:  9pt; color:#828282; }
+.subtext { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
+.yclinks { font-family:Verdana, sans-serif; font-size:  8pt; color:#828282; }
+.pagetop { font-family:Verdana, sans-serif; font-size: 10pt; color:#222222; }
+.comhead { font-family:Verdana, sans-serif; font-size:  8pt; color:#828282; }
+.comment { font-family:Verdana, sans-serif; font-size:  9pt; }
+.dead    { font-family:Verdana, sans-serif; font-size:  9pt; color:#dddddd; }
 
 .comment a:link, .comment a:visited { text-decoration:underline;}
 .dead a:link, .dead a:visited { color:#dddddd; }
