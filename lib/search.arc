@@ -17,15 +17,18 @@
 (def search-bar (user)
   (aform
     (fn (req)
-      (search-page user (arg req "term")))
-    (single-input "" 'term 20 "Search")))
+      (search-page user (arg req "terms")))
+    (single-input "" 'terms 20 "Search")))
 
-(def search-page (user term)
-  (listpage user (msec) (search stories* term) "search"
-    (string "Search results for " term)))
+(def search-page (user terms)
+  (listpage user (msec) (search stories* tokens.terms) "search"
+    (string "Search results for \"" terms #\")))
 
-(def search (stories term)
-  (keep [match? _ term] stories))
+(def search (stories terms)
+  (keep [match-all? _ terms] stories))
+
+(def match-all? (story terms)
+  (all idfn (map [match? story _] terms)))
 
 (def match? (story term)
   (some [match-ignoring-case? (string story._) term] '(title url by)))
