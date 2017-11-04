@@ -14,6 +14,12 @@
 ;   You should have received a copy of the GNU Affero General Public License
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+(def search-bar (user)
+  (aform
+    (fn (req)
+         (search-page user (arg req "term")))
+    (single-input "" 'term 20 "Search")))
+
 (def search-page (user term)
     (listpage user (msec) (search stories* term) "search"
       (string "Search results for " term)))
@@ -31,9 +37,3 @@
             ;list of keys that are searched in
             '(title url by)))))
       stories))
-
-(def search-bar (user)
-  (aform
-    (fn (req)
-         (search-page user (arg req "term")))
-    (single-input "" 'term 20 "Search")))
