@@ -111,10 +111,6 @@ By clicking on the domain name of a submitted link admins may tag the domain. Th
 * *darkred* ignore
 * *darkblue* kill
 
-### Polls
-
-To create a poll, go to [http://localhost:8080/newpoll](http://localhost:8080/newpoll). By default you need 20 *karma* to create a poll. This can be changed by setting `poll-threshold*` to a different value.
-
 
 ### Windows specific
 

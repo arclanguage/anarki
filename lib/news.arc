@@ -610,6 +610,9 @@ function vote(node) {
     (toplink "leaders"  "leaders"     label)
     (hook 'toprow user label)
     (link "submit")
+    (when
+      (and user (> (karma user) poll-threshold*))
+      (toplink "poll" "newpoll" label))
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
