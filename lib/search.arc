@@ -14,9 +14,6 @@
 ;   You should have received a copy of the GNU Affero General Public License
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(newsop search ()
-  (search-page user term))
-
 (def search-page (user term)
     (listpage user (msec) (search stories* term) "search"
       (string "Search results for " term)))
