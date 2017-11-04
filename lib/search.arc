@@ -25,14 +25,11 @@
     (string "Search results for " term)))
 
 (def search (stories term)
-  (keep
-    (fn (story)
-      (flat:map
-        (fn (key)
-          (re-match
-            ; search term is case-insensitive
-            (re (string "(?i:" term ")" ))
-            (string story.key))
-        ; list of keys that are searched in
-        '(title url by))))
-    stories))
+  (keep [match? _ term] stories))
+
+(def match? (story term)
+  (some [match-ignoring-case? (string story._) term] '(title url by)))
+
+(def match-ignoring-case? (s pat)
+  (re-match (re:string "(?i:" pat ")")
+            s))
