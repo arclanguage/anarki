@@ -30,7 +30,7 @@
               (re-match
             ;search term is case insensitive
               (re (string "(?i:" term ")" ))
-              (story key)))
+              (string (story key))))
             ;list of keys that are searched in
             '(title url by)))))
       stories))
