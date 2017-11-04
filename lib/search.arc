@@ -17,23 +17,22 @@
 (def search-bar (user)
   (aform
     (fn (req)
-         (search-page user (arg req "term")))
+      (search-page user (arg req "term")))
     (single-input "" 'term 20 "Search")))
 
 (def search-page (user term)
-    (listpage user (msec) (search stories* term) "search"
-      (string "Search results for " term)))
+  (listpage user (msec) (search stories* term) "search"
+    (string "Search results for " term)))
 
 (def search (stories term)
-    (keep
-      (fn (story)
-        (or
-          (flat (map
-            (fn (key)
-              (re-match
-            ;search term is case insensitive
-              (re (string "(?i:" term ")" ))
-              (string (story key))))
-            ;list of keys that are searched in
-            '(title url by)))))
-      stories))
+  (keep
+    (fn (story)
+      (flat:map
+        (fn (key)
+          (re-match
+            ; search term is case-insensitive
+            (re (string "(?i:" term ")" ))
+            (string story.key))
+        ; list of keys that are searched in
+        '(title url by))))
+    stories))
