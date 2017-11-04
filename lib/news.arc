@@ -429,6 +429,7 @@
                (br)
                (center
                  (hook 'longfoot)
+                 (search-bar user)
                  (admin-bar ,gu (- (msec) ,gt) ,whence)))))))
 
 (def admin-bar (user elapsed whence)
@@ -2605,6 +2606,9 @@ first asterisk isn't whitespace.
     (tab
       (each c (dedup (map downcase (trues [uvar _ topcolor] (users))))
         (tr (td c) (tdcolor (hex>color c) (hspace 30)))))))
+
+; Load the search bar
+(load "lib/search.arc")
 
 ; since Arc has no modules we have to turn off global settings turned on just
 ; in this file
