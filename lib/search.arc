@@ -31,7 +31,7 @@
   (all idfn (map [match? story _] terms)))
 
 (def match? (story term)
-  (some [match-ignoring-case? (string story._) term] '(title url by)))
+  (some [match-ignoring-case? (string story._) term] '(title url by text)))
 
 (def match-ignoring-case? (s pat)
   (re-match (re:string "(?i:" pat ")")
