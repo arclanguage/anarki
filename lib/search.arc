@@ -21,7 +21,7 @@
     (single-input "" 'terms 20 "Search")))
 
 (def search-page (user terms)
-  (listpage user (msec) (search stories* tokens.terms) "search"
+  (listpage user (msec) (search (join stories* comments*) tokens.terms) "search"
     (string "Search results for \"" terms #\")))
 
 (def search (stories terms)
