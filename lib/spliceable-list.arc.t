@@ -3,7 +3,7 @@
               two-elements   (spliceable-list 2 '(1 2))
               three-elements (spliceable-list 2 '(1 2 3))
               four-elements  (ret temp-three-elements (spliceable-list 2 '(1 2 3))
-                               (append temp-three-elements '(4))))
+                               (njoin temp-three-elements '(4))))
        (test initializes-without-list
              (assert-same (obj 
                             contents
@@ -40,12 +40,12 @@
                             nil
                             suffix-len
                             3)
-                          (do (append one-element (list 2))
+                          (do (njoin one-element (list 2))
                               (rep one-element))))
        (test suffix-3
              (assert-same '(2 3)
-                          (do (append one-element (list 2))
-                              (append one-element (list 3))
+                          (do (njoin one-element (list 2))
+                              (njoin one-element (list 3))
                               (suffix one-element))))
        (test splicing-without-suffix
              (assert-same '(1) (splice three-elements)))

@@ -1,11 +1,9 @@
-;; append elems to it, check n-elem suffix for a match, then splice the suffix out
-
 (def spliceable-list (n (o init))
 "Create a spliceable list with a constant suffix length of n. A spliceable
 list is a special data structure that efficiently supports the following
 operations:
 
-1. Appending items using [[append]].
+1. Destructively appending items using [[njoin]].
 2. Returning the last n items appended using [[suffix]] if there are at least
 n items to return.
 3. Dropping the last n items appended, and returning everything else. [[splice]]"
@@ -21,10 +19,7 @@ n items to return.
 (defextend empty (l) (isa l 'spliceable-list)
   (empty rep.l!contents))
 
-(def append (a b)
-  (= (cdr lastcons.a) b))
-
-(defextend append (l tail) (isa l 'spliceable-list)
+(defextend njoin (l tail) (isa l 'spliceable-list)
   (if empty.l
     (= rep.l!contents tail
        rep.l!last rep.tail)

@@ -744,6 +744,11 @@ append to 'xs'."
     (lastcons cdr.xs)
     xs))
 
+(def njoin (a b)
+"Concatenates/appends second argument to first, then returns first argument."
+  (ret a
+    (= (cdr lastcons.a) b)))
+
 ; Generalization of pair: (tuples x) = (pair x)
 
 (def tuples (xs (o n 2))

@@ -340,7 +340,7 @@
   (= pat (map int (coerce pat 'cons)))
   (let buffer (spliceable-list len.pat)
     (until (iso pat suffix.buffer)
-      (append buffer (list readb.in)))
+      (njoin buffer (list readb.in)))
     splice.buffer))
 
 ; convert list of bytes to string
