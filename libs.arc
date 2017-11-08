@@ -16,6 +16,7 @@
     lib/srv.arc
     lib/app.arc
     lib/news.arc
+    lib/blog.arc
 
     lib/client.arc
 

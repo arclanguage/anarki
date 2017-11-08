@@ -382,10 +382,6 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-; Blog
-
-(= blog? nil)
-(load "lib/blog.arc")
 
 ; Page Layout
 
@@ -617,7 +613,7 @@ function vote(node) {
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
-    (if blog? (link "blog"))
+    (if (bound 'blogtitle*) (link "blog"))
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
@@ -1658,6 +1654,9 @@ function vote(node) {
   (kill c 'thread)
   (map kill-whole-thread:item c!kids))
 
+; Blog
+
+(= blog-threshold* 100)
 
 ; Polls
 

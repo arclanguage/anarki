@@ -53,8 +53,6 @@
   (br2)
   (pr p!text))
 
-(= blog-threshold* 100)
-
 (defopl newpost req
   (whitepage
     (aform [let u (get-user _)
@@ -63,7 +61,7 @@
       (tab (row "title" (input "t" "" 60))
            (row "text"  (textarea "b" 10 80))
            (row ""      (submit)))
-      (pr "Sorry, you need @blog-threshold* karma to create a blog post.")))))
+      (pr (string "Sorry, you need " blog-threshold* " karma to create a blog post."))))))
 
 (def addpost (user title text)
   (let p (inst 'post 'id (++ maxid*) 'title title 'text text)
