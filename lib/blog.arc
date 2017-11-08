@@ -5,9 +5,6 @@
 ; arc> (bsv)
 ; go to http://localhost:8080/blog
 
-; enable string interpolation just in this file
-(declare 'atstrings t)
-
 ;enable blog in news.arc
 (= blog? t)
 
@@ -62,7 +59,7 @@
   (whitepage
     (aform [let u (get-user _)
              (post-page u (addpost u (arg _ "t") (arg _ "b")))]
-      (if (> (karma (get-user req)) blog-post-threshold*)
+      (if (> (karma (get-user req)) blog-threshold*)
       (tab (row "title" (input "t" "" 60))
            (row "text"  (textarea "b" 10 80))
            (row ""      (submit)))
@@ -101,6 +98,3 @@
   (ensure-dir postdir*)
   (load-posts)
   (asv))
-
-;disable string interpolation
-(declare 'atstrings nil)

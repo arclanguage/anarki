@@ -70,11 +70,6 @@
   kids       nil
   keys       nil)
 
-; Blog
-
-(= blog? nil)
-(load "lib/blog.arc")
-
 ; Load and Save
 
 (= newsdir*  (+ srvdir* "news/")
@@ -387,6 +382,10 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
+; Blog
+
+(= blog? nil)
+(load "lib/blog.arc")
 
 ; Page Layout
 
