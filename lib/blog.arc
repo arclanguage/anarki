@@ -38,12 +38,12 @@
        (f (get-user req) it)
        (blogpage (pr "No such post."))))
 
-(def permalink (p) (string "viewpost?id=" p!id))
+(def blog-permalink (p) (string "viewpost?id=" p!id))
 
 (def post-page (user p) (blogpage (display-post user p)))
 
 (def display-post (user p)
-  (tag b (link p!title (permalink p)))
+  (tag b (link p!title (blog-permalink p)))
   (when user
     (sp)
     (link "[edit]" (string "editpost?id=" p!id)))
@@ -63,9 +63,9 @@
     (save-post p)
     (= (posts* p!id) p)))
 
-(defopl editpost req (blogop edit-page req))
+(defopl editpost req (blogop edit-blog-page req))
 
-(def edit-page (user p)
+(def edit-blog-page (user p)
   (whitepage
     (vars-form user
                `((string title ,p!title t t) (text text ,p!text t t))
@@ -77,7 +77,7 @@
   (blogpage
     (tag ul
       (each p (map post (rev (range 1 maxid*)))
-        (tag li (link p!title (permalink p)))))))
+        (tag li (link p!title (blog-permalink p)))))))
 
 (defop blog req
   (let user (get-user req)
