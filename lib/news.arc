@@ -70,6 +70,10 @@
   kids       nil
   keys       nil)
 
+; Blog
+
+(= blog? nil)
+(load "lib/blog.arc")
 
 ; Load and Save
 
@@ -614,6 +618,7 @@ function vote(node) {
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
+    (if blog? (link "blog"))
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
