@@ -24,15 +24,16 @@
 (def post (id) (posts* (errsafe:int id)))
 
 (mac blogpage body
-  `(whitepage
+  `(longpage user (msec) nil "blog" blogtitle* "blog"
      (center
        (widtable 600
          (tag b (link blogtitle* "blog"))
          (br 3)
          ,@body
          (br 3)
+         (center
          (w/bars (link "archive")
-                 (link "new post" "newpost"))))))
+                   (link "new post" "newpost")))))))
 
 (defop viewpost req (blogop post-page req))
 
@@ -51,7 +52,8 @@
     (sp)
     (link "[edit]" (string "editpost?id=" p!id)))
   (br2)
-  (pr p!text))
+  (tag (span "style" "font-family:serif; color:black;")
+       (pr (markdown p!text))))
 
 (defopl newpost req
   (whitepage
@@ -82,10 +84,11 @@
 
 (defop archive req
   (ensure-posts)
+  (let user (get-user req)
   (blogpage
     (tag ul
       (each p (map post (rev (range 1 maxid*)))
-        (tag li (link p!title (blog-permalink p)))))))
+        (tag li (link p!title (blog-permalink p))))))))
 
 (defop blog req
   (ensure-posts)

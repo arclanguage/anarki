@@ -389,14 +389,14 @@
 (defopr favicon.ico req favicon-url*)
 
 (def gen-css-url ()
-  (prn "<link rel=\"stylesheet\" type=\"text/css\" href=\"news.css\">"))
+  (tag (link "rel" "stylesheet" "type" "text/css" "href" "news.css")))
 
 (mac npage (title . body)
   `(tag html
      (tag head
        (gen-css-url)
-       (prn "<link rel=\"shortcut icon\" href=\"" favicon-url* "\">")
-       (prn "<meta name=\"viewport\" content=\"width=device-width\">")
+       (tag (link "rel" "shortcut icon" "href" favicon-url*))
+       (tag (meta "name" "viewport" "content" "width=device-width"))
        (tag script (pr votejs*))
        (tag title (pr ,title)))
      (tag body
