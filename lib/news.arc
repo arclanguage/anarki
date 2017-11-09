@@ -445,10 +445,10 @@
 (def bottom-bar ()
      (spanclass yclinks
      (w/bars
-       (if (bound 'blogtitle*) (link "blog"))
        (link "rss")
        (link "lists")
        (link "formatdoc")
+       (if (bound 'blogtitle*) (link "blog"))
        (link "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
@@ -2260,14 +2260,17 @@ function vote(node) {
             (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
             (tag comments (pr comurl))
             (tag description
-              (cdata (link "Comments" comurl)))))))))
+              (cdata
+                (if (no s!text)
+                  (link "Comments" comurl)
+                  (pr s!text))))))))))
 
 ; RSS feed of user
 (newsop follow (subject)
   (rss-stories
      (retrieve perpage* [is (_ 'by) subject] stories*)
      subject
-     (string site-url* "?user=" subject)
+     (+ site-url* "?user=" subject)
      profile.subject!about))
 
 ; User Stats

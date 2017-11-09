@@ -24,7 +24,7 @@
 (def post (id) (posts* (errsafe:int id)))
 
 (mac blogpage body
-  `(longpage user (msec) nil "blog" blogtitle* "blog"
+  `(minipage blogtitle*
      (center
        (widtable 600
          (tag b (link blogtitle* "blog"))
@@ -32,8 +32,10 @@
          ,@body
          (br 3)
          (center
-         (w/bars (link "archive")
-                   (link "new post" "newpost")))))))
+         (w/bars
+           (link "archive")
+           (link "new post" "newpost")
+           (link "rss" "blog-rss")))))))
 
 (defop viewpost req (blogop post-page req))
 
@@ -84,11 +86,10 @@
 
 (defop archive req
   (ensure-posts)
-  (let user (get-user req)
   (blogpage
     (tag ul
       (each p (map post (rev (range 1 blog-maxid*)))
-        (tag li (link p!title (blog-permalink p))))))))
+        (tag li (link p!title (blog-permalink p)))))))
 
 (defop blog req
   (ensure-posts)
@@ -102,6 +103,13 @@
 (def ensure-posts ()
   (ensure-dir postdir*)
   (load-posts))
+
+(defop blog-rss req
+  (ensure-posts)
+  (if (bound 'rss-stories)
+    (rss-stories
+      (map [posts* _] (range 1 blog-maxid*))
+      blogtitle*)))
 
 (def bsv ()
   (ensure-posts)
