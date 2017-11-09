@@ -15,10 +15,10 @@
     lib/html.arc
     lib/srv.arc
     lib/app.arc
-    lib/news.arc
-    lib/blog.arc
-
     lib/client.arc
+    lib/news.arc
+    lib/search.arc
+    lib/blog.arc
 
     ; helpers for the repl
     lib/ppr.arc

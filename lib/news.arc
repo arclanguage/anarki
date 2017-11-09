@@ -1,4 +1,3 @@
-; things to customize
 (= this-site*    "My Forum"
    site-url*     "http://news.yourdomain.com/"
    parent-url*   "http://www.yourdomain.com"
@@ -429,6 +428,8 @@
                (center
                  (hook 'longfoot)
                  (search-bar user)
+                 (br2)
+                 (bottom-bar)
                  (admin-bar ,gu (- (msec) ,gt) ,whence)))))))
 
 (def admin-bar (user elapsed whence)
@@ -440,6 +441,12 @@
       (pr elapsed " msec")
       (link "settings" "newsadmin")
       (hook 'admin-bar user whence))))
+
+(def bottom-bar ()
+     (w/bars
+       (link "rss")
+       (if (bound 'blogtitle*) (link "blog"))
+       (link "anarki" "http://github.com/arclanguage/anarki")))
 
 (def color-stripe (c)
   (tag (table width "100%" cellspacing 0 cellpadding 1)
@@ -613,7 +620,6 @@ function vote(node) {
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
-    (if (bound 'blogtitle*) (link "blog"))
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
@@ -754,6 +760,8 @@ function vote(node) {
       (when (some acomment:item (uvar subject submitted))
         (sp)
         (underlink "comments" (threads-url subject)))
+        (sp)
+        (underlink "rss" "follow?subject=@subject")
       (hook 'user user subject))))
 
 (def profile-form (user subject)
@@ -1112,7 +1120,9 @@ function vote(node) {
                            whence))
         (canvote user i dir)
          (do (vote-for by i dir)
-             (logvote ip by i))
+             (logvote ip by i)
+             ; Redirect w/o JavaScript when votejs* can't be run
+             (pr (redirect whence)))
          (pr "Can't make that vote."))))
 
 (def itemline (i user)
@@ -2233,12 +2243,12 @@ function vote(node) {
 (newscache rsspage user 90
   (rss-stories (retrieve perpage* live ranked-stories*)))
 
-(def rss-stories (stories)
+(def rss-stories (stories (o t this-site*) (o l site-url*) (o d site-desc*))
   (tag (rss version "2.0")
     (tag channel
-      (tag title (pr this-site*))
-      (tag link (pr site-url*))
-      (tag description (pr site-desc*))
+      (tag title (pr t))
+      (tag link (pr l))
+      (tag description (pr d))
       (each s stories
         (tag item
           (let comurl (+ site-url* (item-url s!id))
@@ -2248,6 +2258,13 @@ function vote(node) {
             (tag description
               (cdata (link "Comments" comurl)))))))))
 
+; RSS feed of user
+(newsop follow (subject)
+  (rss-stories
+     (retrieve perpage* [is (_ 'by) subject] stories*)
+     subject
+     ((profile subject) 'about)
+     (string site-url* "?user=" subject)))
 
 ; User Stats
 
@@ -2609,9 +2626,6 @@ first asterisk isn't whitespace.
     (tab
       (each c (dedup (map downcase (trues [uvar _ topcolor] (users))))
         (tr (td c) (tdcolor (hex>color c) (hspace 30)))))))
-
-; Load the search bar
-(load "lib/search.arc")
 
 ; since Arc has no modules we have to turn off global settings turned on just
 ; in this file

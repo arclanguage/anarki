@@ -57,7 +57,9 @@
   (whitepage
     (aform [let u (get-user _)
              (post-page u (addpost u (arg _ "t") (arg _ "b")))]
-      (if (> (karma (get-user req)) blog-threshold*)
+      (if (if (all bound '(blog-threshold* karma))
+            (> (karma (get-user req)) blog-threshold*)
+            t)
       (tab (row "title" (input "t" "" 60))
            (row "text"  (textarea "b" 10 80))
            (row ""      (submit)))

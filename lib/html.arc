@@ -442,3 +442,6 @@
        (if ,g
          (tag (font color ,g) ,@body)
          (do ,@body)))))
+
+(def redirect (url)
+  (tag head (tag (meta "http-equiv" "refresh" "content" (string "0;" url)))))
