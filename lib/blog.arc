@@ -8,7 +8,7 @@
 ;enable blog in news.arc
 (= blog? t)
 
-(= postdir* (+ srvdir* "posts/")  maxid* 0  posts* (table))
+(= postdir* (+ srvdir* "posts/")  blog-maxid* 0  posts* (table))
 
 (= blogtitle* "A Blog")
 
@@ -16,7 +16,7 @@
 
 (def load-posts ()
   (each id (map int (dir postdir*))
-    (= maxid*      (max maxid* id)
+    (= blog-maxid*      (max blog-maxid* id)
        (posts* id) (temload 'post (string postdir* id)))))
 
 (def save-post (p) (temstore 'post p (string postdir* p!id)))
@@ -68,7 +68,7 @@
       (pr (string "Sorry, you need " blog-threshold* " karma to create a blog post."))))))
 
 (def addpost (user title text)
-  (let p (inst 'post 'id (++ maxid*) 'title title 'text text)
+  (let p (inst 'post 'id (++ blog-maxid*) 'title title 'text text)
     (save-post p)
     (= (posts* p!id) p)))
 
@@ -87,7 +87,7 @@
   (let user (get-user req)
   (blogpage
     (tag ul
-      (each p (map post (rev (range 1 maxid*)))
+      (each p (map post (rev (range 1 blog-maxid*)))
         (tag li (link p!title (blog-permalink p))))))))
 
 (defop blog req
@@ -95,7 +95,7 @@
   (let user (get-user req)
     (blogpage
       (up i 0 5
-        (awhen (posts* (- maxid* i))
+        (awhen (posts* (- blog-maxid* i))
           (display-post user it)
           (br 3))))))
 
