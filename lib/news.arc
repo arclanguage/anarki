@@ -2267,8 +2267,8 @@ function vote(node) {
   (rss-stories
      (retrieve perpage* [is (_ 'by) subject] stories*)
      subject
-     ((profile subject) 'about)
-     (string site-url* "?user=" subject)))
+     (string site-url* "?user=" subject)
+     profile.subject!about))
 
 ; User Stats
 
