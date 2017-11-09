@@ -429,7 +429,7 @@
                  (hook 'longfoot)
                  (bottom-bar)
                  (br2)
-                 (search-bar user)
+                 (if (bound 'search-bar) (search-bar user))
                  (admin-bar ,gu (- (msec) ,gt) ,whence)))))))
 
 (def admin-bar (user elapsed whence)
@@ -443,12 +443,13 @@
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
+     (spanclass yclinks
      (w/bars
        (if (bound 'blogtitle*) (link "blog"))
        (link "rss")
        (link "lists")
        (link "formatdoc")
-       (link "anarki" "http://github.com/arclanguage/anarki")))
+       (link "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
   (tag (table width "100%" cellspacing 0 cellpadding 1)
@@ -1124,7 +1125,8 @@ function vote(node) {
          (do (vote-for by i dir)
              (logvote ip by i)
              ; Redirect w/o JavaScript when votejs* can't be run
-             (pr (redirect whence)))
+             (pr (redirect whence 1))
+             (pr "Thank you for voting."))
          (pr "Can't make that vote."))))
 
 (def itemline (i user)
@@ -2245,12 +2247,12 @@ function vote(node) {
 (newscache rsspage user 90
   (rss-stories (retrieve perpage* live ranked-stories*)))
 
-(def rss-stories (stories (o t this-site*) (o l site-url*) (o d site-desc*))
+(def rss-stories (stories (o title this-site*) (o url site-url*) (o desc site-desc*))
   (tag (rss version "2.0")
     (tag channel
-      (tag title (pr t))
-      (tag link (pr l))
-      (tag description (pr d))
+      (tag title (pr title))
+      (tag link (pr url))
+      (tag description (pr desc))
       (each s stories
         (tag item
           (let comurl (+ site-url* (item-url s!id))

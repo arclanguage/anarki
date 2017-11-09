@@ -443,5 +443,5 @@
          (tag (font color ,g) ,@body)
          (do ,@body)))))
 
-(def redirect (url)
-  (tag head (tag (meta "http-equiv" "refresh" "content" (string "0;" url)))))
+(def redirect (url (o delay 0))
+  (tag head (tag (meta "http-equiv" "refresh" "content" (string delay ";" url)))))
