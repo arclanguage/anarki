@@ -81,12 +81,14 @@
                       (post-page user p)))))
 
 (defop archive req
+  (ensure-posts)
   (blogpage
     (tag ul
       (each p (map post (rev (range 1 maxid*)))
         (tag li (link p!title (blog-permalink p)))))))
 
 (defop blog req
+  (ensure-posts)
   (let user (get-user req)
     (blogpage
       (up i 0 5
@@ -94,7 +96,10 @@
           (display-post user it)
           (br 3))))))
 
-(def bsv ()
+(def ensure-posts ()
   (ensure-dir postdir*)
-  (load-posts)
+  (load-posts))
+
+(def bsv ()
+  (ensure-posts)
   (asv))
