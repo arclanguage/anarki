@@ -427,9 +427,9 @@
                (br)
                (center
                  (hook 'longfoot)
-                 (search-bar user)
-                 (br2)
                  (bottom-bar)
+                 (br2)
+                 (search-bar user)
                  (admin-bar ,gu (- (msec) ,gt) ,whence)))))))
 
 (def admin-bar (user elapsed whence)
@@ -444,8 +444,10 @@
 
 (def bottom-bar ()
      (w/bars
-       (link "rss")
        (if (bound 'blogtitle*) (link "blog"))
+       (link "rss")
+       (link "lists")
+       (link "formatdoc")
        (link "anarki" "http://github.com/arclanguage/anarki")))
 
 (def color-stripe (c)
