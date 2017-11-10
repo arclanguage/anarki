@@ -448,7 +448,6 @@
        (link "rss")
        (link "lists")
        (link "formatdoc")
-       (if (bound 'blogtitle*) (link "blog"))
        (link "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
@@ -605,7 +604,7 @@ function vote(node) {
       (tag (img src logo-url* width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
-(= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "*"))
+(= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "blog" "*"))
 
 (= welcome-url* "welcome")
 
@@ -619,10 +618,11 @@ function vote(node) {
     (toplink "comments" "newcomments" label)
     (toplink "leaders"  "leaders"     label)
     (hook 'toprow user label)
-    (link "submit")
+    (if (bound 'blogtitle*) (toplink "blog" "blog" label))
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
+    (link "submit")
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 

@@ -1,16 +1,7 @@
-; Blog tool example.  20 Jan 08, rev 21 May 09.
-
-; To run:
-; arc> (load "lib/blog.arc")
-; arc> (bsv)
-; go to http://localhost:8080/blog
-
-;enable blog in news.arc
-(= blog? t)
+; A blog for news.arc
+; For the standalone blog example by PG, see blog.arc from arc3.1
 
 (= postdir* (+ srvdir* "posts/")  blog-maxid* 0  posts* (table))
-
-(= blogtitle* "A Blog")
 
 (deftem post  id nil  title nil  text nil)
 
@@ -24,19 +15,17 @@
 (def post (id) (posts* (errsafe:int id)))
 
 (mac blogpage body
-  `(minipage blogtitle*
+  `(longpage user (msec) nil "blog" "Blog" "blog"
      (center
        (widtable 600
-         (tag b (link blogtitle* "blog"))
-         (br 3)
-         ,@body
-         (br 3)
-         (center
-         (w/bars
-           (link "archive")
-           (link "new post" "newpost")
-           (link "rss" "blog-rss")))))))
-
+          (center
+            (w/bars
+              (link "archive")
+              (link "new post" "newpost")
+              (link "rss" "blog-rss")))
+          (br)
+         ,@body))))
+         
 (defop viewpost req (blogop post-page req))
 
 (def blogop (f req)
@@ -58,16 +47,14 @@
        (pr (markdown p!text))))
 
 (defopl newpost req
-  (whitepage
+  (minipage "New post"
     (aform [let u (get-user _)
              (post-page u (addpost u (arg _ "t") (arg _ "b")))]
-      (if (if (all bound '(blog-threshold* karma))
-            (> (karma (get-user req)) blog-threshold*)
-            t)
-      (tab (row "title" (input "t" "" 60))
-           (row "text"  (textarea "b" 10 80))
-           (row ""      (submit)))
-      (pr (string "Sorry, you need " blog-threshold* " karma to create a blog post."))))))
+      (if (> (karma (get-user req)) blog-threshold*)
+        (tab (row "title" (input "t" "" 60))
+             (row "text"  (textarea "b" 10 80))
+             (row ""      (submit)))
+        (pr (string "Sorry, you need " blog-threshold* " karma to create a blog post."))))))
 
 (def addpost (user title text)
   (let p (inst 'post 'id (++ blog-maxid*) 'title title 'text text)
@@ -84,21 +71,20 @@
                (fn () (save-post p)
                       (post-page user p)))))
 
-(defop archive req
+(newsop archive ()
   (ensure-posts)
   (blogpage
     (tag ul
       (each p (map post (rev (range 1 blog-maxid*)))
         (tag li (link p!title (blog-permalink p)))))))
 
-(defop blog req
+(newsop blog ()
   (ensure-posts)
-  (let user (get-user req)
     (blogpage
       (up i 0 5
         (awhen (posts* (- blog-maxid* i))
           (display-post user it)
-          (br 3))))))
+          (br 3)))))
 
 (def ensure-posts ()
   (ensure-dir postdir*)
