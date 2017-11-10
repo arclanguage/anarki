@@ -618,7 +618,7 @@ function vote(node) {
     (toplink "comments" "newcomments" label)
     (toplink "leaders"  "leaders"     label)
     (hook 'toprow user label)
-    (if (bound 'blogtitle*) (toplink "blog" "blog" label))
+    (if (bound 'blog-threshold*) (toplink "blog" "blog" label))
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
@@ -1667,10 +1667,6 @@ function vote(node) {
 (def kill-whole-thread (c)
   (kill c 'thread)
   (map kill-whole-thread:item c!kids))
-
-; Blog
-
-(= blog-threshold* 100)
 
 ; Polls
 

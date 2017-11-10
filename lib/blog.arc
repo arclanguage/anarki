@@ -3,7 +3,9 @@
 
 (= postdir* (+ srvdir* "posts/")  blog-maxid* 0  posts* (table))
 
-(deftem post  id nil  title nil  text nil)
+(deftem post  id nil  by nil  title nil  text nil)
+
+(= blog-threshold* 10)
 
 (def load-posts ()
   (each id (map int (dir postdir*))
@@ -25,7 +27,7 @@
               (link "rss" "blog-rss")))
           (br)
          ,@body))))
-         
+
 (defop viewpost req (blogop post-page req))
 
 (def blogop (f req)
@@ -39,7 +41,9 @@
 
 (def display-post (user p)
   (tag b (link p!title (blog-permalink p)))
-  (when (blogger user)
+  (when (or
+          (is p!by user)
+          (admin user))
     (sp)
     (link "[edit]" (string "editpost?id=" p!id)))
   (br2)
@@ -50,7 +54,6 @@
   (and (no (blank user))
        (or (> (karma user) blog-threshold*)
            (admin user))))
-
 
 (newsop newpost ()
   (minipage "New post"
@@ -64,7 +67,7 @@
         (pr (string "Sorry, you need " blog-threshold* " karma to submit blog posts."))))))
 
 (def addpost (user title text)
-  (let p (inst 'post 'id (++ blog-maxid*) 'title title 'text text)
+  (let p (inst 'post 'id (++ blog-maxid*) 'by user 'title title 'text text)
     (save-post p)
     (= (posts* p!id) p)))
 
