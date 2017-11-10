@@ -40,7 +40,8 @@
 (def post-page (user p) (blogpage (display-post user p)))
 
 (def display-post (user p)
-  (tag b (link p!title (blog-permalink p)))
+  (tag b (link p!title (blog-permalink p))) (br)
+  (spanclass "subtext" (pr "by") (sp) (userlink user p!by))
   (when (or
           (is p!by user)
           (admin user))
@@ -48,7 +49,9 @@
     (link "[edit]" (string "editpost?id=" p!id)))
   (br2)
   (tag (span "style" "font-family:serif; color:black;")
-       (pr (markdown p!text))))
+       (pr (markdown p!text))
+       (br 4)
+       (center (pr "***"))))
 
 (def blogger (user)
   (and (no (blank user))
@@ -108,7 +111,3 @@
     (rss-stories
       (map [posts* _] (range 1 blog-maxid*))
       blogtitle*)))
-
-(def bsv ()
-  (ensure-posts)
-  (asv))
