@@ -21,7 +21,7 @@
           (center
             (w/bars
               (link "archive")
-              (link "new post" "newpost")
+              (if (blogger user) (link "new post" "newpost"))
               (link "rss" "blog-rss")))
           (br)
          ,@body))))
@@ -39,22 +39,29 @@
 
 (def display-post (user p)
   (tag b (link p!title (blog-permalink p)))
-  (when user
+  (when (blogger user)
     (sp)
     (link "[edit]" (string "editpost?id=" p!id)))
   (br2)
   (tag (span "style" "font-family:serif; color:black;")
        (pr (markdown p!text))))
 
-(defopl newpost req
+(def blogger (user)
+  (and (no (blank user))
+       (or (> (karma user) blog-threshold*)
+           (admin user))))
+
+
+(newsop newpost ()
   (minipage "New post"
-    (aform [let u (get-user _)
-             (post-page u (addpost u (arg _ "t") (arg _ "b")))]
-      (if (> (karma (get-user req)) blog-threshold*)
+    (aform
+      (fn (req)
+        (post-page user (addpost user (arg req "t") (arg req "b"))))
+      (if (blogger user)
         (tab (row "title" (input "t" "" 60))
              (row "text"  (textarea "b" 10 80))
              (row ""      (submit)))
-        (pr (string "Sorry, you need " blog-threshold* " karma to create a blog post."))))))
+        (pr (string "Sorry, you need " blog-threshold* " karma to submit blog posts."))))))
 
 (def addpost (user title text)
   (let p (inst 'post 'id (++ blog-maxid*) 'title title 'text text)
@@ -64,12 +71,14 @@
 (defopl editpost req (blogop edit-blog-page req))
 
 (def edit-blog-page (user p)
-  (whitepage
-    (vars-form user
-               `((string title ,p!title t t) (text text ,p!text t t))
-               (fn (name val) (= (p name) val))
-               (fn () (save-post p)
-                      (post-page user p)))))
+  (if (blogger user)
+    (minipage "Edit post"
+      (vars-form user
+                 `((string title ,p!title t t) (text text ,p!text t t))
+                 (fn (name val) (= (p name) val))
+                 (fn () (save-post p)
+                        (post-page user p))))
+    (pr (string "Sorry, you need " blog-threshold* " karma to edit posts."))))
 
 (newsop archive ()
   (ensure-posts)
