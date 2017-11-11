@@ -40,13 +40,14 @@
 (def post-page (user p) (blogpage (display-post user p)))
 
 (def display-post (user p)
-  (tag b (link p!title (blog-permalink p))) (br)
-  (spanclass "subtext" (pr "by") (sp) (userlink user p!by))
+  (tag b (link p!title (blog-permalink p)))
   (when (or
           (is p!by user)
           (admin user))
-    (sp)
-    (link "[edit]" (string "editpost?id=" p!id)))
+        (sp)
+        (link "[edit]" (string "editpost?id=" p!id)))
+  (br)
+  (spanclass "subtext" (pr "by") (sp) (userlink user p!by))
   (br2)
   (tag (span "style" "font-family:serif; color:black;")
        (pr (markdown p!text))
