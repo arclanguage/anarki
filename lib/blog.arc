@@ -32,8 +32,8 @@
 
 (def blogop (f req)
   (aif (post (arg req "id"))
-       (f (get-user req) it)
-       (blogpage (pr "No such post."))))
+    (f (get-user req) it)
+    (blogpage (pr "No such post."))))
 
 (def blog-permalink (p) (string "viewpost?id=" p!id))
 
@@ -42,20 +42,19 @@
 (def display-post (user p)
   (tag b (link p!title (blog-permalink p)))
   (when (or
-          (is p!by user)
-          (admin user))
-        (sp)
-        (link "[edit]" (string "editpost?id=" p!id)))
+    (is p!by user)
+      (admin user))
+      (sp) (link "[edit]" (string "editpost?id=" p!id)))
   (br)
   (spanclass "subtext" (pr "by") (sp) (userlink user p!by))
   (br2)
   (tag (span "style" "font-family:serif; color:black;")
-       (pr (markdown p!text))
-       (br 4)
-       (center (pr "***"))))
+    (pr (markdown p!text))
+    (br 4)
+    (center (pr "***"))))
 
 (def blogger (user)
-  (and (no (blank user))
+  (and user
        (or (> (karma user) blog-threshold*)
            (admin user))))
 
@@ -81,10 +80,10 @@
   (if (blogger user)
     (minipage "Edit post"
       (vars-form user
-                 `((string title ,p!title t t) (text text ,p!text t t))
-                 (fn (name val) (= (p name) val))
-                 (fn () (save-post p)
-                        (post-page user p))))
+        `((string title ,p!title t t) (text text ,p!text t t))
+         (fn (name val) (= (p name) val))
+         (fn () (save-post p)
+         (post-page user p))))
     (pr (string "Sorry, you need " blog-threshold* " karma to edit posts."))))
 
 (newsop archive ()
