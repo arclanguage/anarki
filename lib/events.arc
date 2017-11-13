@@ -93,6 +93,7 @@
    events*)
 
 (def ensure-events ()
+  (ensure-dir eventdir*)
   (if (no events*)
       (load-events)))
 
