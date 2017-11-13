@@ -19,6 +19,7 @@
     lib/news.arc
     lib/search.arc
     lib/blog.arc
+    lib/events.arc
 
     ; helpers for the repl
     lib/ppr.arc
