@@ -14,11 +14,13 @@
 ;   You should have received a copy of the GNU Affero General Public License
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+(newsop search (q)
+  (search-page user q))
+
 (def search-bar (user)
-  (aform
-    (fn (req)
-      (search-page user (arg req "terms")))
-    (single-input "" 'terms 20 "Search")))
+  (tag (form action "search")
+    (pr "Search: ")
+    (input 'q "" 18 )))
 
 (def search-page (user terms)
   (listpage user (msec) (search (join stories* comments*) tokens.terms) "search"
