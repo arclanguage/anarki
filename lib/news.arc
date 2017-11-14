@@ -1,6 +1,6 @@
 (= this-site*    "My Forum"
-   site-url*     "http://news.yourdomain.com/"
-   parent-url*   "http://www.yourdomain.com"
+   site-url*     "http://news.example.com/"               ; your domain name
+   parent-url*   "http://www.example.com"
    favicon-url*  ""
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
@@ -448,6 +448,7 @@
        (link "rss")
        (link "lists")
        (link "formatting" "formatdoc")
+       (if (bound 'events*) (link "events"))
        (link "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
@@ -604,7 +605,7 @@ function vote(node) {
       (tag (img src logo-url* width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
-(= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "blog" "events" "*"))
+(= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "blog" "*"))
 
 (= welcome-url* "welcome")
 
@@ -618,8 +619,7 @@ function vote(node) {
     (toplink "comments" "newcomments" label)
     (toplink "leaders"  "leaders"     label)
     (hook 'toprow user label)
-    (if (bound 'blog-threshold*) (toplink "blog" "blog" label))
-    (if (bound 'event-threshold*) (toplink "events" "events" label))
+    (if (bound 'posts*) (toplink "blog" "blog" label))
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
