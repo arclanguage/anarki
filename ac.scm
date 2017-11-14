@@ -1289,6 +1289,14 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                 (namespace-set-variable-value! '_thatexpr expr))
               (tl2 interactive?)))))))
 
+(let ((current-function '()))
+  (define (set-current-fn name)
+    (set! current-function name))
+  (define (current-fn)
+    current-function)
+  (xdef set-current-fn set-current-fn)
+  (xdef current-fn current-fn))
+
 (define (aload1 p)
   (let ((x (read p)))
     (if (eof-object? x)

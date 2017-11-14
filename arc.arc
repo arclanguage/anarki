@@ -175,12 +175,15 @@ last expression."
 'body', parameterizing 'parms' with call arguments.
 For more information see the tutorial: http://ycombinator.com/arc/tut.txt
 Or come ask questions at http://arclanguage.org/forum"
+  (set-current-fn name)  ; make the current function name available to macros for error messages
   `(do (warn-if-bound ,name)
        (document def ,name ,parms
                    ,@(if (is (type car.body) 'string)
                        body
                        (cons nil body)))
        (assign ,name (fn ,parms ,@body))))
+  ; clearing current-fn at end causes macroexpansions to no longer have access
+  ; to the current function.
 
 (mac redef (name parms . body)
 "Defines a new function like [[def]], but doesn't warn if 'name' already exists."
@@ -636,6 +639,13 @@ This is the most reliable way to check for presence, even when searching for nil
 "Tries to convert 'expr' into a different 'type'.
 More convenient form of [[coerce]] with arguments reversed; doesn't need
 'type' to be quoted."
+  (if (is type 'list)
+    (if (and (current-fn)
+             (~is (current-fn) 'print-like-repl))  ; hack: typing at the interactive REPL
+      (ero "warning: function " (current-fn) " in file " current-load-file* ": tried to coerce to 'list', but the default type of lists is 'cons'")
+      (if current-load-file*
+        (ero "warning: file " current-load-file* ": tried to coerce to 'list', but the default type of lists is 'cons'")
+        (ero "warning: tried to coerce to 'list', but the default type of lists is 'cons'"))))
   `(coerce ,expr ',type))
 
 (def sym (x)
