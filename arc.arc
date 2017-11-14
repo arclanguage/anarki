@@ -162,6 +162,14 @@ last expression."
       (prn "line 3"))
   _)
 
+;; def
+;
+; the core of this implementation is:
+;   (mac def (name parms . body)
+;     (assign ,name (fn ,parms ,@body)))
+;
+; everything else is hooking up useful infrastructure for debugging: warnings,
+; online help, error messages.
 (mac def (name parms . body)
 "Defines a new function called 'name'. When called, the function runs
 'body', parameterizing 'parms' with call arguments.
