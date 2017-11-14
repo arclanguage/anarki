@@ -1,6 +1,8 @@
 ; A blog for news.arc
 ; For the standalone blog example by PG, see blog.arc from arc3.1
 
+(= blogtitle* "A blog")
+
 (= postdir* (+ srvdir* "posts/")  blog-maxid* 0  posts* (table))
 
 (deftem post  id nil  by nil  title nil  text nil)
