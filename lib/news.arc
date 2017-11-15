@@ -605,7 +605,7 @@ function vote(node) {
       (tag (img src logo-url* alt 'logo width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
-(= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "blog" "*"))
+(= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "*"))
 
 (= welcome-url* "welcome")
 
@@ -617,7 +617,6 @@ function vote(node) {
     (when user
       (toplink "threads" (threads-url user) label))
     (toplink "comments" "newcomments" label)
-    (toplink "leaders"  "leaders"     label)
     (hook 'toprow user label)
     (if (bound 'posts*) (toplink "blog" "blog" label))
     (when
@@ -912,6 +911,7 @@ function vote(node) {
 (newsop lists ()
   (longpage user (msec) nil "lists" "Lists" "lists"
     (sptab
+      (row (link "leaders")      "Users with most karma.")
       (row (link "best")         "Highest voted recent links.")
       (row (link "active")       "Most active current discussions.")
       (row (link "bestcomments") "Highest voted recent comments.")
@@ -977,6 +977,12 @@ function vote(node) {
           rel 'nofollow)
     (pr "More")))
 
+; Look up title on Searx, a free metasearch engine
+
+(def weblink (q)
+  (pr bar*)
+  (link "web" (+ "https://searx.me/?q=" (urlencode q))))
+
 (def display-story (i s user whence)
   (when (or (cansee user s) (s 'kids))
     (tr (display-item-number i)
@@ -986,6 +992,7 @@ function vote(node) {
         (tag (td class 'subtext)
           (hook 'itemline s user)
           (itemline s user)
+          (when (isnt whence "news") (weblink s!title))
           (when (in s!type 'story 'poll) (commentlink s user))
           (editlink s user)
           (when (apoll s) (addoptlink s user))
