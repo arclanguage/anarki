@@ -6,10 +6,14 @@
 # argument parsing
 RLWRAP=true
 DO_HELP=false
-while getopts nh opt; do
+REPL=false
+while getopts nih opt; do
     case $opt in
         n)
             RLWRAP=false
+            ;;
+        i)
+            REPL=true
             ;;
         h)
             DO_HELP=true
@@ -26,11 +30,14 @@ shift $((OPTIND - 1))
 
 if [[ $DO_HELP == true ]] ; then
     echo "
-arc.sh [-n] [-h] [<file> [<file_args>]]
+arc.sh [-n] [-i] [-h] [<file> [<file_args>]]
 
 OPTIONS
     -n
         No rlwrap for line-editing (useful inside emacs)
+
+    -i
+        Run the interactive REPL
 
     -h
         Print help and exit
@@ -94,13 +101,15 @@ esac
 
 if [[ $RLWRAP == "true" ]] ; then
     rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
-else
-    rl=''
+fi
+
+if [[ $REPL == "true" ]] ; then
+  repl='(tl)'
 fi
 
 if [ $# -gt 0 ]; then
     # there's a file given, execute it
-    exec $rl racket -t "$arc_dir/boot.scm" -e '(aload (vector-ref (current-command-line-arguments) 0))' "$@"
+    $rl racket -t "$arc_dir/boot.scm" -e "(aload (vector-ref (current-command-line-arguments) 0)) $repl" "$@"
 else
     #no file, start the REPL
     $rl racket -t "$arc_dir/boot.scm" -e '(tl)'
