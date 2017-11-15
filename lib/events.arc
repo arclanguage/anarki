@@ -95,6 +95,7 @@
             (display-event user event)))))))
 
 (def load-events ()
+   (= events* nil)
    (each id (map int (dir eventdir*))
       (do
       (= event-maxid* (max event-maxid* id))

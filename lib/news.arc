@@ -445,9 +445,9 @@
 (def bottom-bar ()
      (spanclass yclinks
      (w/bars
-       (link "rss")
+       (link "faq")
        (link "lists")
-       (link "formatting" "formatdoc")
+       (link "rss")
        (if (bound 'events*) (link "events"))
        (link "anarki" "http://github.com/arclanguage/anarki"))))
 
@@ -602,7 +602,7 @@ function vote(node) {
 (def gen-logo ()
   (tag (td style "width:18px;padding-right:4px")
     (tag (a href parent-url*)
-      (tag (img src logo-url* alt 'logo width 18 height 18
+      (tag (img src logo-url* alt 'a width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "*"))
@@ -1082,8 +1082,8 @@ function vote(node) {
           onclick (if user "return vote(this)")
           href    (vote-url user i dir whence))
     (if (is dir 'up)
-      (out (gentag img src up-url*   alt '+ border 0 vspace 3 hspace 2))
-      (out (gentag img src down-url* alt '- border 0 vspace 3 hspace 2)))))
+      (out (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2))
+      (out (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2)))))
 
 (def vote-url (user i dir whence)
   (+ "vote?" "for=" i!id
@@ -2376,6 +2376,33 @@ reproduced verbatim.  (This is intended for code.)
 first asterisk isn't whitespace.
 <p> Urls become links, except in the text field of a submission.<br><br>")
 
+
+; FAQ
+
+(defop faq req
+  (let user (get-user req)
+  (msgpage user (faq user) "FAQ")))
+
+(def faq (user)
+  (string
+"<b>Anarki FAQ</b><br><br>
+<b>What kind of formatting can you use in comments?</b><br>
+See the <a href=formatdoc>formatting options</a>.<br><br>
+<b>In my profile, what is showdead?</b><br>
+It lets you see stories that have been killed.<br><br>
+<b>In my profile, what is noprocrast?</b><br>
+If you enable noprocrast, you'll only be allowed to visit this site for maxvisit minutes at a time, with gaps of minaway minutes in between.<br><br>
+<b>In my profile, what is delay?</b><br>
+It is the number of minutes you can edit your comments before they appear to others.<br><br>"
+    (if (admin user)
+"<b>As an admin, what does it mean when I click on the site name of a story, and the site name changes color?</b><br>
+By clicking on the site name of a story admins may tag the domain. The color of a domain indicates its tag,
+<ul>
+  <li>gray: default</li>
+  <li>darkred: ignore</li>
+  <li>darkblue: kill</li>
+</ul>
+<br><br>")))
 
 ; Noprocrast
 

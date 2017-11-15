@@ -81,14 +81,6 @@ You may want to serve **News** securely over **HTTPS**. An example configuration
 The **News** server will use the `openssl` command. If you're on Windows, first install **OpenSSL** and make sure it's on your `PATH`. Other systems should be distributed with **OpenSSL** already.
 
 
-### Submissions
-
-By clicking on the domain name of a submitted link admins may tag the domain. The color of a domain name indicates its tag,
-
-* *gray* default
-* *darkred* ignore
-* *darkblue* kill
-
 ## Development
 
 ### Tests
