@@ -8,14 +8,14 @@
 # argument parsing
 RLWRAP=true
 DO_HELP=false
-REPL=false
+REPL=maybe
 while getopts nih opt; do
     case $opt in
         n)
             RLWRAP=false
             ;;
         i)
-            REPL=true
+            REPL=definitely
             ;;
         h)
             DO_HELP=true
@@ -76,7 +76,7 @@ case $(uname) in
           exit 1
         fi
         arc_dir=$(dirname "$(greadlink -f "$0")")
-        if $RLWRAP && ! which rlwrap >&/dev/null
+        if [[ $RLWRAP == true ]] && ! which rlwrap >&/dev/null
         then
           echo 'Please run "brew install rlwrap"'
           echo 'Or run arc without rlwrap: "./arc.sh -n"'
@@ -92,7 +92,7 @@ case $(uname) in
           exit 1
         fi
         arc_dir=$(dirname "$(readlink -f "$0")")
-        if $RLWRAP && ! which rlwrap >&/dev/null
+        if [[ $RLWRAP == true ]] && ! which rlwrap >&/dev/null
         then
           echo "Please install rlwrap with your OS's package manager (apt-get, dpkg, rpm, yum, pacman, etc.)"
           echo 'Or run arc without rlwrap: "./arc.sh -n"'
@@ -105,18 +105,17 @@ case $(uname) in
         exit 1
 esac
 
-if [[ $RLWRAP == "true" ]] ; then
-    rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+if [ $# -gt 0 ]; then
+  # there's a file given, execute it
+  load="(aload (vector-ref (current-command-line-arguments) 0))"
 fi
 
-if [[ $REPL == "true" ]] ; then
+if [[ $REPL == definitely || ( $REPL == maybe && $# -eq 0 ) ]]; then
+  # start an interactive prompt
+  if [[ $RLWRAP == true ]]; then
+    rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+  fi
   repl='(tl)'
 fi
 
-if [ $# -gt 0 ]; then
-    # there's a file given, execute it
-    $rl racket -t "$arc_dir/boot.scm" -e "(aload (vector-ref (current-command-line-arguments) 0)) $repl" "$@"
-else
-    #no file, start the REPL
-    $rl racket -t "$arc_dir/boot.scm" -e '(tl)'
-fi
+$rl racket -t "$arc_dir/boot.scm" -e "$load $repl" "$@"
