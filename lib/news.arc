@@ -602,7 +602,7 @@ function vote(node) {
 (def gen-logo ()
   (tag (td style "width:18px;padding-right:4px")
     (tag (a href parent-url*)
-      (tag (img src logo-url* width 18 height 18
+      (tag (img src logo-url* alt 'logo width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "leaders" "blog" "*"))
@@ -1075,8 +1075,8 @@ function vote(node) {
           onclick (if user "return vote(this)")
           href    (vote-url user i dir whence))
     (if (is dir 'up)
-      (out (gentag img src up-url*   border 0 vspace 3 hspace 2))
-      (out (gentag img src down-url* border 0 vspace 3 hspace 2)))))
+      (out (gentag img src up-url*   alt '+ border 0 vspace 3 hspace 2))
+      (out (gentag img src down-url* alt '- border 0 vspace 3 hspace 2)))))
 
 (def vote-url (user i dir whence)
   (+ "vote?" "for=" i!id
