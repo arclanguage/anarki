@@ -1,7 +1,9 @@
 #!/bin/bash
-# With args, acts as a wrapper for scripting in the arc language.
-# Put a symlink to it somewhere in your path.
-# Without args, starts up a repl.
+# Put a symlink to this script somewhere in your path.
+#
+# To run an Arc program, pass it in followed by any args to it.
+# To open an interactive prompt (REPL), run without args.
+# To open a REPL after running a program, pass in the '-i' flag.
 
 # argument parsing
 RLWRAP=true
@@ -37,21 +39,25 @@ OPTIONS
         No rlwrap for line-editing (useful inside emacs)
 
     -i
-        Run the interactive REPL
+        Start an interactive session (REPL)
 
     -h
         Print help and exit
 
     <file> [<file_args>]
-        Don't start up a REPL; instead, execute the file, passing to it any file_args. When the file finishes executing, exit Arc.
+        Run the given file, passing to it any file_args. When the file finishes running, start an interactive session (REPL) if '-i' was explicitly provided.
 
 EXAMPLES
     Start the Arc REPL:
         arc.sh
     Start the Arc REPL without any line-editing smarts:
         arc.sh -n
-    Run the file \"file-to-run.arc\", passing to it the argument 3
-        arc.sh file-to-run.arc 3
+    Run the file \"x.arc\", passing to it the argument '3':
+        arc.sh x.arc 3
+    Run the file \"x.arc\", passing to it the argument '3' -- and then start the Arc REPL:
+        arc.sh -i x.arc 3
+    Run the file \"x.arc\", passing to it the arguments '-i' and '3':
+        arc.sh x.arc -i 3
 "
     exit 1
 fi
