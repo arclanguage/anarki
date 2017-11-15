@@ -43,10 +43,9 @@
 
 (def display-post (user p)
   (tag b (link p!title (blog-permalink p)))
-  (when (or
-    (is p!by user)
-      (admin user))
-      (sp) (link "[edit]" (string "editpost?id=" p!id)))
+  (when (or (author user p)
+            (admin user))
+    (sp) (link "[edit]" (string "editpost?id=" p!id)))
   (br)
   (spanclass "subtext" (pr "by") (sp) (userlink user p!by))
   (br2)
@@ -79,13 +78,15 @@
 (defopl editpost req (blogop edit-blog-page req))
 
 (def edit-blog-page (user p)
-  (if (blogger user)
+  (if (or (author user p)
+          (admin user))
     (minipage "Edit post"
       (vars-form user
         `((string title ,p!title t t) (text text ,p!text t t))
          (fn (name val) (= (p name) val))
-         (fn () (save-post p)
-         (post-page user p))))
+         (fn ()
+           (save-post p)
+           (post-page user p))))
     (pr (string "Sorry, you need " blog-threshold* " karma to edit posts."))))
 
 (newsop archive ()
