@@ -75,6 +75,15 @@ Any interactive changes to the prompt will be reflected immediately in the serve
 
 You may want to serve **News** securely over **HTTPS**. An example configuration for running **Nginx** with **SSL** as a reverse proxy for **News** can be found in `anarki/extras/news.nginx.conf`.
 
+### Resetting passwords
+
+For password reset mails to be sent out, your must set up an email account to send these from,
+
+    $ echo "someone@example.com" > www/app-email  ; email
+    $ echo "smtp.example.com" >> www/app-email     ; smtp server
+    $ echo "someone@example.com" >> www/app-email  ; user
+    $ echo "1234" >> www/app-email                 ; password
+
 
 ### Windows specific
 

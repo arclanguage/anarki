@@ -235,7 +235,7 @@ Returns nil if no logged-in user."
   (aform (fn (req)
            (let user (arg req "u")
              (iflet email emails*.user
-               (do (email-forgotpw-link user email)
+               (do (email-forgotpw-link2 user email)
                    (pr "We've emailed you a link. Please click on it within the next few minutes to reset your password.")
                    (br2)
                    (pr "If you don't see it, check your spam folder."))
@@ -243,7 +243,28 @@ Returns nil if no logged-in user."
     (input "u" "" 20)
     (submit "I've forgotten my password. Help!")))
 
+($ (require net/smtp))
+(def email-forgotpw-link2 (user email)
+; reset pw email with smtp
+; TODO: Show error to user if mail fails to send
+  (withr (app-email (map string (readfile "www/app-email"))
+         from      (app-email 0)
+         smtp-srv  (app-email 1)
+         auth-user (app-email 2)
+         pw        (app-email 3))
+        ($.smtp-send-message
+          smtp-srv
+          from
+          ($.list email)
+          "Reset your password"
+          (prn site-url* (flink (fn ignore
+             (forgotpw-reset-page user))))
+          ; TODO: how to use keyword args in Arc (because this doesn't work right now)
+          '#:auth-user auth-user
+          '#:auth-passwd pw)))
+
 (def email-forgotpw-link (user email)
+; reset pw email with sendmail
   (pipe-to (system "sendmail -t")
     (prn "To: " email)
     (prn "Subject: reset your password")
