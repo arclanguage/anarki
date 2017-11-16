@@ -235,17 +235,21 @@ Returns nil if no logged-in user."
   (aform (fn (req)
            (let user (arg req "u")
              (iflet email emails*.user
-               (do (email-forgotpw-link user email)
-                   (pr "We've emailed you a link. Please click on it within the next few minutes to reset your password.")
-                   (br2)
-                   (pr "If you don't see it, check your spam folder."))
+               (if (errsafe:email-forgotpw-link user email)
+                   (do
+                     (pr "We've emailed you a link. Please click on it within the next few minutes to reset your password.")
+                     (br2)
+                     (pr "If you don't see it, check your spam folder."))
+                   (do
+                     (pr "Sorry, there was a problem sending the email.")
+                     (br2)
+                     (pr "Please tell an admin, so they can fix it.")))
                (pr "You didn't provide a valid email. Please create a fresh account."))))
     (input "u" "" 20)
     (submit "Send reset email")))
 
 ($ (require net/smtp))
 (def email-forgotpw-link (user email)
-; TODO: Display user error if mail fails to send
   (withr (app-email (map string (readfile "www/app-email"))
          to         ($.list email)
          header     "Subject: Reset your password\n\n"
