@@ -10,7 +10,8 @@
     namespace-anchor->namespace
     thread-receive
     thread-send
-    thread-try-receive))
+    thread-try-receive
+    keyword-apply))
 (require openssl)
 (require (lib "port.ss"))
 (require (lib "process.ss"))

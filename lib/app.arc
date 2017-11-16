@@ -235,44 +235,32 @@ Returns nil if no logged-in user."
   (aform (fn (req)
            (let user (arg req "u")
              (iflet email emails*.user
-               (do (email-forgotpw-link2 user email)
+               (do (email-forgotpw-link user email)
                    (pr "We've emailed you a link. Please click on it within the next few minutes to reset your password.")
                    (br2)
                    (pr "If you don't see it, check your spam folder."))
                (pr "You didn't provide a valid email. Please create a fresh account."))))
     (input "u" "" 20)
-    (submit "I've forgotten my password. Help!")))
+    (submit "Send reset email")))
 
 ($ (require net/smtp))
-(def email-forgotpw-link2 (user email)
-; reset pw email with smtp
-; TODO: Show error to user if mail fails to send
-  (withr (app-email (map string (readfile "www/app-email"))
-         from      (app-email 0)
-         smtp-srv  (app-email 1)
-         auth-user (app-email 2)
-         pw        (app-email 3))
-        ($.smtp-send-message
-          smtp-srv
-          from
-          ($.list email)
-          "Reset your password"
-          (prn site-url* (flink (fn ignore
-             (forgotpw-reset-page user))))
-          ; TODO: how to use keyword args in Arc (because this doesn't work right now)
-          '#:auth-user auth-user
-          '#:auth-passwd pw)))
-
 (def email-forgotpw-link (user email)
-; reset pw email with sendmail
-  (pipe-to (system "sendmail -t")
-    (prn "To: " email)
-    (prn "Subject: reset your password")
-    (prn "From: " (emails* admins*.0))
-    (prn)
-    (prn "To reset your password, go here:")
-    (prn site-url* (flink (fn ignore
-                            (forgotpw-reset-page user))))))
+; TODO: Display user error if mail fails to send
+  (withr (app-email (map string (readfile "www/app-email"))
+         to         ($.list email)
+         header     "Subject: Reset your password\n\n"
+         message    ($.list (string
+                            (trim site-url* 'end #\/)
+                            (flink (fn ignore (forgotpw-reset-page user)))))
+         from       (app-email 0)
+         smtp-srv   (app-email 1)
+         auth-user  (app-email 2)
+         pw         (app-email 3))
+        ($.keyword-apply
+          $.smtp-send-message
+          ($.map $.string->keyword ($.list "auth-passwd" "auth-user"))
+          ($.list pw auth-user)
+          ($.list smtp-srv from to header message))))
 
 (def forgotpw-reset-page (user (o msg))
   (if msg (pr msg))
