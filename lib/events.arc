@@ -14,6 +14,8 @@
 ;   You should have received a copy of the GNU Affero General Public License
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+($ (require racket/date))
+
 (= events-title* "My calendar"
    events-url*   "http://example.com"
    events-desc*  "What kind of events are posted here.")
@@ -32,44 +34,42 @@
                url     nil
                date    nil)
 
-(deftem date  year  nil
-              month nil
-              day   nil)
-
-(def newdate (y m d)
-  (inst 'date 'year  y
-              'month m
-              'day  d))
-
 (= months
   '(nil "Jan" "Feb" "Mar" "Apr" "May" "Jun"
         "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
 
-(def today ()
-  (let now ($ (seconds->date (current-seconds)))
-    (newdate ($.date-year now) ($.date-month now) ($.date-day now))))
+(def weekday (d)
+  ('("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat")
+  ($.date-week-day ($.seconds->date (toseconds d)))))
 
-(def compare-dates (f d1 d2)
-  (if (isnt (int d1!year)  (int d2!year))
-      (f    (int d1!year)  (int d2!year))
-      (isnt (int d1!month) (int d2!month))
-      (f    (int d1!month) (int d2!month))
-      (f    (int d1!day)   (int d2!day))))
+(def countdown (d)
+  (let days (round (- (days-since (toseconds d))))
+    (if (is days 0) "today"
+        (string "in " (plural days "day")))))
+
+(def toseconds (d)
+  (let _ 0 ;unused fields
+     ($.date->seconds
+       ($.date _ _ _ (int (d 2)) (int (d 1)) (int (d 0)) _ _ _ _))))
+
+(def than (f d1 d2)
+  ;compare dates as seconds
+  (apply f (map toseconds (list d1 d2))))
 
 (def earlier (d1 d2)
-  (compare-dates < d1 d2))
+  (than < d1 d2))
 
 (def later (d1 d2)
-  (compare-dates > d1 d2))
+  (than > d1 d2))
 
 (def sameday (d1 d2)
-  (compare-dates is d1 d2))
+  (than is d1 d2))
 
 (def future (d)
-  (earlier (today) d))
+  (earlier (date) d))
 
 (def past (d)
-  (later (today) d))
+  (later (date) d))
 
 (def upcoming (events)
   (rem [past _!date]
@@ -91,8 +91,9 @@
           (link "new event" "new-event")
           (link "rss" "events-rss"))
         (widtable 600
-          (each event (upcoming events*)
-            (display-event user event)))))))
+          (tag ul
+            (each event (upcoming events*)
+              (display-event user event))))))))
 
 (def load-events ()
    (= events* nil)
@@ -132,7 +133,7 @@
     (o title)
     (o address)
     (o url)
-    (o date (today))
+    (o d (date))
     (o id)
     (o msg))
   (whitepage
@@ -144,41 +145,37 @@
           (arg req "t")
           (arg req "a")
           (arg req "u")
-          (newdate
-            (arg req "y")
-            (string (pos (arg req "m") months))
-            (arg req "d"))
+          (list ;date
+            (arg req "year")
+            (string (pos (arg req "month") months))
+            (arg req "day"))
           id)
         (row 'Title   (input 't title 40))
         (row 'Address (input 'a address 40))
         (row 'Link    (input 'u url 40))
         (row 'Date
           (tag span
-            (menu  'y (range ((today) 'year)
-                                         (+ ((today) 'year) 10))
-                                               (int date!year))
-            (menu  'm (map [months _] (range 1 12))
-                               (months (int date!month)))
-            (menu  'd (range 1 31) (int date!day))))
+            (menu  'year (range ((date) 0) (+ ((date) 0) 10)) (int (d 0)))
+            (menu  'month (map [months _] (range 1 12)) (months (int (d 1))))
+            (menu  'day (range 1 31) (int (d 2)))))
         (row (submit))))))
 
-(def process-event (user title address url date id)
-  ; Somehow insufficient check, because February 31st passes
+(def process-event (user title address url d id)
   (if
-      (no (all errsafe:int (list date!year date!month date!day)))
-        (new-event-page user title address url date id
+      (no (errsafe:toseconds d))
+        (new-event-page user title address url d id
                        "Please pick a valid date.")
-      (past date)
-        (new-event-page user title address url date id
+      (past d)
+        (new-event-page user title address url d id
                        "Please pick a future date.")
       (blank title)
-        (new-event-page user title address url date id
+        (new-event-page user title address url d id
                        "Please enter a title.")
       (nor (valid-url url) (blank url))
-        (new-event-page user title address url date id
+        (new-event-page user title address url d id
                        "Please enter a valid link (or no link).")
       (do
-        (add-event user title address url date id)
+        (add-event user title address url d id)
         (events-page user))))
 
 (def add-event (user title address url date (o id))
@@ -206,31 +203,30 @@
 
 (def format-address (address)
   (if (nonblank address)
-    (link
-      (ellipsize address)
-      (openstreetmap address)) ""))
+      (link (ellipsize address)
+            (openstreetmap address)) ""))
 
-(def format-date (date)
-  (if (sameday (today) date)
-      "Today"
-      (string (check (int date!year) [isnt _ ((today) 'year)] "") " "
-              (months (int date!month)) " "
-              date!day)))
+(def format-date (d)
+  (string (weekday d) " "
+          (d 2) " "
+          (months (int (d 1))) " "
+          (check (int (d 0)) [isnt _ ((date) 0)] "")))
 
 (def display-event (user event)
-  (row
+  (tag li
     (tag span
-      (pr (format-title event!title event!url))
+      (tag b (pr (format-title event!title event!url)))
       (br)
       (tag span
         (w/bars
           (pr (format-date event!date))
+          (pr (countdown event!date))
           (pr (format-address event!address))
           (when (may-edit user event)
             (w/bars
               (onlink "edit" (edit-event user event))
-              (onlink "delete" (del-confirm-event user event))))))))
-  (spacerow 5))
+              (onlink "delete" (del-confirm-event user event)))))))
+    (br2)))
 
 (def may-edit (user event)
   (and user
@@ -256,7 +252,6 @@
         (aif (file-exists (string eventdir* event!id)) (rmfile it))
         (events-page user))
       (pr "Not allowed.")))
-
 
 (defop events-rss ()
   (ensure-events)
