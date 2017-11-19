@@ -589,7 +589,8 @@ function vote(node) {
                 (tag (td style "line-height:12pt; height:10px;")
                   (spanclass pagetop
                     (tag b (link this-site* "news"))
-                    (hspace 10)
+                    (sp)
+                    (hspace 5)
                     (toprow user label))))
              (if (is switch 'full)
                (tag (td style "text-align:right;padding-right:4px;")
@@ -1330,7 +1331,6 @@ function vote(node) {
     (if (>= a 1440) (pr (plural (trunc (/ a 1440)) "day")    " ago")
         (>= a   60) (pr (plural (trunc (/ a 60))   "hour")   " ago")
                     (pr (plural (trunc a)          "minute") " ago"))))
-
 
 ; Voting
 
