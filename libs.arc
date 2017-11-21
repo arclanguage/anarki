@@ -23,6 +23,7 @@
     lib/search.arc
     lib/blog.arc
     lib/events.arc
+    lib/prompt.arc
 
     ; helpers for the repl
     lib/ppr.arc
