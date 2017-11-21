@@ -13,6 +13,7 @@
   (ensure-dir (string appdir* user))
   (whitepage
     (prbold "Prompt")
+    (sp)
     (hspace 20)
     (pr user " | ")
     (link "logout")
