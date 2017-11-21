@@ -57,19 +57,27 @@
        (or (> (karma user) blog-threshold*)
            (admin user))))
 
-(newsop newpost ()
+(def newpost-page (user)
   (minipage "New post"
     (aform
       (fn (req)
         (post-page user (addpost user (arg req "t") (arg req "b"))))
-      (if (blogger user)
-        (tab (row "title" (input "t" "" 60))
-             (row "text"  (textarea "b" 10 80))
-             (row ""      (submit)))
-        (pr (string "Sorry, you need " blog-threshold* " karma to submit blog posts."))))))
+      (tab (row "title" (input "t" "" 60))
+           (row "text"  (textarea "b" 10 80))
+           (row ""      (submit))))))
+
+(newsop newpost ()
+  (if
+    (no user)
+      (login-page "You have to be logged in to submit blog posts."
+        (fn (user ip)
+            (newpost-page user)))
+    (blogger user)
+      (newpost-page user)
+    (pr (string "Sorry, you need " blog-threshold* " karma to submit blog posts."))))
 
 (def addpost (user title text)
-  (let p (inst 'post 'id (++ blog-maxid*) 'by user 'title title 'text text)
+  (atlet p (inst 'post 'id (++ blog-maxid*) 'by user 'title title 'text text)
     (save-post p)
     (= (posts* p!id) p)))
 
