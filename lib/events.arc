@@ -42,28 +42,30 @@
   ('("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat")
   ($.date-week-day ($.seconds->date (toseconds d)))))
 
-(def countdown (d)
-  (let days (round (- (days-since (toseconds d))))
-    (if (is days 0) "today"
-        (string "in " (plural days "day")))))
+(def till (d)
+  (tostring
+    (let days (roundup (- (- (days-since (toseconds d)) 0.5)))
+      (if (< days 7)
+              (if (is days 0) (pr "today")
+                  (is days 1) (pr "tomorrow")
+                  (+ "in " (plural days "day")))
+          (< days 30)
+              (pr "in " (plural (round (/ days 7)) "week"))
+          (< days 365)
+              (pr "in " (plural (round (/ days 30)) "month"))
+          t
+              (pr "in " (plural (round (/ days 365)) "year"))))))
 
 (def toseconds (d)
   (let _ 0 ;unused fields
      ($.date->seconds
        ($.date _ _ _ (int (d 2)) (int (d 1)) (int (d 0)) _ _ _ _))))
 
-(def than (f d1 d2)
-  ;compare dates as seconds
-  (apply f (map toseconds (list d1 d2))))
-
 (def earlier (d1 d2)
-  (than < d1 d2))
+  (apply < (map toseconds (list d1 d2))))
 
 (def later (d1 d2)
-  (than > d1 d2))
-
-(def sameday (d1 d2)
-  (than is d1 d2))
+  (apply > (map toseconds (list d1 d2))))
 
 (def future (d)
   (earlier (date) d))
@@ -89,11 +91,10 @@
         (br2)
         (w/bars
           (link "new event" "new-event")
-          (link "rss" "events-rss"))
-        (widtable 600
-          (tag ul
-            (each event (upcoming events*)
-              (display-event user event))))))))
+          (link "rss" "events-rss")))
+      (tag ul
+        (each event (upcoming events*)
+          (display-event user event))))))
 
 (def load-events ()
    (= events* nil)
@@ -145,7 +146,7 @@
           (arg req "t")
           (arg req "a")
           (arg req "u")
-          (list ;date
+          (list
             (arg req "year")
             (string (pos (arg req "month") months))
             (arg req "day"))
@@ -155,9 +156,9 @@
         (row 'Link    (input 'u url 40))
         (row 'Date
           (tag span
-            (menu  'year (range ((date) 0) (+ ((date) 0) 10)) (int (d 0)))
-            (menu  'month (map [months _] (range 1 12)) (months (int (d 1))))
-            (menu  'day (range 1 31) (int (d 2)))))
+            (menu  'year   (range ((date) 0) (+ ((date) 0) 10)) (int (d 0)))
+            (menu  'month  (map [months _] (range 1 12)) (months (int (d 1))))
+            (menu  'day    (range 1 31) (int (d 2)))))
         (row (submit))))))
 
 (def process-event (user title address url d id)
@@ -220,7 +221,7 @@
       (tag span
         (w/bars
           (pr (format-date event!date))
-          (pr (countdown event!date))
+          (pr (till event!date))
           (pr (format-address event!address))
           (when (may-edit user event)
             (w/bars
@@ -270,9 +271,7 @@
               (if (no (blank event!url)) (tag link (link event!url)))
               (tag description
                 (cdata
-                    (pr event!title)
-                    (br)
-                    (pr (format-date event!date))
-                    (br)
+                    (pr event!title) (br)
+                    (pr (format-date event!date)) (br)
                     (pr (format-address event!address))))))
         events))))
