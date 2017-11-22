@@ -32,7 +32,8 @@
                title   nil
                address nil
                url     nil
-               date    nil)
+               date    nil
+               oclock  nil)
 
 (= months
   '(nil "Jan" "Feb" "Mar" "Apr" "May" "Jun"
@@ -126,6 +127,7 @@
       event!address
       event!url
       event!date
+      event!oclock
       event!id)
       "Not allowed."))
 
@@ -135,12 +137,13 @@
     (o address)
     (o url)
     (o d (date))
+    (o oclock)
     (o id)
     (o msg))
   (whitepage
     (pagemessage msg)
     (tab
-      (uform user req
+      (urform user req
         (process-event
           (get-user req)
           (arg req "t")
@@ -150,36 +153,39 @@
             (arg req "year")
             (string (pos (arg req "month") months))
             (arg req "day"))
+          (arg req "oclock")
           id)
-        (row 'Title   (input 't title 40))
-        (row 'Address (input 'a address 40))
-        (row 'Link    (input 'u url 40))
-        (row 'Date
-          (tag span
-            (menu  'year   (range ((date) 0) (+ ((date) 0) 10)) (int (d 0)))
-            (menu  'month  (map [months _] (range 1 12)) (months (int (d 1))))
-            (menu  'day    (range 1 31) (int (d 2)))))
+        (row "title"   (input 't title 40))
+        (row "address" (input 'a address 40))
+        (row "link"    (input 'u url 40))
+        (spacerow 10)
+        (row "year"  (menu  'year  (range ((date) 0) (+ ((date) 0) 10)) (int (d 0))))
+        (row "month" (menu  'month (map [months _] (range 1 12)) (months (int (d 1)))))
+        (row "day"   (menu  'day   (range 1 31) (int (d 2))))
+        (row "time of day" (input 'oclock oclock 10))
+        (spacerow 10)
         (row (submit))))))
 
-(def process-event (user title address url d id)
-  (if
+(def process-event (user title address url d oclock id)
+  (let error [new-event-page user title address url d oclock id _]
+    (if
       (no (errsafe:toseconds d))
-        (new-event-page user title address url d id
-                       "Please pick a valid date.")
+        (flink [error "Please pick a valid date."])
       (past d)
-        (new-event-page user title address url d id
-                       "Please pick a future date.")
+        (flink [error "Please pick a future date."])
       (blank title)
-        (new-event-page user title address url d id
-                       "Please enter a title.")
+        (flink [error "Please enter a title."])
+      (> (len title) 80)
+        (flink [error "Please make title < 80 characters."])
       (nor (valid-url url) (blank url))
-        (new-event-page user title address url d id
-                       "Please enter a valid link (or no link).")
+        (flink [error "Please enter a valid link (or no link)."])
+      (> (len oclock) 20)
+        (flink [error "Please make time of day < 20 characters."])
       (do
-        (add-event user title address url d id)
-        (events-page user))))
+        (add-event user title address url d oclock id)
+        "events"))))
 
-(def add-event (user title address url date (o id))
+(def add-event (user title address url date oclock (o id))
   (ensure-events)
   (let event   (inst 'event
       'id      (if (no id) (++ event-maxid*) id)
@@ -187,7 +193,8 @@
       'title   title
       'address address
       'url     url
-      'date    date)
+      'date    date
+      'oclock  oclock)
     (save-event event)
     (if id (pull [is _!id id] events*))
     (push event events*)))
@@ -200,7 +207,7 @@
 
 (def format-title (title url)
   ([if (nonblank url)
-    (link _ url) _] (ellipsize title)))
+    (link _ url) _] title))
 
 (def format-address (address)
   (if (nonblank address)
@@ -220,6 +227,7 @@
       (br)
       (tag span
         (w/bars
+          (pr event!oclock)
           (pr (format-date event!date))
           (pr (till event!date))
           (pr (format-address event!address))
@@ -239,7 +247,7 @@
     (tab
      (row (display-event user event))
      (spacerow 20)
-     (row (uform user req
+     (row (urform user req
        (if (is (arg req "b") "Yes")
          (delete-event user event)
          (events-page user))
@@ -251,7 +259,7 @@
       (do
         (pull [is event _] events*)
         (aif (file-exists (string eventdir* event!id)) (rmfile it))
-        (events-page user))
+        "events")
       (pr "Not allowed.")))
 
 (defop events-rss ()

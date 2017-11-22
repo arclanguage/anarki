@@ -59,9 +59,8 @@
 
 (def newpost-page (user)
   (minipage "New post"
-    (aform
-      (fn (req)
-        (post-page user (addpost user (arg req "t") (arg req "b"))))
+    (urform user req
+      (blog-permalink (addpost user (arg req "t") (arg req "b")))
       (tab (row "title" (input "t" "" 60))
            (row "text"  (textarea "b" 10 80))
            (row ""      (submit))))))
@@ -77,6 +76,7 @@
     (pr (string "Sorry, you need " blog-threshold* " karma to submit blog posts."))))
 
 (def addpost (user title text)
+  ; TODO: this one is not even checking if there's any title yet
   (atlet p (inst 'post 'id (++ blog-maxid*) 'by user 'title title 'text text)
     (save-post p)
     (= (posts* p!id) p)))
