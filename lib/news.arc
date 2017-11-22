@@ -440,6 +440,8 @@
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
       (link "settings" "newsadmin")
+      (if (bound 'appdir*)
+        (link "prompt"))
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
@@ -606,7 +608,7 @@ function vote(node) {
       (tag (img src logo-url* alt 'a width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
-(= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "prompt" "*"))
+(= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "*"))
 
 (= welcome-url* "welcome")
 
@@ -620,8 +622,6 @@ function vote(node) {
     (toplink "comments" "newcomments" label)
     (hook 'toprow user label)
     (if (bound 'posts*) (toplink "blog" "blog" label))
-    (if (and (admin user) (bound 'appdir*))
-      (toplink "prompt" "prompt" label))
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
