@@ -505,7 +505,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 ;probability distributions
 
 (def poisson-dist (lambda)
-  "returns a function for the probability of k discrete, uncorrelated events occuring in a time where the mean expected events is lambda"
+  "returns a function for the probability of k discrete, uncorrelated events occurring in a time where the mean expected events is lambda"
   (fn (k)
     (if (or (< k 0) (no:isa k 'int))
       (err "k in poisson dist must be a non-negative integer"))
@@ -520,7 +520,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     (* (/:beta a b) (expt x (- a 1)) (expt (- 1 x) (- b 1)))))
 
 (def binomial-dist (n p)
-  "returns a function for the binomal distribution, gives the probability of k events with probability p out of n occuring"
+  "returns a function for the binomal distribution, gives the probability of k events with probability p out of n occurring"
   (if (no:<= 0 p 1)
     (err "p is a probability and muxt be between 0 and 1"))
   (fn (k)
