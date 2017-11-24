@@ -81,8 +81,8 @@
 (= osmjs* "
 var map = {
 
-  init : function(loc) {
-    document.getElementById('map').style.height='150'
+  init : loc => {
+    document.getElementById('map').style.height='200'
     map.context = L.map('map').setView([loc.lat,loc.lon],13)
     L.tileLayer(
       'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
@@ -91,8 +91,10 @@ var map = {
       }).addTo(map.context)
   },
 
-  lookup : function(e){
-    var address = e.getAttribute('data-address')
+  markers: {},
+
+  lookup : event => {
+    var address = event.getAttribute('data-address')
     if (address) fetch(
       'https://nominatim.openstreetmap.org/search?q='+
       address+
@@ -105,25 +107,34 @@ var map = {
           if (!map.context) {
             map.init(locs[0])
           }
-          var m = L.marker(
-            [locs[0].lat,
-            locs[0].lon]
-          ).addTo(map.context).bindPopup(
-            '<a href=viewevent?id='+
-            e.getAttribute('data-id')+'>'+
-            e.getAttribute('data-title')+'</a>'
-          )
-          e.onclick = function(){
-            map.context.setView([locs[0].lat,locs[0].lon])
-            m.openPopup()
-          }
+          ((marker, event) => {
+            var label =
+              '<a href=viewevent?id='+
+              event.getAttribute('data-id')+'>'+
+              event.getAttribute('data-title')+'</a><br>'
+            if (! marker ) {
+              map.markers[locs[0].osm_id] = L.marker(
+                [locs[0].lat,
+                locs[0].lon]
+              ).addTo(map.context).bindPopup(
+                label
+              ).openPopup()
+              marker =  map.markers[locs[0].osm_id]
+            } else {
+              marker.bindPopup(marker.getPopup().getContent()+label)
+            }
+            event.onclick = function(){
+              map.context.setView([locs[0].lat,locs[0].lon])
+              marker.openPopup()
+            }
+          })(map.markers[locs[0].osm_id], event)
         }
       }
     )
   }
 }
 
-window.onload = function(){
+window.onload = _ => {
   for ( var e of document.getElementsByClassName('event') ) {
     map.lookup(e)
   }
