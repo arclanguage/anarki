@@ -16,16 +16,13 @@
 
 ($ (require racket/date))
 
-(= events-title* "My calendar"
-   events-url*   "http://example.com"
-   events-desc*  "What kind of events are posted here.")
-
-(= eventdir* (+ srvdir* "events/")
+(= eventdir*    (+ srvdir* "events/")
    event-maxid* 0
-   events* nil)
+   events*      nil
+   osm-enabled  t)
 
 (def event (id)
-  (keep [is _!id id] events*))
+  (car (keep [is _!id id] events*)))
 
 (deftem event  id      nil
                by      nil
@@ -44,18 +41,17 @@
   ($.date-week-day ($.seconds->date (toseconds d)))))
 
 (def till (d)
-  (tostring
-    (let days (roundup (- (- (days-since (toseconds d)) 0.5)))
-      (if (< days 7)
-              (if (is days 0) (pr "today")
-                  (is days 1) (pr "tomorrow")
-                  (+ "in " (plural days "day")))
-          (< days 30)
-              (pr "in " (plural (round (/ days 7)) "week"))
-          (< days 365)
-              (pr "in " (plural (round (/ days 30)) "month"))
-          t
-              (pr "in " (plural (round (/ days 365)) "year"))))))
+  (let days (roundup (- (- (days-since (toseconds d)) 0.5)))
+    (if (< days 7)
+            (if (is days 0) "today"
+                (is days 1) "tomorrow"
+                (+ "in " (plural days "day")))
+        (< days 30)
+            (+ "in " (plural (round (/ days 7)) "week"))
+        (< days 365)
+            (+ "in " (plural (round (/ days 30)) "month"))
+        t
+            (+ "in " (plural (round (/ days 365)) "year")))))
 
 (def toseconds (d)
   (let _ 0 ;unused fields
@@ -79,23 +75,79 @@
     (sort (fn (e1 e2) (earlier e1!date e2!date))
        events)))
 
-(defop events req
-  (let user (get-user req)
-    (events-page user)))
+(newsop events ()
+  (events-page user))
+
+(= osmjs* "
+var map = {
+
+  init : function(loc) {
+    document.getElementById('map').style.height='150'
+    map.context = L.map('map').setView([loc.lat,loc.lon],13)
+    L.tileLayer(
+      'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+      { attribution:
+        '&copy; <a href=http://osm.org/copyright>OpenStreetMap</a> contributors'
+      }).addTo(map.context)
+  },
+
+  lookup : function(e){
+    var address = e.getAttribute('data-address')
+    if (address) fetch(
+      'https://nominatim.openstreetmap.org/search?q='+
+      address+
+      '&format=json'
+    ).then(
+      res => res.json()
+    ).then(
+      locs => {
+        if (!map.context) {
+          map.init(locs[0])
+        }
+        var m = L.marker(
+          [locs[0].lat,
+          locs[0].lon]
+        ).addTo(map.context).bindPopup(
+          '<a href=viewevent?id='+
+          e.getAttribute('data-id')+'>'+
+          e.getAttribute('data-title')+'</a>'
+        )
+        e.onclick = function(){
+          map.context.setView([locs[0].lat,locs[0].lon])
+          m.openPopup()
+        }
+      }
+    )
+  }
+}
+
+window.onload = function(){
+  for ( var e of document.getElementsByClassName('event') ) {
+    map.lookup(e)
+  }
+} ")
+
+(def osm ()
+  (when osm-enabled
+    (tag (div "id" "map" "width" "100%" "height" "0"))
+    (tag (link "rel" "stylesheet" "type" "text/css"
+               "href" "https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+               "integrity" "sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1"))
+    (tag (script "src" "https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+                 "integrity" "sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq"))
+    (tag "script" (pr osmjs*))))
 
 (def events-page (user)
   (ensure-events)
-  (whitepage
+  (longpage user (msec) nil "events" "Events" "events"
     (tab
+      (osm)
       (center
-        (tag b (link  events-title* events-url*))
-        (br2)
-        (w/bars
-          (link "new event" "new-event")
-          (link "rss" "events-rss")))
-      (tag ul
-        (each event (upcoming events*)
-          (display-event user event))))))
+          (w/bars
+            (link "new event" "newevent")
+            (link "rss" "events-rss")))
+      (each event (upcoming events*)
+        (display-event user event)))))
 
 (def load-events ()
    (= events* nil)
@@ -110,14 +162,13 @@
   (if (no events*)
       (load-events)))
 
-(defop new-event req
-  (let user (get-user req)
-    (if
-      (no user)
-        (login-page
-          "You need to be logged in to post events."
-          (fn (user ip) (new-event-page user)))
-      (new-event-page user))))
+(newsop newevent ()
+  (if
+    (no user)
+      (login-page
+        "You need to be logged in to post events."
+        (fn (user ip) (new-event-page user)))
+    (new-event-page user)))
 
 (def edit-event (user event)
   (if (may-edit user event)
@@ -140,7 +191,7 @@
     (o oclock)
     (o id)
     (o msg))
-  (whitepage
+  (minipage "New event"
     (pagemessage msg)
     (tab
       (urform user req
@@ -201,18 +252,10 @@
 
 (def save-event (event) (temstore 'event event (string eventdir* event!id)))
 
-(def openstreetmap (address)
-  (string "https://nominatim.openstreetmap.org/search?q="
-          (urlencode address)))
-
-(def format-title (title url)
-  ([if (nonblank url)
-    (link _ url) _] title))
-
 (def format-address (address)
-  (if (nonblank address)
-      (link (ellipsize address)
-            (openstreetmap address)) ""))
+  (tostring
+    (if (nonblank address)
+        (link (ellipsize address) "javascript:void(0)"))))
 
 (def format-date (d)
   (string (weekday d) " "
@@ -220,47 +263,67 @@
           (months (int (d 1))) " "
           (check (int (d 0)) [isnt _ ((date) 0)] "")))
 
-(def display-event (user event)
-  (tag li
-    (tag span
-      (tag b (pr (format-title event!title event!url)))
+(def format-time (o)
+  (check o nonblank ""))
+
+(def display-event (user e)
+  (row
+    (pr (capitalize (till e!date)))
+    (tag
+      (span "class"        "event"
+            "data-address" e!address
+            "data-title"   e!title
+            "data-id"      e!id)
+      (link e!title
+            (check e!url nonblank (event-permalink e)))
       (br)
-      (tag span
+      (spanclass "subtext"
         (w/bars
-          (pr event!oclock)
-          (pr (format-date event!date))
-          (pr (till event!date))
-          (pr (format-address event!address))
-          (when (may-edit user event)
+          (pr (format-time e!oclock))
+          (pr (format-date e!date))
+          (pr (format-address e!address))
+          (when (may-edit user e)
             (w/bars
-              (onlink "edit" (edit-event user event))
-              (onlink "delete" (del-confirm-event user event)))))))
-    (br2)))
+              (onlink "edit" (edit-event user e))
+              (onlink "delete" (del-confirm-event user e)))))))
+    (spacerow 5)))
 
 (def may-edit (user event)
   (and user
        (or (is event!by user)
            (admin user))))
 
+(newsop viewevent (id)
+  (ensure-events)
+  (let e (event (int id))
+    (longpage user (msec) nil nil event!title (event-permalink e)
+      (tab
+        (osm)
+        (display-event user e)))))
+
+(def event-permalink (e)
+  (string "viewevent?id=" e!id))
+
 (def del-confirm-event (user event)
-  (whitepage
+  (minipage "Confirm"
     (tab
-     (row (display-event user event))
+     (display-event user event)
      (spacerow 20)
-     (row (urform user req
-       (if (is (arg req "b") "Yes")
-         (delete-event user event)
-         (events-page user))
-       (pr "Delete this event? ")
-       (but "Yes" "b") (sp) (but "No"))))))
+     (tr (td)
+         (td (urform user req
+               (if (is (arg req "b") "Yes")
+                 (delete-event user event)
+               ;TODO: should really just go back to previous page
+                 "events")
+               (pr "Do you want this to be deleted?")
+               (br2)
+               (but "Yes" "b") (sp) (but "No")))))))
 
 (def delete-event (user event)
-  (if (may-edit user event)
-      (do
+  (when (may-edit user event)
         (pull [is event _] events*)
         (aif (file-exists (string eventdir* event!id)) (rmfile it))
-        "events")
-      (pr "Not allowed.")))
+        "events"))
 
 (defop events-rss ()
   (ensure-events)
@@ -269,9 +332,9 @@
 (def rss-events (events)
   (tag (rss version "2.0")
     (tag channel
-      (tag title (pr events-title*))
-      (tag link (pr events-url*))
-      (tag description (pr events-desc*))
+      (tag title (pr (+ this-site* " events")))
+      (tag link (pr (+ site-url* "events")))
+      (tag description (pr site-desc*))
       (map
         (fn (event)
           (tag item
@@ -280,6 +343,7 @@
               (tag description
                 (cdata
                     (pr event!title) (br)
+                    (pr (format-time event!oclock)) (sp)
                     (pr (format-date event!date)) (br)
                     (pr (format-address event!address))))))
         events))))
