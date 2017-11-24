@@ -101,20 +101,22 @@ var map = {
       res => res.json()
     ).then(
       locs => {
-        if (!map.context) {
-          map.init(locs[0])
-        }
-        var m = L.marker(
-          [locs[0].lat,
-          locs[0].lon]
-        ).addTo(map.context).bindPopup(
-          '<a href=viewevent?id='+
-          e.getAttribute('data-id')+'>'+
-          e.getAttribute('data-title')+'</a>'
-        )
-        e.onclick = function(){
-          map.context.setView([locs[0].lat,locs[0].lon])
-          m.openPopup()
+        if (locs.length > 0) {
+          if (!map.context) {
+            map.init(locs[0])
+          }
+          var m = L.marker(
+            [locs[0].lat,
+            locs[0].lon]
+          ).addTo(map.context).bindPopup(
+            '<a href=viewevent?id='+
+            e.getAttribute('data-id')+'>'+
+            e.getAttribute('data-title')+'</a>'
+          )
+          e.onclick = function(){
+            map.context.setView([locs[0].lat,locs[0].lon])
+            m.openPopup()
+          }
         }
       }
     )
