@@ -267,7 +267,7 @@ window.onload = _ => {
 (def format-address (address)
   (tostring
     (if (nonblank address)
-        (link (ellipsize address) "javascript:void(0)"))))
+        (link (ellipsize address) "#map"))))
 
 (def format-date (d)
   (string (weekday d) " "
@@ -348,14 +348,17 @@ window.onload = _ => {
       (tag link (pr (+ site-url* "events")))
       (tag description (pr site-desc*))
       (map
-        (fn (event)
+        (fn (e)
           (tag item
-              (tag title (pr (eschtml event!title)))
-              (if (no (blank event!url)) (tag link (link event!url)))
-              (tag description
-                (cdata
-                    (pr event!title) (br)
-                    (pr (format-time event!oclock)) (sp)
-                    (pr (format-date event!date)) (br)
-                    (pr (format-address event!address))))))
+            (tag title (pr (eschtml e!title)))
+            (tag link  (pr (if (blank e!url)
+                               (event-permalink e)
+                               (eschtml e!url))))
+            (if (no (blank e!url)) (tag link (link e!url)))
+            (tag description
+              (cdata
+                (pr e!title) (br)
+                (pr (format-time e!oclock)) (br)
+                (pr (format-date e!date)) (br)
+                (pr e!address)))))
         events))))
