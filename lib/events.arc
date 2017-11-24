@@ -117,15 +117,14 @@ var map = {
                 [locs[0].lat,
                 locs[0].lon]
               ).addTo(map.context).bindPopup(
-                label
-              ).openPopup()
+                label, {maxHeight: 100}
+              )
               marker =  map.markers[locs[0].osm_id]
             } else {
               marker.bindPopup(marker.getPopup().getContent()+label)
             }
             event.onclick = function(){
-              map.context.setView([locs[0].lat,locs[0].lon])
-              marker.openPopup()
+              map.context.flyTo([locs[0].lat,locs[0].lon])
             }
           })(map.markers[locs[0].osm_id], event)
         }
@@ -254,7 +253,7 @@ window.onload = _ => {
   (let event   (inst 'event
       'id      (if (no id) (++ event-maxid*) id)
       'by      user
-      'title   title
+      'title   (capitalize title)
       'address address
       'url     url
       'date    date
