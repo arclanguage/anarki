@@ -48,7 +48,7 @@
   (spanclass "subtext" (pr "by") (sp) (userlink user p!by))
   (br2)
   (tag (span "style" "font-family:serif; color:black;")
-    (pr (markdown p!text))
+    (pr (md-from-form p!text))
     (br 4)
     (center (pr "***"))))
 
