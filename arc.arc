@@ -904,7 +904,7 @@ table, or other user-defined type) to 'value'.")
            (w/uniq (g h)
              (list (list g expr)
                    g
-                   `(fn (,h) (assign-and-warn ,expr ,h)))))
+                   `(fn (,h) (assign ,expr ,h)))))
         ; make it also work for uncompressed calls to compose
         (and (acons expr) (metafn (car expr)))
          (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
@@ -944,7 +944,7 @@ table, or other user-defined type) to 'value'.")
 
 (def expand= (place val)
   (if (and (isa place 'sym) (~ssyntax place))
-    `(assign-and-warn ,place ,val)
+    `(assign ,place ,val)
     (let (vars prev setter) (setforms place)
       (w/uniq g
         `(atwith ,(+ vars (list g val))
