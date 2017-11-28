@@ -74,43 +74,9 @@ Returns nil if no logged-in user."
     `(linkf ,text (,req)
        (when-umatch ,user ,req ,@body))))
 
-
-(defop admin req (admin-gate (get-user req)))
-
-(def admin-gate (u)
-  (if (admin u)
-    (admin-page u)
-    (login-page nil
-                (fn (u ip)  (admin-gate u)))))
-
 (def admin (u)
 "Does user 'u' possess administrator privileges for the site?"
   (and u (mem u admins*)))
-
-(def user-exists (u) (and u (hpasswords* u) u))
-
-(def admin-page (user . msg)
-  (whitepage
-    (prbold "Admin: ")
-    (hspace 20)
-    (pr user " | ")
-    (w/link (do (logout-user user)
-                (whitepage (pr "Bye " user ".")))
-      (pr "logout"))
-    (when msg (hspace 10) (map pr msg))
-    (br2)
-    (aform (fn (req)
-             (when-umatch user req
-               (with (u (arg req "u")
-                      p (arg req "p")
-                      e (arg req "e"))
-                 (if (or (no u) (no p) (is u "") (is p "") (no e))
-                      (pr "Bad data.")
-                     (user-exists u)
-                      (admin-page user "User already exists: " u)
-                      (do (create-acct u p e)
-                          (admin-page user))))))
-      (pwfields "create (server) account"))))
 
 (def cook-user (user)
   (let id (new-user-cookie)
