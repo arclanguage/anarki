@@ -24,6 +24,8 @@
     lib/blog.arc
     lib/events.arc
     lib/prompt.arc
+    lib/form-tests.arc
+    lib/boyer-moore.arc
 
     ; helpers for the repl
     lib/ppr.arc
