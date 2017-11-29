@@ -14,34 +14,38 @@
 ;   You should have received a copy of the GNU Affero General Public License
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(def rev-match (p s (o j 0))
-  ; not sure wether memoization is practical here
-  "Checks if 'p' and 's' are identical, and if not then return the mismatch in 's' and its reverse index."
-  (if (no (last p)) t
-      (is (last p) (last s))
-        (rev-match (butlast p) (butlast s) (inc j))
-      (list (last s) j))) ; when no match, return character where search failed
+(def rev-mismatch (pat s)
+  "Return the last byte of 's' and its reverse index where 'pat' doesn't match. See also [[mismatch]]."
+  (zap rev pat)
+  (zap rev s)
+  (loop (patc (pop pat)
+         sc   (pop s)
+         i  0)
+      (if sc
+        (if (is patc sc)
+            (recur (pop pat) (pop s) (inc i))
+            (list sc i))
+        nil)))
 
-(def bad-character (pat)
-  "Create a table of safe skips for each character that may cause a mismatch in a substring search."
-  (let bc (obj)
+(defmemo bad-character (pat)
+  "Create a table of safe skips for each character that may cause a mismatch in a search."
+  (ret bc (obj)
       (walk (range 0 255) [= (bc _) (len pat)])
-      (walk pat           [= (bc _) (max 1 (pos _ (rev pat)))])
-      bc))
+      (walk pat           [= (bc _) (pos _ (rev pat))])))
+
+;TODO: implement the good-suffix rule
 
 (def scan-past (pat in)
-  "Returns a list of bytes in 'in' until 'pat' is found. See also [[posmatch]]."
- (time
-  (withs (pat   (map int (as cons pat))
-          bc    (bad-character pat)
-          skip  (len pat)
-          look  nil
-          sub   nil)
-     (accum yield
-       (until (is look t)
-         (= b (readbytes skip in))
-         (= sub (join (cut sub skip) b))
-         (= look (rev-match pat sub))
-         (walk b yield)
-         (when (isnt look t)
-               (= skip (- (bc (look 0)) (look 1)))))))))
+  "Returns a list of bytes in 'in' until 'pat' is found."
+  (zap [map int (as cons _)] pat)
+  (time (with
+           (bc (bad-character pat)
+           sub nil)
+     (flat (accum yield
+       (loop (skip (len pat))
+         (withs
+             (b   (readbytes skip in)
+              sub (join (cut sub skip) b))
+           (yield b)
+           (aif (rev-mismatch pat sub)
+             (recur (- (bc (it 0)) (it 1)))))))))))
