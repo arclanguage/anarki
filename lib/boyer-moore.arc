@@ -14,19 +14,6 @@
 ;   You should have received a copy of the GNU Affero General Public License
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(def rev-mismatch (pat s)
-  "Return the last byte of 's' and its reverse index where 'pat' doesn't match. See also [[mismatch]]."
-  (zap rev pat)
-  (zap rev s)
-  (loop (patc (pop pat)
-         sc   (pop s)
-         i  0)
-      (if sc
-        (if (is patc sc)
-            (recur (pop pat) (pop s) (inc i))
-            (list sc i))
-        nil)))
-
 (defmemo bad-character (pat)
   "Create a table of safe skips for each character that may cause a mismatch in a search."
   (ret bc (obj)
@@ -39,13 +26,16 @@
   "Returns a list of bytes in 'in' until 'pat' is found."
   (zap [map int (as cons _)] pat)
   (time (with
-           (bc (bad-character pat)
-           sub nil)
+           (bc    (bad-character pat)
+           sub    nil
+           revpat (rev pat))
      (flat (accum yield
        (loop (skip (len pat))
          (withs
-             (b   (readbytes skip in)
-              sub (join (cut sub skip) b))
+             (b      (readbytes skip in)
+              sub    (join (cut sub skip) b)
+              revsub (rev sub))
            (yield b)
-           (aif (rev-mismatch pat sub)
-             (recur (- (bc (it 0)) (it 1)))))))))))
+           (aif (mismatch revpat revsub)
+              (if (< it (len sub))
+                (recur (- (bc (revsub it)) it)))))))))))
