@@ -228,7 +228,7 @@ Returns nil if no logged-in user."
          pw         (app-email 3))
         ($.keyword-apply
           $.smtp-send-message
-          ($.map $.string->keyword ($.list "auth-passwd" "auth-user"))
+          ($.list :auth-passwd :auth-user)
           ($.list pw auth-user)
           ($.list smtp-srv from to header message))))
 
