@@ -22,7 +22,7 @@ n items to return.
 (defextend njoin (l tail) (isa l 'spliceable-list)
   (if empty.l
     (= rep.l!contents tail
-       rep.l!last rep.tail)
+       rep.l!last tail)
     (= (cdr rep.l!last) tail))
   (zap lastcons rep.l!last)
   (if rep.l!suffix
