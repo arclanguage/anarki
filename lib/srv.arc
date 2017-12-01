@@ -338,10 +338,11 @@
 ; all chars in pat must be 1-byte
 (def scan-past (pat in)
   (= pat (map int (coerce pat 'cons)))
+  (time
   (let buffer (spliceable-list len.pat)
     (until (iso pat suffix.buffer)
       (njoin buffer (list readb.in)))
-    splice.buffer))
+    splice.buffer)))
 
 ; convert list of bytes to string
 (def bytes-string (l)
