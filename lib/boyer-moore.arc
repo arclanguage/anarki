@@ -29,6 +29,8 @@
            (bc    (bad-character pat)
            sub    nil
            revpat (rev pat))
+      ; TODO: find better way of not including the boundary, because this is really slow -- perhaps using spliceable-lists
+     ([cut _ 0 (- (len _) (len pat))] ; remove boundary
      (flat (accum yield
        (loop (skip (len pat))
          (withs
@@ -38,4 +40,4 @@
            (yield b)
            (aif (mismatch revpat revsub)
               (if (< it (len sub))
-                (recur (- (bc (revsub it)) it)))))))))))
+                (recur (- (bc (revsub it)) it))))))))))))
