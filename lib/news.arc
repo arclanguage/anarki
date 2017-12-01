@@ -440,8 +440,8 @@
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
       (link "settings" "newsadmin")
-      (if (bound 'appdir*)
-        (link "prompt"))
+      (link "repl")
+      (link "prompt")
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()

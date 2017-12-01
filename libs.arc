@@ -18,14 +18,17 @@
     lib/client.arc
     lib/news.arc
 
-    ; optional libs
-    ; (may be commented out)
+    ; addittilal web apps
     lib/search.arc
     lib/blog.arc
     lib/events.arc
     lib/prompt.arc
-    lib/form-tests.arc
+
+    ; speed improvements
     lib/boyer-moore.arc
+
+    ; testing
+    lib/form-tests.arc
 
     ; helpers for the repl
     lib/ppr.arc
