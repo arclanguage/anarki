@@ -3,7 +3,7 @@
 list is a special data structure that efficiently supports the following
 operations:
 
-1. Destructively appending items using [[njoin]].
+1. Destructively appending items using [[nappend]].
 2. Returning the last n items appended using [[suffix]] if there are at least
 n items to return.
 3. Dropping the last n items appended, and returning everything else. [[splice]]"
@@ -11,7 +11,7 @@ n items to return.
   (annotate 'spliceable-list (obj contents init
                                   last lastcons.init
                                   suffix-len n
-                                  suffix (suffix n init))))
+                                  pre-suffix (suffix n init))))
 
 (defextend len (l) (isa l 'spliceable-list)
   (len rep.l!contents))
@@ -19,17 +19,23 @@ n items to return.
 (defextend empty (l) (isa l 'spliceable-list)
   (empty rep.l!contents))
 
-(defextend njoin (l tail) (isa l 'spliceable-list)
+(defextend nappend (l item) (isa l 'spliceable-list)
   (if empty.l
-    (= rep.l!contents tail
-       rep.l!last tail)
-    (= (cdr rep.l!last) tail))
+    (= rep.l!contents list.item
+       rep.l!last rep.l!contents)
+    (= (cdr rep.l!last) list.item))
   (zap lastcons rep.l!last)
-  (if rep.l!suffix
-    (zap [nthcdr len.tail _] rep.l!suffix)
-    ; no suffix yet; do we have enough elems to start?
+  (if rep.l!pre-suffix
+    (zap cdr rep.l!pre-suffix)
+    ; no pre-suffix yet; do we have enough elems to start?
     (if (is rep.l!suffix-len (len rep.l!contents))
-      (= rep.l!suffix rep.l!contents))))
+      (= rep.l!pre-suffix rep.l!contents))))
+
+; like njoin, but instead of entire list, returns just the pre-suffix
+(def nslide (l tail)
+  (each x tail
+    (nappend l x))
+  rep.l!pre-suffix)
 
 (defcoerce cons spliceable-list (l)
   rep.l!contents)
@@ -46,8 +52,8 @@ n items to return.
 (def splice (l)
 "Clears up to the last n items of a [[spliceable-list]] defined with a suffix
 length of n, and returns everything else."
-  (when rep.l!suffix
-    (wipe (cdr rep.l!suffix))
+  (when rep.l!pre-suffix
+    (wipe (cdr rep.l!pre-suffix))
     rep.l!contents))
 
 (examples splice
@@ -80,7 +86,7 @@ length of n, and returns everything else."
 
 (defextend suffix (l) (isa l 'spliceable-list)
   (aif
-    rep.l!suffix
+    rep.l!pre-suffix
       cdr.it
     (iso (len rep.l!contents) (- rep.l!suffix-len 1))
       rep.l!contents))

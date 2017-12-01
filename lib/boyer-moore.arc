@@ -40,7 +40,7 @@
        (loop (shift (len pat))
          (withs
              (b     (readbytes shift in)
-              sub   (njoin buffer b))
+              sub   (nslide buffer b))
              (if b ; check if any bytes were read at all
                (aif (rev-mismatch pat sub)
                  (recur (- (bc (sub (- (len sub) it 1))) it))))))

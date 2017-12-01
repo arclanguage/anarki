@@ -763,9 +763,14 @@ append to 'xs'."
     xs))
 
 (def njoin (a b)
-"Concatenates/appends second argument to first, then returns first argument."
+"Concatenates/appends second list to first, then returns entire result."
   (ret a
     (= (cdr lastcons.a) b)))
+
+(def nappend (l item)
+"Appends item to list, then returns list."
+  (ret l
+    (= (cdr lastcons.l) list.item)))
 
 ; Generalization of pair: (tuples x) = (pair x)
 

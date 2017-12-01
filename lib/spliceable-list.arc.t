@@ -3,7 +3,7 @@
               two-elements   (spliceable-list 2 '(1 2))
               three-elements (spliceable-list 2 '(1 2 3))
               four-elements  (ret temp-three-elements (spliceable-list 2 '(1 2 3))
-                               (njoin temp-three-elements '(4))))
+                               (nappend temp-three-elements 4)))
        (test initializes-without-list
              (assert-same (obj 
                             contents
@@ -12,7 +12,7 @@
                             nil
                             suffix-len
                             3
-                            suffix
+                            pre-suffix
                             nil)
                           (rep:spliceable-list 2)))
        (test initializes-with-list
@@ -23,7 +23,7 @@
                             list.1
                             suffix-len
                             3
-                            suffix
+                            pre-suffix
                             nil)
                           (rep:spliceable-list 2 '(1))))
        (test suffix-is-empty-if-list-is-too-short
@@ -36,16 +36,16 @@
                             '(1 2)
                             last
                             list.2
-                            suffix
+                            pre-suffix
                             nil
                             suffix-len
                             3)
-                          (do (njoin one-element (list 2))
+                          (do (nappend one-element 2)
                               (rep one-element))))
        (test suffix-3
              (assert-same '(2 3)
-                          (do (njoin one-element (list 2))
-                              (njoin one-element (list 3))
+                          (do (nappend one-element 2)
+                              (nappend one-element 3)
                               (suffix one-element))))
        (test splicing-without-suffix
              (assert-same '(1) (splice three-elements)))
@@ -57,7 +57,7 @@
                             '(1 2 3 4)
                             last
                             list.4
-                            suffix
+                            pre-suffix
                             '(2 3 4)
                             suffix-len
                             3)

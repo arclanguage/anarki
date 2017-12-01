@@ -341,7 +341,7 @@
   (time
   (let buffer (spliceable-list len.pat)
     (until (iso pat suffix.buffer)
-      (njoin buffer (list readb.in)))
+      (nappend buffer readb.in))
     splice.buffer)))
 
 ; convert list of bytes to string
