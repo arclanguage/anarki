@@ -16,34 +16,32 @@
 
 (def rev-mismatch (pat s)
   "Like [[mismatch]] but searching right to left and returning the reverse index."
-  (loop (i (- (len s) 1))
-        (if (isnt (pat i) (s i))
-            (- (len s) i 1)
-            (if (>= i 0)
-              (recur (- i 1))))))
+  (loop (i (- len.s 1))
+    (if (isnt pat.i s.i)
+      (- len.s i 1)
+      (if (>= i 0)
+        (recur (- i 1))))))
 
 (defmemo bc-table (pat)
   "Create a table of safe shifts for each bad character."
   (ret bc (obj)
       (walk (range 0 255) [= (bc _) (len pat)])
-      (walk pat           [= (bc _) (pos _ (rev pat))])))
+      (walk pat           [= (bc _) (pos _ rev.pat)])))
 
 ;todo: implement good suffix rule
 
 (def scan-past (pat in)
   "Returns a list of bytes in 'in' until 'pat' is found."
   (zap [map int (as cons _)] pat)
-  (time (with
-           (bc      (bc-table pat)
-            sub     nil
-            buffer  (spliceable-list (- (len pat) 1)))
-       (loop (shift (len pat))
-         (withs
-             (b     (readbytes shift in)
+  (time:with (bc      (bc-table pat)
+              sub     nil
+              buffer  (spliceable-list (- len.pat 1)))
+    (loop (shift len.pat)
+      (withs (b     (readbytes shift in)
               sub   (nslide buffer b))
-             (if b ; check if any bytes were read at all
-               (aif (rev-mismatch pat sub)
-                 (recur (- (bc (sub (- (len sub) it 1))) it))))))
-       ;todo: What off-by-one error have I made that makes it necessary to use `butlast` here?
-       ;`butlast` is extremely slow and doubles the running time of the entire function!
-       (butlast (splice buffer)))))
+        (if b ; check if any bytes were read at all
+          (aif (rev-mismatch pat sub)
+            (recur (- (bc (sub (- len.sub it 1))) it))))))
+    ;todo: What off-by-one error have I made that makes it necessary to use `butlast` here?
+    ;`butlast` is extremely slow and doubles the running time of the entire function!
+    (butlast splice.buffer)))

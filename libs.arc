@@ -18,7 +18,7 @@
     lib/client.arc
     lib/news.arc
 
-    ; addittilal web apps
+    ; additional web apps
     lib/search.arc
     lib/blog.arc
     lib/events.arc
