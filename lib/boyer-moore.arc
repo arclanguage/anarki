@@ -33,15 +33,12 @@
 (def scan-past (pat in)
   "Returns a list of bytes in 'in' until 'pat' is found."
   (zap [map int (as cons _)] pat)
-  (time:with (bc      (bc-table pat)
-              sub     nil
-              buffer  (spliceable-list (- len.pat 1)))
+  (with (bc      (bc-table pat)
+         buffer  (spliceable-list len.pat))
     (loop (shift len.pat)
-      (withs (b     (readbytes shift in)
-              sub   (nslide buffer b))
-        (if b ; check if any bytes were read at all
-          (aif (rev-mismatch pat sub)
-            (recur (- (bc (sub (- len.sub it 1))) it))))))
-    ;todo: What off-by-one error have I made that makes it necessary to use `butlast` here?
-    ;`butlast` is extremely slow and doubles the running time of the entire function!
-    (butlast splice.buffer)))
+      (whenlet b (readbytes shift in)
+        (nslide buffer b)
+        (awhen (rev-mismatch pat suffix.buffer)
+          (recur (- (bc (suffix.buffer (- len.pat it 1)))
+                    it)))))
+    splice.buffer))

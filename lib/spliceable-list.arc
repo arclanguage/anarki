@@ -32,11 +32,11 @@ n items to return.
       (= rep.l!pre-suffix rep.l!contents))))
 ;? )
 
-; like njoin, but instead of entire list, returns just the pre-suffix
+; perform njoin, but return nothing (force caller to check suffix explicitly)
 (def nslide (l tail)
   (each x tail
     (nappend l x))
-  rep.l!pre-suffix)
+  nil)
 
 (defcoerce cons spliceable-list (l)
   rep.l!contents)
