@@ -19,7 +19,7 @@
   (loop (i (- len.s 1))
     (if (isnt pat.i s.i)
       (- len.s i 1)
-      (if (>= i 0)
+      (if (> i 0)
         (recur (- i 1))))))
 
 (defmemo bc-table (pat)
