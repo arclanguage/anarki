@@ -33,7 +33,7 @@
 (def scan-past (pat in)
   "Returns a list of bytes in 'in' until 'pat' is found."
   (zap [map int (as cons _)] pat)
-  (with (bc      (bc-table pat)
+  (time:with (bc      (bc-table pat)
          buffer  (spliceable-list len.pat))
     (loop (shift len.pat)
       (whenlet b (readbytes shift in)

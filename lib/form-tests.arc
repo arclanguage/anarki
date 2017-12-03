@@ -24,8 +24,13 @@
   (let dir (+ srvdir* "tmp")
     (ensure-dir dir)
     (w/outfile out (+ srvdir* "tmp/form-tests.out")
-      (each byte (arg req "name")
-        (writeb byte out)))
+      (case (type:arg req "name")
+        'string
+          (each c (arg req "name")
+            (writec c out))
+        'cons  ; binary
+          (each byte (arg req "name")
+            (writeb byte out))))
     (tofile (+ srvdir* "tmp/form-tests.txt")
       (write (arg req "name")))
     (prn "saved file to " dir "/form-tests.out and its s-expression to " dir "/form-tests.txt")))
