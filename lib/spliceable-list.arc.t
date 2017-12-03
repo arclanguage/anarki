@@ -11,7 +11,7 @@
                             last
                             nil
                             suffix-len
-                            3
+                            2
                             pre-suffix
                             nil)
                           (rep:spliceable-list 2)))
@@ -22,7 +22,7 @@
                             last
                             list.1
                             suffix-len
-                            3
+                            2
                             pre-suffix
                             nil)
                           (rep:spliceable-list 2 '(1))))
@@ -39,7 +39,7 @@
                             pre-suffix
                             nil
                             suffix-len
-                            3)
+                            2)
                           (do (nappend one-element 2)
                               (rep one-element))))
        (test suffix-3
@@ -60,7 +60,7 @@
                             pre-suffix
                             '(2 3 4)
                             suffix-len
-                            3)
+                            2)
                           (rep four-elements)))
        (test splicing-with-suffix-works
              (assert-same '(1 2) (splice four-elements))))

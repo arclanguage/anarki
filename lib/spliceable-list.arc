@@ -7,11 +7,10 @@ operations:
 2. Returning the last n items appended using [[suffix]] if there are at least
 n items to return.
 3. Dropping the last n items appended, and returning everything else. [[splice]]"
-  ++.n
-  (annotate 'spliceable-list (obj contents init
-                                  last lastcons.init
-                                  suffix-len n
-                                  pre-suffix (suffix n init))))
+  (annotate 'spliceable-list (obj contents  init
+                                  last  lastcons.init
+                                  suffix-len  n
+                                  pre-suffix  (suffix (+ 1 n) init))))
 
 (defextend len (l) (isa l 'spliceable-list)
   (len rep.l!contents))
@@ -28,8 +27,10 @@ n items to return.
   (if rep.l!pre-suffix
     (zap cdr rep.l!pre-suffix)
     ; no pre-suffix yet; do we have enough elems to start?
-    (if (is rep.l!suffix-len (len rep.l!contents))
+;? (do (prn rep.l!suffix-len " " (len rep.l!contents))
+    (if (is (len rep.l!contents) (+ 1 rep.l!suffix-len))
       (= rep.l!pre-suffix rep.l!contents))))
+;? )
 
 ; like njoin, but instead of entire list, returns just the pre-suffix
 (def nslide (l tail)
@@ -88,5 +89,5 @@ length of n, and returns everything else."
   (aif
     rep.l!pre-suffix
       cdr.it
-    (iso (len rep.l!contents) (- rep.l!suffix-len 1))
+    (iso (len rep.l!contents) rep.l!suffix-len)
       rep.l!contents))
