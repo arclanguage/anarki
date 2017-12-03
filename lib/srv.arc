@@ -319,10 +319,7 @@
   (awhen (and headers (alref headers "name"))
     (list unstring.it
           (w/table multipart-arg
-            (= (multipart-arg "contents")
-               (if (all-ascii? body)
-                 bytes-string.body
-                 body))
+            (= (multipart-arg "contents") body)
             (each (property val) headers
               (unless (iso "name" property)
                 (= multipart-arg.property val)))))))
@@ -338,9 +335,6 @@
   (coerce (map [coerce _ 'char]
                l)
           'string))
-
-(def all-ascii? (l)
-  (errsafe:all [<= 0 _ 127] l))
 
 ; "\"abc\"" => "abc"
 (def unstring (s)
