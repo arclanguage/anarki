@@ -337,7 +337,7 @@
 ; pat is read from input but dropped from result
 ; all chars in pat must be 1-byte
 (def scan-past (pat in)
-  (= pat (map int (coerce pat 'cons)))
+  (zap [map int (as cons _)] pat)
   (time
   (let buffer (spliceable-list len.pat)
     (until (iso pat suffix.buffer)
