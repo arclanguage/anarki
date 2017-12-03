@@ -34,8 +34,19 @@ n items to return.
 
 ; perform njoin, but return nothing (force caller to check suffix explicitly)
 (def nslide (l tail)
-  (each x tail
-    (nappend l x))
+  (when (no empty.tail)
+    (if empty.l
+      (= rep.l!contents tail)
+      (= (cdr rep.l!last) tail))
+    (= rep.l!last lastcons.tail)
+    (if rep.l!pre-suffix
+      (zap [nthcdr len.tail _] rep.l!pre-suffix)
+      ; no suffix yet; do we have enough elems to start?
+      (when (< rep.l!suffix-len (len rep.l!contents))
+        (= rep.l!pre-suffix (nthcdr (- (len rep.l!contents)
+                                       rep.l!suffix-len
+                                       1)
+                                    rep.l!contents)))))
   nil)
 
 (defcoerce cons spliceable-list (l)

@@ -43,4 +43,34 @@
                                suffix-len  2)
                           (rep four-elements)))
        (test splicing-with-suffix-works
-             (assert-same '(1 2) (splice four-elements))))
+             (assert-same '(1 2) (splice four-elements)))
+
+       (test nslide-with-empty-list-is-idempotent
+             (assert-same (spliceable-list 2 '(1 2 3))
+                          (ret x (spliceable-list 2 '(1 2 3))
+                            (nslide x '()))))
+       (test nslide-on-empty-list-works
+             (assert-same (obj contents  '(1 2 3 4)
+                               last  list.4
+                               pre-suffix  '(2 3 4)
+                               suffix-len  2)
+                          (let x (spliceable-list 2)
+                            (nslide x '(1 2 3 4))
+                            rep.x)))
+       (test nslide-on-empty-list-can-return-nil-suffix
+             (assert-same (obj contents  '(1 2)
+                               last  list.2
+                               pre-suffix  nil
+                               suffix-len  2)
+                          (let x (spliceable-list 2)
+                            (nslide x '(1 2))
+                            rep.x)))
+       (test suffix-after-short-nslide-on-empty-list-remains-nil
+             (assert-nil (let x (spliceable-list 4)
+                           (nslide x '(1 2))
+                           suffix.x)))
+       (test suffix-after-short-nslide-remains-nil
+             (assert-nil (let x (spliceable-list 4 '(1))
+                           (nslide x '(2 3))
+                           suffix.x)))
+)

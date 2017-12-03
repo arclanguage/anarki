@@ -31,13 +31,17 @@
 ;todo: implement good suffix rule
 
 (def scan-past (pat in)
-  "Returns a list of bytes in 'in' until 'pat' is found."
+  "Returns a list of bytes in 'in' until 'pat' is found.
+'pat' is read from 'in' but dropped from result.
+Not unicode-aware. All chars in 'pat' must be single-byte ASCII.
+This is just for multipart POSTs, so doesn't handle the case where 'pat' is never found."
   (zap [map int (as cons _)] pat)
-  (time:with (bc      (bc-table pat)
+  (with (bc      (bc-table pat)
          buffer  (spliceable-list len.pat))
     (loop (shift len.pat)
       (whenlet b (readbytes shift in)
         (nslide buffer b)
+        ; suffix.buffer is now guaranteed to not be nil
         (awhen (rev-mismatch pat suffix.buffer)
           (recur (- (bc (suffix.buffer (- len.pat it 1)))
                     it)))))

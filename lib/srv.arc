@@ -333,17 +333,6 @@
   (map [tokens _ #\=]
        (tokens downcase.line (orf whitec (testify #\;)))))
 
-; return list of bytes until pat is encountered
-; pat is read from input but dropped from result
-; all chars in pat must be 1-byte
-(def scan-past (pat in)
-  (zap [map int (as cons _)] pat)
-  (time
-  (let buffer (spliceable-list len.pat)
-    (until (iso pat suffix.buffer)
-      (nappend buffer readb.in))
-    splice.buffer)))
-
 ; convert list of bytes to string
 (def bytes-string (l)
   (coerce (map [coerce _ 'char]
