@@ -19,29 +19,17 @@
              (assert-same '("content-type" "multipart/form-data; boundary=aaaabbbb")
                           (split-header "Content-Type: multipart/form-data; boundary=aaaabbbb")))
        (test parse-header
-             (assert-same (obj 
-                            op
-                            empty-sym*
-                            type
-                            'get
-                            "host"
-                            "localhost:8080"
-                            "user-agent"
-                            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0"
-                            "accept"
-                            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-                            "accept-language"
-                            "en-US,en;q=0.5"
-                            "accept-encoding"
-                            "gzip, deflate"
-                            "dnt"
-                            "1"
-                            "cookie"
-                            "user=Qr9lN3Vn"
-                            "connection"
-                            "keep-alive"
-                            "cache-control"
-                            "max-age=0")
+             (assert-same (obj op  empty-sym*
+                               type  'get
+                               "host"  "localhost:8080"
+                               "user-agent"  "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0"
+                               "accept"  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+                               "accept-language"  "en-US,en;q=0.5"
+                               "accept-encoding"  "gzip, deflate"
+                               "dnt"  "1"
+                               "cookie"  "user=Qr9lN3Vn"
+                               "connection"  "keep-alive"
+                               "cache-control"  "max-age=0")
                           (pipe-to (parse-header)
                             (prrn "GET / HTTP/1.1")
                             (prrn "Host: localhost:8080")
