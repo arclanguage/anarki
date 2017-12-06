@@ -1624,11 +1624,18 @@ expressions  as a list."
         (cons x recur.in)))))
 
 (def allchars (str)
+"Outputs all characters in a stream."
   (tostring (whilet c (readc str)
               (writec c))))
 
 (def filechars (name)
+"Outputs all characters in a file."
   (w/infile s name (allchars s)))
+
+(def allbytes (in)
+"Outputs all bytes in a stream."
+  (accum yield
+    (whilet b readb.in (yield b))))
 
 ; Can't simply mod pr to print strings represented as lists of chars,
 ; because empty string will get printed as nil.  Would need to rep strings
