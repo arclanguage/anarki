@@ -403,7 +403,7 @@
             (no intag) (pr c))))))
 
 (def clean-url (u)
-  (rem [in _ #\" #\' #\< #\>] u))
+  (rem [in _ #\" #\< #\>] u))
 
 (def shortlink (url)
   (unless (or (no url) (< (len url) 7))
@@ -434,7 +434,7 @@
   (and (len> url 10)
        (or (begins downcase.url "http://")
            (begins downcase.url "https://"))
-       (~find [in _ #\< #\> #\" #\'] url)))
+       (~find [in _ #\< #\> #\"] url)))
 
 (mac fontcolor (c . body)
   (w/uniq g
