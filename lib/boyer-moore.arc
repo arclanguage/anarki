@@ -36,13 +36,25 @@
 Not unicode-aware. All chars in 'pat' must be single-byte ASCII.
 This is just for multipart POSTs, so doesn't handle the case where 'pat' is never found."
   (zap [map int (as cons _)] pat)
+  ; First, preprocess 'pat' to make a shift lookup table.
   (with (bc      (bc-table pat)
          buffer  (spliceable-list len.pat))
     (loop (shift len.pat)
+  ; In first loop iteration, we read a substring of 's' with the same size as 'pat',
       (whenlet b (readbytes shift in)
         (nslide buffer b)
-        ; suffix.buffer is now guaranteed to not be nil
+        ; then we compare 'pat' and 'sub' right-to-left.
         (awhen (rev-mismatch pat suffix.buffer)
-          (recur (- (bc (suffix.buffer (- len.pat it 1)))
-                    it)))))
+        ; If 'pat' and the substring do not match, then we need to shift 'pat' within 'in'.
+        ; (suffix.buffer is now guaranteed to not be nil)
+          (recur
+            (max
+              ; We shift at very least 1 to the right,
+              1
+              ; but if the bad character rule permits it, we shift further,
+              (- (bc (suffix.buffer (- len.pat it 1)))
+              ; relative to where the mismatch occured
+                    it))))))
+    ; if pat and sub match, then return the bytes that have been searched through
     splice.buffer))
+
