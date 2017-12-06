@@ -31,10 +31,11 @@
 ;todo: implement good suffix rule
 
 (def scan-past (pat in)
-  "Returns a list of bytes in 'in' until 'pat' is found.
+"Returns a list of bytes in 'in' until 'pat' is found.
 'pat' is read from 'in' but dropped from result.
 Not unicode-aware. All chars in 'pat' must be single-byte ASCII.
-This is just for multipart POSTs, so doesn't handle the case where 'pat' is never found."
+Returns nil if 'pat' is never found.
+(This is mainly for multipart POSTs.)"
   (zap [map int (as cons _)] pat)
   ; First, preprocess 'pat' to make a shift lookup table.
   (with (bc      (bc-table pat)
@@ -44,7 +45,7 @@ This is just for multipart POSTs, so doesn't handle the case where 'pat' is neve
       (whenlet b (readbytes shift in)
         (nslide buffer b)
         ; then we compare 'pat' and 'sub' right-to-left.
-        (awhen (rev-mismatch pat suffix.buffer)
+        (aif (rev-mismatch pat suffix.buffer)
         ; If 'pat' and the substring do not match, then we need to shift 'pat' within 'in'.
         ; (suffix.buffer is now guaranteed to not be nil)
           (recur
@@ -54,7 +55,7 @@ This is just for multipart POSTs, so doesn't handle the case where 'pat' is neve
               ; but if the bad character rule permits it, we shift further,
               (- (bc (suffix.buffer (- len.pat it 1)))
               ; relative to where the mismatch occured
-                    it))))))
+                    it)))
+          splice.buffer)))))
     ; if pat and sub match, then return the bytes that have been searched through
-    splice.buffer))
 
