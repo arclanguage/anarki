@@ -22,7 +22,7 @@
       (if (> i 0)
         (recur (- i 1))))))
 
-(defmemo bc-table (pat)
+(def bc-table (pat)
   "Create a table of safe shifts for each bad character."
   (ret bc (obj)
       (walk (range 0 255) [= (bc _) (len pat)])
