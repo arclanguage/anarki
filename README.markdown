@@ -122,6 +122,9 @@ If you write lots of **Racket** code and you just want to use **Anarki** for par
     (def utility-for-use-in-racket (x)
       (* x (racket-import x))
 
+#### Scope
 Note that **Anarki** does not have private module scopes; the `(:provide ...)` section is just there to make it easy to `require` an **Anarki**-based library from **Racket**.
 
+#### Keyword arguments
+**Anarki** has some issues passing *keyword arguments* to **Racket** functions, but **Racket**'s `keyword-apply` can be used for that.
 
