@@ -1,3 +1,5 @@
+(require "lib/html.arc")
+
 ; HTTP Server.
 
 ; To improve performance with static files, set static-max-age*.

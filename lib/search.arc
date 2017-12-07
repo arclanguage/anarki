@@ -1,4 +1,4 @@
-;   Search bar for news.arc
+;   Search bar for News
 ;   Copyright (C) 2017  Pelle Hjek
 ;
 ;   This program is free software: you can redistribute it and/or modify

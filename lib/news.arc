@@ -1,3 +1,5 @@
+(require "lib/app.arc")
+
 (= this-site*    "My Forum"
    site-url*     "http://news.example.com/"               ; your domain name
    parent-url*   "http://www.example.com"

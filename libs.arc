@@ -10,6 +10,7 @@
     lib/util.arc
     lib/declare.arc
     lib/make-br-fn.arc
+    lib/client.arc
 
     ; helpers for the repl
     lib/ppr.arc

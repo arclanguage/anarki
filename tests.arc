@@ -1,6 +1,9 @@
 ; first hg clone https://bitbucket.org/zck/unit-test.arc
 (load "unit-test.arc/unit-test.arc")
 
+; ensure that all News libs are loaded
+(require "lib/news.arc")
+
 ; tests currently rely on atstrings
 ; TODO: minimally turn on atstrings once unit-test.arc has support for suite
 ; setup/teardown functions
