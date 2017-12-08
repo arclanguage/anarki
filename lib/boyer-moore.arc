@@ -15,10 +15,10 @@
 ;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 (def rev-mismatch (pat s)
-  "Like [[mismatch]] but searching right to left and returning the reverse index."
+  "Like [[mismatch]] but searching right to left."
   (loop (i (- len.s 1))
     (if (isnt pat.i s.i)
-      (- len.s i 1)
+      i
       (if (> i 0)
         (recur (- i 1))))))
 
@@ -38,14 +38,14 @@ Returns nil if 'pat' is never found.
 (This is mainly for multipart POSTs.)"
   (zap [map int (as cons _)] pat)
   ; First, preprocess 'pat' to make a shift lookup table.
-  (with (bc      (bc-table pat)
+  (time:with (bc      (bc-table pat)
          buffer  (spliceable-list len.pat))
     (loop (shift len.pat)
   ; In first loop iteration, we read a substring of 's' with the same size as 'pat',
       (whenlet b (readbytes shift in)
         (nslide buffer b)
         ; then we compare 'pat' and 'sub' right-to-left.
-        (aif (rev-mismatch pat suffix.buffer)
+        (whenlet mm (rev-mismatch pat suffix.buffer)
         ; If 'pat' and the substring do not match, then we need to shift 'pat' within 'in'.
         ; (suffix.buffer is now guaranteed to not be nil)
           (recur
@@ -53,9 +53,9 @@ Returns nil if 'pat' is never found.
               ; We shift at very least 1 to the right,
               1
               ; but if the bad character rule permits it, we shift further,
-              (- (bc (suffix.buffer (- len.pat it 1)))
+              (- (bc (suffix.buffer mm))
               ; relative to where the mismatch occured
-                    it)))
+                 (- len.pat mm 1))))
+          ; if pat and sub match, then return the bytes that have been searched through
           splice.buffer)))))
-    ; if pat and sub match, then return the bytes that have been searched through
 

@@ -1,4 +1,5 @@
 (require "lib/html.arc")
+(require "lib/boyer-moore.arc")
 
 ; HTTP Server.
 
