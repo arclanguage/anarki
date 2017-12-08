@@ -23,12 +23,20 @@
         (recur (- i 1))))))
 
 (def bc-table (pat)
-  "Create a table of safe shifts for each bad character."
+  "Returns a table of safe shifts for each bad character in 'pat'."
   (ret bc (obj)
       (walk (range 0 255) [= (bc _) (len pat)])
       (walk pat           [= (bc _) (pos _ rev.pat)])))
 
-;todo: implement good suffix rule
+(def gs-table (pat)
+  "Returns a table of safe shifts for each good suffix in 'pat'."
+  (ret gs (obj)
+     (each i (rev (range 0 (- (len pat) 1)))
+           (let p (split pat i)
+             (= (gs i)
+                (aif
+                  (posmatch (rev (p 1)) (rev (p 0)))
+                  it 0))))))
 
 (def scan-past (pat in)
 "Returns a list of bytes in 'in' until 'pat' is found.
@@ -38,8 +46,9 @@ Returns nil if 'pat' is never found.
 (This is mainly for multipart POSTs.)"
   (zap [map int (as cons _)] pat)
   ; First, preprocess 'pat' to make a shift lookup table.
-  (time:with (bc      (bc-table pat)
-         buffer  (spliceable-list len.pat))
+  (time:with (bc     (bc-table pat)
+              gs     (gs-table pat)
+              buffer (spliceable-list len.pat))
     (loop (shift len.pat)
   ; In first loop iteration, we read a substring of 's' with the same size as 'pat',
       (whenlet b (readbytes shift in)
@@ -55,7 +64,11 @@ Returns nil if 'pat' is never found.
               ; but if the bad character rule permits it, we shift further,
               (- (bc (suffix.buffer mm))
               ; relative to where the mismatch occured
-                 (- len.pat mm 1))))
+                 (- len.pat mm 1))
+              ; and check with the good suffix rule
+              (- (gs mm)
+                 (- len.pat mm 1))
+              ))
           ; if pat and sub match, then return the bytes that have been searched through
           splice.buffer)))))
 
