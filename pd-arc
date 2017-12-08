@@ -1,0 +1,2 @@
+#!/bin/bash
+`dirname $0`/arc.sh -i `dirname $0`/extras/pd.arc
