@@ -1,21 +1,19 @@
-; by Mark Huetsch
-; some code lifted (with slight modifications) from http://awwx.ws/re2.arc
+(= re $.regexp)
+(document builtin re (s)
+  "Compiles 's' to a regular expression. See also [[pre]].")
 
-(def re-match-pat (pat str)
-  (ac-niltree ($.regexp-match ($.pregexp pat) str)))
+(= pre $.pregexp)
+(document builtin pre (s)
+  "Compiles 's' to a regular expression using a Perl-like syntax. See also [[re]].")
 
-(def re-match (pat str)
-  (only.cdr (re-match-pat pat str)))
+(= re-match $.regexp-match)
+(document builtin re-match (pat i)
+  "Returns the first match of 'pat' in 'i'.")
 
-(def re-split (delim str)
-  ($.regexp-split delim str))
+(def re-pos (pat i) (errsafe:car ($.regexp-match-positions pat i)))
+(document builtin re-pos (pat i)
+  "Returns the start and end position of the first match of 'pat' in 'i'.")
 
-(def re-replace (pat text replacement)
-  ($.regexp-replace* ($.pregexp pat) text replacement))
-
-; TODO why did I want this in addition to re-split again?
-(def matchsplit (pat str)
-  (let pos (posmatch pat str)
-    (if pos
-	    (list (cut str 0 pos) (cut str (+ 1 pos)))
-	    (list str))))
+(= re-subst $.regexp-replace)
+(document builtin re-subst (pat i sub)
+  "Returns 'i' where first match of 'pat' has been replaced with 'sub'.")

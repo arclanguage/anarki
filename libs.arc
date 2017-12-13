@@ -1,6 +1,7 @@
 (map load:string '(
     lib/require.arc
     lib/strings.arc
+    lib/re.arc
     lib/queue.arc
     lib/spliceable-list.arc
     lib/tem.arc

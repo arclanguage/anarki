@@ -217,32 +217,6 @@ trailing zeros and an initial zero before the decimal as desired."
     (or plural-form
         (string str "s"))))
 
-; Import Scheme's regular expressions
-(= re $.regexp)
-(def re-match (rx s (o start 0) (o end nil) (o output-port $.#f) (o input-prefix ($.bytes)))
-     ($.regexp-match
-       rx
-       s
-       start
-       (if end end
-	       len.s)
-       output-port
-       input-prefix))
-(def pre-match (px s (o start 0) (o end nil) (o output-port $.#f) (o input-prefix ($.bytes)))
-     ($.regexp-match
-       (if $.string?.px $.pregexp.px
-	   $.bytes?.px	$.byte-pregexp.px
-	   		px)
-       s
-       start
-       (if end end
-	       len.s)
-       output-port
-       input-prefix))
-(= re-match? [no:no:re-match _1 _2])
-(= re-pos $.regexp-match-positions)
-(= re-subst $.regexp-replace)
-
 (def plural (n x (o plural-form))
 "Returns a phrase like \"3 apples\", [[pluralize]]ing depending on 'n'."
   (string n #\space (pluralize n x plural-form)))
