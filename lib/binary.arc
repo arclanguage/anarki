@@ -1,8 +1,6 @@
 ; originally from http://awwx.ws/binary1.arc
 
-(require "lib/scheme.arc")
-
-(defextend type (x) (scheme.bytes? x)
+(defextend type (x) ($.bytes? x)
   'binary)
 
 (defextend ac-literal (x) (errsafe:isa x 'binary)
@@ -11,7 +9,7 @@
 (defextend coerce (x totype . args) (is totype 'binary)
   (case (type x)
     binary x
-    string (scheme.string->bytes/utf-8 x)
+    string ($.string->bytes/utf-8 x)
            (err "Can't coerce" x type)))
 
 (def binary (x)
@@ -20,8 +18,8 @@
 (defextend coerce (x totype . args) (isa x 'binary)
   (case totype
     binary x
-    string (scheme.bytes->string/utf-8 x)
+    string ($.bytes->string/utf-8 x)
            (err "Can't coerce" x type)))
 
 (defextend len (x) (isa x 'binary)
-  (scheme.bytes-length x))
+  ($.bytes-length x))
