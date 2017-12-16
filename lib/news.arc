@@ -2264,14 +2264,12 @@ function vote(node) {
       (each s stories
         (tag item
           (let comurl (+ site-url* (item-url s!id))
-            (tag title    (pr (eschtml s!title) " (" (sitename s!url) ")"))
+            (tag title    (pr (eschtml s!title)
+                              (aif (sitename s!url) (+ " (" it ")") "")))
             (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
             (tag comments (pr comurl))
             (tag description
-              (cdata
-                (if (no s!text)
-                  (link "Comments" comurl)
-                  (pr s!text))))))))))
+              (cdata (link "Comments" comurl)))))))))
 
 ; RSS feed of user
 (newsop follow (subject)
