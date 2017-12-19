@@ -34,6 +34,7 @@
 ;
 ; How does it work?
 ;
+; * Firstly, from the Arc prompt, type (load "lib/pd.arc")
 ; * '%' creates Pd objects and messages
 ; * '->' connects them
 ; * 'pd' runs the patch in Pd
@@ -53,15 +54,15 @@
 ; * ... and hence not eliminate the need to display the Pd gui
 ; * Open Pd help from the repl
 ; * More examples and better docs
-; 
+; * Disconnecting things
 ;
-; Maydo: 
 ;
-; * allow subpatches and graph-on-parent
-; * allow symbols and floats
-; * allow bangs, toggles, radios, sliders
-; * passing objects directly as arguments instead of connecting with `->`
-; * prettier generated patches (e.g. in tree layout)
+; Maydo:
+;
+; * Allow subpatches and graph-on-parent
+; * Allow symbols and floats
+; * Passing objects directly as arguments instead of connecting with `->`
+; * Prettier generated patches (e.g. in tree layout)
 ;
 ;
 ; Similar to:
@@ -74,7 +75,6 @@
 ;
 ; * Pd-Scheme (A Scheme interpreter embedded in Pd)
 ;   See https://github.com/etienne-p/Pd_Scheme
-;
 
 
 ; The path to the Pd binary
@@ -200,10 +200,19 @@
 
 (def pd-exec (file)
   "Open a patch file in Pd."
-  ; todo: killing thread doesn't work for Pd,
-  ; so perhaps the thread can be killed by sending the message `pd quit;` within Pd
-  (system "@pd-bin @pd-bin-args @file"))
+  ;todo: this is an inelegant way of resetting pd
+  (system "killall -9 pd")
+  (thread (system "@pd-bin @pd-bin-args @file")))
 
 (def pd ()
   "Run current patch in Pd."
   (pd-exec (pd-c)))
+
+(mac pd-help (pd-obj)
+  "Opens the help patch for the given Pd object."
+  `(let help-patch
+     (+ "/usr/lib/puredata/doc/5.reference/"
+        (quote ,pd-obj)
+        "-help.pd")
+     (aif (file-exists help-patch)
+       (pd-exec it))))
