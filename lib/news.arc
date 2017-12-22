@@ -1002,6 +1002,7 @@ function vote(node) {
           (editlink s user)
           (when (apoll s) (addoptlink s user))
           (unless i (flaglink s user whence))
+          (locklink s user whence)
           (killlink s user whence)
           (blastlink s user whence)
           (blastlink s user whence t)
@@ -1261,6 +1262,14 @@ function vote(node) {
                  (save-item i)
                  whence)
       (pr "@(if i!dead 'un)kill"))))
+
+(def locklink (i user whence)
+  (when (admin user)
+      (pr bar*)
+      (w/rlink (do (togglemem 'locked i!keys)
+                   (save-item i)
+                   whence)
+        (prt (if (mem 'locked i!keys) "un") "lock"))))
 
 ; Blast kills the submission and bans the user.  Nuke also bans the
 ; site, so that all future submitters will be ignored.  Does not ban
