@@ -1488,7 +1488,7 @@ from index 'start' (0 by default)."
 
 (mac after (x . ys)
 "Runs all 'ys' after 'x', even if 'x' throws an error.
-Returns result of 'ys' on success, and nothing on error."
+Returns result of 'x' on success, and nothing on error."
   `(protect (fn () ,x) (fn () ,@ys)))
 
 (let expander
