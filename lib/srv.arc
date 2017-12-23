@@ -52,9 +52,12 @@
          th1 nil th2 nil)
     (++ requests*)
     (= th1 (thread
-             (after (handle-request-thread in out ip)
+               (on-err
+                 [ero "connection closed prematurely for " ip]
+                 [after t
+                    (handle-request-thread in out ip)
                     (close in out)
-                    (kill-thread th2))))
+                    (kill-thread th2)])))
     (= th2 (thread
              (sleep threadlife*)
              (unless (dead th1)
