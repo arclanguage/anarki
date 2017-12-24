@@ -1990,15 +1990,21 @@ function vote(node) {
       (spacerow 10)
       (row "" (comment-form parent user whence text)))))
 
-(= noob-comment-msg* nil)
+(= noob-comment-msg* nil
+   mismatch-msg*
+   "Please confirm that this is your comment by submitting it one more time.
+   This is a security measure.
+   It usually happens when you log in after the original page was loaded.")
 
 ; Comment forms last for 30 min (- cache time)
 
 (def comment-form (parent user whence (o text))
   (tarform 1800
-           (fn (req)
-             (when-umatch/r user req
-               (process-comment user parent (arg req "text") req!ip whence)))
+    (fn (req)
+      (if (is (get-user req) user)
+        (process-comment user parent (arg req "text") req!ip whence)
+        (flink [addcomment-page parent (get-user _)
+                                whence (arg req "text") mismatch-msg*])))
     (textarea "text" 6 60
       (aif text (prn (unmarkdown it))))
     (when (and noob-comment-msg* (noob user))
