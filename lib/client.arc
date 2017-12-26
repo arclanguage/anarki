@@ -24,9 +24,11 @@
         ,response))))
 
 (def mkreq (url (o querylist) (o method "GET") (o cookies) (o headers))
+  "Submit a HTTP request with 'url'. \
+'querylist' contains field-value pairs, hence its length must be even."
   (let url (parse-url url)
     (w/io (get-io   url!resource url!host url!port)
-          (buildreq url!host
+          (build-req url!host
                     url!path
                     (build-query url!query querylist)
                     (upcase method)
@@ -34,9 +36,11 @@
                     headers)
           receive-response)))
 
-(mac defreq (name url (o querylist) (o method "GET") (o cookies))
-  `(def ,name ((o param))
-    (mkreq ,url (join ,querylist param) ,method ,cookies)))
+(mac defreq (name url (o fields) (o method "GET") (o cookies))
+  "Defines a function 'name' that performs a HTTP request to 'url', \
+whose query string is 'fields' with the 'values' passed 'name'."
+  `(def ,name values
+    (mkreq ,url (flat:zip ,fields values) ,method ,cookies)))
 
 (def mkuri (url (o querylist))
   (let url (parse-url url)
@@ -124,7 +128,7 @@
     (+ query (str-rn))
     nil))
 
-(def buildreq (host path query method cookies headers)
+(def build-req (host path query method cookies headers)
   (+ (build-header host path query method cookies headers)
      (str-rn 2)
      (build-body query method)))
@@ -143,13 +147,13 @@
   (list (slurp-header s) (slurp-body s)))
 
 (def slurp-header ((o s (stdin)))
-  " Read each line from port until a blank line is reached. "
+  "Read each line from port until a blank line is reached."
   (accum a
     (whiler line (readline s) blank
       (a line))))
 
 (def slurp-body ((o s (stdin)))
-  " Read remaining lines from port. "
+  "Read remaining lines from port."
   (tostring
     (whilet line (readline s)
       (pr line))))
@@ -157,14 +161,17 @@
 ; Convenience functions.
 ; Note: these ignore the response header: (car (mkreq url))
 (def get-url (url)
-  (cdr (mkreq url)))
+  "Submit a HTTP GET request to 'url' and return the body of the response."
+  (cadr (mkreq url)))
 
 ; (post-url "url" (list 'arg1 arg1 'arg2 arg2 'arg3 arg3))
-(def post-url (url args)
-  (cdr (mkreq url args "POST")))
+(def post-url (url (o querylist))
+  "Submit a HTTP POST request to 'url' and return the body of the response. \
+'querylist' contains field-value pairs, hence its length must be even."
+  (cadr (mkreq url querylist "POST")))
 
 ; TODO write functions to parse/tokenize header lines
-; TODO refactor google func to use defreq macro
-(def google (q)
-  (get-url (+ "www.google.com/search?q=" (urlencode q))))
+(defreq google "https://google.com/search" '(q))
 
+; TODO could use any public searx instance
+(defreq searx "https://searx.me" '(q))
