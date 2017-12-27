@@ -23,3 +23,6 @@
 
 (defextend len (x) (isa x 'binary)
   ($.bytes-length x))
+
+(defextend iso (x y) (isa x 'binary)
+  (ac-denil:$.bytes=? x y))
