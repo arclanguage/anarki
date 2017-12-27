@@ -1632,11 +1632,6 @@ expressions  as a list."
 "Outputs all characters in a file."
   (w/infile s name (allchars s)))
 
-(def allbytes (in)
-"Outputs all bytes in a stream."
-  (accum yield
-    (whilet b readb.in (yield b))))
-
 ; Can't simply mod pr to print strings represented as lists of chars,
 ; because empty string will get printed as nil.  Would need to rep strings
 ; as lists of chars annotated with 'string, and modify car and cdr to get

@@ -25,11 +25,10 @@
     (prn:arg req "name"))
   (let dir (+ srvdir* "tmp")
     (ensure-dir dir)
-    (w/outfile out (+ srvdir* "tmp/form-tests.out")
-      (each byte (arg req "name")
-        (writeb byte out)))
     (tofile (+ srvdir* "tmp/form-tests.txt")
       (write (arg req "name")))
+    (w/outfile out (+ srvdir* "tmp/form-tests.out")
+      (writebytes (arg req "name") out))
     (prn "saved file to " dir "/form-tests.out and its s-expression to " dir "/form-tests.txt")))
 
 (defop form_target req

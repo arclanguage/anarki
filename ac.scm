@@ -11,7 +11,9 @@
     thread-receive
     thread-send
     thread-try-receive
-    keyword-apply))
+    keyword-apply
+    regexp-match*
+    ))
 (require openssl)
 (require (lib "port.ss"))
 (require (lib "process.ss"))
@@ -900,7 +902,7 @@
                   (let ((cs (read-string n (if (pair? str)
                                               (car str)
                                               (current-input-port)))))
-                    (if (eof-object? cs) 'nil (string->list cs)))))
+                    (if (eof-object? cs) 'nil cs))))
 
 (xdef readb (lambda str
               (let ((c (read-byte (if (pair? str)
@@ -912,7 +914,7 @@
                   (let ((bs (read-bytes n (if (pair? str)
                                               (car str)
                                               (current-input-port)))))
-                    (if (eof-object? bs) 'nil (bytes->list bs)))))
+                    (if (eof-object? bs) 'nil bs))))
 
 (xdef peekc (lambda str
               (let ((c (peek-char (if (pair? str)
@@ -935,7 +937,7 @@
                 b))
 
 (xdef writebytes (lambda (bs . args)
-                   (write-bytes (list->bytes (ac-denil bs))
+                   (write-bytes bs
                                 (if (pair? args)
                                     (car args)
                                     (current-output-port)))

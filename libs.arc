@@ -2,6 +2,7 @@
     lib/require.arc
     lib/strings.arc
     lib/re.arc
+    lib/binary.arc
     lib/queue.arc
     lib/spliceable-list.arc
     lib/tem.arc

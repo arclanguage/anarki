@@ -1,5 +1,4 @@
 (require "lib/html.arc")
-(require "lib/boyer-moore.arc")
 
 ; HTTP Server.
 
@@ -274,8 +273,9 @@
            (+ req!args
               (let ctype (req "content-type")
                 (if (~begins downcase.ctype "multipart/form-data")
-                  (parseargs:string:readchars clen in) ; ascii
-                  (parse-multipart-args multipart-boundary.ctype in))))) ; maybe non-ascii
+                  (parseargs:readchars clen in) ; ascii
+                  (time:parse-multipart-args multipart-boundary.ctype
+                                        (readbytes clen in)))))) ; maybe non-ascii
         (respond out req))
     (respond-err out "Post request without Content-Length.")))
 
@@ -285,39 +285,18 @@
                       len.delim)))))
 
 (def parse-multipart-args (boundary in)
-  (scan-past boundary in) ; skip prelude
-  (accum yield
-    (until (multipart-end boundary in)
-      (withs (headers   scan-headers.in
-              body  (scan-body boundary in)) ; only part that may contain non-ascii
-        (when headers
-          (yield:parse-multipart-part headers body))))))
-
-; "The final boundary is followed by two more hyphens to indicate that no
-; further parts follow."
-;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
-; We've already read the boundary itself.
-(def multipart-end (boundary in)
-  (aif peekc.in
-    (and (is #\- it) readc.in
-         (or (is #\- peekc.in)
-             ; "one #\- shalt thou not count,
-             ; excepting that thou then proceed to two"
-             (ero "malformed multipart input; boundary followed by just one '-'. Is it the final part or isn't it?")))
-    (ero "malformed multipart input; request didn't have a final boundary")))
-
-(def scan-headers (in)
-  ; "The boundary must be followed immediately either by another CRLF and the
-  ; header fields for the next part, or by two CRLFs, in which case there are no
-  ; header fields for the next part.."
-  ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
-  (parse-mime-header:bytes-string:scan-past "\r\n\r\n" in))
-
-(def scan-body (boundary in)
-  ; "The CRLF preceding the encapsulation line is considered part of the
-  ; boundary.."
-  ;   -- http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
-  (scan-past (+ "\r\n" boundary) in))
+ (= parts
+    (re-match*
+      (+ "(?<=" boundary ").*(?=" boundary ")")
+      in))
+ (map
+   (fn (part)
+     (zap [car:re-match "(?<=\r\n).*" _] part) ;skip prelude
+     (with
+        (headers  (parse-mime-header (string:car:re-match "^.+(?=\r\n)" part))
+         body     (car:re-match "(?<=\r\n).+" part))
+     (parse-multipart-part headers body)))
+   parts))
 
 (def parse-multipart-part (headers body)
   (awhen (and headers (alref headers "name"))
