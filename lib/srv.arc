@@ -292,10 +292,10 @@
  (map
    (fn (part)
      (zap [car:re-match "(?<=\r\n).*" _] part) ;skip prelude
-     (with
-        (headers  (parse-mime-header (string:car:re-match "^.+(?=\r\n)" part))
-         body     (car:re-match "(?<=\r\n).+" part))
-     (parse-multipart-part headers body)))
+     (withs
+         (headers  (parse-mime-header (string:car:re-match "^[^\r\n]+(?=\r\n)" part))
+          body     (car:re-match "(?<=\r\n).+" part))
+       (parse-multipart-part headers body)))
    parts))
 
 (def parse-multipart-part (headers body)
