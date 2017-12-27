@@ -291,7 +291,7 @@
        (parse-mime-header (string:car:re-match (binary "^.+(?=\r\n\r\n)") _))
       body (car:re-match (binary "(?<=\r\n\r\n).+") _))
      (parse-multipart-part headers body)]
-   (re-match* (binary (+ "(?<=" boundary ").*(?=" boundary ")")) in)))
+   (re-match* (binary (+ "(?<=" boundary ").*?(?=" boundary ")")) in)))
 
 (def parse-multipart-part (headers body)
   (awhen (and headers (alref headers "name"))
