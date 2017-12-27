@@ -285,18 +285,13 @@
                       len.delim)))))
 
 (def parse-multipart-args (boundary in)
- (= parts
-    (re-match*
-      (+ "(?<=" boundary ").*(?=" boundary ")")
-      in))
  (map
-   (fn (part)
-     (zap [car:re-match "(?<=\r\n).*" _] part) ;skip prelude
-     (withs
-         (headers  (parse-mime-header (string:car:re-match "^[^\r\n]+(?=\r\n)" part))
-          body     (car:re-match "(?<=\r\n).+" part))
-       (parse-multipart-part headers body)))
-   parts))
+   [withs
+     (headers
+       (parse-mime-header (string:car:re-match (binary "^.+(?=\r\n\r\n)") _))
+      body (car:re-match (binary "(?<=\r\n\r\n).+") _))
+     (parse-multipart-part headers body)]
+   (re-match* (binary (+ "(?<=" boundary ").*(?=" boundary ")")) in)))
 
 (def parse-multipart-part (headers body)
   (awhen (and headers (alref headers "name"))
