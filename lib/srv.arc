@@ -291,7 +291,7 @@
        (parse-mime-header (string:car:re-match (binary "^.+(?=\r\n\r\n)") _))
       body (car:re-match (binary "(?<=\r\n\r\n).+") _))
      (parse-multipart-part headers body)]
-   (re-match* (binary (+ "(?<=" boundary ").*?(?=" boundary ")")) in)))
+   (re-match* (binary (+ "(?<=" boundary ").*?(?=\r\n" boundary ")")) in)))
 
 (def parse-multipart-part (headers body)
   (awhen (and headers (alref headers "name"))
@@ -307,12 +307,6 @@
 (def parse-mime-header (line)
   (map [tokens _ #\=]
        (tokens downcase.line (orf whitec (testify #\;)))))
-
-; convert list of bytes to string
-(def bytes-string (l)
-  (coerce (map [coerce _ 'char]
-               l)
-          'string))
 
 ; "\"abc\"" => "abc"
 (def unstring (s)

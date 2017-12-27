@@ -60,9 +60,9 @@
                             (args (("foo" "bar") ("ug" ""))))
                           (parse-cmd "GET /p1?foo=bar&ug")))
        (test parse-multipart-args
-             (assert-same `(("a" ,(obj "contents" "34"))
-                            ("b" ,(obj "contents" "209")))
-                          (postprocess-multipart:parse-multipart-args "--abc"
+             (assert-same `(("a" ,(obj "contents" (binary "34")))
+                            ("b" ,(obj "contents" (binary "209"))))
+                          (parse-multipart-args "--abc"
                                                 (instring "\r\n--abc\r\nContent-Disposition: form-data; name=\"a\"\r\n\r\n34\r\n--abc\r\nContent-Disposition: form-data; name=\"b\"\r\n\r\n209\r\n--abc--\r\n"))))
        (suite run-request
               (test simple-request
@@ -79,8 +79,3 @@
                           (handle-request-thread (stdin)
                                                  (stdout)
                                                  "no ip"))))))
-
-(def postprocess-multipart (x)
-  (each (key table) x
-    (zap bytes-string (table "contents")))
-  x)

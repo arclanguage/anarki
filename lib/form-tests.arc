@@ -21,9 +21,8 @@
   (each (k v) (alref req!args "name")
     (if (~iso k "contents")
       (prn k ": " v)))
-; note: it may not be sensible to write out the entire content of large binary files
-;  (tag pre
-;    (prn:arg req "name"))
+  (tag pre
+    (errsafe:prn:ellipsize:string:arg req "name"))
   (let dir (+ srvdir* "tmp")
     (ensure-dir dir)
     (tofile (+ srvdir* "tmp/form-tests.txt")
