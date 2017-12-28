@@ -2961,9 +2961,6 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
       (if (is e.1 name)
         (eval e)))))
 
-(def l (f)
-  (load (+ string.f ".arc")))
-
 (wipe current-load-file*)
 
 ; any logical reason I can't say (push x (if foo y z)) ?

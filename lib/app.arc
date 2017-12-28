@@ -6,7 +6,7 @@
 
 ; A user is simply a string: "pg". Use /whoami to test user cookie.
 
-(require "lib/srv.arc")
+(require 'lib/srv.arc)
 
 (= hpwfile*   (+ srvdir* "hpw")
    emailfile* (+ srvdir* "emails")

@@ -1,18 +1,30 @@
-(map load:string '(
-    lib/require.arc
+(load "lib/require.arc")
+
+(require '(
+    ; core
     lib/strings.arc
     lib/re.arc
     lib/binary.arc
     lib/queue.arc
-    lib/spliceable-list.arc
     lib/tem.arc
-    lib/tree.arc
+    lib/declare.arc
+
+    ; optional
+    lib/files.arc
     lib/streams.arc
     lib/lru-cache.arc
+    lib/tree.arc
     lib/util.arc
-    lib/declare.arc
+    lib/spliceable-list.arc
     lib/make-br-fn.arc
     lib/client.arc
+    lib/pd.arc
+
+    ; web
+    lib/html.arc
+    lib/srv.arc
+    lib/app.arc
+    lib/prompt.arc
 
     ; helpers for the repl
     lib/ppr.arc

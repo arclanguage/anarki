@@ -12,7 +12,6 @@
     thread-send
     thread-try-receive
     keyword-apply
-    regexp-match*
     ))
 (require openssl)
 (require (lib "port.ss"))

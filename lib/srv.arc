@@ -1,11 +1,11 @@
-(require "lib/html.arc")
-
 ; HTTP Server.
 
 ; To improve performance with static files, set static-max-age*.
 
 ; http requests currently capped to upload-limit* bytes
 ; see socket-accept
+
+(require 'lib/html.arc)
 
 (= srvdir* "www/"  logdir* (+ srvdir* "logs/")  staticdir* "static/")
 

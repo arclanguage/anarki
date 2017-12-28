@@ -1,3 +1,9 @@
+($:require
+  (only racket
+    regexp-match*
+    regexp-split
+))
+
 (= re $.regexp)
 (document builtin re (s)
   "Compiles 's' to a regular expression. See also [[pre]].")

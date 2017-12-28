@@ -1,11 +1,14 @@
 (unless (and (bound 'required-files*) required-files*)
   (= required-files* (table)))
 
-(def require (file)
-  " Loads `file' if it has not yet been `require'd.  Can be fooled by changing
+(def require (files)
+  " Loads `file(s)' if it/they has not yet been `require'd.  (Can be fooled by changing
     the name ((require \"foo.arc\") as opposed to (require \"./foo.arc\")), but
-    this should not be a problem.
+    this should not be a problem.)
     See also [[load]]. "
-  (or (required-files* file)
-    (do (set required-files*.file)
-        (load file))))
+  (each file (check files alist (list files))
+    (zap string file)
+    (or (required-files* file)
+      (do (set required-files*.file)
+          (load file)))))
+

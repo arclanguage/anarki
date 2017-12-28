@@ -1,4 +1,4 @@
-(require "lib/app.arc")
+(require 'lib/app.arc)
 
 (= this-site*    "My Forum"
    site-url*     "http://news.example.com/"               ; your domain name
@@ -2066,7 +2066,7 @@ function vote(node) {
 (def display-comment (n c user whence (o astree) (o indent 0)
                                       (o showpar) (o showon))
   (tr (display-item-number n)
-      (when astree (td (tag pre (repeat indent (sp 5)))))
+      (when astree (td (tag pre (repeat (* 5 indent) (pr " ")))))
       (tag (td valign 'top) (votelinks c user whence t))
       (display-comment-body c user whence astree indent showpar showon)))
 
