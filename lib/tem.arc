@@ -1,4 +1,4 @@
-($:require (only racket vector-map))
+($:require (only-in racket vector-map))
 
 (= templates* (table))
 

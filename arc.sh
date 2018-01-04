@@ -118,4 +118,4 @@ if [[ $REPL == definitely || ( $REPL == maybe && $# -eq 0 ) ]]; then
   repl='(tl)'
 fi
 
-$rl racket -t "$arc_dir/boot.scm" -e "$load $repl" "$@"
+$rl racket -t "$arc_dir/boot.rkt" -e "$load $repl" "$@"

@@ -208,7 +208,7 @@
     (let ((opt val) . rest) options
       (let meth (if (in opt 'style 'class 'id)
                       opstring
-                    :else
+                    'else
                       (opmeth spec opt))
         (if meth
           (if val
@@ -428,7 +428,7 @@
   (when text (prn text) (br2)))
 
 ; Could be stricter.  Memoized because looking for chars in Unicode
-; strings is terribly inefficient in Mzscheme.
+; strings is terribly inefficient in Racket.
 
 (defmemo valid-url (url)
   (and (len> url 10)

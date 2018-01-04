@@ -31,7 +31,7 @@
 "[[len]] for dotted lists"
   (if (no x)  0
       (~acons x)  1
-      :else  (+ 1 (len-dotted cdr.x))))
+      'else  (+ 1 (len-dotted cdr.x))))
 
 (examples len-dotted
   (len-dotted '(1 2 3))

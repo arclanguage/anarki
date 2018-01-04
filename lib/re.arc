@@ -1,5 +1,5 @@
 ($:require
-  (only racket
+  (only-in racket
     regexp-match*
     regexp-split
 ))

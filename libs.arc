@@ -9,16 +9,16 @@
     lib/tem.arc
     lib/declare.arc
 
-    ; optional
-    lib/files.arc
-    lib/streams.arc
-    lib/lru-cache.arc
-    lib/tree.arc
-    lib/util.arc
-    lib/spliceable-list.arc
-    lib/make-br-fn.arc
-    lib/client.arc
-    lib/pd.arc
+;   ; optional
+;   lib/files.arc
+;   lib/streams.arc
+;   lib/lru-cache.arc
+;   lib/tree.arc
+;   lib/util.arc
+;   lib/spliceable-list.arc
+;   lib/make-br-fn.arc
+;   lib/client.arc
+;   lib/pd.arc
 
     ; web
     lib/html.arc

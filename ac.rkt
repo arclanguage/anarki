@@ -1,27 +1,18 @@
 ; Arc Compiler.
 
-(module ac mzscheme
+(module ac racket/base
 
-(provide (all-defined))
-(require
-  (only racket
-    define-namespace-anchor
-    make-temporary-file
-    namespace-anchor->namespace
-    thread-receive
-    thread-send
-    thread-try-receive
-    keyword-apply
-    ))
-(require openssl)
-(require (lib "port.ss"))
-(require (lib "process.ss"))
-(require (lib "pretty.ss"))
+(provide (all-defined-out))
+
+(require openssl
+         racket/port
+         racket/tcp
+         racket/system
+         racket/pretty)
 
 ; This defines names like _list, so it would conflict with the naming
 ; convention for Arc global variables if we didn't prefix it.
-(require (prefix ffi: ffi/unsafe))
-
+(require (prefix-in ffi: ffi/unsafe))
 
 (define-namespace-anchor main-namespace-anchor)
 (define (main-namespace)
@@ -29,6 +20,15 @@
 
 (define (ac-global-name s)
   (string->symbol (string-append "_" (symbol->string s))))
+
+(define-syntax xdef
+  (syntax-rules ()
+    ((xxdef a b)
+     (let ((nm (ac-global-name 'a))
+           (a b))
+       (parameterize ((current-namespace (main-namespace)))
+         (namespace-set-variable-value! nm a))
+       ))))
 
 (define-syntax defarc
   (syntax-rules ()
@@ -88,9 +88,9 @@
                                          (unescape-ats x)
                                          x))
                                    (codestring s)))))
-          (hash-table-put! ar-declarations 'atstrings 'nil)
+          (hash-set! ar-declarations 'atstrings 'nil)
           (let ((result (ac target-expression env)))
-            (hash-table-put! ar-declarations 'atstrings 't)
+            (hash-set! ar-declarations 'atstrings 't)
             result))
         (list string-copy (unescape-ats s)))
       (list string-copy s)))     ; avoid immutable strings
@@ -267,7 +267,7 @@
         ((ac-defined-var? s) (list (ac-global-name s)))
         (#t                  (ac-global-name s))))
 
-; lowering into mzscheme, with (unquote <foo>) lifting us back into arc
+; lowering into Racket with (unquote <foo>) lifting us back into arc
 
 (define (ac-$ args env)
   (ac-qqx args
@@ -552,10 +552,10 @@
 
 (define (ac-denil x)
   (cond ((pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x))))
-        ((hash-table? x)
-         (let ((xc (make-hash-table 'equal)))
-           (hash-table-for-each x
-             (lambda (k v) (hash-table-put! xc (ac-denil k) (ac-denil v))))
+        ((hash? x)
+         (let ((xc (make-hash)))
+           (hash-for-each x
+             (lambda (k v) (hash-set! xc (ac-denil k) (ac-denil v))))
            xc))
         (#t x)))
 
@@ -588,7 +588,7 @@
 ; function that treats an argument as a list, call ar-denil-last
 ; to change terminal NIL to '(). When returning any data created by Scheme
 ; to Arc, call ac-niltree to turn all '() into NIL.
-; (hash-table-get doesn't use its argument as a list, so it doesn't
+; (hash-ref doesn't use its argument as a list, so it doesn't
 ; need ar-denil-last).
 
 (define (ac-niltree x)
@@ -619,16 +619,7 @@
 ;  (namespace-set-variable-value! (ac-global-name a) b)
 ;  b)
 
-(define-syntax xdef
-  (syntax-rules ()
-    ((xxdef a b)
-     (let ((nm (ac-global-name 'a))
-           (a b))
-       (parameterize ((current-namespace (main-namespace)))
-         (namespace-set-variable-value! nm a))
-       a))))
-
-(define sig* (make-hash-table 'equal))  ;; fn/macro name -> params
+(define sig* (make-hash))  ;; fn/macro name -> params
 (xdef sig* sig*)
 
 ; This is a replacement for xdef that stores operator signatures.
@@ -636,7 +627,7 @@
 
 (define (odef a parms b)
   (namespace-set-variable-value! (ac-global-name a) b)
-  (hash-table-put! sig* a (list parms))
+  (hash-set! sig* a (list parms))
   b)
 
 ; convert #f from a Scheme predicate to NIL.
@@ -812,7 +803,7 @@
 
 (xdef len (lambda (x)
              (cond ((string? x) (string-length x))
-                   ((hash-table? x) (hash-table-count x))
+                   ((hash? x) (hash-count x))
                    (#t (length (ar-denil-last x))))))
 
 (define (ar-tagged? x)
@@ -839,7 +830,7 @@
         ((exint? x)         'int)
         ((number? x)        'num)     ; unsure about this
         ((vector? x)        'vector)
-        ((hash-table? x)    'table)
+        ((hash? x)    'table)
         ((output-port? x)   'output)
         ((input-port? x)    'input)
         ((tcp-listener? x)  'socket)
@@ -867,8 +858,8 @@
 
 (xdef outfile (lambda (f . args)
                  (open-output-file f
-                                   'text
-                                   (if (equal? args '(append))
+                                   ;#:mode 'text
+                                   #:exists (if (equal? args '(append))
                                        'append
                                        'truncate))))
 
@@ -974,14 +965,14 @@
 (define (iround x) (inexact->exact (round x)))
 
 ; look up first by target type, then by source type
-(define coercions (make-hash-table 'equal))
+(define coercions (make-hash))
 
 (for-each (lambda (e)
             (let ((target-type (car e))
-                  (conversions (make-hash-table 'equal)))
-              (hash-table-put! coercions target-type conversions)
+                  (conversions (make-hash)))
+              (hash-set! coercions target-type conversions)
               (for-each
-               (lambda (x) (hash-table-put! conversions (car x) (cadr x)))
+               (lambda (x) (hash-set! conversions (car x) (cadr x)))
                (cdr e))))
  `((fn      (cons   ,(lambda (l) (lambda (i)
                                    (ar-car (ar-nthcdr (if (< i 0)
@@ -993,8 +984,8 @@
                                                       l)))))
             (string ,(lambda (s) (lambda (i) (string-ref s i))))
             (table  ,(lambda (h) (case-lambda
-                                  ((k) (hash-table-get h k 'nil))
-                                  ((k d) (hash-table-get h k d)))))
+                                  ((k) (hash-ref h k 'nil))
+                                  ((k d) (hash-ref h k d)))))
             (vector ,(lambda (v) (lambda (i) (vector-ref v i)))))
 
    (string  (int    ,number->string)
@@ -1029,8 +1020,8 @@
   (let ((x-type (ar-type x)))
     (if (eqv? type x-type) x
         (let* ((fail        (lambda () (err "Can't coerce " x type)))
-               (conversions (hash-table-get coercions type fail))
-               (converter   (hash-table-get conversions x-type fail)))
+               (conversions (hash-ref coercions type fail))
+               (converter   (hash-ref conversions x-type fail)))
           (ar-apply converter (cons x args))))))
 
 (xdef coerce ar-coerce)
@@ -1128,23 +1119,23 @@
 ; we need the latter for strings.
 
 (xdef table (lambda args
-              (let ((h (make-hash-table 'equal)))
-                (if (pair? args) ((car args) h))
+              (let ((h (make-hash)))
+                (if (pair? args) ((car args) h) null)
                 h)))
 
 ;(xdef table (lambda args
-;               (fill-table (make-hash-table 'equal)
+;               (fill-table (hash 'equal)
 ;                           (if (pair? args) (ac-denil (car args)) '()))))
 
 (define (fill-table h pairs)
   (if (eq? pairs '())
       h
       (let ((pair (car pairs)))
-        (begin (hash-table-put! h (car pair) (cadr pair))
+        (begin (hash-set! h (car pair) (cadr pair))
                (fill-table h (cdr pairs))))))
 
 (xdef maptable (lambda (fn table)               ; arg is (fn (key value) ...)
-                  (hash-table-for-each table fn)
+                  (hash-for-each table fn)
                   table))
 
 (define (protect during after)
@@ -1264,7 +1255,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (if (not (char-whitespace? (peek-char)))
       '()
       (begin (read-char)
-             (trash-whitespace)))))
+             (trash-whitespace)))
+    null))
 
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
@@ -1279,7 +1271,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
         (trash-whitespace)          ; throw away until we hit non-white or leading newline
         (if (eof-object? expr)
              (begin (when interactive? (newline))
-                    (exit)))
+                    (exit))
+            null)
         (if (eqv? expr ':a)
             'done
             (let ((val (arc-eval expr)))
@@ -1318,7 +1311,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
             (if (ar-false? v)
                 (begin
                   (display "  FAILED")
-                  (newline))))
+                  (newline))
+                null))
           (atests1 p)))))
 
 (define (aload filename)
@@ -1345,7 +1339,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (acompile inname)
   (let ((outname (string-append inname ".scm")))
     (if (file-exists? outname)
-        (delete-file outname))
+        (delete-file outname)
+        null)
     (call-with-input-file inname
       (lambda (ip)
         (call-with-output-file outname
@@ -1394,7 +1389,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 ; waterhouse's code to modify mzscheme-4's immutable pairs.
 ; http://arclanguage.org/item?id=13616
-(require (only racket/unsafe/ops unsafe-set-mcar! unsafe-set-mcdr!))
+(require (only-in racket/unsafe/ops unsafe-set-mcar! unsafe-set-mcdr!))
 
 (define x-set-car!
   (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))
@@ -1429,9 +1424,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef sref
   (lambda (com val ind)
-    (cond ((hash-table? com)  (if (eqv? val 'nil)
-                                  (hash-table-remove! com ind)
-                                  (hash-table-put! com ind val)))
+    (cond ((hash? com)  (if (eqv? val 'nil)
+                                  (hash-remove! com ind)
+                                  (hash-set! com ind val)))
           ((string? com) (string-set! com ind val))
           ((pair? com)   (nth-set! com ind val))
           ((vector? com)  (vector-set! com ind val))
@@ -1497,7 +1492,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef dead (lambda (x) (tnil (thread-dead? x))))
 
-; Added because Mzscheme buffers output.  Not a permanent part of Arc.
+; Added because Racket buffers output.  Not a permanent part of Arc.
 ; Only need to use when declare explicit-flush optimization.
 
 (xdef flushout (lambda args (flush-output (if (pair? args)
@@ -1517,26 +1512,26 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; (force-close o) discards buffered output, then closes UNIX desc.
 ; web servers need the latter to get rid of connections to
 ; clients that are not reading data.
-; mzscheme close-output-port doesn't work (just raises an error)
+; Racket's close-output-port doesn't work (just raises an error)
 ; if there is buffered output for a non-responsive socket.
 ; must use custodian-shutdown-all instead.
 
-(define custodians (make-hash-table 'equal))
+(define custodians (make-hash))
 
 (define (associate-custodian c i o)
-  (hash-table-put! custodians i c)
-  (hash-table-put! custodians o c))
+  (hash-set! custodians i c)
+  (hash-set! custodians o c))
 
 ; if a port has a custodian, use it to close the port forcefully.
 ; also get rid of the reference to the custodian.
 ; sadly doing this to the input port also kills the output port.
 
 (define (try-custodian p)
-  (let ((c (hash-table-get custodians p #f)))
+  (let ((c (hash-ref custodians p #f)))
     (if c
         (begin
           (custodian-shutdown-all c)
-          (hash-table-remove! custodians p)
+          (hash-remove! custodians p)
           #t)
         #f)))
 
@@ -1555,16 +1550,17 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (xdef force-close (lambda args
                        (map (lambda (p)
                               (if (not (try-custodian p))
-                                  (ar-close p)))
+                                  (ar-close p)
+                                  null))
                             args)
                        'nil))
 
 (xdef memory current-memory-use)
 
-(define ar-declarations (make-hash-table))
+(define ar-declarations (make-hash))
 
 (define (ar-bflag key)
-  (not (ar-false? (hash-table-get ar-declarations key 'nil))))
+  (not (ar-false? (hash-ref ar-declarations key 'nil))))
 
 (xdef declarations* ar-declarations)
 

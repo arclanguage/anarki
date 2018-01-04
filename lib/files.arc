@@ -40,3 +40,8 @@
 (def qualified-path (path)
   " Returns the fully-qualified path of a possibly relative `path'. "
   ($ (path->string (simplify-path (path->complete-path ,path)))))
+
+(def dir-tree (path)
+  " Returns a directory tree from the given path. "
+  (if (~dir-exists path) path
+      (map dir-tree (map [$.path->string:$.build-path path _] (dir path)))))

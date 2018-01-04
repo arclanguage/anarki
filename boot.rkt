@@ -1,13 +1,14 @@
-(module boot mzscheme ; promise we won't redefine mzscheme bindings
+(module boot racket/base
 
 (parameterize ((current-output-port (current-error-port)))
   (display "initializing arc.. (may take a minute)")(newline))
 
-(require (only racket path-only))
-(require (only racket/runtime-path define-runtime-path))
+(require (for-syntax racket)
+         (only-in racket/runtime-path define-runtime-path)
+         (only-in racket path-only))
 
-(require "ac.scm")
-(require (only "brackets.scm" use-bracket-readtable))
+(require "ac.rkt")
+(require (only-in "brackets.rkt" use-bracket-readtable))
 (use-bracket-readtable)
 
 (define-runtime-path arc-arc-path "arc.arc")
@@ -17,7 +18,7 @@
   (aload arc-arc-path)
   (aload libs-arc-path))
 
-(provide (all-from mzscheme))
-(provide (all-from "ac.scm"))
+(provide (all-from-out racket/base))
+(provide (all-from-out "ac.rkt"))
 
 )

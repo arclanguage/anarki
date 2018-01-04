@@ -113,7 +113,7 @@
           (node y!lf!dt (node d x y!lf!lf)
                 (node y!dt y!lf!rt y!rt))
           (node y!dt (node d x y!lf) y!rt))
-      :else
+      'else
         (node d x y)))
 
 ; Note that, up to this point, we haven't needed to compare any elements, and
@@ -127,7 +127,7 @@
         (node/r tree!dt
                 (ainsert less x tree!lf)
                 tree!rt)
-      :else
+      'else
         (node/r tree!dt
                 tree!lf
                 (ainsert less x tree!rt))))
@@ -141,7 +141,7 @@
         (node/r tree!dt
                 (aremove less test tree!lf)
                 tree!rt)
-      :else
+      'else
         (node/r tree!dt
                 tree!lf
                 (aremove less test tree!rt))))
@@ -155,7 +155,7 @@
         (node/r b!dt
                 (amerge a b!lf)
                 b!rt)
-      :else
+      'else
         (node/r a!dt
                 a!lf
                 (amerge a!rt b))))

@@ -1,4 +1,4 @@
-Anarki's implementation of 'uniq calls mzscheme's 'gensym. This has two
+Anarki's implementation of 'uniq calls Racket's 'gensym. This has two
 effects. First and foremost, 'uniq now returns a "true" gensym - an uninterned
 symbol:
 

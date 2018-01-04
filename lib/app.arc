@@ -230,7 +230,7 @@ Returns nil if no logged-in user."
          pw         (app-email 3))
         ($.keyword-apply
           $.smtp-send-message
-          ($.list :auth-passwd :auth-user)
+          ($.map $.string->keyword ($.list "auth-passwd" "auth-user"))
           ($.list pw auth-user)
           ($.list smtp-srv from to header message))))
 
@@ -554,7 +554,7 @@ Returns nil if no logged-in user."
             (if indelim (+ i 1) i)
           (or punc.c whitec.c opendelim.c)
             i
-          :else
+          'else
             (+ i 1))
       (let nextc (s (+ i 1))
         (if (or whitec.c

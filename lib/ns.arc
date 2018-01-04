@@ -50,7 +50,7 @@
 ; 'arc-exec in ac.scm for more details about how this helps.
 
 ($:require
-  (only racket/base
+  (only-in racket/base
     local-require
     make-derived-parameter
     namespace-anchor?
