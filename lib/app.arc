@@ -218,7 +218,7 @@ Returns nil if no logged-in user."
 
 ($ (require net/smtp))
 (def email-forgotpw-link (user email)
-  (withr (app-email (map string (readfile "www/app-email"))
+  (withs (app-email (map string (readfile "www/app-email"))
          to         ($.list email)
          header     "Subject: Reset your password\n\n"
          message    ($.list (string
