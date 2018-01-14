@@ -209,6 +209,7 @@ Returns nil if no logged-in user."
                      (br2)
                      (pr "If you don't see it, check your spam folder."))
                    (do
+                     (ero (string "Failed to send password reset email to " user "!"))
                      (pr "Sorry, there was a problem sending the email.")
                      (br2)
                      (pr "Please tell an admin, so they can fix it.")))
@@ -216,22 +217,33 @@ Returns nil if no logged-in user."
     (input "u" "" 20)
     (submit "Send reset email")))
 
-($ (require net/smtp))
+($ (require net/smtp net/head))
 (def email-forgotpw-link (user email)
   (withs (app-email (map string (readfile "www/app-email"))
          to         ($.list email)
-         header     "Subject: Reset your password\n\n"
          message    ($.list (string
                             (trim site-url* 'end #\/)
                             (flink (fn ignore (forgotpw-reset-page user)))))
          from       (app-email 0)
          smtp-srv   (app-email 1)
          auth-user  (app-email 2)
-         pw         (app-email 3))
+         pw         (app-email 3)
+         header     ($.standard-message-header
+                      from
+                      to
+                      $.null
+                      $.null
+                      "Reset your password"))
         ($.keyword-apply
           $.smtp-send-message
-          ($.map $.string->keyword ($.list "auth-passwd" "auth-user"))
-          ($.list pw auth-user)
+          ($.map $.string->keyword ($.list
+            "auth-passwd"
+            "auth-user"
+            "tls-encode"))
+          ($.list
+            pw
+            auth-user
+            $.ports->ssl-ports)
           ($.list smtp-srv from to header message))))
 
 (def forgotpw-reset-page (user (o msg))
