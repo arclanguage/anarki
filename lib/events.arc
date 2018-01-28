@@ -143,10 +143,8 @@ window.onload = _ => {
   (when osm-enabled
     (tag (div "id" "map" "width" "100%" "height" "0"))
     (tag (link "rel" "stylesheet" "type" "text/css"
-               "href" "https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
-               "integrity" "sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1"))
-    (tag (script "src" "https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
-                 "integrity" "sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq"))
+               "href" "https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"))
+    (tag (script "src" "https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"))
     (tag "script" (pr osmjs*))))
 
 (def events-page (user)
