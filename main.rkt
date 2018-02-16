@@ -2,9 +2,9 @@
 
 (require racket/runtime-path)
 
-(define-runtime-path boot-scm-path "boot.scm")
+(define-runtime-path boot-rkt-path "boot.rkt")
 
-(define anarki-path (path-only boot-scm-path))
+(define anarki-path (path-only boot-rkt-path))
 
 ; Loading Anarki is expensive, so we do it on demand, and the
 ; (anarki-init) function is dedicated to doing so. Fortunately, we pay
@@ -14,14 +14,14 @@
 (define (anarki-init)
   ; We load the export, but then we ignore it. We could use any export
   ; for this.
-  (dynamic-require boot-scm-path 'tl)
+  (dynamic-require boot-rkt-path 'tl)
   (void))
 
 (define-syntax provide-functions-from-anarki
   (syntax-rules ()
     [(_ [internal-name external-name] ...)
       (begin (begin (define (external-name . args)
-                      (apply (dynamic-require boot-scm-path
+                      (apply (dynamic-require boot-rkt-path
                                'internal-name)
                         args))
                     (provide external-name))

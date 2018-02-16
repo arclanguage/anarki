@@ -5,7 +5,7 @@
 ; need better way of generating strings; too many calls to string
 ;  maybe strings with escape char for evaluation
 ; make foo~bar equiv of foo:~bar (in expand-ssyntax)
-; add sigs of ops defined in ac.scm
+; add sigs of ops defined in ac.rkt
 ; get hold of error types within arc
 ; does macex have to be defined in scheme instead of using def below?
 ; write disp in arc

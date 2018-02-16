@@ -43,11 +43,11 @@
 ; '{r,}ns-set-import utilities which take care of renaming using an
 ; optional "original name" argument. TODO: Implement that.
 ;
-; This library also requires a slight change to ac.scm: Instead of Arc
+; This library also requires a slight change to ac.rkt: Instead of Arc
 ; global variables being set using 'namespace-set-variable-value!,
 ; they're now set using 'set!, and the Racket version of an Arc
 ; command is compiled using 'compile-allow-set!-undefined. See
-; 'arc-exec in ac.scm for more details about how this helps.
+; 'arc-exec in ac.rkt for more details about how this helps.
 
 ($:require
   (only-in racket/base

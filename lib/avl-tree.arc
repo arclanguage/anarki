@@ -312,7 +312,7 @@
 ; "x!rt!lf" with (lf (rt x)), etc. Or one could use a Racket vector--define
 ; (datum node) as (vector-ref node 0), (lf node) as (vector-ref node 1), and
 ; so on. Or one could import Racket structs, and maybe add a "struct?" case
-; for "ar-apply" in ac.scm so you can still use the x!rt!lf syntax. All of
+; for "ar-apply" in ac.rkt so you can still use the x!rt!lf syntax. All of
 ; these are likely more efficient than using tables.
 ; 
 ; [3] I think the functional approach is easier for the same reason that this:

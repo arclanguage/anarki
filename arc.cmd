@@ -26,9 +26,9 @@ SET arglen=0
 FOR %%X IN (%*) DO SET /A arglen+=1
 
 IF %arglen% EQU 0 (
-  racket -t %arc_dir%boot.scm -e "(tl)"
+  racket -t %arc_dir%boot.rkt -e "(tl)"
 ) ELSE (
-  racket -t %arc_dir%boot.scm -e "(aload (vector-ref (current-command-line-arguments) 0))" %*
+  racket -t %arc_dir%boot.rkt -e "(aload (vector-ref (current-command-line-arguments) 0))" %*
 )
 
 ENDLOCAL
