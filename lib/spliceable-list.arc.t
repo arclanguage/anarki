@@ -1,3 +1,5 @@
+(require 'lib/spliceable-list.arc)
+
 (suite spliceable-list
        (setup one-element    (spliceable-list 2 '(1))
               two-elements   (spliceable-list 2 '(1 2))

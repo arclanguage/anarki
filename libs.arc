@@ -8,6 +8,7 @@
     lib/queue.arc
     lib/tem.arc
     lib/declare.arc
+    lib/make-br-fn.arc
 
 ;   ; optional
 ;   lib/files.arc
@@ -16,7 +17,6 @@
 ;   lib/tree.arc
 ;   lib/util.arc
 ;   lib/spliceable-list.arc
-;   lib/make-br-fn.arc
 ;   lib/client.arc
 ;   lib/pd.arc
 

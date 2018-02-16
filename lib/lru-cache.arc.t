@@ -1,3 +1,5 @@
+(require 'lib/lru-cache.arc)
+
 (suite lru
        (setup calls    0
               test-lru (lru 2 [do (++ calls) (+ _ 1)]))

@@ -1,3 +1,7 @@
+; We require lib/util.arc to get its modified definition of `mac` with
+; support for @-based gensyms.
+(require 'lib/util.arc)
+
 (suite atom
        (test includes-int (assert-t (atom 3)))
        (test includes-float

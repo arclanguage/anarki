@@ -1,4 +1,4 @@
-(require "lib/ns.arc")
+(require 'lib/ns.arc)
 
 (suite namespace
        (setup foo (nsobj a 1 b 2))

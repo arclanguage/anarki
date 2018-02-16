@@ -1,3 +1,5 @@
+(require 'lib/client.arc)
+
 (suite web
        (suite parse-url
               (test default-resource

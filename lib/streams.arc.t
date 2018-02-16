@@ -1,3 +1,5 @@
+(require 'lib/streams.arc)
+
 (suite lazy-stream
        (test car
              (assert-same 1 (car (lazy-cons 1 2))))
