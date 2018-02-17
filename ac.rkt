@@ -4,8 +4,7 @@
 
 (provide (all-defined-out))
 
-(require openssl
-         racket/port
+(require racket/port
          racket/tcp
          racket/system
          racket/pretty)
@@ -1070,6 +1069,12 @@
                          (lambda () (tcp-connect host port)))))
 
 (xdef ssl-connect (lambda (host port)
+                    ; NOTE: There was a bug in unmarshaling namespace
+                    ; information from compiled Racket code that was
+                    ; fixed in Racket 6.11. On that version and later,
+                    ; we can replace this with `(require openssl)`.
+                    (define ssl-connect
+                      (dynamic-require 'openssl 'ssl-connect))
                     (ar-init-socket
                       (lambda () (ssl-connect host port)))))
 
@@ -1107,8 +1112,13 @@
                        (system (string-append "rm -f " tf))
                        str))))
 
-(require racket/random)
 (define (ar-tmpname)
+  ; NOTE: There was a bug in unmarshaling namespace information from
+  ; compiled Racket code that was fixed in Racket 6.11. On that
+  ; version and later, we can replace this with
+  ; `(require racket/random)`.
+  (define crypto-random-bytes
+    (dynamic-require 'racket/random 'crypto-random-bytes))
   (string-append "/tmp/"
     (list->string
       (map (lambda (byte)
