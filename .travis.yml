@@ -48,8 +48,8 @@ script:
   - ./arc.sh -n tests.arc
 
 
-  # We do a sanity checks to be sure the Racket package works. This
-  # (and most of the rest of this file) is taken from the sample
+  # We do sanity checks to be sure the Racket package works. This (and
+  # most of the rest of this file) is adapted from the sample
   # .travis.yml at <https://github.com/greghendershott/travis-racket>.
 
   # We install the current directory as a linked package, and we
@@ -57,14 +57,26 @@ script:
   - raco pkg install --deps search-auto
 
   # We recompile every dependency of Anarki, but we don't recompile
-  # their documentation. (TODO: Why? Is there a chance `raco setup`
-  # fails when `raco pkg install` doesn't?)
+  # their documentation. (TODO: Why does travis-racket suggest this?
+  # Is there a chance `raco setup` fails when `raco pkg install`
+  # doesn't?)
   - raco setup --no-docs --check-pkg-deps anarki
 
-  # We run any 'test submodules of any Racket module files existing
-  # recursively under this package. If 'test is not present, we don't
-  # fall back to running the whole file; we just skip the file.
-  - raco test --no-run-if-absent --package anarki
+  # We run Racket tests according to the way the DrDr continuous
+  # testing system does. This imitates the settings used by the Racket
+  # package index at <https://pkgs.racket-lang.org/>.
+  #
+  # Due to the usual `raco test` behavior, this runs any submodules
+  # named "test" of any Racket module files existing recursively under
+  # this package. If a submodule named "test" is not present in a
+  # module file, this falls back to running the whole file.
+  #
+  # Due to the `--drdr` option, this runs each test with a separate
+  # temporary directory, gives it no stdin, suppresses its stdout, and
+  # treats any stderr output as a test failure. See
+  # <https://docs.racket-lang.org/raco/test.html>.
+  #
+  - raco test --drdr --package anarki
 
 
 after_success:
