@@ -11,9 +11,29 @@ env:
     - RACKET_DIR=~/racket
     - TRAVIS_RACKET_DIR=~/travis-racket
   matrix:
-#    - RACKET_VERSION=6.6
-#    - RACKET_VERSION=6.7
-    - RACKET_VERSION=6.8
+
+    # Versions prior to 5.92 don't seem to install the current
+    # directory as a package named "anarki" using
+    # `raco pkg install --deps search-auto`. It's unknown how well
+    # they work.
+
+    # Versions prior to 6.0.1 don't provide the `--drdr` option, which
+    # is used by one of the testing commands here, but they otherwise
+    # should work as well as the versions after.
+
+    # Versions prior to 6.1 don't provide the `--check-pkg-deps`
+    # option, which is used by one of the testing commands here, but
+    # they otherwise should work as well as the versions after.
+
+    # Versions prior to 6.3 don't define the `racket/random` module,
+    # which is needed for news.arc and one of the tests.
+
+    # This is the earliest known supported version.
+    - RACKET_VERSION=6.3
+
+    # This is the latest known supported version.
+    - RACKET_VERSION=6.12
+
 #    - RACKET_VERSION=HEAD
 
 matrix:
