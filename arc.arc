@@ -1736,14 +1736,19 @@ protocol requires them."
 
 (def rand-string (n)
 "Generates a random string of letters and numbers."
-  (let c "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    (with (nc 62 s (newstring n) i 0)
-      (while (< i n)
-        (let x ($.bytes-ref ($.crypto-random-bytes 1) 0)
-           (unless (> x 247)
-             (= (s i) (c (mod x nc)))
-             (++ i))))
-      s)))
+  (with
+    (c "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+     nc 62
+     s (newstring n)
+     i 0
+     crypto-random-bytes
+       ($.dynamic-require 'racket/random 'crypto-random-bytes))
+    (while (< i n)
+      (let x ($.bytes-ref (crypto-random-bytes 1) 0)
+        (unless (> x 247)
+          (= (s i) (c (mod x nc)))
+          (++ i))))
+    s))
 
 (mac on (var s . body)
 "Like [[each]], but also maintains a variable calles 'index' counting the iterations."
