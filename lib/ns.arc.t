@@ -1,14 +1,20 @@
 (require 'lib/ns.arc)
 
 (suite namespace
-       (setup foo (nsobj a 1 b 2))
+       (setup foo (nsobj a 1 b 2)
+              bar (nsobj a 3 b 4))
+       (test namespaces-are-distinct
+             (assert-same (list 1 3)
+                          (list foo!a bar!a)))
        (test make-namespaces
              (assert-same '(a b)
                           (sort <
                                 (keep $.symbol-interned? ns-keys.foo))))
        (test get-namespaces (assert-same 1 foo!a))
        (test assigning-into-namespace
-             (assert-same 2 (do (= foo!a 2) foo!a))))
+             (assert-same 2 (do (= foo!a 2) foo!a)))
+       (test namespaces-do-not-disturb-each-other
+             (assert-same 3 (do (= foo!a 2) bar!a))))
 
 (suite modecule
        (setup foo (nsobj i 9 j 10)
