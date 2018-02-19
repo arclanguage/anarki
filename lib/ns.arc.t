@@ -14,7 +14,15 @@
        (test assigning-into-namespace
              (assert-same 2 (do (= foo!a 2) foo!a)))
        (test namespaces-do-not-disturb-each-other
-             (assert-same 3 (do (= foo!a 2) bar!a))))
+             (assert-same 3 (do (= foo!a 2) bar!a)))
+       ; TODO: Uncomment these tests once they pass.
+       #;(test w/current-ns-get
+             (assert-same 2 (w/current-ns foo (eval 'b))))
+       #;(test w/current-ns-set
+             (assert-same 5
+               (w/current-ns foo
+                 (eval '(= variable-that-should-wind-up-in-foo 5))
+                 foo!variable-that-should-wind-up-in-foo))))
 
 (suite modecule
        (setup foo (nsobj i 9 j 10)
