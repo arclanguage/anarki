@@ -1235,8 +1235,6 @@
       (newline)
       (tle))))
 
-(define last-condition* #f)
-
 (define (tl)
   (let ((interactive? (terminal-port? (current-input-port))))
     (when interactive?
@@ -1271,10 +1269,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
   (on-err (lambda (c)
-            (set! last-condition* c)
             (parameterize ((current-output-port (current-error-port)))
               ((error-display-handler) (exn-message c) c)
               (newline))
+            (define last-condition-var
+              (ac-global-name 'last-condition*))
+            (parameterize ((current-namespace (main-namespace)))
+              (namespace-set-variable-value! last-condition-var c))
             (tl2 interactive?))
     (lambda ()
       (let ((expr (read)))
