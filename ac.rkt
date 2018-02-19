@@ -1251,7 +1251,7 @@ For a list of differences with arc 3.1:
   arc> (incompatibilities)
 To run all automatic tests:
   $ hg clone https://bitbucket.org/zck/unit-test.arc
-  $ ./arc
+  $ ./arc.sh
   arc> (load \"tests.arc\")
 
 If you have questions or get stuck, come to http://arclanguage.org/forum.
