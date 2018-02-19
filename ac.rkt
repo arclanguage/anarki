@@ -1305,7 +1305,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (aload1 p)
   (let ((x (read p)))
     (if (eof-object? x)
-        #t
+        (void)
         (begin
           (arc-eval x)
           (aload1 p)))))
@@ -1574,7 +1574,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef declarations* ar-declarations)
 
-(putenv "TZ" ":GMT")
+; We use `void` here to avoid printing `#t` when this module is
+; visited.
+(void (putenv "TZ" ":GMT"))
 
 (define (gmt-date sec) (seconds->date sec))
 
