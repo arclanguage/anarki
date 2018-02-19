@@ -93,9 +93,9 @@
                                          (unescape-ats x)
                                          x))
                                    (codestring s)))))
-          (hash-set! ar-declarations 'atstrings 'nil)
+          (hash-set! (ar-declarations) 'atstrings 'nil)
           (let ((result (ac target-expression env)))
-            (hash-set! ar-declarations 'atstrings 't)
+            (hash-set! (ar-declarations) 'atstrings 't)
             result))
         (list string-copy (unescape-ats s)))
       (list string-copy s)))     ; avoid immutable strings
@@ -970,15 +970,19 @@
 (define (iround x) (inexact->exact (round x)))
 
 ; look up first by target type, then by source type
-(define coercions (make-hash))
+(xdef coerce* (make-hash))
+(define (coercions)
+  (parameterize ((current-namespace (main-namespace)))
+    (namespace-variable-value (ac-global-name 'coerce*))))
 
 (for-each (lambda (e)
-            (let ((target-type (car e))
-                  (conversions (make-hash)))
-              (hash-set! coercions target-type conversions)
-              (for-each
-               (lambda (x) (hash-set! conversions (car x) (cadr x)))
-               (cdr e))))
+            (add-init-step
+              (let ((target-type (car e))
+                    (conversions (make-hash)))
+                (hash-set! (coercions) target-type conversions)
+                (for-each
+                  (lambda (x) (hash-set! conversions (car x) (cadr x)))
+                  (cdr e)))))
  `((fn      (cons   ,(lambda (l) (lambda (i)
                                    (ar-car (ar-nthcdr (if (< i 0)
                                                         (let* ((l (ar-denil-last l))
@@ -1025,12 +1029,11 @@
   (let ((x-type (ar-type x)))
     (if (eqv? type x-type) x
         (let* ((fail        (lambda () (err "Can't coerce " x type)))
-               (conversions (hash-ref coercions type fail))
+               (conversions (hash-ref (coercions) type fail))
                (converter   (hash-ref conversions x-type fail)))
           (ar-apply converter (cons x args))))))
 
 (xdef coerce ar-coerce)
-(xdef coerce* coercions)
 
 (xdef parameter make-parameter)
 (xdef parameterize-sub
@@ -1574,12 +1577,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef memory current-memory-use)
 
-(define ar-declarations (make-hash))
+(xdef declarations* (make-hash))
+(define (ar-declarations)
+  (parameterize ((current-namespace (main-namespace)))
+    (namespace-variable-value (ac-global-name 'declarations*))))
 
 (define (ar-bflag key)
-  (not (ar-false? (hash-ref ar-declarations key 'nil))))
-
-(xdef declarations* ar-declarations)
+  (not (ar-false? (hash-ref (ar-declarations) key 'nil))))
 
 (void (putenv "TZ" ":GMT"))
 

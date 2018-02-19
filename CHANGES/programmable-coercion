@@ -10,13 +10,16 @@ to boot. See http://arclanguage.org/item?id=9828 for more details.
 Specifically, the result of (coerce val new), where val is of type old, is
 (((coerce* new) old) val).
 
-Note that changing the value of the variable coerce* itself will *not* affect
-coercion. Rather, coerce* is a hashtable which must be _modified_ to affect
-coercion. That is:
+Note that changing the value of the variable coerce* itself *will* affect
+coercion, but modifying the table is the usual way to use this. That is:
 
-    ; WRONG
-    (= coerce* (let old (copy coerce*) (= old!fn!int (fn (i) (fn _ i)))))
-    ; RIGHT
+    ; NORMAL USAGE: Modifying the existing tables.
+    (= coerce*!fn!int (fn (i) (fn _ i)))
+
+    ; ALSO WORKS: Overwriting the variable itself, but carefully copying the
+    ; tables to avoid modifying the originals,
+    (zap listtab:tablist coerce*)
+    (zap listtab:tablist coerce*!fn)
     (= coerce*!fn!int (fn (i) (fn _ i)))
 
 A file load/defcall.arc is also provided which defines 'set-coercer, 'defcoerce,
