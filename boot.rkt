@@ -16,6 +16,8 @@
 
 (define anarki-init-promise
   (delay
+    (parameterize ([current-namespace (main-namespace)])
+      (run-init-steps))
     (use-bracket-readtable)
     (parameterize ([current-directory (path-only arc-arc-path)])
       (aload arc-arc-path)

@@ -20,14 +20,20 @@
 (define (ac-global-name s)
   (string->symbol (string-append "_" (symbol->string s))))
 
-(define-syntax xdef
-  (syntax-rules ()
-    ((xxdef a b)
-     (let ((nm (ac-global-name 'a))
-           (a b))
-       (parameterize ((current-namespace (main-namespace)))
-         (namespace-set-variable-value! nm a))
-       ))))
+(define init-steps-reversed* (list))
+
+(define-syntax-rule (add-init-step step)
+  (set! init-steps-reversed*
+    (cons (lambda () step) init-steps-reversed*)))
+
+(define-syntax-rule (xdef a b)
+  (add-init-step
+    (let ((a b))
+      (namespace-set-variable-value! (ac-global-name 'a) a))))
+
+(define (run-init-steps)
+  (for ((step (reverse init-steps-reversed*)))
+    (step)))
 
 (define-syntax defarc
   (syntax-rules ()
