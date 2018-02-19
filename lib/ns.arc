@@ -393,8 +393,10 @@
 
   (def rns-set (var val (o rns current-rns))
     " Sets a variable in a Racket namespace using Racket's 'set!. "
-    (let (var rns) (rep:rns-var var rns)
-      ($.arc-exec ($.list set var embed.val) rns))
+    (withs ((var rns) (rep:rns-var var rns)
+            racket-code ($.list set var embed.val))
+      (w/current-rns rns
+        $.arc-exec.racket-code))
     val)
 
   (def ns-set (var val (o ns current-ns))

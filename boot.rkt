@@ -4,11 +4,12 @@
 (require "ac.rkt")
 (require (only-in "brackets.rkt" use-bracket-readtable))
 
+(define-runtime-path ac-rkt-path "ac.rkt")
 (define-runtime-path arc-arc-path "arc.arc")
 (define-runtime-path libs-arc-path "libs.arc")
 
-
 (define (anarki-init)
+  (namespace-require ac-rkt-path)
   (run-init-steps)
   (use-bracket-readtable)
   (parameterize ([current-directory (path-only arc-arc-path)])

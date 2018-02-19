@@ -45,8 +45,7 @@
        (defarc arc-name scheme-name)))
     ((defarc arc-name scheme-name)
      (define (scheme-name . args)
-       (apply (parameterize ((current-namespace (main-namespace)))
-                (namespace-variable-value (ac-global-name 'arc-name)))
+       (apply (namespace-variable-value (ac-global-name 'arc-name))
               args)))
     ((defarc name)
      (defarc name name))))
@@ -1108,8 +1107,8 @@
 
 (xdef system (lambda (s) (tnil (system s))))
 
-(let ((argv (current-command-line-arguments)))
-  (parameterize ((current-namespace (main-namespace)))
+(add-init-step
+  (let ((argv (current-command-line-arguments)))
     (namespace-set-variable-value! (ac-global-name 'argv)
                                    (vector->list argv))))
 
@@ -1217,23 +1216,16 @@
 ; versions ((set! ...) forms and direct variable references) or less
 ; direct versions (uses of full 'arc-eval) depending on how their
 ; behavior should change when a module import or syntax obstructs the
-; original meaning of the variable. Some have instead been kept
-; around, but surrounded by (parameterize ...) forms so they're tied
-; the main namespace. Another utility changed in this spirit is
-; 'bound?, which should now be able to see variables which are bound
-; as Racket syntax.
-(define (arc-exec racket-expr . namespace)
-  (parameterize ((current-namespace
-                  (if (pair? namespace)
-                    (car namespace)
-                    (main-namespace))))
-    (eval (parameterize ((compile-allow-set!-undefined #t))
-            (compile racket-expr)))))
+; original meaning of the variable. Another utility changed in this
+; spirit is 'bound?, which should now be able to see variables which
+; are bound as Racket syntax.
+;
+(define (arc-exec racket-expr)
+  (eval (parameterize ((compile-allow-set!-undefined #t))
+          (compile racket-expr))))
 
 (define (arc-eval expr)
-  (arc-exec
-    (parameterize ((current-namespace (main-namespace)))
-      (ac expr '()))))
+  (arc-exec (ac expr '())))
 
 (define (tle)
   (display "Arc> ")
@@ -1284,10 +1276,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
             (parameterize ((current-output-port (current-error-port)))
               ((error-display-handler) (exn-message c) c)
               (newline))
-            (define last-condition-var
-              (ac-global-name 'last-condition*))
-            (parameterize ((current-namespace (main-namespace)))
-              (namespace-set-variable-value! last-condition-var c))
+            (namespace-set-variable-value!
+              (ac-global-name 'last-condition*)
+              c)
             (tl2 interactive?))
     (lambda ()
       (let ((expr (read)))
@@ -1302,9 +1293,12 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
               (when interactive?
                 (write (ac-denil val))
                 (newline))
-              (parameterize ((current-namespace (main-namespace)))
-                (namespace-set-variable-value! '_that val)
-                (namespace-set-variable-value! '_thatexpr expr))
+              (namespace-set-variable-value!
+                (ac-global-name 'that)
+                val)
+              (namespace-set-variable-value!
+                (ac-global-name 'thatexpr)
+                expr)
               (tl2 interactive?)))))))
 
 (let ((current-function '()))
@@ -1352,9 +1346,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (let ((x (read ip)))
     (if (eof-object? x)
         #t
-        (let ((scm
-               (parameterize ((current-namespace (main-namespace)))
-                 (ac x '()))))
+        (let ((scm (ac x '())))
           (arc-exec scm)
           (pretty-print scm op)
           (newline op)
@@ -1586,8 +1578,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef declarations* (make-hash))
 (define (ar-declarations)
-  (parameterize ((current-namespace (main-namespace)))
-    (namespace-variable-value (ac-global-name 'declarations*))))
+  (namespace-variable-value (ac-global-name 'declarations*)))
 
 (define (ar-bflag key)
   (not (ar-false? (hash-ref (ar-declarations) key 'nil))))

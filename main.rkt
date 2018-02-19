@@ -8,6 +8,10 @@
 ;   > (require anarki)
 ;   > (anarki)
 ;   arc>
+;
+; TODO: Right now, `(anarki)` actually doesn't display anything at the
+; REPL because stdout appears to be a non-terminal port. Fix this
+; somehow.
 
 
 (require anarki/boot)
