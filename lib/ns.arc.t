@@ -15,13 +15,37 @@
              (assert-same 2 (do (= foo!a 2) foo!a)))
        (test namespaces-do-not-disturb-each-other
              (assert-same 3 (do (= foo!a 2) bar!a)))
-       ; TODO: Uncomment these tests once they pass.
-       #;(test w/current-ns-get
-             (assert-same 2 (w/current-ns foo (eval 'b))))
-       #;(test w/current-ns-set
+       (test w/current-ns-get
+             (assert-same 2
+               (w/current-ns foo
+                 ($.namespace-require 'racket/base)
+                 ($.anarki-init)
+                 (eval 'b))))
+       (test w/current-ns-set-1
              (assert-same 5
                (w/current-ns foo
+                 ($.namespace-require 'racket/base)
+                 ($.anarki-init)
+                 (eval '(= variable-that-should-wind-up-in-foo 5)))
+               ; NOTE: We have to call the namespace like this
+               ; *outside* the `w/current-ns` section because the
+               ; coercion of `ns` to `fn` is stored in the `coerce*`
+               ; variable of the namespace these tests run in, not in
+               ; the `foo` namespace.
+               foo!variable-that-should-wind-up-in-foo))
+       ; TODO: Fix and uncomment this test. It's causing other tests
+       ; in this suite to fail, probably because ns.arc defines a
+       ; Racket module partway through.
+       #;(test w/current-ns-set-2
+             (assert-same 5
+               (w/current-ns foo
+                 ($.namespace-require 'racket/base)
+                 ($.anarki-init)
+                 (eval '(require 'lib/ns.arc))
                  (eval '(= variable-that-should-wind-up-in-foo 5))
+                 ; NOTE: This time, we loaded ns.arc in the `foo`
+                 ; namespace itself, so we can use the `ns` to `fn`
+                 ; coercion.
                  foo!variable-that-should-wind-up-in-foo))))
 
 (suite modecule

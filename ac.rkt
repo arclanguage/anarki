@@ -4,7 +4,9 @@
 
 (provide (all-defined-out))
 
-(require racket/port
+(require (only-in racket/runtime-path define-runtime-path)
+         (only-in racket/promise delay force)
+         racket/port
          racket/tcp
          racket/system
          racket/pretty)
@@ -12,6 +14,14 @@
 ; This defines names like _list, so it would conflict with the naming
 ; convention for Arc global variables if we didn't prefix it.
 (require (prefix-in ffi: ffi/unsafe))
+
+(require (only-in "brackets.rkt" use-bracket-readtable))
+
+(require (for-syntax racket/base))
+
+(define-runtime-path ac-rkt-path "ac.rkt")
+(define-runtime-path arc-arc-path "arc.arc")
+(define-runtime-path libs-arc-path "libs.arc")
 
 (define-namespace-anchor main-namespace-anchor)
 (define (main-namespace)
@@ -49,6 +59,31 @@
               args)))
     ((defarc name)
      (defarc name name))))
+
+(define (anarki-init)
+  (namespace-require ac-rkt-path)
+  (run-init-steps)
+  (use-bracket-readtable)
+  (parameterize ([current-directory (path-only arc-arc-path)])
+    (aload arc-arc-path)
+    (aload libs-arc-path)))
+
+(define anarki-init-in-main-namespace-promise
+  (delay
+    (parameterize ([current-namespace (main-namespace)])
+      (anarki-init))))
+
+(define (anarki-init-in-main-namespace)
+  (force anarki-init-in-main-namespace-promise))
+
+(define (anarki-init-verbose)
+  (parameterize ([current-output-port (current-error-port)])
+    (displayln "initializing arc.. (may take a minute)"))
+  (anarki-init))
+
+(define (anarki-init-verbose-in-main-namespace)
+  (parameterize ([current-namespace (main-namespace)])
+    (anarki-init-verbose)))
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.

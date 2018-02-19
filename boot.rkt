@@ -1,38 +1,13 @@
-#lang racket
+#lang racket/base
 
-(require (only-in racket/runtime-path define-runtime-path))
+(require (only-in racket/cmdline command-line))
+
 (require "ac.rkt")
-(require (only-in "brackets.rkt" use-bracket-readtable))
-
-(define-runtime-path ac-rkt-path "ac.rkt")
-(define-runtime-path arc-arc-path "arc.arc")
-(define-runtime-path libs-arc-path "libs.arc")
-
-(define (anarki-init)
-  (namespace-require ac-rkt-path)
-  (run-init-steps)
-  (use-bracket-readtable)
-  (parameterize ([current-directory (path-only arc-arc-path)])
-    (aload arc-arc-path)
-    (aload libs-arc-path)))
-
-(define anarki-init-in-main-namespace-promise
-  (delay
-    (parameterize ([current-namespace (main-namespace)])
-      (anarki-init))))
-
-(define (anarki-init-in-main-namespace)
-  (force anarki-init-in-main-namespace-promise))
 
 
-(define (anarki-init-verbose)
-  (parameterize ([current-output-port (current-error-port)])
-    (displayln "initializing arc.. (may take a minute)"))
-  (anarki-init))
-
-(define (anarki-init-verbose-in-main-namespace)
-  (parameterize ([current-namespace (main-namespace)])
-    (anarki-init-verbose)))
+(provide (all-from-out racket/base))
+(provide (all-from-out "ac.rkt"))
+(provide anarki-windows-cli)
 
 
 (define (anarki-windows-cli)
@@ -93,8 +68,3 @@
 
       ; We start an interactive prompt.
       (tl-in-main-namespace))))
-
-
-(provide (all-from-out racket))
-(provide (all-from-out "ac.rkt"))
-(provide (all-defined-out))
