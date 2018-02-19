@@ -3,9 +3,7 @@
 ;; For any future changes please refer to spec found at http://json.org/
 
 ;; To Use:
-;; ($ (require (file "lib/json.ss")))
-;; ($ (xdef read-json read-json))
-;; ($ (xdef write-json write-json))
+;; (require 'lib/json.arc)
 
 ;; Test Cases:
 ;; (tostring (write-json '(1 2 3)))

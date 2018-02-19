@@ -41,9 +41,7 @@
 ; (query client '(list-collections))
 ; (query client '(delete accounts))
 
-($ (require (file "lib/json.ss")))
-($ (xdef read-json read-json))
-($ (xdef write-json write-json))
+(require 'lib/json.arc)
 
 (= client (obj host "127.0.0.1" port 3400))
 
