@@ -1585,8 +1585,6 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (ar-bflag key)
   (not (ar-false? (hash-ref (ar-declarations) key 'nil))))
 
-(void (putenv "TZ" ":GMT"))
-
 (define (utc-date sec) (seconds->date sec #f))
 
 (xdef timedate
