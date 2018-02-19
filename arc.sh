@@ -107,7 +107,7 @@ esac
 
 if [ $# -gt 0 ]; then
   # there's a file given, execute it
-  load="(aload (vector-ref (current-command-line-arguments) 0))"
+  load="(aload-in-main-namespace (vector-ref (current-command-line-arguments) 0))"
 fi
 
 if [[ $REPL == definitely || ( $REPL == maybe && $# -eq 0 ) ]]; then
@@ -115,7 +115,7 @@ if [[ $REPL == definitely || ( $REPL == maybe && $# -eq 0 ) ]]; then
   if [[ $RLWRAP == true ]]; then
     rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
   fi
-  repl='(tl)'
+  repl="(tl-in-main-namespace)"
 fi
 
-$rl racket -t "$arc_dir/boot.rkt" -e "(anarki-init-verbose) $load $repl" "$@"
+$rl racket -t "$arc_dir/boot.rkt" -e "(anarki-init-verbose-in-main-namespace) $load $repl" "$@"

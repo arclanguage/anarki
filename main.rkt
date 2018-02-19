@@ -1,30 +1,32 @@
 #lang racket
 
-(require racket/runtime-path)
+; This is the primary interface to Anarki as a Racket library. It can
+; be accessed like so:
+;
+;   $ raco pkg install anarki
+;   $ racket
+;   > (require anarki)
+;   > (anarki)
+;   arc>
 
-(require (only-in "boot.rkt" aload anarki-init arc-eval tl))
 
-(define-runtime-path boot-rkt-path "boot.rkt")
+(require anarki/boot)
 
-(define anarki-path (path-only boot-rkt-path))
+(provide
+  anarki-init
+  anarki-init-in-main-namespace
+  anarki-init-verbose
+  (rename-out
+    [arc-arc-path anarki-path]
+    [main-namespace anarki-main-namespace]
+    [tl anarki-repl]
+    [aload anarki-load]
+    [arc-eval anarki-eval])
+  anarki)
 
-(define-syntax provide-functions-from-anarki
-  (syntax-rules ()
-    [(_ [internal-name external-name] ...)
-      (begin (begin (define (external-name . args)
-                      (anarki-init)
-                      (apply internal-name args))
-                    (provide external-name))
-             ...)]))
-
-(provide-functions-from-anarki
-  [tl anarki-repl]
-  [aload anarki-load]
-  [arc-eval anarki-eval])
 
 ; launch anarki repl from the anarki package folder
 (define (anarki)
-  (parameterize ([current-directory anarki-path])
-    (anarki-repl)))
-
-(provide anarki-path anarki-init anarki)
+  (parameterize ([current-directory arc-arc-path])
+    (anarki-init-verbose)
+    (tl)))

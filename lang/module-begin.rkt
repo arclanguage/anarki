@@ -1,7 +1,9 @@
 #lang racket
 
-(require (only-in anarki anarki-eval)
-         (only-in racket/runtime-path define-runtime-path))
+(require
+  (only-in anarki
+    anarki-eval anarki-init-in-main-namespace anarki-main-namespace)
+  (only-in racket/runtime-path define-runtime-path))
 
 (provide (rename-out [module-begin #%module-begin]))
 
@@ -27,6 +29,8 @@
          ; end, so we strip it off.
          (define here (simple-form-path here-nonsimple))
 
+         (anarki-init-in-main-namespace)
+
          ; Arc code often uses (load ...) to look up other files, so
          ; we set the working directory to the location of the Arc
          ; code file so that the behavior of (load ...) is more
@@ -35,7 +39,8 @@
          ; libraries from Arc is similar to loading Arc libraries from
          ; Arc.
          (define (eval-here expr)
-           (parameterize ([current-directory here])
+           (parameterize ([current-namespace (anarki-main-namespace)]
+                          [current-directory here])
              (anarki-eval expr)))
 
          (let ()

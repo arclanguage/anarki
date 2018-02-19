@@ -8,30 +8,30 @@
 (define-runtime-path libs-arc-path "libs.arc")
 
 
-; Loading Anarki is expensive, so we do it on demand, and the
-; (anarki-init) function is dedicated to doing so. By using Racket's
-; promises, we pay the initialization cost only once even though a
-; client of the Racket `anarki` module may call `anarki-init` multiple
-; times.
+(define (anarki-init)
+  (run-init-steps)
+  (use-bracket-readtable)
+  (parameterize ([current-directory (path-only arc-arc-path)])
+    (aload arc-arc-path)
+    (aload libs-arc-path)))
 
-(define anarki-init-promise
+(define anarki-init-in-main-namespace-promise
   (delay
     (parameterize ([current-namespace (main-namespace)])
-      (run-init-steps))
-    (use-bracket-readtable)
-    (parameterize ([current-directory (path-only arc-arc-path)])
-      (aload arc-arc-path)
-      (aload libs-arc-path))
-    (void)))
+      (anarki-init))))
 
-(define (anarki-init)
-  (force anarki-init-promise))
+(define (anarki-init-in-main-namespace)
+  (force anarki-init-in-main-namespace-promise))
 
 
 (define (anarki-init-verbose)
   (parameterize ([current-output-port (current-error-port)])
     (displayln "initializing arc.. (may take a minute)"))
   (anarki-init))
+
+(define (anarki-init-verbose-in-main-namespace)
+  (parameterize ([current-namespace (main-namespace)])
+    (anarki-init-verbose)))
 
 
 (define (anarki-windows-cli)
@@ -78,12 +78,12 @@
     (define args (if (eq? #f file) null (cons file file-args)))
     (current-command-line-arguments (list->vector args))
 
-    (anarki-init-verbose)
+    (anarki-init-verbose-in-main-namespace)
 
     (unless (eq? #f file)
 
       ; A file has been given, so we execute it.
-      (aload file))
+      (aload-in-main-namespace file))
 
     (when
       (or
@@ -91,7 +91,7 @@
         (and (eq? 'maybe repl) (eq? #f file)))
 
       ; We start an interactive prompt.
-      (tl))))
+      (tl-in-main-namespace))))
 
 
 (provide (all-from-out racket))

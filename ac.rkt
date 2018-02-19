@@ -972,8 +972,7 @@
 ; look up first by target type, then by source type
 (xdef coerce* (make-hash))
 (define (coercions)
-  (parameterize ((current-namespace (main-namespace)))
-    (namespace-variable-value (ac-global-name 'coerce*))))
+  (namespace-variable-value (ac-global-name 'coerce*)))
 
 (for-each (lambda (e)
             (add-init-step
@@ -1266,6 +1265,10 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 "))
     (tl2 interactive?)))
 
+(define (tl-in-main-namespace)
+  (parameterize ((current-namespace (main-namespace)))
+    (tl)))
+
 
 (define (trash-whitespace)
   (if (char-ready?)
@@ -1337,6 +1340,10 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (define (aload filename)
   (call-with-input-file filename aload1))
+
+(define (aload-in-main-namespace filename)
+  (parameterize ((current-namespace (main-namespace)))
+    (aload filename)))
 
 (define (test filename)
   (call-with-input-file filename atests1))
