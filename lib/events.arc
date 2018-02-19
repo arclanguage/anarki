@@ -38,7 +38,7 @@
 
 (def weekday (d)
   ('("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat")
-  ($.date-week-day ($.seconds->date (toseconds d)))))
+  ($.date-week-day ($.seconds->date (toseconds d) #f))))
 
 (def till (d)
   (let days (roundup (- (- (days-since (toseconds d)) 0.5)))

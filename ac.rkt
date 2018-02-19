@@ -1574,15 +1574,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef declarations* ar-declarations)
 
-; We use `void` here to avoid printing `#t` when this module is
-; visited.
 (void (putenv "TZ" ":GMT"))
 
-(define (gmt-date sec) (seconds->date sec))
+(define (utc-date sec) (seconds->date sec #f))
 
 (xdef timedate
   (lambda args
-    (let ((d (gmt-date (if (pair? args) (car args) (current-seconds)))))
+    (let ((d (utc-date (if (pair? args) (car args) (current-seconds)))))
       (ac-niltree (list (date-second d)
                         (date-minute d)
                         (date-hour d)

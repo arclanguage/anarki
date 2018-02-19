@@ -1,0 +1,12 @@
+When Arc 3.1 loads, the "TZ" system environment variable is set to be ":GMT" so
+that Arc's 'timedate function can return a value that's independent of the
+system's time zone.
+
+In the time since that code was written, Racket has added a parameter to its
+`seconds->time` function that makes the result consistently based on UTC time.
+Anarki now avoids modifying the "TZ" environment variable and uses Racket's
+direct support instead.
+
+This is not an invisible change. In particular, it may have a noticeable impact
+on Arc code that uses (system ...) calls like (system "date") that are sensitive
+to the "TZ" environment variable, since the value they see will be unmodified.
