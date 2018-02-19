@@ -18,13 +18,11 @@
        (test w/current-ns-get
              (assert-same 2
                (w/current-ns foo
-                 ($.namespace-require 'racket/base)
                  ($.anarki-init)
                  (eval 'b))))
        (test w/current-ns-set-1
              (assert-same 5
                (w/current-ns foo
-                 ($.namespace-require 'racket/base)
                  ($.anarki-init)
                  (eval '(= variable-that-should-wind-up-in-foo 5)))
                ; NOTE: We have to call the namespace like this
@@ -39,7 +37,6 @@
        #;(test w/current-ns-set-2
              (assert-same 5
                (w/current-ns foo
-                 ($.namespace-require 'racket/base)
                  ($.anarki-init)
                  (eval '(require 'lib/ns.arc))
                  (eval '(= variable-that-should-wind-up-in-foo 5))

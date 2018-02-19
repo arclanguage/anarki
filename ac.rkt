@@ -61,6 +61,7 @@
      (defarc name name))))
 
 (define (anarki-init)
+  (namespace-require 'racket/base)
   (namespace-require ac-rkt-path)
   (run-init-steps)
   (use-bracket-readtable)
