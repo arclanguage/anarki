@@ -55,7 +55,15 @@
     make-derived-parameter
     namespace-anchor?
     namespace-anchor->empty-namespace)
-  "lib/ns.rkt")
+  (only-in "lib/ns.rkt"
+    bare-bones--app
+    bare-bones--datum
+    bare-bones--define-customvar
+    bare-bones--plain-module-begin
+    bare-bones--provide
+    bare-bones--require))
+; This also "requires" that the module
+; (submod "lib/ns.rkt" bare-bones) exist.
 
 
 (defextend type (x) $.namespace?.x

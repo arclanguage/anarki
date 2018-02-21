@@ -28,34 +28,34 @@
 
 (require (for-syntax racket/base))
 
-(define-for-syntax clauses-reversed (list))
+(provide
+  bare-bones--app
+  bare-bones--datum
+  bare-bones--define-customvar
+  bare-bones--plain-module-begin
+  bare-bones--provide
+  bare-bones--require)
+; This also "provides" the module (submod "ns.rkt" bare-bones).
 
-(define-syntax (provide-gensym stx)
+
+(define-for-syntax bare-bones-exports (list))
+
+; This macro has side effects when it expands.
+(define-syntax (define-gensym stx)
   (syntax-case stx ()
     [ (_ racket-name provided-name)
-      (let ([prefixed-name
-             (datum->syntax #'provided-name
-               (string->symbol
-                 (string-append "bare-bones--"
-                   (symbol->string
-                     (syntax->datum #'provided-name)))))]
-            [g (gensym (syntax-e #'provided-name))])
-        (set! clauses-reversed
+      (let ([g (gensym (syntax-e #'racket-name))])
+        (set! bare-bones-exports
           (cons #`(racket-name #,g)
-            clauses-reversed))
-        #`(begin
-            (provide #,prefixed-name)
-            (define #,prefixed-name '#,g)))]))
+            bare-bones-exports))
+        #`(define provided-name '#,g))]))
 
-(provide-gensym #%plain-module-begin plain-module-begin)
-(provide-gensym define define)
-(provide-gensym define-customvar define-customvar)
-(provide-gensym quote quote)
-(provide-gensym #%datum datum)
-(provide-gensym set! set)
-(provide-gensym #%app app)
-(provide-gensym #%require require)
-(provide-gensym #%provide provide)
+(define-gensym #%app bare-bones--app)
+(define-gensym #%datum bare-bones--datum)
+(define-gensym define-customvar bare-bones--define-customvar)
+(define-gensym #%plain-module-begin bare-bones--plain-module-begin)
+(define-gensym #%provide bare-bones--provide)
+(define-gensym #%require bare-bones--require)
 
 (define-syntax (module-bare-bones stx)
   #`(module bare-bones racket/base
@@ -64,9 +64,10 @@
         (define-syntax var
           (make-set!-transformer
             (lambda (stx)
-              (syntax-case stx (set!)
-                (id (identifier? #'id) #'(getter))
-                ((set! _ val) #'(setter val)))))))
-      (provide (rename-out #,@(reverse clauses-reversed)))))
+              (syntax-protect
+                (syntax-case stx (set!)
+                  (id (identifier? #'id) #'(getter))
+                  ((set! _ val) #'(setter val))))))))
+      (provide (rename-out #,@bare-bones-exports))))
 
 (module-bare-bones)
