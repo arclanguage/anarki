@@ -1464,23 +1464,15 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; waterhouse's code to modify mzscheme-4's immutable pairs.
 ; http://arclanguage.org/item?id=13616
 
-(define x-set-car!
-  (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))
-    (if (procedure? fn)
-        fn
-        (lambda (p x)
-          (if (pair? p)
-              (unsafe-set-mcar! p x)
-              (raise-type-error 'set-car! "pair" p))))))
+(define (x-set-car! p x)
+  (unless (pair? p)
+    (raise-type-error 'set-car! "pair" p))
+  (unsafe-set-mcar! p x))
 
-(define x-set-cdr!
-  (let ((fn (namespace-variable-value 'set-cdr! #t (lambda () #f))))
-    (if (procedure? fn)
-        fn
-        (lambda (p x)
-          (if (pair? p)
-              (unsafe-set-mcdr! p x)
-              (raise-type-error 'set-cdr! "pair" p))))))
+(define (x-set-cdr! p x)
+  (unless (pair? p)
+    (raise-type-error 'set-cdr! "pair" p))
+  (unsafe-set-mcdr! p x))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
 ; say (if (string? x) (string-replace! x val 1) ...) in scdr, but
