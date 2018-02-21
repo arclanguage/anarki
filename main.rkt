@@ -45,6 +45,7 @@
 
 
 (require
+  (only-in racket/contract/base -> any any/c contract-out or/c)
   (only-in "ac.rkt"
     [arc-eval anarki-eval]
     anarki-init
@@ -57,16 +58,17 @@
     [tl anarki-repl]))
 
 (provide
-  anarki
-  anarki-eval
-  anarki-init
-  anarki-init-in-main-namespace
-  anarki-init-in-main-namespace-verbose
-  anarki-init-verbose
-  anarki-load
-  anarki-main-namespace
-  anarki-path
-  anarki-repl)
+  (contract-out
+    [anarki (-> (or/c null 'done))]
+    [anarki-eval (-> any/c any)]
+    [anarki-init (-> void?)]
+    [anarki-init-in-main-namespace (-> void?)]
+    [anarki-init-in-main-namespace-verbose (-> void?)]
+    [anarki-init-verbose (-> void?)]
+    [anarki-load (-> path-string? void?)]
+    [anarki-main-namespace namespace?]
+    [anarki-path path?]
+    [anarki-repl (-> (or/c null 'done))]))
 
 
 ; launch anarki repl from the anarki package folder
