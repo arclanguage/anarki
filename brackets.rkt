@@ -1,3 +1,5 @@
+#lang racket/base
+
 ; From Eli Barzilay, eli@barzilay.org
 
 ;> (require "brackets.rkt")
@@ -5,7 +7,6 @@
 ;> ([+ _ 1] 10)
 ;11
 
-(module brackets racket/base
 
 ; main reader function for []s
 ; recursive read starts with default readtable's [ parser,
@@ -44,5 +45,3 @@
 ; and the need to be provided as `read' and `read-syntax'
 
 (provide (rename-out (*read read) (*read-syntax read-syntax)))
-
-)

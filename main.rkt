@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 ; This is the primary interface to Anarki as a Racket library. It can
 ; be accessed like so:

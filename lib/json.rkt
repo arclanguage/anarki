@@ -1,3 +1,5 @@
+#lang racket/base
+
 ;; Scheme JSON parser from http://planet.plt-scheme.org/display.ss?package=json.plt&owner=dherman
 ;; Substantial changes to support arc data structures and json spec.
 ;; For any future changes please refer to spec found at http://json.org/
@@ -19,7 +21,6 @@
 ;; (tostring (write-json (obj "server" "cool server" "success" 'true)))
 ;; (fromstring x (read-json (stdin))) ;; where x is any of the above
 
-#lang racket/base
 (provide read-json write-json jsexpr->json json->jsexpr jsexpr?)
 
 (define (write-json json [port (current-output-port)])

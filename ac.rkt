@@ -1,6 +1,7 @@
+#lang racket/base
+
 ; Arc Compiler.
 
-(module ac racket/base
 
 (provide (all-defined-out))
 
@@ -1706,5 +1707,3 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     'nil
     (cons start (range (+ start 1) end))))
 (xdef range range)
-
-)

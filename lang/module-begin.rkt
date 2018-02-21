@@ -1,9 +1,13 @@
-#lang racket
+#lang racket/base
 
 (require
+  (only-in racket/path simple-form-path)
+  (only-in racket/runtime-path define-runtime-path)
+
   (only-in anarki
     anarki-eval anarki-init-in-main-namespace anarki-main-namespace)
-  (only-in racket/runtime-path define-runtime-path))
+
+  (for-syntax racket/base))
 
 (provide (rename-out [module-begin #%module-begin]))
 
