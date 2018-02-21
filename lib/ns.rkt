@@ -57,6 +57,13 @@
 (define-gensym #%provide bare-bones--provide)
 (define-gensym #%require bare-bones--require)
 
+; TODO: Sometimes we need a `#%module-begin` binding and sometimes we
+; don't. The error telling us it's missing seems to happen the first
+; time the code is compiled after a change to a Racket module like
+; main.rkt or ac.rkt. Figure out why this is happening. For now, we
+; work around it by supplying a `#%module-begin` binding.
+(define-gensym #%module-begin (#%variable-reference))
+
 (define-syntax (module-bare-bones stx)
   #`(module bare-bones racket/base
       (require (for-syntax racket/base))
