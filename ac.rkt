@@ -1320,8 +1320,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 "))
   (tl2 interactive?))
 
-(define (tl-in-main-namespace)
-  (parameterize ([current-namespace main-namespace])
+(define (tl-with-main-settings)
+  (parameterize ([current-namespace main-namespace]
+                 [current-readtable bracket-readtable])
     (tl)))
 
 
@@ -1398,8 +1399,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (aload filename)
   (call-with-input-file filename aload1))
 
-(define (aload-in-main-namespace filename)
-  (parameterize ([current-namespace main-namespace])
+(define (aload-with-main-settings filename)
+  (parameterize ([current-namespace main-namespace]
+                 [current-readtable bracket-readtable])
     (aload filename)))
 
 (define (test filename)

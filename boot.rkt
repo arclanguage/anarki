@@ -3,16 +3,16 @@
 (require
   (only-in racket/cmdline command-line)
   (only-in "ac.rkt"
-    aload-in-main-namespace
+    aload-with-main-settings
     anarki-init-in-main-namespace-verbose
-    tl-in-main-namespace))
+    tl-with-main-settings))
 
 (provide
   (all-from-out racket/base)
-  aload-in-main-namespace
+  aload-with-main-settings
   anarki-init-in-main-namespace-verbose
   anarki-windows-cli
-  tl-in-main-namespace)
+  tl-with-main-settings)
 
 
 (define (anarki-windows-cli)
@@ -64,7 +64,7 @@
     (unless (eq? #f file)
 
       ; A file has been given, so we execute it.
-      (aload-in-main-namespace file))
+      (aload-with-main-settings file))
 
     (when
       (or
@@ -72,4 +72,4 @@
         (and (eq? 'maybe repl) (eq? #f file)))
 
       ; We start an interactive prompt.
-      (tl-in-main-namespace))))
+      (tl-with-main-settings))))
