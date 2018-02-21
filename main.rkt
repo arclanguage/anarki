@@ -46,6 +46,7 @@
 
 (require
   (only-in racket/contract/base -> any any/c contract-out or/c)
+  (only-in racket/path path-only)
   (only-in "ac.rkt"
     [arc-eval anarki-eval]
     anarki-init
@@ -54,7 +55,7 @@
     anarki-init-in-main-namespace-verbose
     [aload anarki-load]
     [main-namespace anarki-main-namespace]
-    [arc-arc-path anarki-path]
+    arc-arc-path
     [tl anarki-repl]))
 
 (provide
@@ -70,6 +71,8 @@
     [anarki-path path?]
     [anarki-repl (-> (or/c null 'done))]))
 
+
+(define anarki-path (path-only arc-arc-path))
 
 ; launch anarki repl from the anarki package folder
 (define (anarki)

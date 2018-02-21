@@ -34,8 +34,8 @@ Documentation on Anarki as a language is available at
 
   @racketblock[
     (anarki-init-in-main-namespace-verbose)
-    (parameterize ([current-directory anarki-path]
-                   [current-namespace anarki-main-namespace])
+    (parameterize ((current-directory anarki-path)
+                   (current-namespace anarki-main-namespace))
       (anarki-repl))
   ]
 }
@@ -105,7 +105,7 @@ Documentation on Anarki as a language is available at
   namespace most of the time.
 
   @racketblock[
-    (parameterize ([current-namespace anarki-main-namespace])
+    (parameterize ((current-namespace anarki-main-namespace))
       (anarki-load "my-file.arc"))
   ]
 }
@@ -121,8 +121,9 @@ Documentation on Anarki as a language is available at
 
   @racketblock[
     (anarki-init-in-main-namespace-verbose)
-    (parameterize ([current-directory anarki-path]
-                   [current-namespace anarki-main-namespace])
-      (anarki-load "lib/news.arc"))
+    (parameterize ((current-directory anarki-path)
+                   (current-namespace anarki-main-namespace))
+      (anarki-load "lib/news.arc")
+      (anarki-eval '(nsv)))
   ]
 }
