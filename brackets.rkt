@@ -3,14 +3,14 @@
 ; From Eli Barzilay, eli@barzilay.org
 
 ;> (require "brackets.rkt")
-;> (use-bracket-readtable)
-;> ([+ _ 1] 10)
-;11
+;> (current-readtable bracket-readtable)
+;> '([+ _ 1] 10)
+;'((make-br-fn (+ _ 1)) 10)
 
 
 (provide
-  (rename-out [*read read] [*read-syntax read-syntax])
-  use-bracket-readtable)
+  bracket-readtable
+  (rename-out [*read read] [*read-syntax read-syntax]))
 
 
 ; main reader function for []s
@@ -25,11 +25,6 @@
 
 (define bracket-readtable
   (make-readtable #f #\[ 'terminating-macro read-square-brackets))
-
-; call this to set the global readtable
-
-(define (use-bracket-readtable)
-  (current-readtable bracket-readtable))
 
 ; these two implement the required functionality for #reader
 

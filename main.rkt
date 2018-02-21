@@ -56,7 +56,8 @@
     [aload anarki-load]
     [main-namespace anarki-main-namespace]
     arc-arc-path
-    [tl anarki-repl]))
+    [tl anarki-repl])
+  (only-in "brackets.rkt" [bracket-readtable anarki-readtable]))
 
 (provide
   (contract-out
@@ -69,6 +70,7 @@
     [anarki-load (-> path-string? void?)]
     [anarki-main-namespace namespace?]
     [anarki-path path?]
+    [anarki-readtable readtable?]
     [anarki-repl (-> (or/c null 'done))]))
 
 
@@ -78,5 +80,6 @@
 (define (anarki)
   (anarki-init-in-main-namespace-verbose)
   (parameterize ([current-directory anarki-path]
-                 [current-namespace anarki-main-namespace])
+                 [current-namespace anarki-main-namespace]
+                 [current-readtable anarki-readtable])
     (anarki-repl)))

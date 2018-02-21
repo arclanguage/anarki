@@ -34,8 +34,9 @@ Documentation on Anarki as a language is available at
 
   @racketblock[
     (anarki-init-in-main-namespace-verbose)
-    (parameterize ((current-directory anarki-path)
-                   (current-namespace anarki-main-namespace))
+    (parameterize ([current-directory anarki-path]
+                   [current-namespace anarki-main-namespace]
+                   [current-readtable anarki-readtable])
       (anarki-repl))
   ]
 }
@@ -51,8 +52,7 @@ Documentation on Anarki as a language is available at
   [(anarki-init-in-main-namespace-verbose) void?]
 )]{
   Initializes a namespace with the Arc primitives, so that it can be
-  used to evaluate Arc code. This can take a while to complete. This
-  also installs the Arc readtable into @racket[current-readtable].
+  used to evaluate Arc code. This can take a while to complete.
 
   For the "@tt{-in-main-namespace}" variants, the namespace
   initialized is @racket[anarki-main-namespace], and the
@@ -99,13 +99,18 @@ Documentation on Anarki as a language is available at
 @section[#:tag "context"]{Typical Context}
 
 
+@defthing[anarki-readtable readtable?]{
+  The readtable used for Arc code.
+}
+
 @defthing[anarki-main-namespace namespace?]{
   The namespace in which @racketmodfont{#lang} @racketmodname[anarki]
   modules are loaded. It's recommended to load Arc code into this
   namespace most of the time.
 
   @racketblock[
-    (parameterize ((current-namespace anarki-main-namespace))
+    (parameterize ([current-namespace anarki-main-namespace]
+                   [current-readtable anarki-readtable])
       (anarki-load "my-file.arc"))
   ]
 }
@@ -121,8 +126,9 @@ Documentation on Anarki as a language is available at
 
   @racketblock[
     (anarki-init-in-main-namespace-verbose)
-    (parameterize ((current-directory anarki-path)
-                   (current-namespace anarki-main-namespace))
+    (parameterize ([current-directory anarki-path]
+                   [current-namespace anarki-main-namespace]
+                   [current-readtable anarki-readtable])
       (anarki-load "lib/news.arc")
       (anarki-eval '(nsv)))
   ]

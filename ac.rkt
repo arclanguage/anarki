@@ -21,7 +21,7 @@
   racket/system
   racket/tcp
 
-  (only-in "brackets.rkt" use-bracket-readtable)
+  (only-in "brackets.rkt" bracket-readtable)
 
   (for-syntax racket/base))
 ; This module also uses `dynamic-require` for the following
@@ -78,8 +78,8 @@
   (namespace-require 'racket/base)
   (namespace-require ac-rkt-path)
   (run-init-steps)
-  (use-bracket-readtable)
-  (parameterize ([current-directory (path-only arc-arc-path)])
+  (parameterize ([current-directory (path-only arc-arc-path)]
+                 [current-readtable bracket-readtable])
     (aload arc-arc-path)
     (aload libs-arc-path)))
 
