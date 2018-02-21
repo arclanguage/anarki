@@ -1,4 +1,4 @@
-;wrapper for loading json.ss
-($ (require (file "lib/json.ss")))
+;wrapper for loading json.rkt
+($ (require "lib/json.rkt"))
 (= read-json $.read-json)
 (= write-json $.write-json)

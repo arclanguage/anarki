@@ -19,8 +19,7 @@
 ;; (tostring (write-json (obj "server" "cool server" "success" 'true)))
 ;; (fromstring x (read-json (stdin))) ;; where x is any of the above
 
-#lang scheme/base
-(require (only-in scheme/base [read scheme:read] [write scheme:write]))
+#lang racket/base
 (provide read-json write-json jsexpr->json json->jsexpr jsexpr?)
 
 (define (write-json json [port (current-output-port)])
@@ -43,11 +42,11 @@
          (write-json value port))
      (display "]" port)]
    [(arc-boolean? json)
-     (scheme:write (if (eq? json 'false) 'false 'true) port)]
+     (write (if (eq? json 'false) 'false 'true) port)]
    [(or (char? json)(string? json)(number? json)(integer? json)(arc-nil? json))
-     (scheme:write json port)]
+     (write json port)]
    [(symbol? json)
-     (scheme:write (symbol->string json) port)]
+     (write (symbol->string json) port)]
     [else (error 'json "bad json value: ~v" json)]))
 
 ; arc data handlers
