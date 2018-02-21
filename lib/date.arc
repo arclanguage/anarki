@@ -1,4 +1,4 @@
-(require "lib/lang.arc")
+(require 'lib/lang.arc)
 
 (def parse-date (str)
   (timedate

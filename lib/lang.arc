@@ -1,8 +1,8 @@
 ; originally from http://awwx.ws/lang2.arc
 
-(require "lib/template.arc")
-(require "lib/re.arc")
-(require "lib/lock.arc")
+(require 'lib/template.arc)
+(require 'lib/re.arc)
+(require 'lib/lock.arc)
 
 (implicit lang*)
 

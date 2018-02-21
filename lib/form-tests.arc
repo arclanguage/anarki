@@ -7,7 +7,7 @@
 ;
 ; Now test at http://localhost:8080/form-tests.
 ; Test with both text and binary files.
-(require "lib/srv.arc")
+(require 'lib/srv.arc)
 
 (def form-action (req)
   (prn " ... headers ...")
