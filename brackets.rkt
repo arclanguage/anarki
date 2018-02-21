@@ -34,15 +34,15 @@
 ; these two implement the required functionality for #reader
 
 ;(define (*read inp)
-;  (parameterize ((current-readtable bracket-readtable))
+;  (parameterize ([current-readtable bracket-readtable])
 ;    (read inp)))
 
 (define (*read . args)
-  (parameterize ((current-readtable bracket-readtable))
+  (parameterize ([current-readtable bracket-readtable])
     (read (if (null? args) (current-input-port) (car args)))))
 
 (define (*read-syntax src port)
-  (parameterize ((current-readtable bracket-readtable))
+  (parameterize ([current-readtable bracket-readtable])
     (read-syntax src port)))
 
 ; and the need to be provided as `read' and `read-syntax'

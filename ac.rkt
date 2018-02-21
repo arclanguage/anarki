@@ -47,27 +47,27 @@
 
 (define-syntax-rule (xdef a b)
   (add-init-step
-    (let ((a b))
+    (let ([a b])
       (namespace-set-variable-value! (ac-global-name 'a) a))))
 
 (define (run-init-steps)
-  (for ((step (reverse init-steps-reversed*)))
+  (for ([step (reverse init-steps-reversed*)])
     (step)))
 
 (define-syntax defarc
   (syntax-rules ()
-    ((defarc (name . args) body ...)
-     (defarc name (name . args) body ...))
-    ((defarc arc-name (scheme-name . args) body ...)
+    [(defarc (name . args) body ...)
+     (defarc name (name . args) body ...)]
+    [(defarc arc-name (scheme-name . args) body ...)
      (begin
        (xdef arc-name (lambda args body ...))
-       (defarc arc-name scheme-name)))
-    ((defarc arc-name scheme-name)
+       (defarc arc-name scheme-name))]
+    [(defarc arc-name scheme-name)
      (define (scheme-name . args)
        (apply (namespace-variable-value (ac-global-name 'arc-name))
-              args)))
-    ((defarc name)
-     (defarc name name))))
+              args))]
+    [(defarc name)
+     (defarc name name)]))
 
 (define (anarki-init)
   (namespace-require 'racket/base)
@@ -105,44 +105,44 @@
 ; need in order to decide whether set should create a global.
 
 (defarc (ac s env)
-  (cond ((string? s) (ac-string s env))
-        ((literal? s) s)
-        ((keyword? s) s)
-        ((eqv? s 'nil) (list 'quote 'nil))
-        ((ssyntax? s) (ac (expand-ssyntax s) env))
-        ((symbol? s) (ac-var-ref s env))
-        ((ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env))
-        ((eq? (xcar s) '$) (ac-$ (cadr s) env))
-        ((eq? (xcar s) 'quote) (list 'quote (ac-niltree (cadr s))))
-        ((and (eq? (xcar s) 'quasiquote)
+  (cond [(string? s) (ac-string s env)]
+        [(literal? s) s]
+        [(keyword? s) s]
+        [(eqv? s 'nil) (list 'quote 'nil)]
+        [(ssyntax? s) (ac (expand-ssyntax s) env)]
+        [(symbol? s) (ac-var-ref s env)]
+        [(ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env)]
+        [(eq? (xcar s) '$) (ac-$ (cadr s) env)]
+        [(eq? (xcar s) 'quote) (list 'quote (ac-niltree (cadr s)))]
+        [(and (eq? (xcar s) 'quasiquote)
               (not (ac-macro? 'quasiquote)))
-         (ac-qq (cadr s) env))
-        ((eq? (xcar s) 'if) (ac-if (cdr s) env))
-        ((eq? (xcar s) 'fn) (ac-fn (cadr s) (cddr s) env))
-        ((eq? (xcar s) 'assign) (ac-set (cdr s) env))
+         (ac-qq (cadr s) env)]
+        [(eq? (xcar s) 'if) (ac-if (cdr s) env)]
+        [(eq? (xcar s) 'fn) (ac-fn (cadr s) (cddr s) env)]
+        [(eq? (xcar s) 'assign) (ac-set (cdr s) env)]
         ; the next three clauses could be removed without changing semantics
         ; ... except that they work for macros (so prob should do this for
         ; every elt of s, not just the car)
-        ((eq? (xcar (xcar s)) 'compose) (ac (decompose (cdar s) (cdr s)) env))
-        ((eq? (xcar (xcar s)) 'complement)
-         (ac (list 'no (cons (cadar s) (cdr s))) env))
-        ((eq? (xcar (xcar s)) 'andf) (ac-andf s env))
-        ((pair? s) (ac-call (car s) (cdr s) env))
-        (#t (err "Bad object in expression" s))))
+        [(eq? (xcar (xcar s)) 'compose) (ac (decompose (cdar s) (cdr s)) env)]
+        [(eq? (xcar (xcar s)) 'complement)
+         (ac (list 'no (cons (cadar s) (cdr s))) env)]
+        [(eq? (xcar (xcar s)) 'andf) (ac-andf s env)]
+        [(pair? s) (ac-call (car s) (cdr s) env)]
+        [#t (err "Bad object in expression" s)]))
 
 (define (ac-string s env)
   (if (ar-bflag 'atstrings)
       (if (atpos s 0)
         ; evaluate at-expressions without further expanding atstrings and
         ; interpolate them in
-        (let ((target-expression
+        (let ([target-expression
                 (cons 'string (map (lambda (x)
                                      (if (string? x)
                                          (unescape-ats x)
                                          x))
-                                   (codestring s)))))
+                                   (codestring s)))])
           (hash-set! (ar-declarations) 'atstrings 'nil)
-          (let ((result (ac target-expression env)))
+          (let ([result (ac target-expression env)])
             (hash-set! (ar-declarations) 'atstrings 't)
             result))
         (list string-copy (unescape-ats s)))
@@ -158,12 +158,12 @@
 (define (ssyntax? x)
   (and (symbol? x)
        (not (or (eqv? x '+) (eqv? x '++) (eqv? x '_)))
-       (let ((name (symbol->string x)))
+       (let ([name (symbol->string x)])
          (has-ssyntax-char? name (- (string-length name) 1)))))
 
 (define (has-ssyntax-char? string i)
   (and (>= i 0)
-       (or (let ((c (string-ref string i)))
+       (or (let ([c (string-ref string i)])
              (or (eqv? c #\:) (eqv? c #\~)
                  (eqv? c #\&)
                  ;(eqv? c #\_)
@@ -171,8 +171,8 @@
            (has-ssyntax-char? string (- i 1)))))
 
 (define (read-from-string str)
-  (let ((port (open-input-string str)))
-    (let ((val (read port)))
+  (let ([port (open-input-string str)])
+    (let ([val (read port)])
       (close-input-port port)
       val)))
 
@@ -185,12 +185,12 @@
 ; (complement (andf foo bar)).
 
 (define (expand-ssyntax sym)
-  ((cond ((eqv? (car (symbol->chars sym)) #\:) expand-keyword)
-         ((or (insym? #\: sym) (insym? #\~ sym)) expand-compose)
-         ((or (insym? #\. sym) (insym? #\! sym)) expand-sexpr)
-         ((insym? #\& sym) expand-and)
-     ;   ((insym? #\_ sym) expand-curry)
-         (#t (error "Unknown ssyntax" sym)))
+  ((cond [(eqv? (car (symbol->chars sym)) #\:) expand-keyword]
+         [(or (insym? #\: sym) (insym? #\~ sym)) expand-compose]
+         [(or (insym? #\. sym) (insym? #\! sym)) expand-sexpr]
+         [(insym? #\& sym) expand-and]
+     ;   [(insym? #\_ sym) expand-curry]
+         [#t (error "Unknown ssyntax" sym)])
    sym))
 
 ; turn common-lisp style :keywords into racket #:keywords
@@ -198,7 +198,7 @@
   (string->keyword (list->string (cdr (symbol->chars sym)))))
 
 (define (expand-compose sym)
-  (let ((elts (map (lambda (tok)
+  (let ([elts (map (lambda (tok)
                      (if (eqv? (car tok) #\~)
                          (if (null? (cdr tok))
                              'no
@@ -208,18 +208,18 @@
                            (symbol->chars sym)
                            '()
                            '()
-                           #f))))
+                           #f))])
     (if (null? (cdr elts))
         (car elts)
         (cons 'compose elts))))
 
 (define (expand-and sym)
-  (let ((elts (map chars->value
+  (let ([elts (map chars->value
                    (tokens (lambda (c) (eqv? c #\&))
                            (symbol->chars sym)
                            '()
                            '()
-                           #f))))
+                           #f))])
     (if (null? (cdr elts))
         (car elts)
         (cons 'andf elts))))
@@ -232,14 +232,14 @@
 ; make these vars gensyms.
 
 (define (expand-curry sym)
-  (let ((expr (exc (map (lambda (x)
+  (let ([expr (exc (map (lambda (x)
                           (if (pair? x) (chars->value x) x))
                         (tokens (lambda (c) (eqv? c #\_))
                                 (symbol->chars sym)
                                 '()
                                 '()
                                 #t))
-                    0)))
+                    0)])
     (list 'fn
           (keep (lambda (s)
                   (and (symbol? s)
@@ -249,18 +249,18 @@
           expr)))
 
 (define (keep f xs)
-  (cond ((null? xs) '())
-        ((f (car xs)) (cons (car xs) (keep f (cdr xs))))
-        (#t (keep f (cdr xs)))))
+  (cond [(null? xs) '()]
+        [(f (car xs)) (cons (car xs) (keep f (cdr xs)))]
+        [#t (keep f (cdr xs))]))
 
 (define (exc elts n)
-  (cond ((null? elts)
-         '())
-        ((eqv? (car elts) #\_)
+  (cond [(null? elts)
+         '()]
+        [(eqv? (car elts) #\_)
          (cons (string->symbol (string-append "v" (number->string n)))
-               (exc (cdr elts) (+ n 1))))
-        (#t
-         (cons (car elts) (exc (cdr elts) n)))))
+               (exc (cdr elts) (+ n 1)))]
+        [#t
+         (cons (car elts) (exc (cdr elts) n))]))
 
 (define (expand-sexpr sym)
   (build-sexpr (reverse (tokens (lambda (c) (or (eqv? c #\.) (eqv? c #\!)))
@@ -271,17 +271,17 @@
                sym))
 
 (define (build-sexpr toks orig)
-  (cond ((null? toks)
-         'get)
-        ((null? (cdr toks))
-         (chars->value (car toks)))
-        (#t
+  (cond [(null? toks)
+         'get]
+        [(null? (cdr toks))
+         (chars->value (car toks))]
+        [#t
          (list (build-sexpr (cddr toks) orig)
                (if (eqv? (cadr toks) #\!)
                  (list 'quote (chars->value (car toks)))
                  (if (or (eqv? (car toks) #\.) (eqv? (car toks) #\!))
                    (err "Bad ssyntax" orig)
-                   (chars->value (car toks))))))))
+                   (chars->value (car toks)))))]))
 
 (define (insym? char sym) (member char (symbol->chars sym)))
 
@@ -290,35 +290,35 @@
 (define (chars->value chars) (read-from-string (list->string chars)))
 
 (define (tokens test source token acc keepsep?)
-  (cond ((null? source)
+  (cond [(null? source)
          (reverse (if (pair? token)
                       (cons (reverse token) acc)
-                      acc)))
-        ((test (car source))
+                      acc))]
+        [(test (car source))
          (tokens test
                  (cdr source)
                  '()
-                 (let ((rec (if (null? token)
+                 (let ([rec (if (null? token)
                               acc
-                              (cons (reverse token) acc))))
+                              (cons (reverse token) acc))])
                    (if keepsep?
                        (cons (car source) rec)
                        rec))
-                 keepsep?))
-        (#t
+                 keepsep?)]
+        [#t
          (tokens test
                  (cdr source)
                  (cons (car source) token)
                  acc
-                 keepsep?))))
+                 keepsep?)]))
 
 (defarc (ac-defined-var? s)
   #f)
 
 (define (ac-var-ref s env)
-  (cond ((lex? s env)        s)
-        ((ac-defined-var? s) (list (ac-global-name s)))
-        (#t                  (ac-global-name s))))
+  (cond [(lex? s env)        s]
+        [(ac-defined-var? s) (list (ac-global-name s))]
+        [#t                  (ac-global-name s)]))
 
 ; lowering into Racket with (unquote <foo>) lifting us back into arc
 
@@ -341,24 +341,24 @@
 
 (define (ac-qqx x unq splice)
   (cond
-    ((not (pair? x)) x)
-    ((eqv? (car x) 'unquote) (unq (cadr x)))
-    ((eqv? (car x) 'unquote-splicing) (splice (cadr x)))
-    ((eqv? (car x) 'quasiquote)
+    [(not (pair? x)) x]
+    [(eqv? (car x) 'unquote) (unq (cadr x))]
+    [(eqv? (car x) 'unquote-splicing) (splice (cadr x))]
+    [(eqv? (car x) 'quasiquote)
       (list 'quasiquote
         (ac-qqx (cadr x)
           (lambda (e) (list 'unquote (ac-qqx e unq splice)))
-          (lambda (e) (list 'unquote-splicing (ac-qqx e unq splice))))))
-    (#t (imap (lambda (e) (ac-qqx e unq splice)) x))))
+          (lambda (e) (list 'unquote-splicing (ac-qqx e unq splice)))))]
+    [#t (imap (lambda (e) (ac-qqx e unq splice)) x)]))
 
 ; like map, but don't demand '()-terminated list
 
 (define (imap f l)
-  (cond ((pair? l)
-         (cons (f (car l)) (imap f (cdr l))))
-        ((null? l)
-         '())
-        (#t (f l))))
+  (cond [(pair? l)
+         (cons (f (car l)) (imap f (cdr l)))]
+        [(null? l)
+         '()]
+        [#t (f l)]))
 
 ; (if) -> nil
 ; (if x) -> x
@@ -367,11 +367,11 @@
 ; (if nil a b c) -> (if b c)
 
 (define (ac-if args env)
-  (cond ((null? args) ''nil)
-        ((null? (cdr args)) (ac (car args) env))
-        (#t `(if (not (ar-false? ,(ac (car args) env)))
+  (cond [(null? args) ''nil]
+        [(null? (cdr args)) (ac (car args) env)]
+        [#t `(if (not (ar-false? ,(ac (car args) env)))
                  ,(ac (cadr args) env)
-                 ,(ac-if (cddr args) env)))))
+                 ,(ac-if (cddr args) env))]))
 
 (define (ac-dbname! name env)
   (if (symbol? name)
@@ -379,9 +379,9 @@
       env))
 
 (define (ac-dbname env)
-  (cond ((null? env) #f)
-        ((pair? (car env)) (caar env))
-        (#t (ac-dbname (cdr env)))))
+  (cond [(null? env) #f]
+        [(pair? (car env)) (caar env)]
+        [#t (ac-dbname (cdr env))]))
 
 ; translate fn directly into a lambda if it has ordinary
 ; parameters, otherwise use a rest parameter and parse it.
@@ -391,18 +391,18 @@
       (ac-complex-fn args body env)
       (ac-nameit
        (ac-dbname env)
-       `(lambda ,(let ((a (ac-denil args))) (if (eqv? a 'nil) '() a))
+       `(lambda ,(let ([a (ac-denil args)]) (if (eqv? a 'nil) '() a))
           ,@(ac-body* body (append (ac-arglist args) env))))))
 
 ; does an fn arg list use optional parameters or destructuring?
 ; a rest parameter is not complex
 
 (define (ac-complex-args? args)
-  (cond ((eqv? args '()) #f)
-        ((symbol? args) #f)
-        ((and (pair? args) (symbol? (car args)))
-         (ac-complex-args? (cdr args)))
-        (#t #t)))
+  (cond [(eqv? args '()) #f]
+        [(symbol? args) #f]
+        [(and (pair? args) (symbol? (car args)))
+         (ac-complex-args? (cdr args))]
+        [#t #t]))
 
 ; translate a fn with optional or destructuring args
 ; (fn (x (o y x) (o z 21) (x1 x2) . rest) ...)
@@ -411,8 +411,8 @@
 ; be missing.
 
 (define (ac-complex-fn args body env)
-  (let* ((ra (gensym))
-         (z (ac-complex-args args env ra #t)))
+  (let* ([ra (gensym)]
+         [z (ac-complex-args args env ra #t)])
     `(lambda ,ra
        (let* ,z
          ,@(ac-body* body (append (ac-complex-getargs z) env))))))
@@ -425,10 +425,10 @@
 ;   (not destructuring), so they must be passed or be optional.
 
 (define (ac-complex-args args env ra is-params)
-  (cond ((or (eqv? args '()) (eqv? args 'nil)) '())
-        ((symbol? args) (list (list args ra)))
-        ((pair? args)
-         (let* ((x (if (and (pair? (car args)) (eqv? (caar args) 'o))
+  (cond [(or (eqv? args '()) (eqv? args 'nil)) '()]
+        [(symbol? args) (list (list args ra))]
+        [(pair? args)
+         (let* ([x (if (and (pair? (car args)) (eqv? (caar args) 'o))
                        (ac-complex-opt (cadar args)
                                        (if (pair? (cddar args))
                                            (caddar args)
@@ -441,13 +441,13 @@
                         (if is-params
                             `(car ,ra)
                             `(ar-car ,ra))
-                        #f)))
-                (xa (ac-complex-getargs x)))
+                        #f))]
+                [xa (ac-complex-getargs x)])
            (append x (ac-complex-args (cdr args)
                                       (append xa env)
                                       `(ar-cdr ,ra)
-                                      is-params))))
-        (#t (err "Can't understand fn arg list" args))))
+                                      is-params)))]
+        [#t (err "Can't understand fn arg list" args)]))
 
 ; (car ra) is the argument
 ; so it's not present if ra is nil or '()
@@ -464,10 +464,10 @@
 ; a -> (a)
 
 (define (ac-arglist a)
-  (cond ((null? a) '())
-        ((symbol? a) (list a))
-        ((symbol? (cdr a)) (list (car a) (cdr a)))
-        (#t (cons (car a) (ac-arglist (cdr a))))))
+  (cond [(null? a) '()]
+        [(symbol? a) (list a)]
+        [(symbol? (cdr a)) (list (car a) (cdr a))]
+        [#t (cons (car a) (ac-arglist (cdr a)))]))
 
 (define (ac-body body env)
   (map (lambda (x) (ac x env)) body))
@@ -495,8 +495,8 @@
 
 (define (ac-nameit name v)
   (if (symbol? name)
-      (let ((n (string->symbol (string-append " " (symbol->string name)))))
-        (list 'let `((,n ,v)) n))
+      (let ([n (string->symbol (string-append " " (symbol->string name)))])
+        (list 'let `([,n ,v]) n))
       v))
 
 ; = replaced by set, which is only for vars
@@ -505,13 +505,13 @@
 
 (define (ac-set1 a b1 env)
   (if (symbol? a)
-      (let ((b (ac b1 (ac-dbname! a env))))
-        (list 'let `((zz ,b))
-               (cond ((eqv? a 'nil) (err "Can't rebind nil"))
-                     ((eqv? a 't) (err "Can't rebind t"))
-                     ((lex? a env) `(set! ,a zz))
-                     ((ac-defined-var? a) `(,(ac-global-name a) zz))
-                     (#t `(set! ,(ac-global-name a) zz)))
+      (let ([b (ac b1 (ac-dbname! a env))])
+        (list 'let `([zz ,b])
+               (cond [(eqv? a 'nil) (err "Can't rebind nil")]
+                     [(eqv? a 't) (err "Can't rebind t")]
+                     [(lex? a env) `(set! ,a zz)]
+                     [(ac-defined-var? a) `(,(ac-global-name a) zz)]
+                     [#t `(set! ,(ac-global-name a) zz)])
                'zz))
       (err "First arg to set must be a symbol" a)))
 
@@ -540,10 +540,10 @@
 ; (foo bar) where foo is a global variable bound to a procedure.
 
 (define (ac-global-call fn args env)
-  (cond ((and (assoc fn ac-binaries) (= (length args) 2))
-         `(,(cadr (assoc fn ac-binaries)) ,@(ac-args '() args env)))
-        (#t
-         `(,(ac-global-name fn) ,@(ac-args '() args env)))))
+  (cond [(and (assoc fn ac-binaries) (= (length args) 2))
+         `(,(cadr (assoc fn ac-binaries)) ,@(ac-args '() args env))]
+        [#t
+         `(,(ac-global-name fn) ,@(ac-args '() args env))]))
 
 ; compile a function call
 ; special cases for speed, to avoid compiled output like
@@ -555,28 +555,28 @@
 ;   (ar-funcall1 foo bar)
 
 (define (ac-call fn args env)
-  (let ((macfn (ac-macro? fn)))
-    (cond (macfn
-           (ac-mac-call macfn args env))
-          ((and (pair? fn) (eqv? (car fn) 'fn))
-           `(,(ac fn env) ,@(ac-args (cadr fn) args env)))
-          ((and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
+  (let ([macfn (ac-macro? fn)])
+    (cond [macfn
+           (ac-mac-call macfn args env)]
+          [(and (pair? fn) (eqv? (car fn) 'fn))
+           `(,(ac fn env) ,@(ac-args (cadr fn) args env))]
+          [(and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
                 (procedure? (arc-eval fn)))
-           (ac-global-call fn args env))
-          (#t
+           (ac-global-call fn args env)]
+          [#t
            `((ar-coerce ,(ac fn env) 'fn)
-             ,@(map (lambda (x) (ac x env)) args))))))
+             ,@(map (lambda (x) (ac x env)) args))])))
 
 (define (ac-mac-call m args env)
-  (let ((x1 (apply m (map ac-niltree args))))
-    (let ((x2 (ac (ac-denil x1) env)))
+  (let ([x1 (apply m (map ac-niltree args))])
+    (let ([x2 (ac (ac-denil x1) env)])
       x2)))
 
 ; returns #f or the macro function
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-    (let ((v (and (bound? fn) (arc-eval fn))))
+    (let ([v (and (bound? fn) (arc-eval fn))])
       (if (and v
                (ar-tagged? v)
                (eq? (ar-type v) 'mac))
@@ -588,9 +588,9 @@
 
 (define (ac-macex e . once)
   (if (pair? e)
-      (let ((m (ac-macro? (car e))))
+      (let ([m (ac-macro? (car e))])
         (if m
-            (let ((expansion (ac-denil (apply m (map ac-niltree (cdr e))))))
+            (let ([expansion (ac-denil (apply m (map ac-niltree (cdr e))))])
               (if (null? once) (ac-macex expansion) expansion))
             e))
       e))
@@ -604,13 +604,13 @@
 ;   NIL by itself -> NIL
 
 (define (ac-denil x)
-  (cond ((pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x))))
-        ((hash? x)
-         (let ((xc (make-hash)))
+  (cond [(pair? x) (cons (ac-denil-car (car x)) (ac-denil-cdr (cdr x)))]
+        [(hash? x)
+         (let ([xc (make-hash)])
            (hash-for-each x
              (lambda (k v) (hash-set! xc (ac-denil k) (ac-denil v))))
-           xc))
-        (#t x)))
+           xc)]
+        [#t x]))
 
 (define (ac-denil-car x)
   (if (eq? x 'nil)
@@ -645,19 +645,19 @@
 ; need ar-denil-last).
 
 (define (ac-niltree x)
-  (cond ((pair? x)   (cons (ac-niltree (car x)) (ac-niltree (cdr x))))
-        ((or (eq? x #f) (eq? x '()) (void? x))   'nil)
-        (#t   x)))
+  (cond [(pair? x)   (cons (ac-niltree (car x)) (ac-niltree (cdr x)))]
+        [(or (eq? x #f) (eq? x '()) (void? x))   'nil]
+        [#t   x]))
 
 ; The next two are optimizations, except work for macros.
 
 (define (decompose fns args)
-  (cond ((null? fns) `((fn vals (car vals)) ,@args))
-        ((null? (cdr fns)) (cons (car fns) args))
-        (#t (list (car fns) (decompose (cdr fns) args)))))
+  (cond [(null? fns) `((fn vals (car vals)) ,@args)]
+        [(null? (cdr fns)) (cons (car fns) args)]
+        [#t (list (car fns) (decompose (cdr fns) args))]))
 
 (define (ac-andf s env)
-  (ac (let ((gs (map (lambda (x) (gensym)) (cdr s))))
+  (ac (let ([gs (map (lambda (x) (gensym)) (cdr s))])
                `((fn ,gs
                    (and ,@(map (lambda (f) `(,f ,@gs))
                                (cdar s))))
@@ -733,9 +733,9 @@
 ; but that didn't work for (apply fn nil)
 
 (define (ar-apply-args args)
-  (cond ((null? args) '())
-        ((null? (cdr args)) (ar-denil-last (car args)))
-        (#t (cons (car args) (ar-apply-args (cdr args))))))
+  (cond [(null? args) '()]
+        [(null? (cdr args)) (ar-denil-last (car args))]
+        [#t (cons (car args) (ar-apply-args (cdr args)))]))
 
 
 
@@ -744,23 +744,23 @@
 (xdef cons cons)
 
 (define (ar-car x)
-  (cond ((pair? x)     (car x))
-        ((eqv? x 'nil) 'nil)
-        ((eqv? x '())  'nil)
-        (#t            (err "Can't take car of" x))))
+  (cond [(pair? x)     (car x)]
+        [(eqv? x 'nil) 'nil]
+        [(eqv? x '())  'nil]
+        [#t            (err "Can't take car of" x)]))
 (xdef car ar-car)
 
 (define (ar-cdr x)
-  (cond ((pair? x)     (cdr x))
-        ((eqv? x 'nil) 'nil)
-        ((eqv? x '())  'nil)
-        (#t            (err "Can't take cdr of" x))))
+  (cond [(pair? x)     (cdr x)]
+        [(eqv? x 'nil) 'nil]
+        [(eqv? x '())  'nil]
+        [#t            (err "Can't take cdr of" x)]))
 (xdef cdr ar-cdr)
 
 (define (ar-nthcdr n xs)
-  (cond ((ar-false? xs)  xs)
-        ((> n 0)  (ar-nthcdr (- n 1) (cdr xs)))
-        (#t  xs)))
+  (cond [(ar-false? xs)  xs]
+        [(> n 0)  (ar-nthcdr (- n 1) (cdr xs))]
+        [#t  xs]))
 (xdef nthcdr ar-nthcdr)
 
 (define (tnil x) (if x 't 'nil))
@@ -771,11 +771,11 @@
 ; reduce?
 
 (define (pairwise pred lst)
-  (cond ((null? lst) 't)
-        ((null? (cdr lst)) 't)
-        ((not (eqv? (pred (car lst) (cadr lst)) 'nil))
-         (pairwise pred (cdr lst)))
-        (#t 'nil)))
+  (cond [(null? lst) 't]
+        [(null? (cdr lst)) 't]
+        [(not (eqv? (pred (car lst) (cadr lst)) 'nil))
+         (pairwise pred (cdr lst))]
+        [#t 'nil]))
 
 ; not quite right, because behavior of underlying eqv unspecified
 ; in many cases according to r5rs
@@ -806,23 +806,23 @@
 ; Return val has same type as first argument.
 
 (xdef + (lambda args
-           (cond ((null? args) 0)
-                 ((char-or-string? (car args))
+           (cond [(null? args) 0]
+                 [(char-or-string? (car args))
                   (apply string-append
                          (map (lambda (a) (ar-coerce a 'string))
-                              args)))
-                 ((arc-list? (car args))
-                  (ac-niltree (apply append (map ar-denil-last args))))
-                 (#t (apply + args)))))
+                              args))]
+                 [(arc-list? (car args))
+                  (ac-niltree (apply append (map ar-denil-last args)))]
+                 [#t (apply + args)])))
 
 (define (char-or-string? x) (or (string? x) (char? x)))
 
 (define (ar-+2 x y)
-  (cond ((char-or-string? x)
-         (string-append (ar-coerce x 'string) (ar-coerce y 'string)))
-        ((and (arc-list? x) (arc-list? y))
-         (ac-niltree (append (ar-denil-last x) (ar-denil-last y))))
-        (#t (+ x y))))
+  (cond [(char-or-string? x)
+         (string-append (ar-coerce x 'string) (ar-coerce y 'string))]
+        [(and (arc-list? x) (arc-list? y))
+         (ac-niltree (append (ar-denil-last x) (ar-denil-last y)))]
+        [#t (+ x y)]))
 
 (xdef - -)
 (xdef * *)
@@ -835,36 +835,36 @@
 ; generic comparison
 
 (define (ar->2 x y)
-  (tnil (cond ((and (number? x) (number? y)) (> x y))
-              ((and (string? x) (string? y)) (string>? x y))
-              ((and (symbol? x) (symbol? y)) (string>? (symbol->string x)
-                                                       (symbol->string y)))
-              ((and (char? x) (char? y)) (char>? x y))
-              (#t (> x y)))))
+  (tnil (cond [(and (number? x) (number? y)) (> x y)]
+              [(and (string? x) (string? y)) (string>? x y)]
+              [(and (symbol? x) (symbol? y)) (string>? (symbol->string x)
+                                                       (symbol->string y))]
+              [(and (char? x) (char? y)) (char>? x y)]
+              [#t (> x y)])))
 
 (xdef > (lambda args (pairwise ar->2 args)))
 
 (define (ar-<2 x y)
-  (tnil (cond ((and (number? x) (number? y)) (< x y))
-              ((and (string? x) (string? y)) (string<? x y))
-              ((and (symbol? x) (symbol? y)) (string<? (symbol->string x)
-                                                       (symbol->string y)))
-              ((and (char? x) (char? y)) (char<? x y))
-              (#t (< x y)))))
+  (tnil (cond [(and (number? x) (number? y)) (< x y)]
+              [(and (string? x) (string? y)) (string<? x y)]
+              [(and (symbol? x) (symbol? y)) (string<? (symbol->string x)
+                                                       (symbol->string y))]
+              [(and (char? x) (char? y)) (char<? x y)]
+              [#t (< x y)])))
 
 (xdef < (lambda args (pairwise ar-<2 args)))
 
 (xdef len (lambda (x)
-             (cond ((string? x) (string-length x))
-                   ((hash? x) (hash-count x))
-                   (#t (length (ar-denil-last x))))))
+             (cond [(string? x) (string-length x)]
+                   [(hash? x) (hash-count x)]
+                   [#t (length (ar-denil-last x))])))
 
 (define (ar-tagged? x)
   (and (vector? x) (eq? (vector-ref x 0) 'tagged)))
 
 (define (ar-tag type rep)
-  (cond ((eqv? (ar-type rep) type) rep)
-        (#t (vector 'tagged type rep))))
+  (cond [(eqv? (ar-type rep) type) rep]
+        [#t (vector 'tagged type rep)]))
 
 (xdef annotate ar-tag)
 
@@ -873,25 +873,25 @@
 (define (exint? x) (and (integer? x) (exact? x)))
 
 (define (ar-type x)
-  (cond ((ar-tagged? x)     (vector-ref x 1))
-        ((pair? x)          'cons)
-        ((symbol? x)        'sym)
-        ((null? x)          'sym)
-        ((procedure? x)     'fn)
-        ((char? x)          'char)
-        ((string? x)        'string)
-        ((exint? x)         'int)
-        ((number? x)        'num)     ; unsure about this
-        ((vector? x)        'vector)
-        ((hash? x)    'table)
-        ((output-port? x)   'output)
-        ((input-port? x)    'input)
-        ((tcp-listener? x)  'socket)
-        ((exn? x)           'exception)
-        ((thread? x)        'thread)
-        ((thread-cell? x)   'thread-cell)
-        ((keyword? x)       'keyword)
-        (#t                 (err "Type: unknown type" x))))
+  (cond [(ar-tagged? x)     (vector-ref x 1)]
+        [(pair? x)          'cons]
+        [(symbol? x)        'sym]
+        [(null? x)          'sym]
+        [(procedure? x)     'fn]
+        [(char? x)          'char]
+        [(string? x)        'string]
+        [(exint? x)         'int]
+        [(number? x)        'num]     ; unsure about this
+        [(vector? x)        'vector]
+        [(hash? x)    'table]
+        [(output-port? x)   'output]
+        [(input-port? x)    'input]
+        [(tcp-listener? x)  'socket]
+        [(exn? x)           'exception]
+        [(thread? x)        'thread]
+        [(thread-cell? x)   'thread-cell]
+        [(keyword? x)       'keyword]
+        [#t                 (err "Type: unknown type" x)]))
 (xdef type ar-type)
 
 (define (ar-rep x)
@@ -929,40 +929,40 @@
 
 (xdef call-w/stdout
       (lambda (port thunk)
-        (parameterize ((current-output-port port)) (thunk))))
+        (parameterize ([current-output-port port]) (thunk))))
 
 (xdef call-w/stdin
       (lambda (port thunk)
-        (parameterize ((current-input-port port)) (thunk))))
+        (parameterize ([current-input-port port]) (thunk))))
 
 (xdef readc (lambda str
-              (let ((c (read-char (if (pair? str)
+              (let ([c (read-char (if (pair? str)
                                       (car str)
-                                      (current-input-port)))))
+                                      (current-input-port)))])
                 (if (eof-object? c) 'nil c))))
 
 (xdef readchars (lambda (n . str)
-                  (let ((cs (read-string n (if (pair? str)
+                  (let ([cs (read-string n (if (pair? str)
                                               (car str)
-                                              (current-input-port)))))
+                                              (current-input-port)))])
                     (if (eof-object? cs) 'nil cs))))
 
 (xdef readb (lambda str
-              (let ((c (read-byte (if (pair? str)
+              (let ([c (read-byte (if (pair? str)
                                       (car str)
-                                      (current-input-port)))))
+                                      (current-input-port)))])
                 (if (eof-object? c) 'nil c))))
 
 (xdef readbytes (lambda (n . str)
-                  (let ((bs (read-bytes n (if (pair? str)
+                  (let ([bs (read-bytes n (if (pair? str)
                                               (car str)
-                                              (current-input-port)))))
+                                              (current-input-port)))])
                     (if (eof-object? bs) 'nil bs))))
 
 (xdef peekc (lambda str
-              (let ((c (peek-char (if (pair? str)
+              (let ([c (peek-char (if (pair? str)
                                       (car str)
-                                      (current-input-port)))))
+                                      (current-input-port)))])
                 (if (eof-object? c) 'nil c))))
 
 (xdef writec (lambda (c . args)
@@ -987,9 +987,9 @@
                    bs))
 
 (define (printwith f args)
-  (let ((port (if (> (length args) 1)
+  (let ([port (if (> (length args) 1)
                   (cadr args)
-                  (current-output-port))))
+                  (current-output-port))])
     (when (pair? args)
       (f (ac-denil (car args)) port))
     (unless (ar-bflag 'explicit-flush)
@@ -1007,7 +1007,7 @@
 ; sread = scheme read. eventually replace by writing read
 
 (xdef sread (lambda (p)
-               (let ((expr (read p)))
+               (let ([expr (read p)])
                  (if (eof-object? expr) eof expr))))
 
 ; these work in PLT but not scheme48
@@ -1024,24 +1024,24 @@
 
 (for-each (lambda (e)
             (add-init-step
-              (let ((target-type (car e))
-                    (conversions (make-hash)))
+              (let ([target-type (car e)]
+                    [conversions (make-hash)])
                 (hash-set! (coercions) target-type conversions)
                 (for-each
                   (lambda (x) (hash-set! conversions (car x) (cadr x)))
                   (cdr e)))))
  `((fn      (cons   ,(lambda (l) (lambda (i)
                                    (ar-car (ar-nthcdr (if (< i 0)
-                                                        (let* ((l (ar-denil-last l))
-                                                               (len (length l))
-                                                               (i (+ len i)))
+                                                        (let* ([l (ar-denil-last l)]
+                                                               [len (length l)]
+                                                               [i (+ len i)])
                                                           (if (< i 0) len i))
                                                         i)
                                                       l)))))
             (string ,(lambda (s) (lambda (i) (string-ref s i))))
             (table  ,(lambda (h) (case-lambda
-                                  ((k) (hash-ref h k 'nil))
-                                  ((k d) (hash-ref h k d)))))
+                                  [(k) (hash-ref h k 'nil)]
+                                  [(k d) (hash-ref h k d)])))
             (vector ,(lambda (v) (lambda (i) (vector-ref v i)))))
 
    (string  (int    ,number->string)
@@ -1058,7 +1058,7 @@
    (int     (char   ,(lambda (c . args) (char->ascii c)))
             (num    ,(lambda (x . args) (iround x)))
             (string ,(lambda (x . args)
-                       (let ((n (apply string->number x args)))
+                       (let ([n (apply string->number x args)])
                          (if n (iround n)
                              (err "Can't coerce " x 'int))))))
 
@@ -1073,11 +1073,11 @@
             (num    ,(lambda (x) (ascii->char (iround x)))))))
 
 (define (ar-coerce x type . args)
-  (let ((x-type (ar-type x)))
+  (let ([x-type (ar-type x)])
     (if (eqv? type x-type) x
-        (let* ((fail        (lambda () (err "Can't coerce " x type)))
-               (conversions (hash-ref (coercions) type fail))
-               (converter   (hash-ref conversions x-type fail)))
+        (let* ([fail        (lambda () (err "Can't coerce " x type))]
+               [conversions (hash-ref (coercions) type fail)]
+               [converter   (hash-ref conversions x-type fail)])
           (ar-apply converter (cons x args))))))
 
 (xdef coerce ar-coerce)
@@ -1085,7 +1085,7 @@
 (xdef parameter make-parameter)
 (xdef parameterize-sub
       (lambda (var val thunk)
-        (parameterize ((var val)) (thunk))))
+        (parameterize ([var val]) (thunk))))
 
 (xdef open-socket
       (lambda (port)
@@ -1094,8 +1094,8 @@
             (tcp-listen port 50 #t))))
 
 (define (ar-init-socket init-fn . args)
-  (let ((oc (current-custodian))
-        (nc (make-custodian)))
+  (let ([oc (current-custodian)]
+        [nc (make-custodian)])
     (current-custodian nc)
     (apply
       (lambda (in out . tail)
@@ -1117,7 +1117,7 @@
                         (lambda (in out)
                           (list (make-limited-input-port in upload-limit* #t)
                                 out
-                                (let-values (((us them) (tcp-addresses out)))
+                                (let-values ([(us them) (tcp-addresses out)])
                                   them))))))
 
 (xdef socket-connect (lambda (host port)
@@ -1157,14 +1157,14 @@
 (xdef system (lambda (s) (tnil (system s))))
 
 (add-init-step
-  (let ((argv (current-command-line-arguments)))
+  (let ([argv (current-command-line-arguments)])
     (namespace-set-variable-value! (ac-global-name 'argv)
                                    (vector->list argv))))
 
 (xdef pipe-from (lambda (cmd)
-                   (let ((tf (ar-tmpname)))
+                   (let ([tf (ar-tmpname)])
                      (system (string-append cmd " > " tf))
-                     (let ((str (open-input-file tf)))
+                     (let ([str (open-input-file tf)])
                        (system (string-append "rm -f " tf))
                        str))))
 
@@ -1185,7 +1185,7 @@
 ; we need the latter for strings.
 
 (xdef table (lambda args
-              (let ((h (make-hash)))
+              (let ([h (make-hash)])
                 (if (pair? args) ((car args) h) null)
                 h)))
 
@@ -1196,7 +1196,7 @@
 (define (fill-table h pairs)
   (if (eq? pairs '())
       h
-      (let ((pair (car pairs)))
+      (let ([pair (car pairs)])
         (begin (hash-set! h (car pair) (cadr pair))
                (fill-table h (cdr pairs))))))
 
@@ -1268,7 +1268,7 @@
 ; are bound as Racket syntax.
 ;
 (define (arc-exec racket-expr)
-  (eval (parameterize ((compile-allow-set!-undefined #t))
+  (eval (parameterize ([compile-allow-set!-undefined #t])
           (compile racket-expr))))
 
 (define (arc-eval expr)
@@ -1276,7 +1276,7 @@
 
 (define (tle)
   (display "Arc> ")
-  (let ((expr (read)))
+  (let ([expr (read)])
     (when (not (eqv? expr ':a))
       (write (arc-eval expr))
       (newline)
@@ -1315,7 +1315,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (tl2 interactive?))
 
 (define (tl-in-main-namespace)
-  (parameterize ((current-namespace (main-namespace)))
+  (parameterize ([current-namespace (main-namespace)])
     (tl)))
 
 
@@ -1330,7 +1330,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
   (on-err (lambda (c)
-            (parameterize ((current-output-port (current-error-port)))
+            (parameterize ([current-output-port (current-error-port)])
               ((error-display-handler) (exn-message c) c)
               (newline))
             (namespace-set-variable-value!
@@ -1338,7 +1338,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
               c)
             (tl2 interactive?))
     (lambda ()
-      (let ((expr (read)))
+      (let ([expr (read)])
         (trash-whitespace)          ; throw away until we hit non-white or leading newline
         (if (eof-object? expr)
              (begin (when interactive? (newline))
@@ -1346,7 +1346,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
             null)
         (if (eqv? expr ':a)
             'done
-            (let ((val (arc-eval expr)))
+            (let ([val (arc-eval expr)])
               (when interactive?
                 (write (ac-denil val))
                 (newline))
@@ -1358,7 +1358,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                 expr)
               (tl2 interactive?)))))))
 
-(let ((current-function '()))
+(let ([current-function '()])
   (define (set-current-fn name)
     (set! current-function name))
   (define (current-fn)
@@ -1367,7 +1367,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (xdef current-fn current-fn))
 
 (define (aload1 p)
-  (let ((x (read p)))
+  (let ([x (read p)])
     (if (eof-object? x)
         (void)
         (begin
@@ -1375,13 +1375,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
           (aload1 p)))))
 
 (define (atests1 p)
-  (let ((x (read p)))
+  (let ([x (read p)])
     (if (eof-object? x)
         #t
         (begin
           (write x)
           (newline)
-          (let ((v (arc-eval x)))
+          (let ([v (arc-eval x)])
             (if (ar-false? v)
                 (begin
                   (display "  FAILED")
@@ -1393,17 +1393,17 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (call-with-input-file filename aload1))
 
 (define (aload-in-main-namespace filename)
-  (parameterize ((current-namespace (main-namespace)))
+  (parameterize ([current-namespace (main-namespace)])
     (aload filename)))
 
 (define (test filename)
   (call-with-input-file filename atests1))
 
 (define (acompile1 ip op)
-  (let ((x (read ip)))
+  (let ([x (read ip)])
     (if (eof-object? x)
         #t
-        (let ((scm (ac x '())))
+        (let ([scm (ac x '())])
           (arc-exec scm)
           (pretty-print scm op)
           (newline op)
@@ -1413,7 +1413,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; compile xx.arc to xx.arc.scm
 ; useful to examine the Arc compiler output
 (define (acompile inname)
-  (let ((outname (string-append inname ".scm")))
+  (let ([outname (string-append inname ".scm")])
     (if (file-exists? outname)
         (delete-file outname)
         null)
@@ -1437,13 +1437,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   ((call-with-current-continuation
      (lambda (k)
        (lambda ()
-         (with-handlers ((exn:fail? (lambda (c)
-                                      (k (lambda () (errfn c))))))
+         (with-handlers ([exn:fail? (lambda (c)
+                                      (k (lambda () (errfn c))))])
                         (f)))))))
 (xdef on-err on-err)
 
 (define (disp-to-string x)
-  (let ((o (open-output-string)))
+  (let ([o (open-output-string)])
     (display x o)
     (close-output-port o)
     (get-output-string o)))
@@ -1484,7 +1484,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (define (string-replace! str val index)
   (if (eqv? (string-length val) (- (string-length str) index))
-      (do ((i index (+ i 1)))
+      (do ([i index (+ i 1)])
           ((= i (string-length str)) str)
         (string-set! str i (string-ref val (- i index))))
       (err "Length mismatch between strings" str val index)))
@@ -1493,13 +1493,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef sref
   (lambda (com val ind)
-    (cond ((hash? com)  (if (eqv? val 'nil)
+    (cond [(hash? com)  (if (eqv? val 'nil)
                                   (hash-remove! com ind)
-                                  (hash-set! com ind val)))
-          ((string? com) (string-set! com ind val))
-          ((pair? com)   (nth-set! com ind val))
-          ((vector? com)  (vector-set! com ind val))
-          (#t (err "Can't set reference " com ind val)))
+                                  (hash-set! com ind val))]
+          [(string? com) (string-set! com ind val)]
+          [(pair? com)   (nth-set! com ind val)]
+          [(vector? com)  (vector-set! com ind val)]
+          [#t (err "Can't set reference " com ind val)])
     val))
 
 (define (nth-set! lst n val)
@@ -1510,8 +1510,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
               val))
 
 (define (bound? arcname)
-  (with-handlers ((exn:fail:syntax? (lambda (e) #t))
-                  (exn:fail:contract:variable? (lambda (e) #f)))
+  (with-handlers ([exn:fail:syntax? (lambda (e) #t)]
+                  [exn:fail:contract:variable? (lambda (e) #f)])
     (namespace-variable-value (ac-global-name arcname))
     #t))
 
@@ -1536,7 +1536,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (print-hash-table #t)
 
 (xdef client-ip (lambda (port)
-                   (let-values (((x y) (tcp-addresses port)))
+                   (let-values ([(x y) (tcp-addresses port)])
                      y)))
 
 ; make sure only one thread at a time executes anything
@@ -1596,7 +1596,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; sadly doing this to the input port also kills the output port.
 
 (define (try-custodian p)
-  (let ((c (hash-ref custodians p #f)))
+  (let ([c (hash-ref custodians p #f)])
     (if c
         (begin
           (custodian-shutdown-all c)
@@ -1606,10 +1606,10 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (define (ar-close . args)
   (map (lambda (p)
-         (cond ((input-port? p)   (close-input-port p))
-               ((output-port? p)  (close-output-port p))
-               ((tcp-listener? p) (tcp-close p))
-               (#t (err "Can't close " p))))
+         (cond [(input-port? p)   (close-input-port p)]
+               [(output-port? p)  (close-output-port p)]
+               [(tcp-listener? p) (tcp-close p)]
+               [#t (err "Can't close " p)]))
        args)
   (map (lambda (p) (try-custodian p)) args) ; free any custodian
   'nil)
@@ -1637,7 +1637,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef timedate
   (lambda args
-    (let ((d (utc-date (if (pair? args) (car args) (current-seconds)))))
+    (let ([d (utc-date (if (pair? args) (car args) (current-seconds)))])
       (ac-niltree (list (date-second d)
                         (date-minute d)
                         (date-hour d)
@@ -1664,13 +1664,13 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (xdef shl arithmetic-shift)
 
 (define (codestring s)
-  (let ((i (atpos s 0)))
+  (let ([i (atpos s 0)])
     (if i
         (cons (substring s 0 i)
-              (let* ((rest (substring s (+ i 1)))
-                     (in (open-input-string rest))
-                     (expr (read in))
-                     (i2 (let-values (((x y z) (port-next-location in))) z)))
+              (let* ([rest (substring s (+ i 1))]
+                     [in (open-input-string rest)]
+                     [expr (read in)]
+                     [i2 (let-values ([(x y z) (port-next-location in)]) z)])
                 (close-input-port in)
                 (cons expr (codestring (substring rest (- i2 1))))))
         (list s))))
@@ -1678,27 +1678,27 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; First unescaped @ in s, if any.  Escape by doubling.
 
 (define (atpos s i)
-  (cond ((eqv? i (string-length s))
-         #f)
-        ((eqv? (string-ref s i) #\@)
+  (cond [(eqv? i (string-length s))
+         #f]
+        [(eqv? (string-ref s i) #\@)
          (if (and (< (+ i 1) (string-length s))
                   (not (eqv? (string-ref s (+ i 1)) #\@)))
              i
-             (atpos s (+ i 2))))
-        (#t
-         (atpos s (+ i 1)))))
+             (atpos s (+ i 2)))]
+        [#t
+         (atpos s (+ i 1))]))
 
 (define (unescape-ats s)
-  (list->string (letrec ((unesc (lambda (cs)
+  (list->string (letrec ([unesc (lambda (cs)
                                   (cond
-                                    ((null? cs)
-                                     '())
-                                    ((and (eqv? (car cs) #\@)
+                                    [(null? cs)
+                                     '()]
+                                    [(and (eqv? (car cs) #\@)
                                           (not (null? (cdr cs)))
                                           (eqv? (cadr cs) #\@))
-                                     (unesc (cdr cs)))
-                                    (#t
-                                     (cons (car cs) (unesc (cdr cs))))))))
+                                     (unesc (cdr cs))]
+                                    [#t
+                                     (cons (car cs) (unesc (cdr cs)))]))])
                   (unesc (string->list s)))))
 
 (define (range start end)
