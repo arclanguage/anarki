@@ -3,22 +3,28 @@
 ; Arc Compiler.
 
 
+(require
+
+  ; This defines names like _list, so it would conflict with the
+  ; naming convention for Arc global variables if we didn't prefix it.
+  (prefix-in ffi: ffi/unsafe)
+  (only-in racket/unsafe/ops unsafe-set-mcar! unsafe-set-mcdr!)
+
+  racket/file
+  racket/path
+  racket/pretty
+  racket/port
+  (only-in racket/promise delay force)
+  (only-in racket/runtime-path define-runtime-path)
+  racket/system
+  racket/tcp
+
+  (only-in "brackets.rkt" use-bracket-readtable)
+
+  (for-syntax racket/base))
+
 (provide (all-defined-out))
 
-(require (only-in racket/runtime-path define-runtime-path)
-         (only-in racket/promise delay force)
-         racket/port
-         racket/tcp
-         racket/system
-         racket/pretty)
-
-; This defines names like _list, so it would conflict with the naming
-; convention for Arc global variables if we didn't prefix it.
-(require (prefix-in ffi: ffi/unsafe))
-
-(require (only-in "brackets.rkt" use-bracket-readtable))
-
-(require (for-syntax racket/base))
 
 (define-runtime-path ac-rkt-path "ac.rkt")
 (define-runtime-path arc-arc-path "arc.arc")
@@ -1208,7 +1214,6 @@
 (xdef dir (lambda (name)
             (ac-niltree (map path->string (directory-list name)))))
 
-(require racket/file)
 (xdef ensure-dir (wrapnil make-directory*))
 
 (xdef file-exists (lambda (name)
@@ -1217,7 +1222,6 @@
 (xdef dir-exists (lambda (name)
                      (if (directory-exists? name) name 'nil)))
 
-(require racket/path)
 (xdef basename (lambda (name)
                  (path->string (file-name-from-path (string->path name)))))
 (xdef dirname (lambda (name)
@@ -1459,7 +1463,6 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 ; waterhouse's code to modify mzscheme-4's immutable pairs.
 ; http://arclanguage.org/item?id=13616
-(require (only-in racket/unsafe/ops unsafe-set-mcar! unsafe-set-mcdr!))
 
 (define x-set-car!
   (let ((fn (namespace-variable-value 'set-car! #t (lambda () #f))))

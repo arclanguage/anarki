@@ -8,6 +8,11 @@
 ;11
 
 
+(provide
+  (rename-out [*read read] [*read-syntax read-syntax])
+  use-bracket-readtable)
+
+
 ; main reader function for []s
 ; recursive read starts with default readtable's [ parser,
 ; but nested reads still use the curent readtable:
@@ -22,8 +27,6 @@
   (make-readtable #f #\[ 'terminating-macro read-square-brackets))
 
 ; call this to set the global readtable
-
-(provide use-bracket-readtable)
 
 (define (use-bracket-readtable)
   (current-readtable bracket-readtable))
@@ -43,5 +46,3 @@
     (read-syntax src port)))
 
 ; and the need to be provided as `read' and `read-syntax'
-
-(provide (rename-out (*read read) (*read-syntax read-syntax)))

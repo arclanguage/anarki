@@ -44,25 +44,34 @@
 ; customization hooks for purposes like ours.
 
 
-(require anarki/boot)
+(require
+  (only-in "ac.rkt"
+    [arc-eval anarki-eval]
+    anarki-init
+    anarki-init-in-main-namespace
+    anarki-init-verbose
+    anarki-init-in-main-namespace-verbose
+    [aload anarki-load]
+    [main-namespace anarki-main-namespace]
+    [arc-arc-path anarki-path]
+    [tl anarki-repl]))
 
 (provide
+  anarki
+  anarki-eval
   anarki-init
   anarki-init-in-main-namespace
-  anarki-init-verbose
   anarki-init-in-main-namespace-verbose
-  (rename-out
-    [arc-arc-path anarki-path]
-    [main-namespace anarki-main-namespace]
-    [tl anarki-repl]
-    [aload anarki-load]
-    [arc-eval anarki-eval])
-  anarki)
+  anarki-init-verbose
+  anarki-load
+  anarki-main-namespace
+  anarki-path
+  anarki-repl)
 
 
 ; launch anarki repl from the anarki package folder
 (define (anarki)
   (anarki-init-in-main-namespace-verbose)
-  (parameterize ([current-directory arc-arc-path]
-                 [current-namespace (main-namespace)])
-    (tl)))
+  (parameterize ([current-directory anarki-path]
+                 [current-namespace (anarki-main-namespace)])
+    (anarki-repl)))

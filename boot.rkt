@@ -1,13 +1,18 @@
 #lang racket/base
 
-(require (only-in racket/cmdline command-line))
+(require
+  (only-in racket/cmdline command-line)
+  (only-in "ac.rkt"
+    aload-in-main-namespace
+    anarki-init-in-main-namespace-verbose
+    tl-in-main-namespace))
 
-(require "ac.rkt")
-
-
-(provide (all-from-out racket/base))
-(provide (all-from-out "ac.rkt"))
-(provide anarki-windows-cli)
+(provide
+  (all-from-out racket/base)
+  aload-in-main-namespace
+  anarki-init-in-main-namespace-verbose
+  anarki-windows-cli
+  tl-in-main-namespace)
 
 
 (define (anarki-windows-cli)
