@@ -35,7 +35,7 @@
   bare-bones--plain-module-begin
   bare-bones--provide
   bare-bones--require)
-; This also "provides" the module (submod "ns.rkt" bare-bones).
+; This module also "provides" the module (submod "ns.rkt" bare-bones).
 
 
 (define-for-syntax bare-bones-exports (list))

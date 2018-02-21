@@ -62,7 +62,7 @@
     bare-bones--plain-module-begin
     bare-bones--provide
     bare-bones--require))
-; This also "requires" that the module
+; This module also "requires" that the module
 ; (submod "lib/ns.rkt" bare-bones) exist.
 
 

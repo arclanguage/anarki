@@ -24,6 +24,11 @@
   (only-in "brackets.rkt" use-bracket-readtable)
 
   (for-syntax racket/base))
+; This module also uses `dynamic-require` for the following
+; dependencies:
+;
+; (only-in openssl ssl-connect)
+; (only-in racket/random crypto-random-bytes)
 
 (provide (all-defined-out))
 
@@ -1128,7 +1133,8 @@
                     ; NOTE: There was a bug in unmarshaling namespace
                     ; information from compiled Racket code that was
                     ; fixed in Racket 6.11. On that version and later,
-                    ; we can replace this with `(require openssl)`.
+                    ; we can replace this with
+                    ; `(require (only-in openssl ssl-connect))`.
                     (define ssl-connect
                       (dynamic-require 'openssl 'ssl-connect))
                     (ar-init-socket
@@ -1172,7 +1178,7 @@
   ; NOTE: There was a bug in unmarshaling namespace information from
   ; compiled Racket code that was fixed in Racket 6.11. On that
   ; version and later, we can replace this with
-  ; `(require racket/random)`.
+  ; `(require (only-in racket/random crypto-random-bytes))`.
   (define crypto-random-bytes
     (dynamic-require 'racket/random 'crypto-random-bytes))
   (string-append "/tmp/"
