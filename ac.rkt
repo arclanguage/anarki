@@ -10,6 +10,8 @@
   (prefix-in ffi: ffi/unsafe)
   (only-in racket/unsafe/ops unsafe-set-mcar! unsafe-set-mcdr!)
 
+  (only-in racket/contract/base -> any any/c)
+  (only-in racket/contract/region define/contract)
   racket/file
   racket/path
   racket/pretty
@@ -1463,15 +1465,17 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 ; waterhouse's code to modify mzscheme-4's immutable pairs.
 ; http://arclanguage.org/item?id=13616
+;
+; We could almost use `unsafe-set-mcar!` and `unsafe-set-mcdr!`
+; directly, but these do a sanity check to make sure we don't unsafely
+; set the car or cdr of something that isn't an immutable pair.
 
-(define (x-set-car! p x)
-  (unless (pair? p)
-    (raise-type-error 'set-car! "pair" p))
+(define/contract (x-set-car! p x)
+  (-> pair? any/c any)
   (unsafe-set-mcar! p x))
 
-(define (x-set-cdr! p x)
-  (unless (pair? p)
-    (raise-type-error 'set-cdr! "pair" p))
+(define/contract (x-set-cdr! p x)
+  (-> pair? any/c any)
   (unsafe-set-mcdr! p x))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
