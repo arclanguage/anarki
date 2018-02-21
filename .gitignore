@@ -7,6 +7,10 @@
 # accident.
 /unit-test.arc/
 
+# When `raco setup --package anarki` builds documentation, it goes
+# here.
+/doc/
+
 # These are the default .gitignore settings created by `raco pkg new`.
 # The raco tools seem to generate `compiled` directories at the least.
 *~

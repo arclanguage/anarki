@@ -80,7 +80,7 @@ script:
   # their documentation. (TODO: Why does travis-racket suggest this?
   # Is there a chance `raco setup` fails when `raco pkg install`
   # doesn't?)
-  - raco setup --no-docs --check-pkg-deps anarki
+  - raco setup --check-pkg-deps anarki
 
   # We run Racket tests according to the way the DrDr continuous
   # testing system does. This imitates the settings used by the Racket
