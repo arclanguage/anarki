@@ -68,7 +68,7 @@ create the account for your username. You should now be logged in as an admin.
 
 To customize **News**, change the variables at the top of `lib/news.arc`. To change the port your server runs at, modify `lib/run-news.arc`.
 
-Any interactive changes to the prompt will be reflected immediately in the server, without needing to restart it. Hence if you make any changes to `lib/news.arc`, you can load them, by typing `(load "lib/news.arc)` in the repl. If you stop the server or it dies for some reason, previously entered commands are available in the command history (at least if you have **Readline** installed).
+Any interactive changes to the prompt will be reflected immediately in the server, without needing to restart it. Hence if you make any changes to `lib/news.arc`, you can load them, by typing `(load "lib/news.arc")` in the repl. If you stop the server or it dies for some reason, previously entered commands are available in the command history (at least if you have **Readline** installed).
 
 
 ### HTTPS
