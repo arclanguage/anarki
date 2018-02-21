@@ -54,7 +54,7 @@
     (define args (if (eq? #f file) null (cons file file-args)))
     (current-command-line-arguments (list->vector args))
 
-    (anarki-init-verbose-in-main-namespace)
+    (anarki-init-in-main-namespace-verbose)
 
     (unless (eq? #f file)
 

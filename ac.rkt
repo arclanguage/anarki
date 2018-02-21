@@ -69,10 +69,13 @@
     (aload arc-arc-path)
     (aload libs-arc-path)))
 
+(define anarki-init-in-main-namespace-func
+  (make-parameter anarki-init))
+
 (define anarki-init-in-main-namespace-promise
   (delay
     (parameterize ([current-namespace (main-namespace)])
-      (anarki-init))))
+      ((anarki-init-in-main-namespace-func)))))
 
 (define (anarki-init-in-main-namespace)
   (force anarki-init-in-main-namespace-promise))
@@ -82,9 +85,10 @@
     (displayln "initializing arc.. (may take a minute)"))
   (anarki-init))
 
-(define (anarki-init-verbose-in-main-namespace)
-  (parameterize ([current-namespace (main-namespace)])
-    (anarki-init-verbose)))
+(define (anarki-init-in-main-namespace-verbose)
+  (parameterize
+    ([anarki-init-in-main-namespace-func anarki-init-verbose])
+    (anarki-init-in-main-namespace)))
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
@@ -1272,9 +1276,19 @@
       (tle))))
 
 (define (tl)
-  (let ((interactive? (terminal-port? (current-input-port))))
-    (when interactive?
-      (display
+  (define input (current-input-port))
+  ; With default settings, the Racket REPL loads the XREPL module,
+  ; which loads the Readline module, which replaces
+  ; `current-input-port` with something that technically doesn't
+  ; satisfy `terminal-port?`. It gives us some trouble with flushing
+  ; the output port too. The way that XREPL detects whether Readline
+  ; is already installed is to check that the port's name is
+  ; `readline-input`, so that's how we determine that information here
+  ; too.
+  (define readline? (eq? (object-name input) 'readline-input))
+  (define interactive? (or readline? (terminal-port? input)))
+  (when interactive?
+    (display
 "
 To quit:
   arc> (quit)
@@ -1291,7 +1305,7 @@ To run all automatic tests:
 If you have questions or get stuck, come to http://arclanguage.org/forum.
 Arc 3.1 documentation: https://arclanguage.github.io/ref.
 "))
-    (tl2 interactive?)))
+  (tl2 interactive?))
 
 (define (tl-in-main-namespace)
   (parameterize ((current-namespace (main-namespace)))

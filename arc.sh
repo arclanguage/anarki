@@ -118,4 +118,4 @@ if [[ $REPL == definitely || ( $REPL == maybe && $# -eq 0 ) ]]; then
   repl="(tl-in-main-namespace)"
 fi
 
-$rl racket -t "$arc_dir/boot.rkt" -e "(anarki-init-verbose-in-main-namespace) $load $repl" "$@"
+$rl racket -t "$arc_dir/boot.rkt" -e "(anarki-init-in-main-namespace-verbose) $load $repl" "$@"
