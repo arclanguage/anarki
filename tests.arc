@@ -1,5 +1,5 @@
 ; first hg clone https://bitbucket.org/zck/unit-test.arc
-(load "unit-test.arc/unit-test.arc")
+(require 'unit-test.arc/unit-test.arc)
 
 ; ensure that all News libs are loaded
 (require 'lib/news.arc)
@@ -9,7 +9,7 @@
 ; setup/teardown functions
 (declare 'atstrings t)
 
-(map load:string '(
+(require '(
     arc.arc.t
     lib/app.arc.t
     lib/json.arc.t

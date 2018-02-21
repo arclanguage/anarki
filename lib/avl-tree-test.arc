@@ -1,6 +1,6 @@
 ;; Fuzz testing for AVL trees - by Pauan - http://arclanguage.org/item?id=18936
 
-(load "lib/avl-tree.arc")
+(require 'lib/avl-tree.arc)
 
 ; Depth must be correct
 (def verify-depth (tree)

@@ -34,7 +34,7 @@
 ;
 ; How does it work?
 ;
-; * Firstly, from the Arc prompt, type (load "lib/pd.arc")
+; * Firstly, from the Arc prompt, type (require 'lib/pd.arc)
 ; * '%' creates Pd objects and messages
 ; * '->' connects them
 ; * 'pd' runs the patch in Pd

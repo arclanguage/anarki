@@ -1,7 +1,7 @@
 ; Examples of various forms, including file uploads.
 ;
 ; To run:
-;   arc> (load "lib/form-tests.arc")
+;   arc> (require 'lib/form-tests.arc)
 ;   arc> (asv)
 ;   ready to serve port 8080
 ;
