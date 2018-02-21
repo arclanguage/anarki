@@ -73,5 +73,5 @@
 (define (anarki)
   (anarki-init-in-main-namespace-verbose)
   (parameterize ([current-directory anarki-path]
-                 [current-namespace (anarki-main-namespace)])
+                 [current-namespace anarki-main-namespace])
     (anarki-repl)))

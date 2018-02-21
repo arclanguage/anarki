@@ -43,7 +43,7 @@
          ; libraries from Arc is similar to loading Arc libraries from
          ; Arc.
          (define (eval-here expr)
-           (parameterize ([current-namespace (anarki-main-namespace)]
+           (parameterize ([current-namespace anarki-main-namespace]
                           [current-directory here])
              (anarki-eval expr)))
 

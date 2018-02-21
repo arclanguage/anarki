@@ -38,7 +38,7 @@
 (define-runtime-path libs-arc-path "libs.arc")
 
 (define-namespace-anchor main-namespace-anchor)
-(define (main-namespace)
+(define main-namespace
   (namespace-anchor->namespace main-namespace-anchor))
 
 (define (ac-global-name s)
@@ -88,7 +88,7 @@
 
 (define anarki-init-in-main-namespace-promise
   (delay
-    (parameterize ([current-namespace (main-namespace)])
+    (parameterize ([current-namespace main-namespace])
       ((anarki-init-in-main-namespace-func)))))
 
 (define (anarki-init-in-main-namespace)
@@ -1321,7 +1321,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (tl2 interactive?))
 
 (define (tl-in-main-namespace)
-  (parameterize ([current-namespace (main-namespace)])
+  (parameterize ([current-namespace main-namespace])
     (tl)))
 
 
@@ -1399,7 +1399,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (call-with-input-file filename aload1))
 
 (define (aload-in-main-namespace filename)
-  (parameterize ([current-namespace (main-namespace)])
+  (parameterize ([current-namespace main-namespace])
     (aload filename)))
 
 (define (test filename)
