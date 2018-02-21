@@ -54,7 +54,8 @@
     local-require
     make-derived-parameter
     namespace-anchor?
-    namespace-anchor->empty-namespace))
+    namespace-anchor->empty-namespace)
+  "lib/ns.rkt")
 
 
 (defextend type (x) $.namespace?.x
@@ -157,44 +158,6 @@
 
 (= anon-module-prefix* (string (uniq) '-module-))
 
-(= racket/bare-bones--plain-module-begin (uniq))
-(= racket/bare-bones--define (uniq))
-(= racket/bare-bones--define-customvar (uniq))
-(= racket/bare-bones--quote (uniq))
-(= racket/bare-bones--datum (uniq))
-(= racket/bare-bones--set (uniq))
-(= racket/bare-bones--app (uniq))
-(= racket/bare-bones--require (uniq))
-(= racket/bare-bones--provide (uniq))
-
-; We define racket/bare-bones, a stripped-down version of racket/base
-; where every variable is named as a gensym, just to make sure it's
-; possible for our module utilities to define modules which provide
-; exports with names like 'define or '#%app which would clash with the
-; things used to define those very modules.
-;
-(eval `($:module racket/bare-bones racket/base
-         (require (for-syntax racket/base))
-         (define-syntax-rule (define-customvar var getter setter)
-           (define-syntax var
-             (make-set!-transformer
-               (lambda (stx)
-                 (syntax-case stx (set!)
-                   (id (identifier? #'id) #'(getter))
-                   ((set! _ val) #'(setter val)))))))
-         (provide (rename-out
-                    (#%plain-module-begin
-                      ,racket/bare-bones--plain-module-begin)
-                    (define     ,racket/bare-bones--define)
-                    (define-customvar
-                      ,racket/bare-bones--define-customvar)
-                    (quote      ,racket/bare-bones--quote)
-                    (#%datum    ,racket/bare-bones--datum)
-                    (set!       ,racket/bare-bones--set)
-                    (#%app      ,racket/bare-bones--app)
-                    (#%require  ,racket/bare-bones--require)
-                    (#%provide  ,racket/bare-bones--provide)))))
-
 ; We manipulate a Racket module as a module path together with a
 ; Racket namespace the module is registered in.
 (def pathed-rmodule (rns path)
@@ -238,26 +201,28 @@
     (w/current-rns rns ($.dynamic-require path ($.void))))
   rmodule)
 
-(def embed-racket/bare-bones (result)
-  " Makes a `racket/bare-bones' expression out of the literal value
-    `result' by embedding it inside a procedure call. This is
-    necessary so that Racket doesn't translate it into immutable
-    syntax and back. "
-  ($.list racket/bare-bones--app
-    (cons racket/bare-bones--datum (fn () result))))
+(def embed-ns/bare-bones (result)
+  " Makes a `(submod \"lib/ns.rkt\" bare-bones)' expression out of the
+    literal value `result' by embedding it inside a procedure call.
+    This is necessary so that Racket doesn't translate it into
+    immutable syntax and back. "
+  ($.list $.bare-bones--app
+    (cons $.bare-bones--datum (fn () result))))
 
 (def make-bare-bones-rmodule (racket-module-body)
-  " Makes a Racket module based on `racket/bare-bones' and the given
-    Racket list of top-level module expressions. We create the module
-    by evaluating a Racket `(module ...) form in the main namespace of
-    Arc. The resulting module will have a gensym for a name (even if
-    Racket's `current-module-declare-name' would have overridden
-    that), and Racket's `compile-enforce-module-constants' parameter
-    will be `#f' while the module is being compiled, so that its
-    module-level variables can be redefined or assigned to later on. "
+  " Makes a Racket module based on
+    `(submod \"lib/ns.rkt\" bare-bones)' and the given Racket list of
+    top-level module expressions. We create the module by evaluating a
+    Racket `(module ...) form in the main namespace of Arc. The
+    resulting module will have a gensym for a name (even if Racket's
+    `current-module-declare-name' would have overridden that), and
+    Racket's `compile-enforce-module-constants' parameter will be `#f'
+    while the module is being compiled, so that its module-level
+    variables can be redefined or assigned to later on. "
   (let name uniq.anon-module-prefix*
-    (let expr ($.list 'module name (ac-denil ''racket/bare-bones)
-                (cons racket/bare-bones--plain-module-begin
+    (let expr ($.list 'module name
+                ($.list 'submod "lib/ns.rkt" 'bare-bones)
+                (cons $.bare-bones--plain-module-begin
                   racket-module-body))
       (w/current-ns (anchor-ns)
         (let compiled (parameterize
@@ -271,13 +236,13 @@
   (make-bare-bones-rmodule:ac-denil:mappend
     (fn ((var val))
       (let box $.box.val
-        `((,racket/bare-bones--define-customvar ,var
-            ,(embed-racket/bare-bones:fn () $.unbox.box)
-            ,(embed-racket/bare-bones
+        `((,$.bare-bones--define-customvar ,var
+            ,(embed-ns/bare-bones:fn () $.unbox.box)
+            ,(embed-ns/bare-bones
                ; NOTE: We would use [] syntax, but that would try to
                ; ssexpand 'set-box!.
                (fn (val) (($ set-box!) box val))))
-          (,racket/bare-bones--provide ,var))))
+          (,$.bare-bones--provide ,var))))
     pair.binds))
 
 (def make-simple-module binds
@@ -293,16 +258,15 @@
 (def make-sub-rmodule (rmodule var-test)
   (let (rns path) (rep rmodulify.rmodule)
     (make-bare-bones-rmodule:ac-denil
-      `((,racket/bare-bones--require ,path)
-        ,@(map [do `(,racket/bare-bones--provide ,_)]
+      `((,$.bare-bones--require ,path)
+        ,@(map [do `(,$.bare-bones--provide ,_)]
                (keep var-test rmodule-keys.rmodule))))))
 
 (def make-renaming-rmodule (rmodule renamer)
   (let (rns path) (rep rmodulify.rmodule)
     (make-bare-bones-rmodule:ac-denil
-      `((,racket/bare-bones--require ,path)
-        ,@(map [do `(,racket/bare-bones--provide
-                      (rename ,_ ,renamer._))]
+      `((,$.bare-bones--require ,path)
+        ,@(map [do `(,$.bare-bones--provide (rename ,_ ,renamer._))]
                rmodule-keys.rmodule)))))
 
 

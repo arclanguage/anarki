@@ -31,10 +31,7 @@
                ; variable of the namespace these tests run in, not in
                ; the `foo` namespace.
                foo!variable-that-should-wind-up-in-foo))
-       ; TODO: Fix and uncomment this test. It's causing other tests
-       ; in this suite to fail, probably because ns.arc defines a
-       ; Racket module partway through.
-       #;(test w/current-ns-set-2
+       (test w/current-ns-set-2
              (assert-same 5
                (w/current-ns foo
                  ($.anarki-init)
