@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Put a symlink to this script somewhere in your path.
 #
 # To run an Arc program, pass it in followed by any args to it.
@@ -101,8 +101,7 @@ case $(uname) in
         ;;
 
     *)
-        echo "Sorry, this script doesn't run on your platform $(uname) yet. Please create a new issue at https://github.com/arclanguage/anarki/issues."
-        exit 1
+	arc_dir=$(pwd)
 esac
 
 if [ $# -gt 0 ]; then
