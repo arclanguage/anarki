@@ -76,10 +76,10 @@ script:
   # automatically fetch all the dependencies.
   - raco pkg install --deps search-auto
 
-  # We recompile every dependency of Anarki, but we don't recompile
-  # their documentation. (TODO: Why does travis-racket suggest this?
-  # Is there a chance `raco setup` fails when `raco pkg install`
-  # doesn't?)
+  # We recompile Anarki and check that the Racket package dependencies
+  # declared in info.rkt are correct. (TODO: Why does travis-racket
+  # suggest this? Is there a chance `raco setup` fails when
+  # `raco pkg install` doesn't?)
   - raco setup --check-pkg-deps anarki
 
   # We run Racket tests according to the way the DrDr continuous
