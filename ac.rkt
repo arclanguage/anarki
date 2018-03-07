@@ -1541,8 +1541,6 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef seconds current-seconds)
 
-(print-hash-table #t)
-
 (xdef client-ip (lambda (port)
                    (let-values ([(x y) (tcp-addresses port)])
                      y)))
