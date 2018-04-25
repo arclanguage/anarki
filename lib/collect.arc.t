@@ -18,6 +18,9 @@
                                        (for i from 1 to 3)
                                        (for j from 1 to 3)
                                        (if (< i j)))))
+  (test disambiguate (assert-same '(1 2 3)
+                                  (let from 1
+                                    (collect i (for i from (<= i 3) ++.i)))))
 
   (suite ingest
     (test zero-lists (assert-same nil (ingest)))

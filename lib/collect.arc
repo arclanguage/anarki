@@ -34,7 +34,8 @@ https://en.wikipedia.org/wiki/List_comprehension"
 
 (def collect-transform (guard)
   (if (is 'for guard.0)
-        (if (is 'from guard.2)
+        (if (len> guard 5)
+          ; custom syntax inside just 'collect'
           (if (is 'down guard.4)
                 ; (for _ from _ down to _)
                 `(down ,guard.1 ,guard.3 ,guard.6)
@@ -42,7 +43,8 @@ https://en.wikipedia.org/wiki/List_comprehension"
                 ; (for _ from _ to _)
                 `(up ,guard.1 ,guard.3 ,guard.5))
           'else
-            guard)  ; regular for
+            ; regular 'for' statement
+            guard)
       ; insert other syntax here
       'else
         guard))
