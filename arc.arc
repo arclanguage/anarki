@@ -25,8 +25,7 @@
 "The following behave differently from arc 3.1:
 
 1. `for`. See (help for).
-2. `down` has subtly different behavior.
-3. Templates (arc's lightweight object database system). See (help deftem).
+2. Templates (arc's lightweight object database system). See (help deftem).
 
 If you find others, please report them at http://arclanguage.org/forum.
 ")))
@@ -981,8 +980,7 @@ If you nest multiple loops with different 'var's like i and j, you can break out
 Always returns nil.
 
 Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc
-3.1's behavior, use [[up]] (though you'll need to adjust the upper bound). For
-more information, see CHANGES/for."
+3.1's behavior, use [[up]]. For more information, see CHANGES/for."
   ; simple heuristic to alert on the incompatibility at call time. If you need
   ; to check a flag variable you should probably be using 'while' anyway.
   (unless (acons test)
@@ -1006,35 +1004,33 @@ more information, see CHANGES/for."
   _)
 
 (mac up (v init max . body)
-"Counts 'v' up from 'init' (inclusive) to 'max' (exclusive), running 'body'
-with each value. Can also (break) and (continue) inside 'body'; see [[for]]."
-  `(for ,v ,init (< ,v ,max) (assign ,v (+ ,v 1))
+"Counts 'v' up from 'init' (inclusive) to 'max' (also inclusive), running
+'body' with each value. Can also (break) and (continue) inside 'body'; see
+[[for]]."
+  `(for ,v ,init (<= ,v ,max) (assign ,v (+ ,v 1))
      ,@body))
 
 (examples up
-  (up i 1 11
+  (up i 1 10
     (pr i " "))
   _)
 
 (mac down (v init min . body)
-"Counts 'v' down from 'init' (inclusive) to 'min' (exclusive), running 'body'
-with each value. Can also (break) and (continue) inside 'body'; see [[for]].
-
-Incompatibility alert: 'down' is different in Anarki from Arc 3.1. 
-The version from Arc 3.1 runs to 'min' inclusive. For more information, see
-CHANGES/down."
-  `(for ,v ,init (> ,v ,min) (assign ,v (- ,v 1))
+"Counts 'v' down from 'init' (inclusive) to 'min' (also inclusive), running
+'body' with each value. Can also (break) and (continue) inside 'body'; see
+[[for]]."
+  `(for ,v ,init (>= ,v ,min) (assign ,v (- ,v 1))
      ,@body))
 
 (mac repeat (n . body)
 "Runs 'body' expression by expression 'n' times."
   (w/uniq gi
-    `(up ,gi 0 ,n
+    `(up ,gi 0 (- ,n 1)
        ,@body)))
 
 (mac forlen (var s . body)
 "Loops through the length of sequence 's', binding each element to 'var'."
-  `(up ,var 0 (len ,s)
+  `(up ,var 0 (- (len ,s) 1)
      ,@body))
 
 (def walk (seq f)
@@ -1071,7 +1067,7 @@ element of 'expr'."
 ;            (isa ,gseq 'table)
 ;             (maptable (fn ,var ,@body)
 ;                       ,gseq)
-;             (up ,gv 0 (len ,gseq)
+;             (up ,gv 0 (- (len ,gseq) 1)
 ;               (let ,var (,gseq ,gv) ,@body))))))
 
 ; Destructuring means ambiguity: are pat vars bound in else? (no)
@@ -1166,7 +1162,7 @@ negative to count backwards from the end."
 (defextend cut (seq start (o end))  (isa seq 'string)
   (let end (range-bounce end len.seq)
     (ret s2 (newstring (- end start))
-      (up i 0 (- end start)
+      (up i 0 (- end start 1)
         (= s2.i (seq (+ start i)))))))
 
 (def range-bounce (i max)

@@ -5,7 +5,7 @@
 
 ;;should this be in util.arc?
 (mac iterators (its . body)
-  "its is a list of (var max) tuples which are iterated over eg (iterators ((x 2)(y 4)) (pr x)(prn y)) ->
+  "its is a list of (var max) tuples which are iterated over eg (iterators ((x 1)(y 3)) (pr x)(prn y)) ->
 00
 01
 02
@@ -56,10 +56,10 @@
   (with (ans (table) keys (list))
     (let rec (afn (X pre)
                (if (atom:car X)
-                 (up i 0 len.X
+                 (up i 0 (- len.X 1)
                    (= (ans (cons i pre)) X.i)
                    (push (cons i pre) keys))
-                 (up i 0 len.X
+                 (up i 0 (- len.X 1)
                    (self X.i (cons i pre)))))
       (rec mat (list)))
     (= ans!dims (map [+ _ 1] (car:sort (fn (x y) (> (apply + x) (apply + y))) keys)))
@@ -98,7 +98,7 @@
            (is (cadr mat!dims) 1))
     (mat '(0 0))
     (ret ans 0
-      (up i 0 (car mat!dims)
+      (up i 0 (- (car mat!dims) 1)
         (++ ans (* (mat (list 0 i))
                    (expt -1 i)
                    (det:matrix-minor mat (list 0 i))))))))
@@ -106,7 +106,7 @@
 (def ident-matrix (order size (o table? nil))
   "creates an identity maxtrix of number of dimensions order and of size size"
   (let M (mat-to-table (zeros (n-of order size)))
-   (up i 0 size
+    (up i 0 (- size 1)
       (= (M (n-of size i)) 1))
     (if table? M
       (table-to-mat M))))
@@ -117,9 +117,9 @@
   (if (isa b 'table) (zap table-to-mat b))
   (with (col  (fn (mat i) (map [_ i] mat))
          result-matrix  (list))
-    (up rw 0 len.a
+    (up rw 0 (- len.a 1)
       (push (let result-row (list)
-              (up cl 0 (len b.0)
+              (up cl 0 (- (len b.0) 1)
                 (push (apply + (map * a.rw (col b cl))) result-row))
               rev.result-row)
             result-matrix))
@@ -142,25 +142,25 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                (do (pr "car.dims:")(pr (car mat!dims))(pr " ")(pr " cadr.dims:")(pr (cadr mat!dims))(pr " ")(pr "rhs:")(prn rhs)(err "mat must be a square matrix of the same size as rhs, use 0 elements for equations which dont feature a variable")))
           N (car mat!dims))
     (let M (copy mat)
-      (up i 0 N
+      (up i 0 (- N 1)
         (= (M (list N i)) rhs.i))
       ;;elimination step - manipulates the matrix so all elements below the diagonal are zero while maintaining the relation between variables and co-efficients
-      (up i 0 N
+      (up i 0 (- N 1)
         (= MAX i)
-        (up j (+ i 1) N
+        (up j (+ i 1) (- N 1)
           (if (> (abs:M (list i j)) (abs:M (list i MAX))) (= MAX j)))
-        (up k i (+ N 1)
+        (up k i N
           (= tmp (M (list k i)))
              (M (list k i)) (M (list k MAX))
              (M (list k MAX)) tmp)
-        (up j (+ i 1) N
-          (down k N (- i 1)
+        (up j (+ i 1) (- N 1)
+          (down k N i
             (-- (M (list k j)) (/ (* (M (list k i)) (M (list i j)))
                                   (M (list i i)))))))
       ;;sub step - starting from bottom element which just has one co-efficient and can therefore be easily calculated sub in the value of the know variables and solve
-      (down j (- N 1) -1
+      (down j (- N 1) 0
         (= tmp 0)
-        (up k (+ j 1) N
+        (up k (+ j 1) (- N 1)
           (++ tmp (* X.k (M (list k j)))))
         (= X.j (/ (- (M (list N j)) tmp)
                   (M (list j j)))))
@@ -459,20 +459,19 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
       (if (> m 0)
         (with (omx2 (* (- 1 x) (+ 1 x))
                fac 1.0)
-          (up i 0 m
+          (up i 0 (- m 1)
             (= pmm (/ (* pmm omx2 fac) (+ 1 fac)))
             (++ fac 2))))
       (= pmm (sqrt:/ (* pmm 2 (+ m 1)) (* pi 4)))
       (if (isnt m 0) (= pmm (* pmm -1)))
       (if (is l m)
         (if remorm? pmm (* pmm (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
-        (with (pmmp1 (* x pmm (sqrt:+ (* 2 m) 3))
-               ll 0)
+        (let pmmp1 (* x pmm (sqrt:+ (* 2 m) 3))
          (if (is l (+ m 1))
            (if remorm? pmmp1 (* pmmp1 (sqrt:/ (* 4 pi (fact (+ l m))) (* (+ l l 1) (fact (- l m))))))
            (with (oldfac (sqrt:+ 3 (* 2 m))
                   fac 0 pll 0)
-             (up ll (+ m 2) 2  ; todo: is 2 the right upper bound? see git history
+             (up ll (+ m 2) 1  ; todo: is 1 the right upper bound? see git history
                (= fac (sqrt:/ (- (* 4 ll ll) 1) (- (* ll ll) (* m m)))
                   pll (* fac (/ (- (* x pmmp1) pmm) oldfac))
                   oldfac fac
@@ -538,8 +537,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                    (map (fn (x) x) xs))
           A (mat-to-table (init-matrix '(2 2) 0))
           B (map [vec-dot _ ys] fs))
-    (up i 0 2
-      (up j 0 2
+    (up i 0 1
+      (up j 0 1
         (= (A (list i j)) (vec-dot fs.i fs.j))))
     (gauss-elim A B)))
 
@@ -553,8 +552,8 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
                    (map (fn (x) square.x) xs))
           A (mat-to-table (init-matrix '(3 3) 0))
           B (map [vec-dot _ ys] fs))
-    (up i 0 3
-      (up j 0 3
+    (up i 0 2
+      (up j 0 2
         (= (A (list i j)) (vec-dot fs.i fs.j))))
     (gauss-elim A B)))
 
@@ -567,7 +566,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
           A (mat-to-table (init-matrix (list len.fns len.fns) 0))
           B (do (prn fs) (prn ys) (map [vec-dot _ ys] fs)))
     (map prn (list xs ys fns fs A B))
-    (up i 0 len.fns
-      (up j 0 len.fns
+    (up i 0 (- len.fns 1)
+      (up j 0 (- len.fns 1)
         (= (A (list i j)) (vec-dot fs.i fs.j))))
     (gauss-elim A B)))

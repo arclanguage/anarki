@@ -96,10 +96,10 @@ Should behave just like javascript's encodeURIComponent."
 "Returns the first index after 'start' where substring 'pat' is found in 'seq'."
   (catch
     (if (isa pat 'fn)
-      (up i start len.seq
+      (up i start (- len.seq 1)
         (when (pat seq.i)
           (throw i)))
-      (up i start (- len.seq (- len.pat 1))
+      (up i start (- len.seq len.pat)
         (when (headmatch pat seq i)
           (throw i))))
     nil))

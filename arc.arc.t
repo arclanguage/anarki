@@ -92,14 +92,14 @@
        (test break
              (assert-same '(1 x 2 x 3)
                           (accum acc
-                            (up i 1 6
+                            (up i 1 5
                               (acc i)
                               (if (> i 2) (break))
                               (acc 'x)))))
        (test continue
              (assert-same '(1 x 2 x 3 4 5)
                           (accum acc
-                            (up i 1 6
+                            (up i 1 5
                               (acc i)
                               (if (> i 2) (continue))
                               (acc 'x))))))
