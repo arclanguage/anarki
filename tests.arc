@@ -24,6 +24,7 @@
     lib/srv.arc.t
     lib/tem.arc.t
     lib/client.arc.t
+    lib/collect.arc.t
 
     ; tests from conanite's rainbow
     lib/tests/core-lists-test.arc
