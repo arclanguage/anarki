@@ -24,6 +24,9 @@
   (test lists (assert-same '(2 4 6)
                            (let l '(1 2 3)
                              (collect (* i 2) (for i in l)))))
+  (test tables (assert-same '(3 7 11)
+                            (let h (obj 1 2 3 4 5 6)
+                              (sort < (collect (+ k v) (for (k v) in h))))))
 
   (suite ingest
     (test zero-lists (assert-same nil (ingest)))
