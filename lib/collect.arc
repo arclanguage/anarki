@@ -34,17 +34,19 @@ https://en.wikipedia.org/wiki/List_comprehension"
 
 (def collect-transform (guard)
   (if (is 'for guard.0)
-        (if (len> guard 5)
-          ; custom syntax inside just 'collect'
-          (if (is 'down guard.4)
-                ; (for _ from _ down to _)
-                `(down ,guard.1 ,guard.3 ,guard.6)
-              'else
-                ; (for _ from _ to _)
-                `(up ,guard.1 ,guard.3 ,guard.5))
-          'else
-            ; regular 'for' statement
-            guard)
+        (if (is 5 len.guard)
+              ; regular syntax: (for _var _init _term _update)
+              guard
+            (and (is 7 len.guard) (is 'from guard.2) (is 'down guard.4) (is 'to guard.5))
+              ; (for _ from _ down to _)
+              `(down ,guard.1 ,guard.3 ,guard.6)
+            (and (is 6 len.guard) (is 'from guard.2) (is 'to guard.4))
+              ; (for _ from _ to _)
+              `(up ,guard.1 ,guard.3 ,guard.5)
+            (and (is 4 len.guard) (is 'in guard.2))
+              `(each ,guard.1 ,guard.3)
+            'else
+              (err "don't understand how to handle " guard " in collect macro"))
       ; insert other syntax here
       'else
         guard))

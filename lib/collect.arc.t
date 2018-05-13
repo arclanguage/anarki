@@ -21,6 +21,9 @@
   (test disambiguate (assert-same '(1 2 3)
                                   (let from 1
                                     (collect i (for i from (<= i 3) ++.i)))))
+  (test lists (assert-same '(2 4 6)
+                           (let l '(1 2 3)
+                             (collect (* i 2) (for i in l)))))
 
   (suite ingest
     (test zero-lists (assert-same nil (ingest)))
