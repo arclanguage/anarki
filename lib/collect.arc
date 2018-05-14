@@ -44,6 +44,7 @@ https://en.wikipedia.org/wiki/List_comprehension"
               ; (for _ from _ to _)
               `(up ,guard.1 ,guard.3 ,guard.5)
             (and (is 4 len.guard) (is 'in guard.2))
+              ; (for _ in _)
               `(each ,guard.1 ,guard.3)
             'else
               (err "don't understand how to handle " guard " in collect macro"))
