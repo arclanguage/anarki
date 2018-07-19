@@ -394,18 +394,20 @@
   (tag (link "rel" "stylesheet" "type" "text/css" "href" "news.css")))
 
 (mac npage (title . body)
-  `(tag html
-     (tag head
-       (gen-css-url)
-       (tag (link "rel" "shortcut icon" "href" favicon-url*))
-       (tag (meta "name" "viewport" "content" "width=device-width"))
-       (tag script (pr votejs*))
-       (tag title (pr ,title)))
-     (tag body
-       (center
-         (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
-                     bgcolor sand)
-           ,@body)))))
+  `(do 
+    (prn "<!DOCTYPE html>")
+    (tag html
+       (tag head
+         (gen-css-url)
+         (tag (link "rel" "shortcut icon" "href" favicon-url*))
+         (tag (meta "name" "viewport" "content" "width=device-width"))
+         (tag script (pr votejs*))
+         (tag title (pr ,title)))
+       (tag body
+         (center
+           (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
+                       bgcolor sand)
+             ,@body))))))
 
 (= pagefns* nil)
 
