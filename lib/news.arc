@@ -399,7 +399,7 @@
          (sctag (link "rel" "stylesheet" "type" "text/css" "href" "news.css"))
          (sctag (link "rel" "shortcut icon" "href" favicon-url*))
          (sctag (meta "name" "viewport" "content" "width=device-width"))
-         (tag script (pr votejs*))
+         (tag (script "src" "news.js"))
          (tag title (pr ,title)))
        (tag body
          (center
@@ -478,100 +478,6 @@
 (= (max-age* 'news.css) 86400)   ; cache css in browser for 1 day
 
 ; turn off server caching via (= caching* 0) or won't see changes
-
-(defop news.css req
-  (pr "
-body  { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
-td    { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
-
-.admin td   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
-.subtext td { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
-
-input    { font-family:Courier, monospace; font-size:10pt; color:#000000; }
-input[type=\"submit\"] { font-family:Verdana, sans-serif; }
-textarea { font-family:Courier, monospace; font-size:10pt; color:#000000; }
-
-a:link    { color:#000000; text-decoration:none; }
-a:visited { color:#828282; text-decoration:none; }
-
-.default { font-family:Verdana, sans-serif; font-size: 10pt; color:#828282; }
-.admin   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
-.title   { font-family:Verdana, sans-serif; font-size: 10pt; color:#828282; }
-.adtitle { font-family:Verdana, sans-serif; font-size:  9pt; color:#828282; }
-.subtext { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
-.yclinks { font-family:Verdana, sans-serif; font-size:  8pt; color:#828282; }
-.pagetop { font-family:Verdana, sans-serif; font-size: 10pt; color:#222222; }
-.comhead { font-family:Verdana, sans-serif; font-size:  8pt; color:#828282; }
-.comment { font-family:Verdana, sans-serif; font-size:  9pt; }
-.dead    { font-family:Verdana, sans-serif; font-size:  9pt; color:#dddddd; }
-
-.comment a:link, .comment a:visited { text-decoration:underline;}
-.dead a:link, .dead a:visited { color:#dddddd; }
-.pagetop a:visited { color:#000000;}
-.topsel a:link, .topsel a:visited { color:#ffffff; }
-
-.subtext a:link, .subtext a:visited { color:#828282; }
-.subtext a:hover { text-decoration:underline; }
-
-.comhead a:link, .subtext a:visited { color:#828282; }
-.comhead a:hover { text-decoration:underline; }
-
-.default p { margin-top: 8px; margin-bottom: 0px; }
-
-.pagebreak {page-break-before:always}
-
-pre { overflow: auto; padding: 2px; max-width:600px; }
-pre:hover {overflow:auto}
-
-@@media (max-width: 517px) {
-  body { margin:0; }
-  body > center > table { width:100%; }
-  body > center > table > tbody  > tr:nth-child(1) > td > table td .pagetop b { display:block }
-  body > center > table > tbody  > tr:nth-child(1) > td > table td .pagetop img { display:none }
-}"))
-
-; only need pre padding because of a bug in Mac Firefox
-
-; Without setting the bottom margin of p tags to 0, 1- and n-para comments
-; have different space at the bottom.  This solution suggested by Devin.
-; Really am using p tags wrong (as separators rather than wrappers) and the
-; correct thing to do would be to wrap each para in <p></p>.  Then whatever
-; I set the bottom spacing to, it would be the same no matter how many paras
-; in a comment. In this case by setting the bottom spacing of p to 0, I'm
-; making it the same as no p, which is what the first para has.
-
-; supplied by pb
-;.vote { padding-left:2px; vertical-align:top; }
-;.comment { margin-top:1ex; margin-bottom:1ex; color:black; }
-;.vote IMG { border:0; margin: 3px 2px 3px 2px; }
-;.reply { font-size:smaller; text-decoration:underline !important; }
-
-(= votejs* "
-function byId(id) {
-  return document.getElementById(id);
-}
-
-function vote(node) {
-  var v = node.id.split(/_/);   // {'up', '123'}
-  var item = v[1];
-
-  // adjust score
-  var score = byId('score_' + item);
-  var newscore = parseInt(score.innerHTML) + (v[0] == 'up' ? 1 : -1);
-  score.innerHTML = newscore + (newscore == 1 ? ' point' : ' points');
-
-  // hide arrows
-  byId('up_'   + item).style.visibility = 'hidden';
-  try { byId('down_' + item).style.visibility = 'hidden'; }
-  catch(err) {} // ignore
-
-  // ping server
-  var ping = new Image();
-  ping.src = node.href;
-
-  return false; // cancel browser nav
-} ")
-
 
 ; Page top
 
@@ -836,7 +742,7 @@ function vote(node) {
 
 ; remember to set caching to 0 when testing non-logged-in
 
-(= caching* 1 perpage* 30 threads-perpage* 10 maxend* 210)
+(= caching* 0 perpage* 30 threads-perpage* 10 maxend* 210)
 
 ; Limiting that newscache can't take any arguments except the user.
 ; To allow other arguments, would have to turn the cache from a single
