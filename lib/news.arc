@@ -7,7 +7,11 @@
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
-   prefer-url*   t)
+   prefer-url*   t
+   newsdir*  (+ srvdir* "news/")
+   storydir* (+ srvdir* "news/story/")
+   profdir*  (+ srvdir* "news/profile/")
+   votedir*  (+ srvdir* "news/vote/"))
 
 ; these settings might improve performance when you need it
 
@@ -73,10 +77,6 @@
 
 ; Load and Save
 
-(= newsdir*  (+ srvdir* "news/")
-   storydir* (+ srvdir* "news/story/")
-   profdir*  (+ srvdir* "news/profile/")
-   votedir*  (+ srvdir* "news/vote/"))
 
 (= votes* (table) profs* (table))
 
@@ -392,7 +392,7 @@
 
 (mac npage (title . body)
   `(do 
-    (prn "<!DOCTYPE html>")
+;   (prn "<!DOCTYPE html>")
     (tag html
        (tag head
          (sctag (meta "charset" "UTF-8"))

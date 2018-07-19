@@ -1,6 +1,5 @@
 ; HTML Utils.
 
-
 (def color (r g b)
   (with (c (table)
          f (fn (x) (if (< x 0) 0 (> x 255) 255 x)))
@@ -166,6 +165,7 @@
 (mac gentag args (start-tag args))
 
 ; self-closing html tag
+; end tags may need "/>" with some doctypes
 (mac sctag (spec . body)
   `(do ,(if (atom spec)
     `(pr ,(string "<" spec " >"))
@@ -180,7 +180,6 @@
                     opts)))))
        ,@body
        ,`(pr ,(string ">"))))
-
 
 (mac tag (spec . body)
   `(do ,(start-tag spec)
@@ -304,6 +303,7 @@
 (def vspace (n)    (gentag img src (blank-url) height n width 0))
 (def vhspace (h w) (gentag img src (blank-url) height h width w))
 
+;TODO? add style attribute macro, remove literal string tags
 (mac new-hspace (n)
   (if (number n)
     `(pr ,(string "<span style=\"padding-left:" n "px\" />"))
