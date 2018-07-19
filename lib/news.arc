@@ -3,7 +3,7 @@
 (= this-site*    "My Forum"
    site-url*     "http://news.example.com/"               ; your domain name
    parent-url*   "http://www.example.com"
-   favicon-url*  ""
+   favicon-url*  "favicon.ico"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
@@ -11,11 +11,23 @@
    newsdir*  (+ srvdir* "news/")
    storydir* (+ srvdir* "news/story/")
    profdir*  (+ srvdir* "news/profile/")
-   votedir*  (+ srvdir* "news/vote/"))
+   votedir*  (+ srvdir* "news/vote/")
 
-; these settings might improve performance when you need it
+; remember to set caching to 0 when testing non-logged-in
 
-;(= static-max-age* 7200)    ; browsers can cache static files for 7200 sec
+   caching*  1
+   perpage* 30 
+   threads-perpage* 10 
+   maxend* 210
+
+; browsers can cache static files for 7200 sec
+   static-max-age* 7200
+
+; cache css in browser for 1 day
+; .. how does this work with static-max-age above?
+
+   (max-age* 'news.css) 86400   
+)
 
 ;(declare 'direct-calls t)   ; you promise not to redefine fns as tables
 
@@ -392,7 +404,7 @@
 
 (mac npage (title . body)
   `(do 
-;   (prn "<!DOCTYPE html>")
+    (prn "<!DOCTYPE html>")
     (tag html
        (tag head
          (sctag (meta "charset" "UTF-8"))
@@ -475,7 +487,7 @@
                 (pr msg))))
     (br2)))
 
-(= (max-age* 'news.css) 86400)   ; cache css in browser for 1 day
+
 
 ; turn off server caching via (= caching* 0) or won't see changes
 
@@ -740,9 +752,7 @@
 
 ; Main Operators
 
-; remember to set caching to 0 when testing non-logged-in
 
-(= caching* 0 perpage* 30 threads-perpage* 10 maxend* 210)
 
 ; Limiting that newscache can't take any arguments except the user.
 ; To allow other arguments, would have to turn the cache from a single

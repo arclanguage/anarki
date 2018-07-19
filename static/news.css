@@ -5,7 +5,7 @@ td    { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
 .subtext td { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
 
 input    { font-family:Courier, monospace; font-size:10pt; color:#000000; }
-input[type=\"submit\"] { font-family:Verdana, sans-serif; }
+input[type="submit"] { font-family:Verdana, sans-serif; }
 textarea { font-family:Courier, monospace; font-size:10pt; color:#000000; }
 
 a:link    { color:#000000; text-decoration:none; }

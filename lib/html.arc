@@ -165,7 +165,7 @@
 (mac gentag args (start-tag args))
 
 ; self-closing html tag
-; end tags may need "/>" with some doctypes
+; end tags may need "/>" with XHTML doctypes
 (mac sctag (spec . body)
   `(do ,(if (atom spec)
     `(pr ,(string "<" spec " >"))
@@ -239,6 +239,10 @@
   (and (literal val)
        (no (and (is (type val) 'string) (find #\@ val)))))
 
+; TODO: find out why calling (br) from (br2) and
+; (sctag "br") from (br) messes up the HTML and
+; if both can't be deleted entirely in favor of
+; block-styling the elements in css. 
 (def br ((o n 1))
   (repeat n (pr "<br>"))
   (prn))
@@ -303,7 +307,8 @@
 (def vspace (n)    (gentag img src (blank-url) height n width 0))
 (def vhspace (h w) (gentag img src (blank-url) height h width w))
 
-;TODO? add style attribute macro, remove literal string tags
+;TODO: add style attribute macro, remove literal string tags
+;or else remove inline styles altogether and use news.css
 (mac new-hspace (n)
   (if (number n)
     `(pr ,(string "<span style=\"padding-left:" n "px\" />"))
