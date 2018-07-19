@@ -168,10 +168,10 @@
 ; self-closing html tag
 (mac sctag (spec . body)
   `(do ,(if (atom spec)
-    `(pr ,(string "<" spec " />"))
+    `(pr ,(string "<" spec " >"))
     (let opts (tag-options (car spec) (pair (cdr spec)))
       (if (all [isa _ 'string] opts)
-        `(pr ,(string "<" (car spec) (apply string opts) " />"))
+        `(pr ,(string "<" (car spec) (apply string opts) " >"))
         `(do (pr ,(string "<" (car spec)))
              ,@(map (fn (opt)
                       (if (isa opt 'string)
@@ -179,7 +179,7 @@
                         opt))
                     opts)))))
        ,@body
-       ,`(pr ,(string " />"))))
+       ,`(pr ,(string ">"))))
 
 
 (mac tag (spec . body)
