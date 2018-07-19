@@ -395,10 +395,10 @@
     (prn "<!DOCTYPE html>")
     (tag html
        (tag head
-         (tag (meta "charset" "UTF-8"))
-         (tag (link "rel" "stylesheet" "type" "text/css" "href" "news.css"))
-         (tag (link "rel" "shortcut icon" "href" favicon-url*))
-         (tag (meta "name" "viewport" "content" "width=device-width"))
+         (sctag (meta "charset" "UTF-8"))
+         (sctag (link "rel" "stylesheet" "type" "text/css" "href" "news.css"))
+         (sctag (link "rel" "shortcut icon" "href" favicon-url*))
+         (sctag (meta "name" "viewport" "content" "width=device-width"))
          (tag script (pr votejs*))
          (tag title (pr ,title)))
        (tag body
