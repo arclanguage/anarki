@@ -165,6 +165,23 @@
 
 (mac gentag args (start-tag args))
 
+; self-closing html tag
+(mac sctag (spec . body)
+  `(do ,(if (atom spec)
+    `(pr ,(string "<" spec " />"))
+    (let opts (tag-options (car spec) (pair (cdr spec)))
+      (if (all [isa _ 'string] opts)
+        `(pr ,(string "<" (car spec) (apply string opts) " />"))
+        `(do (pr ,(string "<" (car spec)))
+             ,@(map (fn (opt)
+                      (if (isa opt 'string)
+                        `(pr ,opt)
+                        opt))
+                    opts)))))
+       ,@body
+       ,`(pr ,(string " />"))))
+
+
 (mac tag (spec . body)
   `(do ,(start-tag spec)
        ,@body
