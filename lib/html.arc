@@ -240,6 +240,12 @@
 
 (def br2 () (prn "<br><br>"))
 
+; ordered and unordered lists
+(mac ul body `(tag ul ,@body))
+(mac ol body `(tag ol ,@body))
+(mac li body `(tag li ,@body))
+(mac lp body `(tag li (pr ,@body))) ; print li
+
 (mac center    body         `(tag center ,@body))
 (mac underline body         `(tag u ,@body))
 (mac tab       body         `(tag (table border 0) ,@body))
