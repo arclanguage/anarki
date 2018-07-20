@@ -161,6 +161,19 @@
 (attribute span       id             opsym)
 (attribute rss        version        opstring)
 
+(attribute ol    type           opstring)
+(attribute ol    class          opstring)
+(attribute ol    start          opnum)
+(attribute ol    id             opsym)
+
+(attribute ul    class          opstring)
+(attribute ul    id             opsym)
+
+(attribute li    type           opstring)
+(attribute li    class          opstring)
+(attribute li    value          opnum) ; only within <OL>
+(attribute li    id             opsym)
+
 (mac gentag args (start-tag args))
 
 (mac tag (spec . body)
@@ -242,7 +255,8 @@
   (mac td       body         `(tag td ,@(pratoms body)))
   (mac trtd     body         `(tr (td ,@(pratoms body))))
   (mac tdr      body         `(tag (td align 'right) ,@(pratoms body)))
-  (mac tdcolor  (col . body) `(tag (td bgcolor ,col) ,@(pratoms body))))
+  (mac tdcolor  (col . body) `(tag (td bgcolor ,col) ,@(pratoms body)))
+)
 
 (mac row args
   `(tr ,@(map [list 'td _] args)))
