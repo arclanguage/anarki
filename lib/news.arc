@@ -407,10 +407,10 @@
     (prn "<!DOCTYPE html>")
     (tag html
        (tag head
-         (sctag (meta "charset" "UTF-8"))
-         (sctag (link "rel" "stylesheet" "type" "text/css" "href" "news.css"))
-         (sctag (link "rel" "shortcut icon" "href" favicon-url*))
-         (sctag (meta "name" "viewport" "content" "width=device-width"))
+         (gentag meta "charset" "UTF-8")
+         (gentag link "rel" "stylesheet" "type" "text/css" "href" "news.css")
+         (gentag link "rel" "shortcut icon" "href" favicon-url*)
+         (gentag meta "name" "viewport" "content" "width=device-width")
          (tag (script "src" "news.js"))
          (tag title (pr ,title)))
        (tag body

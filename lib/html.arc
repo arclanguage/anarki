@@ -161,25 +161,7 @@
 (attribute span       id             opsym)
 (attribute rss        version        opstring)
 
-
 (mac gentag args (start-tag args))
-
-; self-closing html tag
-; end tags may need "/>" with XHTML doctypes
-(mac sctag (spec . body)
-  `(do ,(if (atom spec)
-    `(pr ,(string "<" spec " >"))
-    (let opts (tag-options (car spec) (pair (cdr spec)))
-      (if (all [isa _ 'string] opts)
-        `(pr ,(string "<" (car spec) (apply string opts) " >"))
-        `(do (pr ,(string "<" (car spec)))
-             ,@(map (fn (opt)
-                      (if (isa opt 'string)
-                        `(pr ,opt)
-                        opt))
-                    opts)))))
-       ,@body
-       ,`(pr ,(string ">"))))
 
 (mac tag (spec . body)
   `(do ,(start-tag spec)
@@ -239,10 +221,6 @@
   (and (literal val)
        (no (and (is (type val) 'string) (find #\@ val)))))
 
-; TODO: find out why calling (br) from (br2) and
-; (sctag "br") from (br) messes up the HTML and
-; if both can't be deleted entirely in favor of
-; block-styling the elements in css. 
 (def br ((o n 1))
   (repeat n (pr "<br>"))
   (prn))
@@ -264,8 +242,7 @@
   (mac td       body         `(tag td ,@(pratoms body)))
   (mac trtd     body         `(tr (td ,@(pratoms body))))
   (mac tdr      body         `(tag (td align 'right) ,@(pratoms body)))
-  (mac tdcolor  (col . body) `(tag (td bgcolor ,col) ,@(pratoms body)))
-)
+  (mac tdcolor  (col . body) `(tag (td bgcolor ,col) ,@(pratoms body))))
 
 (mac row args
   `(tr ,@(map [list 'td _] args)))
