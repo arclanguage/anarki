@@ -1,6 +1,5 @@
 ; HTML Utils.
 
-
 (def color (r g b)
   (with (c (table)
          f (fn (x) (if (< x 0) 0 (> x 255) 255 x)))
@@ -162,6 +161,18 @@
 (attribute span       id             opsym)
 (attribute rss        version        opstring)
 
+(attribute ol    type           opstring)
+(attribute ol    class          opstring)
+(attribute ol    start          opnum)
+(attribute ol    id             opsym)
+
+(attribute ul    class          opstring)
+(attribute ul    id             opsym)
+
+(attribute li    type           opstring)
+(attribute li    class          opstring)
+(attribute li    value          opnum) ; only within <OL>
+(attribute li    id             opsym)
 
 (mac gentag args (start-tag args))
 
@@ -229,6 +240,12 @@
 
 (def br2 () (prn "<br><br>"))
 
+; ordered and unordered lists
+(mac ul body `(tag ul ,@body))
+(mac ol body `(tag ol ,@body))
+(mac li body `(tag li ,@body))
+(mac lp body `(tag li (pr ,@body))) ; print li
+
 (mac center    body         `(tag center ,@body))
 (mac underline body         `(tag u ,@body))
 (mac tab       body         `(tag (table border 0) ,@body))
@@ -287,6 +304,8 @@
 (def vspace (n)    (gentag img src (blank-url) height n width 0))
 (def vhspace (h w) (gentag img src (blank-url) height h width w))
 
+;TODO: add style attribute macro, remove literal string tags
+;or else remove inline styles altogether and use news.css
 (mac new-hspace (n)
   (if (number n)
     `(pr ,(string "<span style=\"padding-left:" n "px\" />"))
