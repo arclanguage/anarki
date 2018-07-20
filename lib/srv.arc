@@ -118,10 +118,10 @@
     (and (~posmatch ".." fname) ; for security
          (case (downcase (last (check (tokens fname #\.) ~single)))
            "gif"  "image/gif"
-           "jpg"  "image/jpg"
-           "jpeg" "image/jpg"
+           "jpg"  "image/jpeg"
+           "jpeg" "image/jpeg"
            "png"  "image/png"
-           "css"  "text/plain"
+           "css"  "text/css"
            "js"   "text/javascript"
            "txt"  "text/plain"
            "htm"  "text/html"

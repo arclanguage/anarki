@@ -62,5 +62,5 @@ supplied by pb
 */
 .vote { padding-left:2px; vertical-align:top; }
 .comment { margin-top:1ex; margin-bottom:1ex; color:black; }
-.vote IMG { border:0; margin: 3px 2px 3px 2px; }
+.vote IMG { border:0px; margin: 3px 2px 3px 2px; }
 .reply { font-size:smaller; text-decoration:underline !important; }
