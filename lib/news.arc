@@ -404,7 +404,7 @@
 
 (mac npage (title . body)
   `(do 
-    (prn "<!DOCTYPE html>")
+;   (prn "<!DOCTYPE html>")
     (tag html
        (tag head
          (gentag meta "charset" "UTF-8")
