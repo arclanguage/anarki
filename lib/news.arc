@@ -4,6 +4,10 @@
    site-url*     "http://127.0.0.1:8080"               ; your domain name
    parent-url*   "http://www.example.com"
    favicon-url*  "favicon.ico"
+   ; Page Layout
+   up-url* "grayarrow.gif" 
+   down-url* "graydown.gif" 
+   logo-url* "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
@@ -29,10 +33,36 @@
    (max-age* 'news.css) 86400   
 )
 
+; overrides for form endpoints 
 (= fnurl*   (normalize-path site-url* "/x")
    rfnurl*  (normalize-path site-url* "/r") 
    rfnurl2* (normalize-path site-url* "/y") 
    jfnurl*  (normalize-path site-url* "/a"))
+
+; site urls
+(def saved-url (user)     (+ (normalize-path site-url* "saved?id=")     user))
+(def user-url (user)      (+ (normalize-path site-url* "user?id=")      user))
+(def item-url (id)        (+ (normalize-path site-url* "item?id=")      id))
+(def edit-url (i)         (+ (normalize-path site-url* "edit?id=")      i!id))
+(def threads-url (user)   (+ (normalize-path site-url* "threads?id=")   user))
+(def submitted-url (user) (+ (normalize-path site-url* "submitted?id=") user))
+
+; why is this its own separate thing? 
+(= formatdoc-url* (normalize-path site-url* "formatdoc"))
+(= welcome-url* (normalize-path site-url* "welcome"))
+
+; Look up title on Searx, a free metasearch engine
+
+(def weblink (q)
+  (pr bar*)
+  (link "web" (+ "https://searx.me/?q=" (urlencode q))))
+
+
+(def vote-url (user i dir whence)
+  (+ (normalize-path site-url* "vote?") "for=" i!id
+             "&dir=" dir
+             (if user (+ "&by=" user "&auth=" (user->cookie* user)))
+             "&whence=" (urlencode whence)))
 
 ;(declare 'direct-calls t)   ; you promise not to redefine fns as tables
 
@@ -400,11 +430,6 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-
-; Page Layout
-
-(= up-url* "grayarrow.gif" down-url* "graydown.gif" logo-url* "arc.png")
-
 (defopr favicon.ico req favicon-url*)
 
 (mac npage (title . body)
@@ -413,10 +438,11 @@
     (tag html
        (tag head
          (gentag meta "charset" "UTF-8")
-         (gentag link "rel" "stylesheet" "type" "text/css" "href" "news.css")
+         (gentag link "rel" "stylesheet" "type" "text/css" 
+            "href" (normalize-path site-url* "news.css"))
          (gentag link "rel" "shortcut icon" "href" favicon-url*)
          (gentag meta "name" "viewport" "content" "width=device-width")
-         (tag (script "src" "news.js"))
+         (tag (script "src" (normalize-path site-url* "news.js")))
          (tag title (pr ,title)))
        (tag body
          (center
@@ -533,8 +559,6 @@
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "events" "*"))
-
-(= welcome-url* "welcome")
 
 (def toprow (user label)
   (w/bars
@@ -848,9 +872,6 @@
              '(optimes topips flagged killed badguys badlogins goodlogins)))
       (hook 'listspage user))))
 
-
-(def saved-url (user) (+ "saved?id=" user))
-
 (newsop saved (id)
   (if (only.profile id)
     (savedpage user id)
@@ -902,12 +923,6 @@
                          (apply f user items label title url args))))))
           rel 'nofollow)
     (pr "More")))
-
-; Look up title on Searx, a free metasearch engine
-
-(def weblink (q)
-  (pr bar*)
-  (abs-link site-url* "web" (+ "https://searx.me/?q=" (urlencode q))))
 
 (def display-story (i s user whence)
   (when (or (cansee user s) (s 'kids))
@@ -1012,11 +1027,6 @@
       (out (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2))
       (out (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2)))))
 
-(def vote-url (user i dir whence)
-  (+ "vote?" "for=" i!id
-             "&dir=" dir
-             (if user (+ "&by=" user "&auth=" (user->cookie* user)))
-             "&whence=" (urlencode whence)))
 
 (= lowest-score* -4)
 
@@ -1077,8 +1087,6 @@
 
 (def byline (i user)
   (pr " by @(tostring (userlink user i!by)) @(text-age:item-age i) "))
-
-(def user-url (user) (+ "user?id=" user))
 
 (= show-avg* nil)
 
@@ -1723,8 +1731,6 @@
 
 ; Individual Item Page (= Comments Page of Stories)
 
-(defmemo item-url (id) (+ "item?id=" id))
-
 (newsop item (id)
   (let s (safe-item id)
     (if (news-type s)
@@ -1809,8 +1815,6 @@
 
 
 ; Edit Item
-
-(def edit-url (i) (+ "edit?id=" i!id))
 
 (newsop edit (id)
   (let i (safe-item id)
@@ -2114,8 +2118,6 @@
 
 ; Threads
 
-(def threads-url (user) (+ "threads?id=" user))
-
 (newsop threads (id)
   (if id
     (threads-page user id)
@@ -2163,8 +2165,6 @@
 
 ; Submitted
 
-(def submitted-url (user) (+ "submitted?id=" user))
-
 (newsop submitted (id)
   (if id
     (submitted-page user id)
@@ -2205,7 +2205,7 @@
             (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
             (tag comments (pr comurl))
             (tag description
-              (cdata (abs-link site-url* "Comments" comurl)))))))))
+              (cdata (link "Comments" comurl)))))))))
 
 ; RSS feed of user
 (newsop follow (subject)
@@ -2303,8 +2303,6 @@
 
 (defop formatdoc req
   (msgpage (get-user req) formatdoc* "Formatting Options"))
-
-(= formatdoc-url* "formatdoc")
 
 (= formatdoc*
 "Blank lines separate paragraphs.
