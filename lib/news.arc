@@ -1,7 +1,7 @@
 (require 'lib/app.arc)
 
 (= this-site*    "My Forum"
-   site-url*     "http://127.0.0.1:8080"               ; your domain name
+   site-url*     "http://site.example.com"; "http://127.0.0.1:8080"               ; your domain name
    parent-url*   "http://www.example.com"
    favicon-url*  "favicon.ico"
    ; Page Layout

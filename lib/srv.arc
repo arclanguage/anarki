@@ -28,8 +28,8 @@
 
   req-times* (table) 
   req-limit* 30 
-  req-window* 0 ;10 
-  dos-window* 0 ;2
+  req-window* 10 ;10 
+  dos-window* 2 ;2
 )
 
 
