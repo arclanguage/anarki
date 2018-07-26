@@ -29,6 +29,11 @@
    (max-age* 'news.css) 86400   
 )
 
+(= fnurl*   (normalize-path site-url* "/x")
+   rfnurl*  (normalize-path site-url* "/r") 
+   rfnurl2* (normalize-path site-url* "/y") 
+   jfnurl*  (normalize-path site-url* "/a"))
+
 ;(declare 'direct-calls t)   ; you promise not to redefine fns as tables
 
 ;(declare 'explicit-flush t) ; you take responsibility for flushing output

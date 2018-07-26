@@ -7,9 +7,31 @@
 
 (require 'lib/html.arc)
 
-(= srvdir* "www/"  logdir* (+ srvdir* "logs/")  staticdir* "static/")
+(= 
+  srvdir* "www/"  
+  logdir* (+ srvdir* "logs/")  
+  staticdir* "static/"
 
-(= quitsrv* nil breaksrv* nil)
+  quitsrv* nil 
+  breaksrv* nil
+
+;; abusive ip throttling
+
+; Returns true if ip has made req-limit* requests in less than
+; req-window* seconds.  If an ip is throttled, only 1 request is
+; allowed per req-window* seconds.  If an ip makes req-limit*
+; requests in less than dos-window* seconds, it is a treated as a DoS
+; attack and put in ignore-ips* (for this server invocation).
+
+; To adjust this while running, adjust the req-window* time, not
+; req-limit*, because algorithm doesn't enforce decreases in the latter.
+
+  req-times* (table) 
+  req-limit* 30 
+  req-window* 0 ;10 
+  dos-window* 0 ;2
+)
+
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
@@ -127,6 +149,8 @@
            "htm"  "text/html"
            "html" "text/html"
            "arc"  "text/plain"
+           "ico"  "image/x-icon"
+           "json" "application/json"
            ))))
 
 (def respond-err (out msg . args)
@@ -203,19 +227,6 @@
   (acheck (alref req!args key) [~isa _ 'table]
     ; deref multipart params by default
     (it "contents")))
-
-;; abusive ip throttling
-
-; Returns true if ip has made req-limit* requests in less than
-; req-window* seconds.  If an ip is throttled, only 1 request is
-; allowed per req-window* seconds.  If an ip makes req-limit*
-; requests in less than dos-window* seconds, it is a treated as a DoS
-; attack and put in ignore-ips* (for this server invocation).
-
-; To adjust this while running, adjust the req-window* time, not
-; req-limit*, because algorithm doesn't enforce decreases in the latter.
-
-(= req-times* (table) req-limit* 30 req-window* 10 dos-window* 2)
 
 (def abusive? (ip)
   (++ (requests/ip* ip 0))
