@@ -234,12 +234,6 @@
   (and (literal val)
        (no (and (is (type val) 'string) (find #\@ val)))))
 
-(def br ((o n 1))
-  (repeat n (pr "<br>"))
-  (prn))
-
-(def br2 () (prn "<br><br>"))
-
 ; ordered and unordered lists
 (mac ul body `(tag ul ,@body))
 (mac ol body `(tag ol ,@body))
