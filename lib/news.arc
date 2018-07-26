@@ -1,7 +1,7 @@
 (require 'lib/app.arc)
 
 (= this-site*    "My Forum"
-   site-url*     "http://news.example.com/"               ; your domain name
+   site-url*     "http://127.0.0.1:8080"               ; your domain name
    parent-url*   "http://www.example.com"
    favicon-url*  "favicon.ico"
    site-desc*    "What this site is about."               ; for rss feed
@@ -458,18 +458,18 @@
       (pr (len items*) "/" maxid* " loaded")
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
-      (link "settings" "newsadmin")
-      (link "repl")
-      (link "prompt")
+      (abs-link site-url* "settings" "newsadmin")
+      (abs-link site-url* "repl")
+      (abs-link site-url* "prompt")
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
      (spanclass yclinks
      (w/bars
-       (link "faq")
-       (link "lists")
-       (link "rss")
-       (link "anarki" "http://github.com/arclanguage/anarki"))))
+       (abs-link site-url* "faq")
+       (abs-link site-url* "lists")
+       (abs-link site-url* "rss")
+       (abs-link site-url* "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
   (tag (table width "100%" cellspacing 0 cellpadding 1)
@@ -514,7 +514,7 @@
               (when (is switch 'full)
                 (tag (td style "line-height:12pt; height:10px;")
                   (spanclass pagetop
-                    (tag b (link this-site* "news"))
+                    (tag b (abs-link site-url* this-site* "news"))
                     (sp)
                     (hspace 5)
                     (toprow user label))))
@@ -550,13 +550,13 @@
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
-    (link "submit")
+    (abs-link site-url*  "submit")
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
 (def toplink (name dest label)
   (tag-if (is name label) (span class 'topsel)
-    (link name dest)))
+    (abs-link site-url* name dest)))
 
 (def topright (user whence (o showkarma t))
   (when user
@@ -837,12 +837,12 @@
 (newsop lists ()
   (longpage user (msec) nil "lists" "Lists" "lists"
     (sptab
-      (row (link "leaders")      "Users with most karma.")
-      (row (link "best")         "Highest voted recent links.")
-      (row (link "active")       "Most active current discussions.")
-      (row (link "bestcomments") "Highest voted recent comments.")
-      (row (link "noobstories")  "Submissions from new accounts.")
-      (row (link "noobcomments") "Comments from new accounts.")
+      (row (abs-link site-url*  "leaders")      "Users with most karma.")
+      (row (abs-link site-url*  "best")         "Highest voted recent links.")
+      (row (abs-link site-url*  "active")       "Most active current discussions.")
+      (row (abs-link site-url*  "bestcomments") "Highest voted recent comments.")
+      (row (abs-link site-url*  "noobstories")  "Submissions from new accounts.")
+      (row (abs-link site-url*  "noobcomments") "Comments from new accounts.")
       (when (admin user)
         (map row:link
              '(optimes topips flagged killed badguys badlogins goodlogins)))
@@ -907,7 +907,7 @@
 
 (def weblink (q)
   (pr bar*)
-  (link "web" (+ "https://searx.me/?q=" (urlencode q))))
+  (abs-link site-url* "web" (+ "https://searx.me/?q=" (urlencode q))))
 
 (def display-story (i s user whence)
   (when (or (cansee user s) (s 'kids))
@@ -1083,7 +1083,7 @@
 (= show-avg* nil)
 
 (def userlink (user subject (o show-avg t))
-  (link (user-name user subject) (user-url subject))
+  (abs-link site-url*  (user-name user subject) (user-url subject))
   (awhen (and show-avg* (admin user) show-avg (uvar subject avg))
     (pr " (@(num it 1 t t))")))
 
@@ -1138,7 +1138,7 @@
 (def editlink (i user)
   (when (canedit user i)
     (pr bar*)
-    (link "edit" (edit-url i))))
+    (abs-link site-url*  "edit" (edit-url i))))
 
 (def addoptlink (p user)
   (when (or (admin user) (author user p))
@@ -1255,7 +1255,7 @@
 (def permalink (story user)
   (when (cansee user story)
     (pr bar*)
-    (link "link" (item-url story!id))))
+    (abs-link site-url* "link" (item-url story!id))))
 
 (def logvote (ip user story)
   (newslog ip user 'vote (story 'id) (list (story 'title))))
@@ -1708,7 +1708,7 @@
               (~live o)        (spanclass dead
                                  (pr (if (~blank o!title) o!title o!text)))
                                (if (and (~blank o!title) (~blank o!url))
-                                   (link o!title o!url)
+                                   (abs-link site-url* o!title o!url)
                                    (fontcolor black (pr o!text)))))))
   (tr (if n (td))
       (td)
@@ -2048,7 +2048,7 @@
           (permalink c user)
           (when parent
             (when (cansee user c) (pr bar*))
-            (link "parent" (item-url ((item parent) 'id))))
+            (abs-link site-url* "parent" (item-url ((item parent) 'id))))
           (editlink c user)
           (killlink c user whence)
           (blastlink c user whence)
@@ -2060,7 +2060,7 @@
           (when showon
             (pr " | on: ")
             (let s (superparent c)
-              (link (ellipsize s!title 50) (item-url s!id))))))
+              (abs-link site-url* (ellipsize s!title 50) (item-url s!id))))))
       (when (or parent (cansee user c))
         (br))
       (spanclass comment
@@ -2090,7 +2090,7 @@
       (> (item-age c) (expt (- indent 1) reply-decay*))))
 
 (def replylink (i whence (o title 'reply))
-  (link title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
+  (abs-link site-url* title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
 
 (newsop reply (id whence)
   (with (i      (safe-item id)
@@ -2205,7 +2205,7 @@
             (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
             (tag comments (pr comurl))
             (tag description
-              (cdata (link "Comments" comurl)))))))))
+              (cdata (abs-link site-url* "Comments" comurl)))))))))
 
 ; RSS feed of user
 (newsop follow (subject)
