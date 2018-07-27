@@ -3,5 +3,5 @@
 
 ; initialize the server and defops. 
 
-(thread (srv 8080))
+(thread (serve 8080))
 
