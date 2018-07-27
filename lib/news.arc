@@ -1,9 +1,13 @@
 (require 'lib/app.arc)
 
 (= this-site*    "My Forum"
-   site-url*     "http://news.example.com/"               ; your domain name
+   site-url*     "http://site.example.com"; "http://127.0.0.1:8080"               ; your domain name
    parent-url*   "http://www.example.com"
    favicon-url*  "favicon.ico"
+   ; Page Layout
+   up-url* "grayarrow.gif" 
+   down-url* "graydown.gif" 
+   logo-url* "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
@@ -28,6 +32,37 @@
 
    (max-age* 'news.css) 86400   
 )
+
+; overrides for form endpoints 
+(= fnurl*   (normalize-path site-url* "/x")
+   rfnurl*  (normalize-path site-url* "/r") 
+   rfnurl2* (normalize-path site-url* "/y") 
+   jfnurl*  (normalize-path site-url* "/a"))
+
+; site urls
+(def saved-url (user)     (+ (normalize-path site-url* "saved?id=")     user))
+(def user-url (user)      (+ (normalize-path site-url* "user?id=")      user))
+(def item-url (id)        (+ (normalize-path site-url* "item?id=")      id))
+(def edit-url (i)         (+ (normalize-path site-url* "edit?id=")      i!id))
+(def threads-url (user)   (+ (normalize-path site-url* "threads?id=")   user))
+(def submitted-url (user) (+ (normalize-path site-url* "submitted?id=") user))
+
+; why is this its own separate thing? 
+(= formatdoc-url* (normalize-path site-url* "formatdoc"))
+(= welcome-url* (normalize-path site-url* "welcome"))
+
+; Look up title on Searx, a free metasearch engine
+
+(def weblink (q)
+  (pr bar*)
+  (link "web" (+ "https://searx.me/?q=" (urlencode q))))
+
+
+(def vote-url (user i dir whence)
+  (+ (normalize-path site-url* "vote?") "for=" i!id
+             "&dir=" dir
+             (if user (+ "&by=" user "&auth=" (user->cookie* user)))
+             "&whence=" (urlencode whence)))
 
 ;(declare 'direct-calls t)   ; you promise not to redefine fns as tables
 
@@ -395,11 +430,6 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-
-; Page Layout
-
-(= up-url* "grayarrow.gif" down-url* "graydown.gif" logo-url* "arc.png")
-
 (defopr favicon.ico req favicon-url*)
 
 (mac npage (title . body)
@@ -408,10 +438,11 @@
     (tag html
        (tag head
          (gentag meta "charset" "UTF-8")
-         (gentag link "rel" "stylesheet" "type" "text/css" "href" "news.css")
+         (gentag link "rel" "stylesheet" "type" "text/css" 
+            "href" (normalize-path site-url* "news.css"))
          (gentag link "rel" "shortcut icon" "href" favicon-url*)
          (gentag meta "name" "viewport" "content" "width=device-width")
-         (tag (script "src" "news.js"))
+         (tag (script "src" (normalize-path site-url* "news.js")))
          (tag title (pr ,title)))
        (tag body
          (center
@@ -453,18 +484,18 @@
       (pr (len items*) "/" maxid* " loaded")
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
-      (link "settings" "newsadmin")
-      (link "repl")
-      (link "prompt")
+      (abs-link site-url* "settings" "newsadmin")
+      (abs-link site-url* "repl")
+      (abs-link site-url* "prompt")
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
      (spanclass yclinks
      (w/bars
-       (link "faq")
-       (link "lists")
-       (link "rss")
-       (link "anarki" "http://github.com/arclanguage/anarki"))))
+       (abs-link site-url* "faq")
+       (abs-link site-url* "lists")
+       (abs-link site-url* "rss")
+       (abs-link site-url* "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
   (tag (table width "100%" cellspacing 0 cellpadding 1)
@@ -509,7 +540,7 @@
               (when (is switch 'full)
                 (tag (td style "line-height:12pt; height:10px;")
                   (spanclass pagetop
-                    (tag b (link this-site* "news"))
+                    (tag b (abs-link site-url* this-site* "news"))
                     (sp)
                     (hspace 5)
                     (toprow user label))))
@@ -529,8 +560,6 @@
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "events" "*"))
 
-(= welcome-url* "welcome")
-
 (def toprow (user label)
   (w/bars
     (when (noob user)
@@ -545,13 +574,13 @@
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
-    (link "submit")
+    (abs-link site-url*  "submit")
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
 (def toplink (name dest label)
   (tag-if (is name label) (span class 'topsel)
-    (link name dest)))
+    (abs-link site-url* name dest)))
 
 (def topright (user whence (o showkarma t))
   (when user
@@ -832,19 +861,16 @@
 (newsop lists ()
   (longpage user (msec) nil "lists" "Lists" "lists"
     (sptab
-      (row (link "leaders")      "Users with most karma.")
-      (row (link "best")         "Highest voted recent links.")
-      (row (link "active")       "Most active current discussions.")
-      (row (link "bestcomments") "Highest voted recent comments.")
-      (row (link "noobstories")  "Submissions from new accounts.")
-      (row (link "noobcomments") "Comments from new accounts.")
+      (row (abs-link site-url*  "leaders")      "Users with most karma.")
+      (row (abs-link site-url*  "best")         "Highest voted recent links.")
+      (row (abs-link site-url*  "active")       "Most active current discussions.")
+      (row (abs-link site-url*  "bestcomments") "Highest voted recent comments.")
+      (row (abs-link site-url*  "noobstories")  "Submissions from new accounts.")
+      (row (abs-link site-url*  "noobcomments") "Comments from new accounts.")
       (when (admin user)
         (map row:link
              '(optimes topips flagged killed badguys badlogins goodlogins)))
       (hook 'listspage user))))
-
-
-(def saved-url (user) (+ "saved?id=" user))
 
 (newsop saved (id)
   (if (only.profile id)
@@ -897,12 +923,6 @@
                          (apply f user items label title url args))))))
           rel 'nofollow)
     (pr "More")))
-
-; Look up title on Searx, a free metasearch engine
-
-(def weblink (q)
-  (pr bar*)
-  (link "web" (+ "https://searx.me/?q=" (urlencode q))))
 
 (def display-story (i s user whence)
   (when (or (cansee user s) (s 'kids))
@@ -1007,11 +1027,6 @@
       (out (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2))
       (out (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2)))))
 
-(def vote-url (user i dir whence)
-  (+ "vote?" "for=" i!id
-             "&dir=" dir
-             (if user (+ "&by=" user "&auth=" (user->cookie* user)))
-             "&whence=" (urlencode whence)))
 
 (= lowest-score* -4)
 
@@ -1073,12 +1088,10 @@
 (def byline (i user)
   (pr " by @(tostring (userlink user i!by)) @(text-age:item-age i) "))
 
-(def user-url (user) (+ "user?id=" user))
-
 (= show-avg* nil)
 
 (def userlink (user subject (o show-avg t))
-  (link (user-name user subject) (user-url subject))
+  (abs-link site-url*  (user-name user subject) (user-url subject))
   (awhen (and show-avg* (admin user) show-avg (uvar subject avg))
     (pr " (@(num it 1 t t))")))
 
@@ -1133,7 +1146,7 @@
 (def editlink (i user)
   (when (canedit user i)
     (pr bar*)
-    (link "edit" (edit-url i))))
+    (abs-link site-url*  "edit" (edit-url i))))
 
 (def addoptlink (p user)
   (when (or (admin user) (author user p))
@@ -1250,7 +1263,7 @@
 (def permalink (story user)
   (when (cansee user story)
     (pr bar*)
-    (link "link" (item-url story!id))))
+    (abs-link site-url* "link" (item-url story!id))))
 
 (def logvote (ip user story)
   (newslog ip user 'vote (story 'id) (list (story 'title))))
@@ -1703,7 +1716,7 @@
               (~live o)        (spanclass dead
                                  (pr (if (~blank o!title) o!title o!text)))
                                (if (and (~blank o!title) (~blank o!url))
-                                   (link o!title o!url)
+                                   (abs-link site-url* o!title o!url)
                                    (fontcolor black (pr o!text)))))))
   (tr (if n (td))
       (td)
@@ -1717,8 +1730,6 @@
 
 
 ; Individual Item Page (= Comments Page of Stories)
-
-(defmemo item-url (id) (+ "item?id=" id))
 
 (newsop item (id)
   (let s (safe-item id)
@@ -1804,8 +1815,6 @@
 
 
 ; Edit Item
-
-(def edit-url (i) (+ "edit?id=" i!id))
 
 (newsop edit (id)
   (let i (safe-item id)
@@ -2043,7 +2052,7 @@
           (permalink c user)
           (when parent
             (when (cansee user c) (pr bar*))
-            (link "parent" (item-url ((item parent) 'id))))
+            (abs-link site-url* "parent" (item-url ((item parent) 'id))))
           (editlink c user)
           (killlink c user whence)
           (blastlink c user whence)
@@ -2055,7 +2064,7 @@
           (when showon
             (pr " | on: ")
             (let s (superparent c)
-              (link (ellipsize s!title 50) (item-url s!id))))))
+              (abs-link site-url* (ellipsize s!title 50) (item-url s!id))))))
       (when (or parent (cansee user c))
         (br))
       (spanclass comment
@@ -2085,7 +2094,7 @@
       (> (item-age c) (expt (- indent 1) reply-decay*))))
 
 (def replylink (i whence (o title 'reply))
-  (link title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
+  (abs-link site-url* title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
 
 (newsop reply (id whence)
   (with (i      (safe-item id)
@@ -2108,8 +2117,6 @@
 
 
 ; Threads
-
-(def threads-url (user) (+ "threads?id=" user))
 
 (newsop threads (id)
   (if id
@@ -2157,8 +2164,6 @@
 
 
 ; Submitted
-
-(def submitted-url (user) (+ "submitted?id=" user))
 
 (newsop submitted (id)
   (if id
@@ -2298,8 +2303,6 @@
 
 (defop formatdoc req
   (msgpage (get-user req) formatdoc* "Formatting Options"))
-
-(= formatdoc-url* "formatdoc")
 
 (= formatdoc*
 "Blank lines separate paragraphs.

@@ -234,12 +234,6 @@
   (and (literal val)
        (no (and (is (type val) 'string) (find #\@ val)))))
 
-(def br ((o n 1))
-  (repeat n (pr "<br>"))
-  (prn))
-
-(def br2 () (prn "<br><br>"))
-
 ; ordered and unordered lists
 (mac ul body `(tag ul ,@body))
 (mac ol body `(tag ol ,@body))
@@ -464,3 +458,33 @@
 
 (def redirect (url (o delay 0))
   (tag head (tag (meta "http-equiv" "refresh" "content" (string delay ";" url)))))
+
+
+;TODO make these work with lists if they don't
+(def ltrim (a b) (trim a 'front b))
+(def rtrim (a b) (trim a 'back b))
+(def btrim (a b) (trim a 'both b))
+
+; repeat a self-closing tag n times
+(mac gentag-n (t (o n 1)) 
+  `(repeat n (gentag ,t)))
+
+; HTML macros
+
+(def br ((o n 1))
+  (gentag-n "br" n))
+
+(def br2 () (br 2))
+
+; try to build a proper url string, taking into 
+; account that either  the base or path might 
+; have extraneous slashes. 
+
+(def normalize-path (b p (o c #\/)) 
+  (string (rtrim b c) c (ltrim p c)))
+
+; make relative urls absolute
+(def abs-link (base text (o dest text) (o color))
+    (if (valid-url dest)
+      (link text dest color)
+      (link text (normalize-path base dest) color)))
