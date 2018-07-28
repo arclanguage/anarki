@@ -5,5 +5,7 @@
 (= recaptcha-pubkey (envif 'RECAPTCHA_PUBKEY' nil)
    recaptcha-prvkey (envif 'RECAPTCHA_PRVKEY' nil))
 
-(def recaptcha-form (pubkey) 
-	(do ))
+(def recaptcha-form () (
+
+	(pr "that's not cinnamon.")
+))
