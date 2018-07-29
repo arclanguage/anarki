@@ -1,5 +1,7 @@
 ; HTML Utils.
 
+
+
 (def color (r g b)
   (with (c (table)
          f (fn (x) (if (< x 0) 0 (> x 255) 255 x)))
@@ -238,7 +240,6 @@
 (mac ul body `(tag ul ,@body))
 (mac ol body `(tag ol ,@body))
 (mac li body `(tag li ,@body))
-(mac lp body `(tag li (pr ,@body))) ; print li
 
 (mac center    body         `(tag center ,@body))
 (mac underline body         `(tag u ,@body))
@@ -404,6 +405,20 @@
     (tag-if color (font color color)
       (pr text))))
 
+
+; try to build a proper url string, taking into 
+; account that either  the base or path might 
+; have extraneous slashes. 
+
+(def normalize-path (b p (o c #\/)) 
+  (string (rtrim b c) c (ltrim p c)))
+
+; make relative urls absolute
+(def abs-link (base text (o dest text) (o color))
+    (if (valid-url dest)
+      (link text dest color)
+      (link text (normalize-path base dest) color)))
+
 (def underlink (text (o dest text))
   (tag (a href dest) (tag u (pr text))))
 
@@ -469,22 +484,66 @@
 (mac gentag-n (t (o n 1)) 
   `(repeat n (gentag ,t)))
 
-; HTML macros
+(mac doctype (t)
+  `(string "<!DOCTYPE "  ,t ">"))
+
+(mac html body 
+  `(tag html ,@body))
+
+(mac head body
+  `(tag head ,@body))
+
+(mac base ((o h "/") (o t "_self"))
+  `(gentag base href ,h target ,t))
+
+(mac meta (n v)
+  `(gentag meta name ,n value ,v))
+
+(mac meta-charset (c)
+  `(gentag meta charset ,c))
+
+(mac js-ext (s)
+  `(tag (script "type" "text/javascript" "src" ,s)))
+
+; for strict CSP rules, inline code is allowed if the SHA-256 hash is included
+; in the CSP headers. So it's better to either not restrict inline code, or
+; move all javascript to an external file, including event binding.
+
+(mac js-inline (body)
+  `(tag script type "text/javascript" ,@body))
+
+(mac css-ext (s)
+  `(gentag link "rel" "stylesheet" 
+                "type" "text/css" 
+                "href" ,s))
+
+(mac css-inline (body)
+  `(tag style type "text/css" ,@body))
+
+(mac noscript (body)
+  `(tag noscript ,@body))
+
+(mac favicon (f)
+  `(gentag link "rel" "shortcut icon" 
+                "href" ,f))
+
+(mac meta-viewport (c) ;"width=device-width"
+  `(gentag meta "name" "viewport" 
+                "content" ,c))
+
+(mac title (t) 
+  `(tag title (pr ,t)))
+
+(mac body b
+  `(tag body ,@b))
+
+(mac div (body)
+  `(tag div ,@body))
+
+(mac span (body)
+  `(tag span ,@body))
 
 (def br ((o n 1))
   (gentag-n "br" n))
 
 (def br2 () (br 2))
-
-; try to build a proper url string, taking into 
-; account that either  the base or path might 
-; have extraneous slashes. 
-
-(def normalize-path (b p (o c #\/)) 
-  (string (rtrim b c) c (ltrim p c)))
-
-; make relative urls absolute
-(def abs-link (base text (o dest text) (o color))
-    (if (valid-url dest)
-      (link text dest color)
-      (link text (normalize-path base dest) color)))

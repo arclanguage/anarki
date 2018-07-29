@@ -430,25 +430,23 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-(defopr favicon.ico req favicon-url*)
+;(defopr favicon.ico req favicon-url*)
 
-(mac npage (title . body)
+; works, but zerotable doesn't pass class. 
+(mac npage (t . b)
   `(do 
-   (prn "<!DOCTYPE html>")
-    (tag html
-       (tag head
-         (gentag meta "charset" "UTF-8")
-         (gentag link "rel" "stylesheet" "type" "text/css" 
-            "href" (normalize-path site-url* "news.css"))
-         (gentag link "rel" "shortcut icon" "href" favicon-url*)
-         (gentag meta "name" "viewport" "content" "width=device-width")
-         (tag (script "src" (normalize-path site-url* "news.js")))
-         (tag title (pr ,title)))
-       (tag body
+     (doctype "html")
+     (html
+       (head
+         (meta-charset "UTF-8")
+         (css-ext (normalize-path site-url* "news.css"))
+         (favicon "favicon.ico")
+         (meta-viewport "width=device-width")
+         (js-ext (normalize-path site-url* "news.js"))
+         (title ,t))
+       (body
          (center
-           (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
-                       bgcolor sand)
-             ,@body))))))
+           (zerotable "class" "layout sand" ,@b))))))
 
 (= pagefns* nil)
 

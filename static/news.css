@@ -1,6 +1,16 @@
 body  { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
 td    { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
 
+
+.layout {
+	display:block;
+	width:85%;
+}
+
+.sand {
+	background-color: rgb(246, 246, 239);
+}
+
 .admin td   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
 .subtext td { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
 
