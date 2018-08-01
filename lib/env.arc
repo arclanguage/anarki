@@ -7,8 +7,8 @@
 (def putenv (e) 
 	($.putenv e))
 
-(defmemo envhas (e) 
+(defmemo env-has (e) 
 	($.environment-variables? e))
 
-(defmemo envif (e d) 
+(defmemo envf-if (e d) 
 	(if (envhas e) (getenv e) d)

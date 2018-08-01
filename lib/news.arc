@@ -3,11 +3,11 @@
 (= this-site*    "My Forum"
    site-url*     "http://site.example.com"; "http://127.0.0.1:8080"               ; your domain name
    parent-url*   "http://www.example.com"
-   favicon-url*  "favicon.ico"
+;  favicon-url*  "favicon.ico"
    ; Page Layout
-   up-url* "grayarrow.gif" 
-   down-url* "graydown.gif" 
-   logo-url* "arc.png"
+   up-url*       "grayarrow.gif" 
+   down-url*     "graydown.gif" 
+   logo-url*     "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
@@ -446,7 +446,13 @@
          (title ,t))
        (body
          (center
-           (zerotable "class" "layout sand" ,@b))))))
+           ; the html table macro should be renamed to
+           ; something less ambiguous than 'tab'
+           (tab border 0 
+                cellpadding 0 
+                cellspacing 0 
+                class "layout" 
+                ,@b))))))
 
 (= pagefns* nil)
 
