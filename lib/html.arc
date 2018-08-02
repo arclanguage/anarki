@@ -166,6 +166,9 @@
 (attribute iframe height opstring)
 (attribute iframe name opstring)
 
+;(mac gentag args (o tags '(#\< #\>))
+; (start-tag args tags))
+
 (mac gentag args (start-tag args))
 
 (mac tag (spec . body)

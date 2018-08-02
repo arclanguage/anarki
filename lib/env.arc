@@ -10,5 +10,5 @@
 (defmemo env-has (e) 
 	($.environment-variables? e))
 
-(defmemo envf-if (e d) 
-	(if (envhas e) (getenv e) d)
+(defmemo env-if (e d) 
+	(if (env-has e) (getenv e) d))

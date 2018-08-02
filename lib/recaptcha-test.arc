@@ -1,10 +1,7 @@
-(require '(
- lib/env.arc       ; environment vars
- lib/srv.arc       ; server
- lib/html.arc      ; html
-; lib/recaptcha.arc  recaptcha
-))
-
+(require 'lib/env.arc)       ; environment vars
+(require 'lib/srv.arc)       ; server
+(require 'lib/html.arc)      ; html
+(require 'lib/recaptcha.arc) ; recaptcha
 
 (=
   quitsrv*   nil 
@@ -18,6 +15,12 @@
 (thread (serve 8080))
 (sleep 3)
 
-(defop || (prn "hi"))
+(defop ||  req (aform form-handler 
+  (do
+    (recaptcha-form)
+    (single-input "enter" 'foo 10 "Submit")
+  )))
 
-	
+(def form-handler (req) 
+  (prn "You entered") 
+    (prbold (alref (req 'args) "foo")))
