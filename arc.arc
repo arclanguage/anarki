@@ -221,17 +221,7 @@ Or come ask questions at http://arclanguage.org/forum"
 "Is 'x' a non-nil list?"
   (is type.x 'cons))
 
-; Can return to this def once Rtm gets ac to make all rest args
-; nil-terminated lists.
-
-; (def list args args)
-
-(def list args
-"Creates a list containing the given 'args'."
-  (if no.args
-    nil
-    (cons car.args
-          (apply list cdr.args))))
+(def list args args)
 
 (examples list
   (list 1 2 3)
