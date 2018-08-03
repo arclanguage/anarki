@@ -533,6 +533,11 @@
 (mac body b
   `(tag body ,@b))
 
+;how do I add rest parameters for tag attributes without putting them
+;after the body (which would be awkward) and without the initial arg
+;for the tag name? Something like (mac div (. r body)) which is 
+; currently illegal
+
 (mac div (body)
   `(tag div ,@body))
 
