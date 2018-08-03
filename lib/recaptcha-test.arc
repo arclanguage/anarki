@@ -1,6 +1,8 @@
+(require 'lib/client.arc)    ; http client
 (require 'lib/env.arc)       ; environment vars
 (require 'lib/srv.arc)       ; server
 (require 'lib/html.arc)      ; html
+(require 'lib/json.arc)      ; json
 (require 'lib/recaptcha.arc) ; recaptcha
 
 (=
@@ -15,12 +17,17 @@
 (thread (serve 8080))
 (sleep 3)
 
-(defop ||  req (aform form-handler 
+(defop || req 
+  
   (do
-    (recaptcha-form)
-    (single-input "enter" 'foo 10 "Submit")
-  )))
+    (pr "<script src=\"https://www.google.com/recaptcha/api.js\" async defer></script>")
+    (pr "")
+    (aform verify-captcha
+    (pr "<div class=\"g-recaptcha\" data-sitekey=\"" recaptcha-sitekey* "\"></div>")
+    (single-input "Enter:" 'foo 10 "Submit"))))
 
-(def form-handler (req) 
-  (prn "You entered") 
-    (prbold (alref (req 'args) "foo")))
+(def verify-captcha (req)
+  (pr 
+    (post-url 
+    "https://www.google.com/recaptcha/api/siteverify"
+    (list 'secret recaptcha-secret* 'response (alref (req 'args) "g-recaptcha-response")))))
