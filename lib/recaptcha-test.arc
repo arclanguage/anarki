@@ -44,8 +44,5 @@
   (do
     (= resp (recaptcha-response recaptcha-secret* (alref (req 'args) "g-recaptcha-response")))
     (pr resp!success)
-
     ;how to handle #t and #f when arc doesn't recognize them as types? 
-    (if resp!success #t 
-      (pr "success")
-      (pr "failure"))))
+   ))
