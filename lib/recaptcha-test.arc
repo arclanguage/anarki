@@ -25,13 +25,8 @@
     (pr "<div class=\"g-recaptcha\" data-sitekey=\"" recaptcha-sitekey* "\"></div>")
     (single-input "Enter:" 'foo 10 "Submit"))))
 
-; send a POST request, return a hashtable from an expected JSON response
-(def post-getjson (url params (o port stdin))
-  (fromstring (post-url url params) 
-    (read-json (port))))
+;TODO: handle Google failure codes/bad response/404?
 
-; #hash((challenge_ts . 2018-08-03T12:59:44Z) (hostname . testkey.google.com) (success . #t))
-; TODO: handle failure codes
 (def recaptcha-response (s r)
   (post-getjson "https://www.google.com/recaptcha/api/siteverify"
                 (list 'secret s 'response r)))
@@ -42,7 +37,12 @@
 
 (def verify-captcha (req)
   (do
+
+; resp should look like
+; #hash((challenge_ts . 2018-08-11T01:20:29Z) (hostname . testkey.google.com) (success . t))
+; we only care about the value of success
+
     (= resp (recaptcha-response recaptcha-secret* (alref (req 'args) "g-recaptcha-response")))
-    (pr resp!success)
-    ;how to handle #t and #f when arc doesn't recognize them as types? 
-   ))
+    (if resp!success 
+      (pr "success") 
+      (pr "failure"))))

@@ -175,3 +175,8 @@ whose query string is 'fields' with the 'values' passed 'name'."
 
 ; TODO could use any public searx instance
 (defreq searx "https://searx.me" '(q))
+
+; send a POST request, return a hashtable from an expected JSON response
+(def post-getjson (url params (o port stdin))
+  (fromstring (post-url url params) 
+    (read-json (port))))
