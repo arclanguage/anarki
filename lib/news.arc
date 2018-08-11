@@ -432,8 +432,7 @@
 
 ;(defopr favicon.ico req favicon-url*)
 
-; works, but zerotable doesn't pass class. 
-(mac npage (t . b)
+(mac npage (title . body)
   `(do 
      (doctype "html")
      (html
@@ -443,16 +442,12 @@
          (favicon "favicon.ico")
          (meta-viewport "width=device-width")
          (js-ext (normalize-path site-url* "news.js"))
-         (title ,t))
+         (title ,title))
        (body
          (center
-           ; the html table macro should be renamed to
-           ; something less ambiguous than 'tab'
-           (tab border 0 
-                cellpadding 0 
-                cellspacing 0 
-                class "layout" 
-                ,@b))))))
+           (tag (table border 0 cellpadding 0 cellspacing 0
+                       class "layout")
+             ,@body))))))
 
 (= pagefns* nil)
 
