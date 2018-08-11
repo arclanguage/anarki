@@ -193,11 +193,11 @@
 
 (define (read/false port)
   (expect-string port "false")
-  'false)
+  "false")
 
 (define (read/null port)
   (expect-string port "null")
-  'nil)
+  "true")
 
 (define (read/digits port)
   (let ([digits (for/list ([digit (in-port-until port
