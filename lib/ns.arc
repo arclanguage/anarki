@@ -125,9 +125,9 @@
 (defvar current-rns
   ($.make-derived-parameter $.current-namespace rnsify idfn))
 
-(def call-w/current-rns (rns body)
+(def call-w/current-rns (rns bodyfn)
   (parameterize defvar-impl.current-rns rns
-    (body)))
+    (bodyfn)))
 
 (mac w/current-rns (rns . body)
   `(call-w/current-rns ,rns (fn () ,@body)))
@@ -135,9 +135,9 @@
 (defvar current-ns ($.make-derived-parameter defvar-impl.current-rns
                      ns-arcracket ns-racketarc))
 
-(def call-w/current-ns (ns body)
+(def call-w/current-ns (ns bodyfn)
   (parameterize defvar-impl.current-ns ns
-    (body)))
+    (bodyfn)))
 
 (mac w/current-ns (ns . body)
   `(call-w/current-ns ,ns (fn () ,@body)))
