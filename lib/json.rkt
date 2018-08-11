@@ -189,11 +189,11 @@
 
 (define (read/true port)
   (expect-string port "true")
-  't)
+  'true)
 
 (define (read/false port)
   (expect-string port "false")
-  'nil)
+  'false)
 
 (define (read/null port)
   (expect-string port "null")
