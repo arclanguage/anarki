@@ -43,6 +43,7 @@
 ; we only care about the value of success
 
     (= resp (recaptcha-response recaptcha-secret* (alref (req 'args) "g-recaptcha-response")))
-    (if resp!success 
+    (pr resp)
+    (if (is resp!success 'true)
       (pr "success") 
       (pr "failure"))))
