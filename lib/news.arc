@@ -3,11 +3,11 @@
 (= this-site*    "My Forum"
    site-url*     "http://site.example.com"; "http://127.0.0.1:8080"               ; your domain name
    parent-url*   "http://www.example.com"
-   favicon-url*  "favicon.ico"
+;  favicon-url*  "favicon.ico"
    ; Page Layout
-   up-url* "grayarrow.gif" 
-   down-url* "graydown.gif" 
-   logo-url* "arc.png"
+   up-url*       "grayarrow.gif" 
+   down-url*     "graydown.gif" 
+   logo-url*     "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
@@ -430,25 +430,29 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-(defopr favicon.ico req favicon-url*)
+;(defopr favicon.ico req favicon-url*)
 
-(mac npage (title . body)
+; works, but zerotable doesn't pass class. 
+(mac npage (t . b)
   `(do 
-   (prn "<!DOCTYPE html>")
-    (tag html
-       (tag head
-         (gentag meta "charset" "UTF-8")
-         (gentag link "rel" "stylesheet" "type" "text/css" 
-            "href" (normalize-path site-url* "news.css"))
-         (gentag link "rel" "shortcut icon" "href" favicon-url*)
-         (gentag meta "name" "viewport" "content" "width=device-width")
-         (tag (script "src" (normalize-path site-url* "news.js")))
-         (tag title (pr ,title)))
-       (tag body
+     (doctype "html")
+     (html
+       (head
+         (meta-charset "UTF-8")
+         (css-ext (normalize-path site-url* "news.css"))
+         (favicon "favicon.ico")
+         (meta-viewport "width=device-width")
+         (js-ext (normalize-path site-url* "news.js"))
+         (title ,t))
+       (body
          (center
-           (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
-                       bgcolor sand)
-             ,@body))))))
+           ; the html table macro should be renamed to
+           ; something less ambiguous than 'tab'
+           (tab border 0 
+                cellpadding 0 
+                cellspacing 0 
+                class "layout" 
+                ,@b))))))
 
 (= pagefns* nil)
 

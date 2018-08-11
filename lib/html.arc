@@ -1,5 +1,7 @@
 ; HTML Utils.
 
+
+
 (def color (r g b)
   (with (c (table)
          f (fn (x) (if (< x 0) 0 (> x 255) 255 x)))
@@ -81,8 +83,6 @@
 
 (attribute a          href           opstring)
 (attribute a          rel            opstring)
-(attribute a          class          opstring)
-(attribute a          id             opsym)
 (attribute a          onclick        opstring)
 (attribute a          onmouseout     opstring)
 (attribute a          onmouseover    opstring)
@@ -94,9 +94,7 @@
 (attribute body       marginwidth    opnum)
 (attribute body       topmargin      opnum)
 (attribute body       vlink          opcolor)
-(attribute div        id             opstring)
 (attribute div        name           opstring)
-(attribute div        class          opstring)
 (attribute div        onclick        opstring)
 (attribute div        onmouseout     opstring)
 (attribute div        onmouseover    opstring)
@@ -105,7 +103,6 @@
 (attribute font       size           opnum)
 (attribute form       action         opstring)
 (attribute form       method         opsym)
-(attribute form       id             opstring)
 (attribute form       name           opstring)
 (attribute form       onsubmit       opstring)
 (attribute form       enctype        opstring)
@@ -116,17 +113,14 @@
 (attribute img        vspace         opnum)
 (attribute img        hspace         opnum)
 (attribute img        src            opstring)
-(attribute img        id             opsym)
 (attribute img        alt            opstring)
 (attribute input      name           opstring)
-(attribute input      id             opstring)
 (attribute input      size           opnum)
 (attribute input      type           opsym)
 (attribute input      value          opesc)
 (attribute input      checked        opcheck)
 (attribute input      onclick        opstring)
 (attribute input      onblur         opstring)
-(attribute input      class          opstring)
 (attribute select     name           opstring)
 (attribute option     selected       opsel)
 (attribute table      bgcolor        opcolor)
@@ -134,9 +128,7 @@
 (attribute table      cellpadding    opnum)
 (attribute table      cellspacing    opnum)
 (attribute table      width          opstring)
-(attribute table      id             opstring)
 (attribute textarea   cols           opnum)
-(attribute textarea   id             opstring)
 (attribute textarea   name           opstring)
 (attribute textarea   rows           opnum)
 (attribute textarea   wrap           opsym)
@@ -151,28 +143,31 @@
 (attribute tr         bgcolor        opcolor)
 (attribute tr         valign         opsym)
 (attribute tr         height         opnum)
-(attribute tr         class          opstring)
 (attribute tr         onclick        opstring)
-(attribute tr         id             opstring)
 (attribute hr         color          opcolor)
 (attribute script     type           opstring)
-(attribute span       class          opstring)
+(attribute script     async          opstring)
+(attribute script     defer          opstring)
+(attribute script     charset        opstring)
 (attribute span       align          opstring)
-(attribute span       id             opsym)
 (attribute rss        version        opstring)
 
 (attribute ol    type           opstring)
-(attribute ol    class          opstring)
 (attribute ol    start          opnum)
-(attribute ol    id             opsym)
-
-(attribute ul    class          opstring)
-(attribute ul    id             opsym)
 
 (attribute li    type           opstring)
-(attribute li    class          opstring)
 (attribute li    value          opnum) ; only within <OL>
-(attribute li    id             opsym)
+
+(attribute iframe src opstring)
+(attribute iframe frameborder opstring)
+(attribute iframe scrolling opstring)
+(attribute iframe sandbox opstring)
+(attribute iframe width opstring)
+(attribute iframe height opstring)
+(attribute iframe name opstring)
+
+;(mac gentag args (o tags '(#\< #\>))
+; (start-tag args tags))
 
 (mac gentag args (start-tag args))
 
@@ -186,8 +181,11 @@
      (tag ,spec ,@body)
      (do ,@body)))
 
+;(def start-tag (spec (o tags '(#\< #\>)))
+
 (def start-tag (spec)
   (if (atom spec)
+;   `(pr ,(string (car tags) spec (cdr tags)))
     `(pr ,(string "<" spec ">"))
     (let opts (tag-options (car spec) (pair (cdr spec)))
       (if (all [isa _ 'string] opts)
@@ -217,7 +215,7 @@
   (if (no options)
     '()
     (let ((opt val) . rest) options
-      (let meth (if (in opt 'style 'class 'id)
+      (let meth (if (in opt 'style 'class 'id 'data- 'accesskey 'lang 'title 'tabindex)
                       opstring
                     'else
                       (opmeth spec opt))
@@ -238,7 +236,6 @@
 (mac ul body `(tag ul ,@body))
 (mac ol body `(tag ol ,@body))
 (mac li body `(tag li ,@body))
-(mac lp body `(tag li (pr ,@body))) ; print li
 
 (mac center    body         `(tag center ,@body))
 (mac underline body         `(tag u ,@body))
@@ -404,6 +401,20 @@
     (tag-if color (font color color)
       (pr text))))
 
+
+; try to build a proper url string, taking into 
+; account that either  the base or path might 
+; have extraneous slashes. 
+
+(def normalize-path (b p (o c #\/)) 
+  (string (rtrim b c) c (ltrim p c)))
+
+; make relative urls absolute
+(def abs-link (base text (o dest text) (o color))
+    (if (valid-url dest)
+      (link text dest color)
+      (link text (normalize-path base dest) color)))
+
 (def underlink (text (o dest text))
   (tag (a href dest) (tag u (pr text))))
 
@@ -469,22 +480,71 @@
 (mac gentag-n (t (o n 1)) 
   `(repeat n (gentag ,t)))
 
-; HTML macros
+(mac doctype (t)
+  `(string "<!DOCTYPE "  ,t ">"))
+
+(mac html body 
+  `(tag html ,@body))
+
+(mac head body
+  `(tag head ,@body))
+
+(mac base ((o h "/") (o t "_self"))
+  `(gentag base href ,h target ,t))
+
+(mac meta (n v)
+  `(gentag meta name ,n value ,v))
+
+(mac meta-charset (c)
+  `(gentag meta charset ,c))
+
+(mac js-ext (s)
+  `(tag (script "type" "text/javascript" "src" ,s)))
+
+; for strict CSP rules, inline code is allowed if the SHA-256 hash is included
+; in the CSP headers. So it's better to either not restrict inline code, or
+; move all javascript to an external file, including event binding.
+
+(mac js-inline (body)
+  `(tag script type "text/javascript" ,@body))
+
+(mac css-ext (s)
+  `(gentag link "rel" "stylesheet" 
+                "type" "text/css" 
+                "href" ,s))
+
+(mac css-inline (body)
+  `(tag style type "text/css" ,@body))
+
+(mac noscript (body)
+  `(tag noscript ,@body))
+
+(mac favicon (f)
+  `(gentag link "rel" "shortcut icon" 
+                "href" ,f))
+
+(mac meta-viewport (c) ;"width=device-width"
+  `(gentag meta "name" "viewport" 
+                "content" ,c))
+
+(mac title (t) 
+  `(tag title (pr ,t)))
+
+(mac body b
+  `(tag body ,@b))
+
+;how do I add rest parameters for tag attributes without putting them
+;after the body (which would be awkward) and without the initial arg
+;for the tag name? Something like (mac div (. r body)) which is 
+; currently illegal
+
+(mac div (body)
+  `(tag div ,@body))
+
+(mac span (body)
+  `(tag span ,@body))
 
 (def br ((o n 1))
   (gentag-n "br" n))
 
 (def br2 () (br 2))
-
-; try to build a proper url string, taking into 
-; account that either  the base or path might 
-; have extraneous slashes. 
-
-(def normalize-path (b p (o c #\/)) 
-  (string (rtrim b c) c (ltrim p c)))
-
-; make relative urls absolute
-(def abs-link (base text (o dest text) (o color))
-    (if (valid-url dest)
-      (link text dest color)
-      (link text (normalize-path base dest) color)))
