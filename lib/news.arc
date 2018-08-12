@@ -1,7 +1,7 @@
 (require 'lib/app.arc)
 
 (= this-site*    "My Forum"
-   site-url*     "http://site.example.com"; "http://127.0.0.1:8080"               ; your domain name
+   site-url*     "http://site.example.com";your domain name
    parent-url*   "http://www.example.com"
 ;  favicon-url*  "favicon.ico"
    ; Page Layout
@@ -33,23 +33,6 @@
    (max-age* 'news.css) 86400   
 )
 
-; overrides for form endpoints 
-(= fnurl*   (normalize-path site-url* "/x")
-   rfnurl*  (normalize-path site-url* "/r") 
-   rfnurl2* (normalize-path site-url* "/y") 
-   jfnurl*  (normalize-path site-url* "/a"))
-
-; site urls
-(def saved-url (user)     (+ (normalize-path site-url* "saved?id=")     user))
-(def user-url (user)      (+ (normalize-path site-url* "user?id=")      user))
-(def item-url (id)        (+ (normalize-path site-url* "item?id=")      id))
-(def edit-url (i)         (+ (normalize-path site-url* "edit?id=")      i!id))
-(def threads-url (user)   (+ (normalize-path site-url* "threads?id=")   user))
-(def submitted-url (user) (+ (normalize-path site-url* "submitted?id=") user))
-
-; why is this its own separate thing? 
-(= formatdoc-url* (normalize-path site-url* "formatdoc"))
-(= welcome-url* (normalize-path site-url* "welcome"))
 
 ; Look up title on Searx, a free metasearch engine
 
@@ -59,7 +42,7 @@
 
 
 (def vote-url (user i dir whence)
-  (+ (normalize-path site-url* "vote?") "for=" i!id
+  (+ "vote?for=" i!id
              "&dir=" dir
              (if user (+ "&by=" user "&auth=" (user->cookie* user)))
              "&whence=" (urlencode whence)))
@@ -438,10 +421,10 @@
      (html
        (head
          (meta-charset "UTF-8")
-         (css-ext (normalize-path site-url* "news.css"))
+         (css-ext "news.css")
          (favicon "favicon.ico")
          (meta-viewport "width=device-width")
-         (js-ext (normalize-path site-url* "news.js"))
+         (js-ext "news.js")
          (title ,title))
        (body
          (center
@@ -483,18 +466,18 @@
       (pr (len items*) "/" maxid* " loaded")
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
-      (abs-link site-url* "settings" "newsadmin")
-      (abs-link site-url* "repl")
-      (abs-link site-url* "prompt")
+      (link "settings" "newsadmin")
+      (link "repl")
+      (link "prompt")
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
      (spanclass yclinks
      (w/bars
-       (abs-link site-url* "faq")
-       (abs-link site-url* "lists")
-       (abs-link site-url* "rss")
-       (abs-link site-url* "anarki" "http://github.com/arclanguage/anarki"))))
+       (link "faq")
+       (link "lists")
+       (link "rss")
+       (link "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
   (tag (table width "100%" cellspacing 0 cellpadding 1)
@@ -539,7 +522,7 @@
               (when (is switch 'full)
                 (tag (td style "line-height:12pt; height:10px;")
                   (spanclass pagetop
-                    (tag b (abs-link site-url* this-site* "news"))
+                    (tag b (link this-site* "news"))
                     (sp)
                     (hspace 5)
                     (toprow user label))))
@@ -559,6 +542,8 @@
 
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "events" "*"))
 
+(= welcome-url* "welcome")
+
 (def toprow (user label)
   (w/bars
     (when (noob user)
@@ -573,13 +558,13 @@
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
-    (abs-link site-url*  "submit")
+    (link  "submit")
     (unless (mem label toplabels*)
       (fontcolor white (pr label)))))
 
 (def toplink (name dest label)
   (tag-if (is name label) (span class 'topsel)
-    (abs-link site-url* name dest)))
+    (link name dest)))
 
 (def topright (user whence (o showkarma t))
   (when user
@@ -863,16 +848,19 @@
 (newsop lists ()
   (longpage user (msec) nil "lists" "Lists" "lists"
     (sptab
-      (row (abs-link site-url*  "leaders")      "Users with most karma.")
-      (row (abs-link site-url*  "best")         "Highest voted recent links.")
-      (row (abs-link site-url*  "active")       "Most active current discussions.")
-      (row (abs-link site-url*  "bestcomments") "Highest voted recent comments.")
-      (row (abs-link site-url*  "noobstories")  "Submissions from new accounts.")
-      (row (abs-link site-url*  "noobcomments") "Comments from new accounts.")
+      (row (link  "leaders")      "Users with most karma.")
+      (row (link  "best")         "Highest voted recent links.")
+      (row (link  "active")       "Most active current discussions.")
+      (row (link  "bestcomments") "Highest voted recent comments.")
+      (row (link  "noobstories")  "Submissions from new accounts.")
+      (row (link  "noobcomments") "Comments from new accounts.")
       (when (admin user)
         (map row:link
              '(optimes topips flagged killed badguys badlogins goodlogins)))
       (hook 'listspage user))))
+
+
+(def saved-url (user) (+ "saved?id=" user))
 
 (newsop saved (id)
   (if (only.profile id)
@@ -1080,10 +1068,12 @@
         (userlink user i!by) (sp)
         (permalink i user (text-age:item-age i)))))
 
+(def user-url (user) (+ "user?id=" user))
+
 (= show-avg* nil)
 
 (def userlink (user subject (o show-avg t))
-  (abs-link site-url*  (user-name user subject) (user-url subject))
+  (link  (user-name user subject) (user-url subject))
   (awhen (and show-avg* (admin user) show-avg (uvar subject avg))
     (pr " (@(num it 1 t t))")))
 
@@ -1138,7 +1128,7 @@
 (def editlink (i user)
   (when (canedit user i)
     (pr bar*)
-    (abs-link site-url*  "edit" (edit-url i))))
+    (link  "edit" (edit-url i))))
 
 (def addoptlink (p user)
   (when (or (admin user) (author user p))
@@ -1254,7 +1244,7 @@
 
 (def permalink (story user text)
   (when (cansee user story)
-    (abs-link site-url* text (item-url story!id))))
+    (link text (item-url story!id))))
 
 (def logvote (ip user story)
   (newslog ip user 'vote (story 'id) (list (story 'title))))
@@ -1707,7 +1697,7 @@
               (~live o)        (spanclass dead
                                  (pr (if (~blank o!title) o!title o!text)))
                                (if (and (~blank o!title) (~blank o!url))
-                                   (abs-link site-url* o!title o!url)
+                                   (link o!title o!url)
                                    (fontcolor black (pr o!text)))))))
   (tr (if n (td))
       (td)
@@ -1721,6 +1711,8 @@
 
 
 ; Individual Item Page (= Comments Page of Stories)
+
+(defmemo item-url (id) (+ "item?id=" id))
 
 (newsop item (id)
   (let s (safe-item id)
@@ -1806,6 +1798,8 @@
 
 
 ; Edit Item
+
+(def edit-url (i) (+ "edit?id=" i!id))
 
 (newsop edit (id)
   (let i (safe-item id)
@@ -2042,7 +2036,7 @@
           (itemline c user)
           (when parent
             (when (cansee user c) (pr bar*))
-            (abs-link site-url* "parent" (item-url ((item parent) 'id))))
+            (link "parent" (item-url ((item parent) 'id))))
           (editlink c user)
           (killlink c user whence)
           (blastlink c user whence)
@@ -2054,7 +2048,7 @@
           (when showon
             (pr " | on: ")
             (let s (superparent c)
-              (abs-link site-url* (ellipsize s!title 50) (item-url s!id))))))
+              (link (ellipsize s!title 50) (item-url s!id))))))
       (when (or parent (cansee user c))
         (br))
       (spanclass comment
@@ -2084,7 +2078,7 @@
       (> (item-age c) (expt (- indent 1) reply-decay*))))
 
 (def replylink (i whence (o title 'reply))
-  (abs-link site-url* title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
+  (link title (+ "reply?id=" i!id "&whence=" (urlencode whence))))
 
 (newsop reply (id whence)
   (with (i      (safe-item id)
@@ -2107,6 +2101,8 @@
 
 
 ; Threads
+
+(def threads-url (user) (+ "threads?id=" user))
 
 (newsop threads (id)
   (if id
@@ -2154,6 +2150,8 @@
 
 
 ; Submitted
+
+(def submitted-url (user) (+ "submitted?id=" user))
 
 (newsop submitted (id)
   (if id
@@ -2296,6 +2294,8 @@
 
 
 ; Doc
+
+(= formatdoc-url* "formatdoc")
 
 (defop formatdoc req
   (msgpage (get-user req) formatdoc* "Formatting Options"))
