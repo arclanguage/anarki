@@ -1085,7 +1085,10 @@
   (hook 'itemscore i user))
 
 (def byline (i user)
-  (pr " by @(tostring (userlink user i!by)) @(text-age:item-age i) "))
+  (pr bar*
+      (tostring
+        (userlink user i!by) (sp)
+        (permalink i user (text-age:item-age i)))))
 
 (= show-avg* nil)
 
@@ -1259,10 +1262,9 @@
                  (br2)
                  (but "Yes" "b") (sp) (but "No" "b")))))))
 
-(def permalink (story user)
+(def permalink (story user text)
   (when (cansee user story)
-    (pr bar*)
-    (abs-link site-url* "link" (item-url story!id))))
+    (abs-link site-url* text (item-url story!id))))
 
 (def logvote (ip user story)
   (newslog ip user 'vote (story 'id) (list (story 'title))))
@@ -2048,7 +2050,6 @@
       (tag (div style "margin-top:2px; margin-bottom:-10px; ")
         (spanclass comhead
           (itemline c user)
-          (permalink c user)
           (when parent
             (when (cansee user c) (pr bar*))
             (abs-link site-url* "parent" (item-url ((item parent) 'id))))
