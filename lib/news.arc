@@ -708,14 +708,17 @@
   (let here (user-url subject)
     (shortpage user nil nil (+ "Profile: " subject) here
       (profile-form user subject)
+      (when (is user subject)
+        (br)
+        (underlink "Download my personal data in machine-readable format" "personal-data"))
       (br2)
       (when (some astory:item (uvar subject submitted))
         (underlink "submissions" (submitted-url subject)))
       (when (some acomment:item (uvar subject submitted))
         (sp)
         (underlink "comments" (threads-url subject)))
-        (sp)
-        (underlink "rss" "follow?subject=@subject")
+      (sp)
+      (underlink "rss" "follow?subject=@subject")
       (hook 'user user subject))))
 
 (def profile-form (user subject)
@@ -2579,6 +2582,13 @@ By clicking on the site name of a story admins may tag the domain. The color of 
   (sptab (each (time ip user) (firstn 100 (rev (as cons source)))
            (row time ip user))))
 
+; personal data export in machine readable format as required by GDPR
+; TODO: should include logs
+(newsop personal-data ()
+  (pr (obj
+     votes     (votes* user)
+     comments  (keep [author user _] comments*)
+     stories   (keep [author user _] stories*))))
 
 ; Stats
 
