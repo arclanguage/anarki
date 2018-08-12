@@ -428,8 +428,8 @@
          (title ,title))
        (body
          (center
-           (tag (table border 0 cellpadding 0 cellspacing 0
-                       class "layout")
+           (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
+                       bgcolor sand)
              ,@body))))))
 
 (= pagefns* nil)
