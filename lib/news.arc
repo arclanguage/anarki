@@ -959,22 +959,9 @@
           (titlelink s url user)
           (awhen (sitename url)
             (spanclass comhead
-              (pr " (" )
-              (if (admin user)
-                (w/rlink (do (set-site-ban user
-                                           it
-                                           (case (car (banned-sites* it))
-                                             nil    'ignore
-                                             ignore 'kill
-                                             kill   nil))
-                             whence)
-                  (let ban (car (banned-sites* it))
-                    (tag-if ban (font color (case ban
-                                              ignore darkred
-                                              kill   darkblue))
-                      (pr it))))
-                (pr it))
-              (pr ") "))))
+              (pr " ("
+                  (tostring (link it (string "from?site=" (sitename url))))
+                  ")"))))
       (pr (pseudo-text s)))))
 
 (def titlelink (s url user)
@@ -2187,6 +2174,12 @@
     (pr "No such user.")))
 
 
+; list stories from one domain
+
+(newsop from (site)
+  (listpage user (msec) (keep [is (sitename (_ 'url)) site] stories*) "from" (string "Submissions from " site)))
+
+
 ; RSS
 
 (newsop rss () (rsspage nil))
@@ -2333,15 +2326,7 @@ It lets you see stories that have been killed.<br><br>
 If you enable noprocrast, you'll only be allowed to visit this site for maxvisit minutes at a time, with gaps of minaway minutes in between.<br><br>
 <b>In my profile, what is delay?</b><br>
 It is the number of minutes you can edit your comments before they appear to others.<br><br>"
-    (if (admin user)
-"<b>As an admin, what does it mean when I click on the site name of a story, and the site name changes color?</b><br>
-By clicking on the site name of a story admins may tag the domain. The color of a domain indicates its tag,
-<ul>
-  <li>gray: default</li>
-  <li>darkred: ignore</li>
-  <li>darkblue: kill</li>
-</ul>
-<br><br>")))
+))
 
 ; Noprocrast
 
