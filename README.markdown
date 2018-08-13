@@ -8,7 +8,7 @@ privileges, just submit your first pull request or ask on [**Arc Language Forum*
 
 ### Installation
 
-First [install **Racket** (v6.8 or later)](http://racket-lang.org), then
+First [install **Racket** (v6.11 or later)](http://racket-lang.org), then
 
     $ raco pkg install sha
     $ git clone http://github.com/arclanguage/anarki

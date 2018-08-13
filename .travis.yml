@@ -27,9 +27,14 @@ env:
 
     # Versions prior to 6.3 don't define the `racket/random` module,
     # which is needed for news.arc and one of the tests.
+    
+    # Versions prior to 6.11 have a bug in unmarshaling namespace
+    # information, which prevents us from having ac.scm statically
+    # require `crypto-random-bytes` from `racket/random` or
+    # `ssl-connect` from `openssl`.
 
     # This is the earliest known supported version.
-    - RACKET_VERSION=6.3
+    - RACKET_VERSION=6.11
 
     # This is the latest known supported version.
     - RACKET_VERSION=6.12

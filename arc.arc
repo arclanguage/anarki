@@ -1726,11 +1726,7 @@ protocol requires them."
     (c "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
      nc 62
      s (newstring n)
-     i 0
-     ; Don't use dynamic-require. It it slooooow
-;     crypto-random-bytes
-;       ($.dynamic-require 'racket/random 'crypto-random-bytes)
-    )
+     i 0)
     (while (< i n)
       (let x ($.bytes-ref ($.crypto-random-bytes 1) 0)
         (unless (> x 247)

@@ -26,11 +26,6 @@
   (only-in "brackets.rkt" bracket-readtable)
 
   (for-syntax racket/base))
-; This module also uses `dynamic-require` for the following
-; dependencies:
-;
-; (only-in openssl ssl-connect)
-; (only-in racket/random crypto-random-bytes)
 
 (provide (all-defined-out))
 
@@ -1132,15 +1127,6 @@
                          (lambda () (tcp-connect host port)))))
 
 (xdef ssl-connect (lambda (host port)
-                    ; dynamic-require is slow as molasses. don't use in hot code!
-                    ;
-                    ; ; NOTE: There was a bug in unmarshaling namespace
-                    ; ; information from compiled Racket code that was
-                    ; ; fixed in Racket 6.11. On that version and later,
-                    ; ; we can replace this with
-                    ; ; `(require (only-in openssl ssl-connect))`.
-                    ; (define ssl-connect
-                    ;   (dynamic-require 'openssl 'ssl-connect))
                     (ar-init-socket
                       (lambda () (ssl-connect host port)))))
 
@@ -1179,14 +1165,6 @@
                        str))))
 
 (define (ar-tmpname)
-  ; dnymaic-require is slowness itself. don't use in hot code!
-  ;
-  ; ; NOTE: There was a bug in unmarshaling namespace information from
-  ; ; compiled Racket code that was fixed in Racket 6.11. On that
-  ; ; version and later, we can replace this with
-  ; ; `(require (only-in racket/random crypto-random-bytes))`.
-  ; (define crypto-random-bytes
-  ;   (dynamic-require 'racket/random 'crypto-random-bytes))
   (string-append "/tmp/"
     (list->string
       (map (lambda (byte)
