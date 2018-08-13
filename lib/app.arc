@@ -271,11 +271,12 @@ Returns nil if no logged-in user."
 ; Create a file in case people have quote chars in their pws.  I can't
 ; believe there's no way to just send the chars.
 
+; NOTE: sha package needs to be installed: `raco pkg install sha`
+($ (require sha))
+
 (def shash (str)
-  (let fname (mktemp "shash")
-    (w/outfile f fname (disp str f))
-    (after (chomp:tostring:system:+ "openssl dgst -sha512 <" fname)
-      (rmfile fname))))
+   ;prepending this (stdin)= for backwards compatibility with previous hashes
+   (+ "(stdin)= " ($.bytes->hex-string ($.sha512 ($.string->bytes/utf-8 str)))))
 
 (= dc-usernames* (table))
 

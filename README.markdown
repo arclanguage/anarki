@@ -10,6 +10,7 @@ privileges, just submit your first pull request or ask on [**Arc Language Forum*
 
 First [install **Racket** (v6.8 or later)](http://racket-lang.org), then
 
+    $ raco pkg install sha
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
     $ ./arc.sh    # start the interactive repl
@@ -83,12 +84,6 @@ For password reset mails to be sent out, your must set up an email account to se
     $ echo "smtp.example.com" >> www/app-email     ; smtp server
     $ echo "someone@example.com" >> www/app-email  ; user
     $ echo "1234" >> www/app-email                 ; password
-
-
-### Windows specific
-
-The **News** server will use the `openssl` command. If you're on Windows, first install **OpenSSL** and make sure it's on your `PATH`. Other systems should be distributed with **OpenSSL** already.
-
 
 ## Development
 
