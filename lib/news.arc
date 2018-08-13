@@ -693,10 +693,6 @@
   (let here (user-url subject)
     (shortpage user nil nil (+ "Profile: " subject) here
       (profile-form user subject)
-      (when (is user subject)
-        (br)
-        (underlink "Download my personal data in machine-readable format" "personal-data"))
-      (br2)
       (when (some astory:item (uvar subject submitted))
         (underlink "submissions" (submitted-url subject)))
       (when (some acomment:item (uvar subject submitted))
@@ -731,6 +727,7 @@
       (string  name       ,(p 'name)                               ,m  ,m)
       (string  created    ,(text-age:user-age subject)              t   nil)
       (string  password   ,(resetpw-link)                          ,w   nil)
+      (string  data       ,(personal-data-link)                    ,w   nil)
       (string  saved      ,(saved-link user subject)               ,u   nil)
       (int     auth       ,(p 'auth)                               ,e  ,a)
       (yesno   member     ,(p 'member)                             ,a  ,a)
@@ -2570,10 +2567,14 @@ It is the number of minutes you can edit your comments before they appear to oth
 ; personal data export in machine readable format as required by GDPR
 ; TODO: should include logs
 (newsop personal-data ()
-  (pr (obj
-     votes     (votes* user)
-     comments  (keep [author user _] comments*)
-     stories   (keep [author user _] stories*))))
+  (tag code
+    (pr (obj
+           votes     (votes* user)
+           comments  (keep [author user _] comments*)
+           stories   (keep [author user _] stories*)))))
+
+(def personal-data-link ()
+  (tostring (underlink "download personal data" "personal-data")))
 
 ; Stats
 
