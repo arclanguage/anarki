@@ -477,6 +477,7 @@
        (link "faq")
        (link "lists")
        (link "rss")
+       (link "bookmarklet")
        (link "anarki" "http://github.com/arclanguage/anarki"))))
 
 (def color-stripe (c)
@@ -1381,12 +1382,33 @@
               (row "url" (input "u" url 50))))
         (row "" (submit))
         (spacerow 20)
-        (row "" submit-instructions*)))))
+        (row "" submit-instructions*)
+        (spacerow 20)
+        (row "" submit-via-bookmarklet*)))))
 
 (= submit-instructions*
    "Leave url blank to submit a question for discussion. If there is
     no url, the text (if any) will appear at the top of the comments
     page. If there is a url, the text will be ignored.")
+
+(= submit-via-bookmarklet*
+   (tostring
+     (pr "You can also submit via ")
+     (underlink "bookmarklet")
+     (pr ".")))
+
+; Bookmarklet
+
+(newsop bookmarklet ()
+  (msgpage user
+    (tostring
+      (row "When you click on the bookmarklet, it will submit the page you're on. To install, drag the link below to your browser bookmark bar.")
+      (row (center (tag (span style "font-size: 2em") (underlink
+        (string "Post to " this-site*)
+        (string "javascript:window.location='"
+                site-url*
+                "/submitlink?u='+encodeURIComponent(document.location)+'&t='+encodeURIComponent(document.title)"))))))
+    "Bookmarklet"))
 
 ; For use by outside code like bookmarklet.
 ; http://news.domain.com/submitlink?u=http://foo.com&t=Foo
