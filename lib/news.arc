@@ -541,7 +541,7 @@
       (tag (img src logo-url* alt 'a width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
-(= toplabels* '(nil "welcome" "new" "threads" "comments" "blog" "events" "*"))
+(= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "blog" "events" "*"))
 
 (= welcome-url* "welcome")
 
@@ -554,6 +554,7 @@
       (toplink "threads" (threads-url user) label))
     (toplink "comments" "newcomments" label)
     (hook 'toprow user label)
+    (toplink "ask" "ask" label)
     (if (bound 'posts*) (toplink "blog" "blog" label))
     (if (bound 'events*) (toplink "events" "events" label))
     (when
@@ -2195,6 +2196,12 @@
 
 (newsop from (site)
   (listpage user (msec) (keep [is (sitename (_ 'url)) site] stories*) "from" (string "Submissions from " site)))
+
+
+; list stories that don't link anywhere
+
+(newsop ask ()
+  (listpage user (msec) (keep [empty (_ 'url)] stories*) "ask" "Ask"))
 
 
 ; RSS
