@@ -16,6 +16,9 @@ env:
     # `allow_failures` tasks haven't completed yet.
     fast_finish: true
 
+
+    include:
+
     # Versions prior to 5.92 don't seem to install the current
     # directory as a package named "anarki" using
     # `raco pkg install --deps search-auto`. It's unknown how well
@@ -38,13 +41,14 @@ env:
     # `ssl-connect` from `openssl`.
 
     # This is the earliest known supported version.
-    - RACKET_VERSION=6.11
+    - env: RACKET_VERSION=6.11
 
     # This is the latest known supported version.
-    - RACKET_VERSION=6.12
+    - env: RACKET_VERSION=6.12
+
 
     allow_failures:
-      - RACKET_VERSION=HEAD
+    - env: RACKET_VERSION=HEAD
 
 
 
