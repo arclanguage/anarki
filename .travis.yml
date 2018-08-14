@@ -46,14 +46,6 @@ env:
     allow_failures:
       - RACKET_VERSION=HEAD
 
-matrix:
-  allow_failures:
-    - env: RACKET_VERSION=HEAD
-  # Fast finish: The overall build result is determined as soon as any
-  # of the rows have failed or all of the rows that aren't allowed to
-  # fail have succeeded.
-  fast_finish: true
-
 
 
 # Build lifecycle steps
