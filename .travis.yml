@@ -12,6 +12,10 @@ env:
     - TRAVIS_RACKET_DIR=~/travis-racket
   matrix:
 
+    # This allows the Travis CI status to be determined even if the
+    # `allow_failures` tasks haven't completed yet.
+    fast_finish: true
+
     # Versions prior to 5.92 don't seem to install the current
     # directory as a package named "anarki" using
     # `raco pkg install --deps search-auto`. It's unknown how well
@@ -39,7 +43,8 @@ env:
     # This is the latest known supported version.
     - RACKET_VERSION=6.12
 
-#    - RACKET_VERSION=HEAD
+    allow_failures:
+      - RACKET_VERSION=HEAD
 
 matrix:
   allow_failures:
