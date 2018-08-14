@@ -68,14 +68,13 @@ install:
   - cd ..
 
 script:
-  # We run the unit tests. While doing so, we disable rlwrap using
-  # `-n`.
-  - ./arc.sh -n tests.arc
-
-
-  # We do sanity checks to be sure the Racket package works. This (and
-  # most of the rest of this file) is adapted from the sample
-  # .travis.yml at <https://github.com/greghendershott/travis-racket>.
+  # We test that the Racket package installs and sets up properly, and
+  # we run the Racket unit test runner just to be sure it works, even
+  # though we launch most of our unit tests in a different way
+  #
+  # This (and most of the rest of this file) is adapted from the
+  # sample .travis.yml at
+  # <https://github.com/greghendershott/travis-racket>.
 
   # We install the current directory as a linked package, and we
   # automatically fetch all the dependencies.
@@ -102,6 +101,16 @@ script:
   # <https://docs.racket-lang.org/raco/test.html>.
   #
   - raco test --drdr --package anarki
+
+
+  # We run the unit tests. While doing so, we disable rlwrap using
+  # `-n`.
+  #
+  # Note that at this point, we have already installed any necessary
+  # Racket package dependencies using the `raco pkg install` command
+  # above.
+  #
+  - ./arc.sh -n tests.arc
 
 
 after_success:
