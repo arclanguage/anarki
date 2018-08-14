@@ -12,13 +12,6 @@ env:
     - TRAVIS_RACKET_DIR=~/travis-racket
   matrix:
 
-    # This allows the Travis CI status to be determined even if the
-    # `allow_failures` tasks haven't completed yet.
-    fast_finish: true
-
-
-    include:
-
     # Versions prior to 5.92 don't seem to install the current
     # directory as a package named "anarki" using
     # `raco pkg install --deps search-auto`. It's unknown how well
@@ -41,14 +34,25 @@ env:
     # `ssl-connect` from `openssl`.
 
     # This is the earliest known supported version.
-    - env: RACKET_VERSION=6.11
+    - RACKET_VERSION=6.11
 
     # This is the latest known supported version.
-    - env: RACKET_VERSION=6.12
+    - RACKET_VERSION=6.12
+
+    # We include the latest Racket version in the build matrix, but
+    # since it's part of `allow_failures` below, a failure here
+    # doesn't count. This is purely to make it easy to check whether
+    # we're already compatible with a newer Racket release.
+    - RACKET_VERSION=HEAD
 
 
-    allow_failures:
+matrix:
+  allow_failures:
     - env: RACKET_VERSION=HEAD
+  # Fast finish: The overall build result is determined as soon as any
+  # of the rows have failed or all of the rows that aren't allowed to
+  # fail have succeeded.
+  fast_finish: true
 
 
 
