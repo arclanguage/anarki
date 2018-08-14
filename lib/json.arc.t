@@ -7,13 +7,15 @@
        (test parse-decimal-point
              (assert-same 0.25
                           (w/instring f "0.25" (read-json f))))
-       (test parse-positive-sign
-             (assert-same 0.025
+       (test fail-to-parse-positive-sign
+             ; The JSON standard requires positive numbers to be
+             ; written without the sign.
+             (assert-same nil
                           (w/instring f "+0.025"
                             (errsafe:read-json f))))
        (test parse-negative-sign
              (assert-same -3.25
-                          (w/instring f "-3.25" (errsafe:read-json f))))
+                          (w/instring f "-3.25" (read-json f))))
        (test parse-positive-exponent
              (assert-same 1000.0
                           (w/instring f "1e3" (read-json f))))
