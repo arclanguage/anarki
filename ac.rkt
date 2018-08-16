@@ -1232,18 +1232,16 @@
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
 
-; To make namespace and module handling more seamless (see
-; lib/ns.arc), we use Racket's 'set! even for undefined variables,
-; rather than using 'namespace-set-variable-value! for all Arc
-; globals. This makes it possible to parameterize the value of
-; 'current-namespace without getting odd behavior, and it makes it
-; possible to assign to imported module variables and use
-; assignment-aware syntax transformers (particularly those made with
-; Racket's 'make-set!-transformer and 'make-rename-transformer).
+; Unlike the official releases of Arc, Anarki uses Racket's 'set! even
+; for undefined Arc globals, rather than using
+; 'namespace-set-variable-value! for all Arc globals. This makes
+; global variables resolve according to the namespace the code was
+; compiled in rather than the value of 'current-namespace at run time,
+; and it makes it possible to get the special assignment behavior of
+; Racket 'make-set!-transformer and 'make-rename-transformer syntaxes.
 ;
-; However, by default 'set! is disallowed when the variable is
-; undefined, and we have to use the 'compile-allow-set!-undefined
-; parameter to go against that default. Rather than sprinkling
+; In order to allow 'set! to compile even for undefined variables, we
+; configure 'compile-allow-set!-undefined. Rather than sprinkling
 ; (parameterize ...) forms all over the code and trying to keep them
 ; in sync, we put them all in this function, and we use this function
 ; instead of 'eval when executing the output of 'ac.
