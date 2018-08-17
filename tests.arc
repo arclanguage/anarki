@@ -9,23 +9,13 @@
 ; setup/teardown functions
 (declare 'atstrings t)
 
-; TODO: Currently, many of the ns.arc.t tests fail with an error
-; saying the generated modules are missing bindings for
-; `#%module-begin`, so we have them commented out here. We should
-; substantially redesign ns.arc so that we don't bother manipulating a
-; module's internal namespace so much as we get and set its *exports*.
-; The generated modules can just be `racket/base` modules, using
-; (provide (rename-out [gs123 my-var])) to export specifically the
-; names we want. Their namespaces would include all of `racket/base`,
-; but we don't have to care about that.
-
 (require '(
     arc.arc.t
     lib/app.arc.t
     lib/json.arc.t
     lib/lru-cache.arc.t
     lib/html.arc.t
-;    lib/ns.arc.t
+    lib/ns.arc.t
     lib/queue.arc.t
     lib/spliceable-list.arc.t
     lib/strings.arc.t

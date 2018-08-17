@@ -49,13 +49,20 @@
 ; command is compiled using 'compile-allow-set!-undefined. See
 ; 'arc-exec in ac.rkt for more details about how this helps.
 
+; TODO: We may want to consider a substantial redesign of this library
+; so that we don't bother manipulating a module's internal namespace
+; (using Racket's `module->namespace`) so much as we get and set its
+; *exported* names. Then again, if we make an empty namespace and have
+; it require a module, then we do end up with a namespace that
+; contains only the module's exported names.
+
 ($:require
   (only-in racket/base
     local-require
     make-derived-parameter
     namespace-anchor?
     namespace-anchor->empty-namespace)
-  (only-in "lib/ns.rkt"
+  (only-in "lib/ns-legend.rkt"
     bare-bones--app
     bare-bones--datum
     bare-bones--define-customvar
@@ -63,7 +70,7 @@
     bare-bones--provide
     bare-bones--require))
 ; This module also "requires" that the module
-; (submod "lib/ns.rkt" bare-bones) exist.
+; (submod "lib/ns-bare-bones.rkt" bare-bones) exist.
 
 
 (defextend type (x) $.namespace?.x
@@ -210,26 +217,26 @@
   rmodule)
 
 (def embed-ns/bare-bones (result)
-  " Makes a `(submod \"lib/ns.rkt\" bare-bones)' expression out of the
-    literal value `result' by embedding it inside a procedure call.
-    This is necessary so that Racket doesn't translate it into
-    immutable syntax and back. "
+  " Makes a `(submod \"lib/ns-bare-bones.rkt\" bare-bones)' expression
+    out of the literal value `result' by embedding it inside a
+    procedure call. This is necessary so that Racket doesn't translate
+    it into immutable syntax and back. "
   ($.list $.bare-bones--app
     (cons $.bare-bones--datum (fn () result))))
 
 (def make-bare-bones-rmodule (racket-module-body)
   " Makes a Racket module based on
-    `(submod \"lib/ns.rkt\" bare-bones)' and the given Racket list of
-    top-level module expressions. We create the module by evaluating a
-    Racket `(module ...) form in the main namespace of Arc. The
-    resulting module will have a gensym for a name (even if Racket's
-    `current-module-declare-name' would have overridden that), and
-    Racket's `compile-enforce-module-constants' parameter will be `#f'
-    while the module is being compiled, so that its module-level
-    variables can be redefined or assigned to later on. "
+    `(submod \"lib/ns-bare-bones.rkt\" bare-bones)' and the given
+    Racket list of top-level module expressions. We create the module
+    by evaluating a Racket `(module ...) form in the main namespace of
+    Arc. The resulting module will have a gensym for a name (even if
+    Racket's `current-module-declare-name' would have overridden
+    that), and Racket's `compile-enforce-module-constants' parameter
+    will be `#f' while the module is being compiled, so that its
+    module-level variables can be redefined or assigned to later on. "
   (let name uniq.anon-module-prefix*
     (let expr ($.list 'module name
-                ($.list 'submod "lib/ns.rkt" 'bare-bones)
+                ($.list 'submod "lib/ns-bare-bones.rkt" 'bare-bones)
                 (cons $.bare-bones--plain-module-begin
                   racket-module-body))
       (w/current-ns (anchor-ns)
