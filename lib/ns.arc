@@ -209,9 +209,9 @@
 
 (def instantiate-rmodule (rmodule)
   " Instantiates a Racket module by first delving into its internal
-    Arc as a combination of a module path and an example namespace
-    which has the module attached on that path, and then requiring
-    that path in that namespace. "
+    Arc representation (a combination of a module path and an example
+    namespace which has the module attached on that path), and then
+    requiring that path in that namespace. "
   (let (rns path) (rep rmodulify.rmodule)
     (w/current-rns rns ($.dynamic-require path ($.void))))
   rmodule)
@@ -250,14 +250,14 @@
 (def make-simple-rmodule binds
   (make-bare-bones-rmodule:ac-denil:mappend
     (fn ((var val))
-      (let box $.box.val
-        `((,$.bare-bones--define-customvar ,var
+      (with (box $.box.val g-var (uniq))
+        `((,$.bare-bones--define-customvar ,g-var
             ,(embed-ns/bare-bones:fn () $.unbox.box)
             ,(embed-ns/bare-bones
                ; NOTE: We would use [] syntax, but that would try to
                ; ssexpand 'set-box!.
                (fn (val) (($ set-box!) box val))))
-          (,$.bare-bones--provide ,var))))
+          (,$.bare-bones--provide (rename ,g-var ,var)))))
     pair.binds))
 
 (def make-simple-module binds
@@ -285,9 +285,24 @@
                rmodule-keys.rmodule)))))
 
 
+; NOTE:
+;
+; Racket provides a procedure called `module->namespace`, which
+; obtains the namespace the module's own top-level expressions were
+; evaluated against. That namespace is full of implementation details
+; of the module, like its imported variables, its intermediate
+; variables, and the internal names of variables that it exported
+; under other names.
+;
+; It seems like if we want to coerce a module to a namespace, then
+; what we actually want, most of the time, is a namespace which
+; contains nothing but the module's *exports*, filed under the names
+; they were exported by. So that's what we make here.
+;
 (defextend rnsify (x) (isa x 'rmodule)
   (let (rns path) (rep instantiate-rmodule.x)
-    (w/current-rns rns $.module->namespace.path)))
+    (ret result (anchor-empty-rns)
+      (w/current-rns result ($.namespace-require path)))))
 
 (defextend nsify (x) (isa x 'module)
   (ns-racketarc:rnsify module-arcracket.x))

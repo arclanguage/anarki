@@ -24,7 +24,17 @@
 (define-syntax (define-gensym stx)
   (syntax-case stx ()
     [ (_ racket-name provided-name)
-      (let ([g (gensym (syntax-e #'racket-name))])
+      ; TODO: We're no longer using actual gensyms here because they
+      ; weren't working with Racket 7.0, and it seems likely that
+      ; gensym exports/imports are not a stable supported feature of
+      ; Racket (https://github.com/racket/racket/issues/2133).
+      ; Instead, we're using gensyms for the module's internal
+      ; definitions in ns.arc's `make-simple-rmodule` and then
+      ; renaming them for export. Now that this is our approach, let's
+      ; get rid of the "bare-bones" approach altogether and just
+      ; generate `racket/base` modules instead.
+;      (let ([g (gensym (syntax-e #'racket-name))])
+      (let ([g (syntax-e #'racket-name)])
         (set! bare-bones-exports
           (cons #`(racket-name #,g)
             bare-bones-exports))
