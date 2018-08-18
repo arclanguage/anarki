@@ -49,13 +49,6 @@
 ; command is compiled using 'compile-allow-set!-undefined. See
 ; 'arc-exec in ac.rkt for more details about how this helps.
 
-; TODO: We may want to consider a substantial redesign of this library
-; so that we don't bother manipulating a module's internal namespace
-; (using Racket's `module->namespace`) so much as we get and set its
-; *exported* names. Then again, if we make an empty namespace and have
-; it require a module, then we do end up with a namespace that
-; contains only the module's exported names.
-
 
 (defextend type (x) $.namespace?.x
   'rns)
