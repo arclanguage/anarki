@@ -56,22 +56,6 @@
 ; it require a module, then we do end up with a namespace that
 ; contains only the module's exported names.
 
-($:require
-  (only-in racket/base
-    local-require
-    make-derived-parameter
-    namespace-anchor?
-    namespace-anchor->empty-namespace)
-  (only-in "lib/ns-legend.rkt"
-    bare-bones--app
-    bare-bones--datum
-    bare-bones--define-customvar
-    bare-bones--plain-module-begin
-    bare-bones--provide
-    bare-bones--require))
-; This module also "requires" that the module
-; (submod "lib/ns-bare-bones.rkt" bare-bones) exist.
-
 
 (defextend type (x) $.namespace?.x
   'rns)
@@ -217,16 +201,14 @@
   rmodule)
 
 (def embed-ns/bare-bones (result)
-  " Makes a `(submod \"lib/ns-bare-bones.rkt\" bare-bones)' expression
-    out of the literal value `result' by embedding it inside a
-    procedure call. This is necessary so that Racket doesn't translate
-    it into immutable syntax and back. "
-  ($.list $.bare-bones--app
-    (cons $.bare-bones--datum (fn () result))))
+  " Makes a `\"lib/ns.rkt\"` expression out of the literal value
+    `result' by embedding it inside a procedure call. This is
+    necessary so that Racket doesn't translate it into immutable
+    syntax and back. "
+  ($.list '#%app (cons '#%datum (fn () result))))
 
 (def make-bare-bones-rmodule (racket-module-body)
-  " Makes a Racket module based on
-    `(submod \"lib/ns-bare-bones.rkt\" bare-bones)' and the given
+  " Makes a Racket module based on `\"lib/ns.rkt\"` and the given
     Racket list of top-level module expressions. We create the module
     by evaluating a Racket `(module ...) form in the main namespace of
     Arc. The resulting module will have a gensym for a name (even if
@@ -235,9 +217,8 @@
     will be `#f' while the module is being compiled, so that its
     module-level variables can be redefined or assigned to later on. "
   (let name uniq.anon-module-prefix*
-    (let expr ($.list 'module name
-                ($.list 'submod "lib/ns-bare-bones.rkt" 'bare-bones)
-                (cons $.bare-bones--plain-module-begin
+    (let expr ($.list 'module name "lib/ns.rkt"
+                (cons '#%plain-module-begin
                   racket-module-body))
       (w/current-ns (anchor-ns)
         (let compiled (parameterize
@@ -251,13 +232,13 @@
   (make-bare-bones-rmodule:ac-denil:mappend
     (fn ((var val))
       (with (box $.box.val g-var (uniq))
-        `((,$.bare-bones--define-customvar ,g-var
+        `((define-customvar ,g-var
             ,(embed-ns/bare-bones:fn () $.unbox.box)
             ,(embed-ns/bare-bones
                ; NOTE: We would use [] syntax, but that would try to
                ; ssexpand 'set-box!.
                (fn (val) (($ set-box!) box val))))
-          (,$.bare-bones--provide (rename ,g-var ,var)))))
+          (#%provide (rename ,g-var ,var)))))
     pair.binds))
 
 (def make-simple-module binds
@@ -273,15 +254,15 @@
 (def make-sub-rmodule (rmodule var-test)
   (let (rns path) (rep rmodulify.rmodule)
     (make-bare-bones-rmodule:ac-denil
-      `((,$.bare-bones--require ,path)
-        ,@(map [do `(,$.bare-bones--provide ,_)]
+      `((#%require ,path)
+        ,@(map [do `(#%provide ,_)]
                (keep var-test rmodule-keys.rmodule))))))
 
 (def make-renaming-rmodule (rmodule renamer)
   (let (rns path) (rep rmodulify.rmodule)
     (make-bare-bones-rmodule:ac-denil
-      `((,$.bare-bones--require ,path)
-        ,@(map [do `(,$.bare-bones--provide (rename ,_ ,renamer._))]
+      `((#%require ,path)
+        ,@(map [do `(#%provide (rename ,_ ,renamer._))]
                rmodule-keys.rmodule)))))
 
 
