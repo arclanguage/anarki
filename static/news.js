@@ -7,9 +7,11 @@ function vote(node) {
   var item = v[1];
 
   // adjust score
-  var score = byId('score_' + item);
-  var newscore = parseInt(score.innerHTML) + (v[0] == 'up' ? 1 : -1);
-  score.innerHTML = newscore + (newscore == 1 ? ' point' : ' points');
+  try{
+    var score = byId('score_' + item);
+    var newscore = parseInt(score.innerHTML) + (v[0] == 'up' ? 1 : -1);
+    score.innerHTML = newscore + (newscore == 1 ? ' point' : ' points');
+  } catch(err) {} //ignore
 
   // hide arrows
   byId('up_'   + item).style.visibility = 'hidden';
