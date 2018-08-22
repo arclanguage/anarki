@@ -1,8 +1,8 @@
 (require 'lib/app.arc)
 
-(= this-site*    "My Forum"
+(= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
-   parent-url*   "http://www.example.com"
+   parent-url*   "http://github.com/arclanguage/anarki"
 ;  favicon-url*  "favicon.ico"
    ; Page Layout
    up-url*       "grayarrow.gif" 
@@ -477,8 +477,7 @@
        (link "faq")
        (link "lists")
        (link "rss")
-       (link "bookmarklet")
-       (link "anarki" "http://github.com/arclanguage/anarki"))))
+       (link "bookmarklet"))))
 
 (def color-stripe (c)
   (tag (table width "100%" cellspacing 0 cellpadding 1)
@@ -536,6 +535,7 @@
   (spacerow 10))
 
 (def gen-logo ()
+  (tag (link rel "icon" href logo-url*))
   (tag (td style "width:18px;padding-right:4px")
     (tag (a href parent-url*)
       (tag (img src logo-url* alt 'a width 18 height 18
