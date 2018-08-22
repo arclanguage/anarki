@@ -1052,18 +1052,23 @@
 
 (def itemline (i user)
   (when (cansee user i)
-    (when (news-type i) (itemscore i user))
+    (when
+      (or (astory i)
+          (apoll i)
+          (author user i))
+      (itemscore i user))
     (byline i user)))
 
 (def itemscore (i (o user))
   (tag (span id (+ "score_" i!id))
     (pr (plural (if (is i!type 'pollopt) (realscore i) i!score)
                 "point")))
+    (if (isnt i!type 'pollopt)
+        (pr " by "))
   (hook 'itemscore i user))
 
 (def byline (i user)
-  (pr bar*
-      (tostring
+  (pr (tostring
         (userlink user i!by) (sp)
         (permalink i user (text-age:item-age i)))))
 
