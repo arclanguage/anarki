@@ -1,6 +1,6 @@
 #!/bin/bash
 
 #change to the directory of the script
-cd $(dirname "$0")
+#cd $(dirname "$0")
 
-./arc.sh -i lib/run-news.arc
+../../arc.sh -i ./run-news.arc

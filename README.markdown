@@ -14,6 +14,7 @@ First [install **Racket** (v6.11 or later)](http://racket-lang.org), then
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
     $ ./arc.sh    # start the interactive repl
+    $cd apps/news
     $ ./run-news  # or start News (also with the repl)
 
 ### Tutorial
@@ -39,7 +40,7 @@ If you run into trouble, check
 
 To run **News**, first pick your (the admin's) username,
 
-    $ cd anarki
+    $ cd anarki/apps/news
     $ mkdir www
     $ echo __username__ > www/admins
 
@@ -67,9 +68,9 @@ create the account for your username. You should now be logged in as an admin.
 
 ### Customization
 
-To customize **News**, change the variables at the top of `lib/news.arc`. To change the port your server runs at, modify `lib/run-news.arc`.
+To customize **News**, change the variables at the top of `apps/news/news.arc`. To change the port your server runs at, modify `apps/news/run-news.arc`.
 
-Any interactive changes to the prompt will be reflected immediately in the server, without needing to restart it. Hence if you make any changes to `lib/news.arc`, you can load them, by typing `(load "lib/news.arc")` in the repl. If you stop the server or it dies for some reason, previously entered commands are available in the command history (at least if you have **Readline** installed).
+Any interactive changes to the prompt will be reflected immediately in the server, without needing to restart it. Hence if you make any changes to `apps/news/news.arc`, you can load them, by typing `(load "apps/news/news.arc")` in the repl. If you stop the server or it dies for some reason, previously entered commands are available in the command history (at least if you have **Readline** installed).
 
 
 ### HTTPS

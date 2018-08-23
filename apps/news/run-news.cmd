@@ -1,6 +1,6 @@
 @ECHO OFF
 SETLOCAL ENABLEEXTENSIONS
 
-arc -i lib\run-news.arc
+../../arc.cmd -i ./run-news.arc
 
 ENDLOCAL
