@@ -2,7 +2,7 @@
 (require 'unit-test.arc/unit-test.arc)
 
 ; ensure that all News libs are loaded
-(require 'lib/news.arc)
+(require 'apps/news/news.arc)
 
 ; tests currently rely on atstrings
 ; TODO: minimally turn on atstrings once unit-test.arc has support for suite
