@@ -3,7 +3,7 @@
 
 ;(= appdir* (+ srvdir* "apps/"))
 
-(= appdir* (qualified-path (string (pwd) "/apps/")))
+(= appdir* (qualified-path (+ srvdir* "../../apps/")))
 
 (defop prompt req
   (let user (get-user req)
