@@ -1,6 +1,9 @@
 ; Prompt: Web-based programming application.  4 Aug 06.
+(require 'lib/files.arc)
 
-(= appdir* (+ srvdir* "apps/"))
+;(= appdir* (+ srvdir* "apps/"))
+
+(= appdir* (qualified-path (+ srvdir* "../../apps/")))
 
 (defop prompt req
   (let user (get-user req)

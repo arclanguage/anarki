@@ -3,6 +3,7 @@
  search.arc ; search bar
  events.arc ; event calendar
  blog.arc   ; community blogging
+ lib/prompt.arc
 ))
 
 (thread (nsv 8080)) ; run in a thread so repl remains usable
