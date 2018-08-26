@@ -114,16 +114,26 @@ script:
   - raco test --drdr --package anarki
 
 
-  # We run the unit tests. While doing so, we disable rlwrap using
-  # `-n`.
+  # We run the unit tests and try to build the HTML help. While doing
+  # so, we disable rlwrap using `-n`.
   #
   # Note that at this point, we have already installed any necessary
   # Racket package dependencies using the `raco pkg install` command
   # above.
   #
-  - ./arc.sh -n tests.arc
+  # Running build-web-help.arc actually runs test.arc too, so we don't
+  # need to do both.
+  #
+#  - ./arc.sh -n test.arc
+  - ./arc.sh -n build-web-help.arc
 
 
 after_success:
-  # TODO: Automatically build and deploy the arcfn docs using
-  # https://github.com/arclanguage/arclanguage.github.io/blob/master/_ref/generate.sh
+  # TODO: We've generated some HTML with build-web-help.arc. Commit
+  # this to either the `gh-pages` branch or the
+  # `arclanguage/arclanguage.github.io` repo's `master` branch so that
+  # GitHub pages will serve it up. For now, at least we've tested that
+  # there are no errors building it.
+  #
+  # TODO: Once Anarki's HTML help is online, link to it from the
+  # `arclanguage/arclanguage.github.io` website.
