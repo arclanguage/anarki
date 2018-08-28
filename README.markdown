@@ -19,7 +19,7 @@ First [install **Racket** (v6.11 or later)](http://racket-lang.org), then
 
 ### Tutorial
 
-If you're new to **Arc**, or **Lisp** in general, a good starting point is the [**Arc Language Tutorial**](http://www.arclanguage.org/tut.txt).
+If you're new to **Arc**, or **Lisp** in general, a good starting point is the [**Tutorial**](https://arclanguage.github.io/tut-anarki.html).
 
 
 ### Documentation and help
