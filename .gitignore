@@ -9,6 +9,9 @@ apps/*/logs
 # accident.
 /unit-test.arc/
 
+# The build-web-help.arc script generates this directory.
+/build-gh-pages/
+
 # When `raco setup --package anarki` builds documentation, it goes
 # here.
 /doc/
