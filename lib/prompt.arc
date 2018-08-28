@@ -1,19 +1,25 @@
 ; Prompt: Web-based programming application.  4 Aug 06.
-(require 'lib/files.arc)
+(require '(
+  lib/files.arc
+  lib/srv.arc))
 
 ;(= appdir* (+ srvdir* "apps/"))
 
 (= appdir* (qualified-path (+ srvdir* "../../apps/")))
 
+; TODO: return a proper 404 error if no admin user
+; this might be a problem in general with routes
+; that exist, but can't resolve
 (defop prompt req
   (let user (get-user req)
     (if (admin user)
       (prompt-page user)
-      (pr "Sorry."))))
+        (pr "Unknown"))))
 
 (def prompt-page (user . msg)
   (ensure-dir appdir*)
   (ensure-dir (string appdir* user))
+;  (ensure-dir (string appdir* "public"))
   (whitepage
     (prbold "Prompt")
     (sp)
@@ -22,6 +28,7 @@
     (link "logout")
     (when msg (hspace 10) (apply pr msg))
     (br2)
+    
     (tag (table border 0 cellspacing 10)
       (each app (dir (+ appdir* user))
         (tr (td app)
@@ -97,10 +104,17 @@
 (defop repl req
   (if (admin (get-user req))
     (replpage req)
-    (pr "Sorry.")))
+    (pr "Unknown")))
 
+; user doesn't actually work here
 (def replpage (req)
   (whitepage
+  (prbold "Prompt")
+    (sp)
+    (hspace 20)
+;   (pr user " | ")
+    (link "logout")
+    (br2)
     (repl (readall (or (arg req "expr") "")) "repl")))
 
 (def repl (exprs url)
