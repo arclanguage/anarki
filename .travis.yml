@@ -129,11 +129,7 @@ script:
 
 
 after_success:
-  # TODO: We've generated some HTML with build-web-help.arc. Commit
-  # this to either the `gh-pages` branch or the
-  # `arclanguage/arclanguage.github.io` repo's `master` branch so that
-  # GitHub pages will serve it up. For now, at least we've tested that
-  # there are no errors building it.
-  #
-  # TODO: Once Anarki's HTML help is online, link to it from the
-  # `arclanguage/arclanguage.github.io` website.
+  # We commit the HTML help to the `gh-pages` branch. This script will
+  # stop early if it wasn't initiated by a commit to the `master`
+  # branch.
+  - ./deploy-to-gh-pages.sh
