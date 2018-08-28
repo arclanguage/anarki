@@ -24,9 +24,9 @@ git checkout gh-pages || git checkout --orphan gh-pages
 # We replace all the files with the contents of the
 # build-gh-pages/site/ directory, plus a short readme. We stage all
 # the files for a commit.
-git rm -r .
+git rm -rf .
 cp -r ../site/* .
-echo 'This branch is automatically generated and deployed. See the scripts .travis.yml and deploy-to-gh-pages.sh on the Anarki `master` branch.' > README.md
+echo 'This `gh-pages` branch is generated and deployed automatically when commits are made to the Anarki `master` branch. See the scripts .travis.yml and deploy-to-gh-pages.sh on `master`.' > README.md
 git add .
 
 # We make a commit to the `gh-pages` branch that looks a lot like the
