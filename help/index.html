@@ -1,0 +1,1046 @@
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8" /><title>Anarki Reference Documentation</title><style type="text/css">
+            body {
+              margin: 0;
+              font-family: sans-serif;
+              background: #336699;
+            }
+            .intro {
+              padding: 33px;
+              background: white;
+            }
+            .intro > h1 {
+              margin-top: 0;
+            }
+            .unstable {
+              width: 100%;
+              border-top: 1px solid black;
+              border-bottom: 1px solid black;
+              padding: 5px 0;
+
+              text-align: center;
+              white-space: nowrap;
+              overflow: hidden;
+
+              font-size: 1.4em;
+              font-weight: bold;
+
+              background: #993333;
+              color: white;
+            }
+            
+            .unstable::after {
+              content:
+                "UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE ⚠️ UNSTABLE";
+              margin: 0 -50%;
+            }
+            .help-entry {
+              margin: 20px;
+              border: 3px solid black;
+              padding: 10px;
+              background: white;
+            }
+            .help-entry > .type-and-sig {
+              font-size: 1.7em;
+            }
+            .help-entry > .docstring-and-examples {
+              font-size: 1.2em;
+            }
+            .help-entry .broken-link {
+              background: #FFCCCC;
+            }
+            </style><body><div class="intro"><h1>Anarki Reference Documentation</h1><p>All this functionality is subject to change! You're welcome to edit it with us <a href="https://github.com/arclanguage/anarki">on GitHub</a>, or you can open a GitHub issue or an <a href="http://arclanguage.org/forum">Arc Forum</a> thread for some help! We count on contributions like yours to make Anarki better.</p><p>Since others are welcome to do the same thing, watch out for changes in this space.</p></div><div class="unstable"></div><div class="help-entry"><a href="#$" name="$"></a><pre class="type-and-sig">[sym] ($ expr)</pre><pre class="docstring-and-examples">Evaluates 'expr' using the underlying Racket implementation.</pre></div><div class="help-entry"><a href="#++" name="++"></a><pre class="type-and-sig">[mac] (++ place (o i 1))</pre><pre class="docstring-and-examples">Increments 'place' by 'i' (1 by default).</pre></div><div class="help-entry"><a href="#--" name="--"></a><pre class="type-and-sig">[mac] (-- place (o i 1))</pre><pre class="docstring-and-examples">Decrements 'place' by 'i' (1 by default).</pre></div><div class="help-entry"><a href="#<=" name="<="></a><pre class="type-and-sig">[fn]  (&#60;= . args)</pre><pre class="docstring-and-examples">Is each element of 'args' lesser than or equal to all following elements?</pre></div><div class="help-entry"><a href="#=" name="="></a><pre class="type-and-sig">[mac] (= . args)</pre><pre class="docstring-and-examples">(= var val) saves 'val' in 'var'.
+(= var1 val1 var2 val2) saves 'val's in corresponding 'var's.
+'var's can be complex expressions like (car x), and so on. See <span class="broken-link">defset</span>.
+When you run multiple threads at once, only one will ever be modifying a variable at once.
+See <a href="#atomic">atomic</a>.
+
+Examples:
+  arc&#62; (= x 1)
+  arc&#62; (= x 2 y 4)</pre></div><div class="help-entry"><a href="#>=" name=">="></a><pre class="type-and-sig">[fn]  (&#62;= . args)</pre><pre class="docstring-and-examples">Is each element of 'args' greater than or equal to all following elements?</pre></div><div class="help-entry"><a href="#aand" name="aand"></a><pre class="type-and-sig">[mac] (aand . args)</pre><pre class="docstring-and-examples">Like <a href="#and">and</a>, but each expression in 'args' can access the result of the
+previous one in variable 'it'.
+
+Examples:
+  arc&#62; (aand 
+         1
+         (+ it 2)
+         (* it 10))
+  30</pre></div><div class="help-entry"><a href="#abs" name="abs"></a><pre class="type-and-sig">[fn]  (abs n)</pre><pre class="docstring-and-examples">Returns the absolute value of 'n'.</pre></div><div class="help-entry"><a href="#accum" name="accum"></a><pre class="type-and-sig">[mac] (accum accfn . body)</pre><pre class="docstring-and-examples">Runs 'body' (usually containing a loop) and then returns in order all the
+values that were called with 'accfn' in the process.
+Can be cleaner than map for complex anonymous functions.
+
+Examples:
+  arc&#62; (accum accfn
+         (each x '(1 2 3)
+           (accfn (* x 10))))
+  (10 20 30)
+  arc&#62; (accum yield
+         (each x "abcd"
+           (yield x)))
+  (a b c d)</pre></div><div class="help-entry"><a href="#acheck" name="acheck"></a><pre class="type-and-sig">[mac] (acheck x test (o alt))</pre><pre class="docstring-and-examples">Like <a href="#check">check</a>, but 'alt' can refer to the value of expr 'x' as 'it.
+Pronounced 'anaphoric check'.</pre></div><div class="help-entry"><a href="#acons" name="acons"></a><pre class="type-and-sig">[fn]  (acons x)</pre><pre class="docstring-and-examples">Is 'x' a non-nil list?</pre></div><div class="help-entry"><a href="#add-suites-to-suite" name="add-suites-to-suite"></a><pre class="type-and-sig">[mac] (add-suites-to-suite full-suite-name cur-suite-sexp suites-sexps)</pre><pre class="docstring-and-examples">Add the first suite from SUITES-SEXPS to CUR-SUITE-SEXP.
+FULL-SUITE-NAME is the unquoted name of the suite.</pre></div><div class="help-entry"><a href="#add-tests-to-suite" name="add-tests-to-suite"></a><pre class="type-and-sig">[mac] (add-tests-to-suite cur-suite-sexp full-suite-name setup tests-sexps)</pre><pre class="docstring-and-examples">Add tests to CUR-SUITE-SEXP, with setup SETUP. Tests come from TESTS-SEXPS.
+
+SETUP is a list of var val pairs, like (x 1) or (age 31 height 70).
+Don't quote FULL-SUITE-NAME.</pre></div><div class="help-entry"><a href="#admin" name="admin"></a><pre class="type-and-sig">[fn]  (admin u)</pre><pre class="docstring-and-examples">Does user 'u' possess administrator privileges for the site?</pre></div><div class="help-entry"><a href="#ado" name="ado"></a><pre class="type-and-sig">[mac] (ado . body)</pre><pre class="docstring-and-examples">Anaphoric do. Each expr in the body is available to the next.
+    See also <a href="#aif">aif</a> <a href="#awhen">awhen</a> <a href="#aand">aand</a> <a href="#ado1">ado1</a></pre></div><div class="help-entry"><a href="#ado1" name="ado1"></a><pre class="type-and-sig">[mac] (ado1 . args)</pre><pre class="docstring-and-examples">Anaphoric ado1. First expr is available to the rest and also returned.
+    See also <a href="#aif">aif</a> <a href="#awhen">awhen</a> <a href="#aand">aand</a> <a href="#ado">ado</a></pre></div><div class="help-entry"><a href="#afn" name="afn"></a><pre class="type-and-sig">[mac] (afn parms . body)</pre><pre class="docstring-and-examples">Like <a href="#fn">fn</a> and <a href="#rfn">rfn</a> but the created function can call itself as 'self'
+
+Examples:
+  arc&#62; ((afn (x)
+          (if (is x 0)
+            1
+            (* 2
+               (self (- x 1)))))
+        5)
+  32</pre></div><div class="help-entry"><a href="#after" name="after"></a><pre class="type-and-sig">[mac] (after x . ys)</pre><pre class="docstring-and-examples">Runs all 'ys' after 'x', even if 'x' throws an error.
+Returns result of 'x' on success, and nothing on error.</pre></div><div class="help-entry"><a href="#aif" name="aif"></a><pre class="type-and-sig">[mac] (aif expr . branches)</pre><pre class="docstring-and-examples">Like <a href="#if">if</a>, but also puts the value of 'expr' in variable 'it'.
+
+Examples:
+  arc&#62; (aif (&#62; 1 2)
+              (+ it 1)
+            42
+              (+ it 2))
+  44
+  arc&#62; (let h (obj a 1)
+         (aif h!a (+ it 1)))
+  2</pre></div><div class="help-entry"><a href="#aint" name="aint"></a><pre class="type-and-sig">[fn]  (aint x)</pre><pre class="docstring-and-examples">`t' iff `x' is an int.</pre></div><div class="help-entry"><a href="#alist" name="alist"></a><pre class="type-and-sig">[fn]  (alist x)</pre><pre class="docstring-and-examples">Is 'x' a (possibly empty) list?</pre></div><div class="help-entry"><a href="#all" name="all"></a><pre class="type-and-sig">[fn]  (all test seq)</pre><pre class="docstring-and-examples">Does every element of 'seq' satisfy 'test'?</pre></div><div class="help-entry"><a href="#allchars" name="allchars"></a><pre class="type-and-sig">[fn]  (allchars str)</pre><pre class="docstring-and-examples">Outputs all characters in a stream.</pre></div><div class="help-entry"><a href="#alphadig" name="alphadig"></a><pre class="type-and-sig">[fn]  (alphadig c)</pre><pre class="docstring-and-examples">Is 'c' a latter or a digit?</pre></div><div class="help-entry"><a href="#alref" name="alref"></a><pre class="type-and-sig">[fn]  (alref al key)</pre><pre class="docstring-and-examples">Returns the value of 'key' in an association list 'al' of (key value) pairs</pre></div><div class="help-entry"><a href="#and" name="and"></a><pre class="type-and-sig">[mac] (and . args)</pre><pre class="docstring-and-examples">Stops at the first argument to fail (return nil). Returns the last argument before stopping.</pre></div><div class="help-entry"><a href="#andf" name="andf"></a><pre class="type-and-sig">[fn]  (andf . fns)</pre><pre class="docstring-and-examples">Returns a function which calls all the functions in 'fns' on its args, and
+<a href="#and">and</a>s the results. For example, ((andf f g) x y) &#60;=&#62; (and (f x y) (g x y)).
+Simple syntax: f&#38;g &#60;=&#62; (andf f g)</pre></div><div class="help-entry"><a href="#annotate" name="annotate"></a><pre class="type-and-sig">[fn]  (annotate tag . val)</pre><pre class="docstring-and-examples">Creates a user-defined tagged type containing 'val'. See also <a href="#type">type</a> and <a href="#rep">rep</a>.</pre></div><div class="help-entry"><a href="#anum" name="anum"></a><pre class="type-and-sig">[fn]  (anum x)</pre><pre class="docstring-and-examples">`t' iff `x' is a num. Note that ints are not nums.</pre></div><div class="help-entry"><a href="#applied" name="applied"></a><pre class="type-and-sig">[fn]  (applied f)</pre><pre class="docstring-and-examples">Returns a fn that calls `f' on the list of its arguments.
+    For example, 'max is equivalent to `(applied [best &#62; _])'.</pre></div><div class="help-entry"><a href="#apply" name="apply"></a><pre class="type-and-sig">[fn]  (apply f . args)</pre><pre class="docstring-and-examples">(apply f '(1 2 3)) &#60;=&#62; (f 1 2 3)
+(apply f x y '(z w)) &#60;=&#62; (f x y z w)</pre></div><div class="help-entry"><a href="#as" name="as"></a><pre class="type-and-sig">[mac] (as type expr)</pre><pre class="docstring-and-examples">Tries to convert 'expr' into a different 'type'.
+More convenient form of <a href="#coerce">coerce</a> with arguments reversed; doesn't need
+'type' to be quoted.</pre></div><div class="help-entry"><a href="#assert" name="assert"></a><pre class="type-and-sig">[mac] (assert exp (o msg (+ "Assertion failed: " (tostring:ppr-main exp (len "Assertion failed: ") t))))</pre><pre class="docstring-and-examples">Errors with `msg' if `exp' evaluates to nil.</pre></div><div class="help-entry"><a href="#asserts" name="asserts"></a><pre class="type-and-sig">[mac] (asserts . args)</pre><pre class="docstring-and-examples">Asserts each expr in `args', with the default error message.</pre></div><div class="help-entry"><a href="#assign" name="assign"></a><pre class="type-and-sig">[sym] (assign x y)</pre><pre class="docstring-and-examples">Set variable 'x' to value 'y'.
+
+Examples:
+  arc&#62; (assign x 10)</pre></div><div class="help-entry"><a href="#assoc" name="assoc"></a><pre class="type-and-sig">[fn]  (assoc key al)</pre><pre class="docstring-and-examples">Finds a (key value) pair in an association list 'al' of such pairs.</pre></div><div class="help-entry"><a href="#astring" name="astring"></a><pre class="type-and-sig">[fn]  (astring x)</pre><pre class="docstring-and-examples">`t' iff `x' is a string.</pre></div><div class="help-entry"><a href="#asym" name="asym"></a><pre class="type-and-sig">[fn]  (asym x)</pre><pre class="docstring-and-examples">`t' iff `x' is a symbol.</pre></div><div class="help-entry"><a href="#atable" name="atable"></a><pre class="type-and-sig">[fn]  (atable x)</pre><pre class="docstring-and-examples">`t' iff `x' is a table.</pre></div><div class="help-entry"><a href="#atend" name="atend"></a><pre class="type-and-sig">[fn]  (atend i s)</pre><pre class="docstring-and-examples">Is index 'i' at or past the end of sequence 's'?</pre></div><div class="help-entry"><a href="#atlet" name="atlet"></a><pre class="type-and-sig">[mac] (atlet . args)</pre><pre class="docstring-and-examples">Like <a href="#let">let</a>, but <a href="#atomic">atomic</a>.</pre></div><div class="help-entry"><a href="#atom" name="atom"></a><pre class="type-and-sig">[fn]  (atom x)</pre><pre class="docstring-and-examples">Is 'x' a simple type? (i.e. not list, table or user-defined)</pre></div><div class="help-entry"><a href="#atomic" name="atomic"></a><pre class="type-and-sig">[mac] (atomic . body)</pre><pre class="docstring-and-examples">Runs expressions in 'body' with exclusive access to system resources.
+Currently invoked for you anytime you modify a variable. This can slow things down, but
+prevents multiple threads of execution from stepping on each other's toes by, say,
+writing to a variable at the same time.</pre></div><div class="help-entry"><a href="#atwith" name="atwith"></a><pre class="type-and-sig">[mac] (atwith . args)</pre><pre class="docstring-and-examples">Like <a href="#with">with</a>, but <a href="#atomic">atomic</a>.</pre></div><div class="help-entry"><a href="#atwiths" name="atwiths"></a><pre class="type-and-sig">[mac] (atwiths . args)</pre><pre class="docstring-and-examples">Like <a href="#withs">withs</a>, but <a href="#atomic">atomic</a>.</pre></div><div class="help-entry"><a href="#auto" name="auto"></a><pre class="type-and-sig">[fn]  (auto exp)</pre><pre class="docstring-and-examples">Tests whether an expression should be autogensymed</pre></div><div class="help-entry"><a href="#avg" name="avg"></a><pre class="type-and-sig">[fn]  (avg ns)</pre><pre class="docstring-and-examples">Returns the arithmetic mean of a list of numbers 'ns'.</pre></div><div class="help-entry"><a href="#awhen" name="awhen"></a><pre class="type-and-sig">[mac] (awhen expr . body)</pre><pre class="docstring-and-examples">Like <a href="#when">when</a>, but also puts the value of 'expr' in variable 'it'.
+
+Examples:
+  arc&#62; (awhen (* 2 3)
+         (+ it 1))
+  7</pre></div><div class="help-entry"><a href="#before" name="before"></a><pre class="type-and-sig">[fn]  (before x y seq (o i 0))</pre><pre class="docstring-and-examples">Does 'x' lie before 'y' in 'seq' (optionally starting from index 'i')?
+
+Examples:
+  arc&#62; (before 2
+               3
+               '(1 2 3 4))
+  t
+  arc&#62; (before 2
+               1
+               '(1 2 3 4))
+  nil
+  arc&#62; (before 1
+               even
+               '(1 2 3 4))
+  t
+  arc&#62; (before #\a #\n "banana")
+  t
+  arc&#62; (before #\a #\n "banana" 2)
+  nil</pre></div><div class="help-entry"><a href="#begins" name="begins"></a><pre class="type-and-sig">[fn]  (begins seq pat (o start 0))</pre><pre class="docstring-and-examples">Like <a href="#headmatch">headmatch</a> but with 'seq' and 'pat' reversed.</pre></div><div class="help-entry"><a href="#best" name="best"></a><pre class="type-and-sig">[fn]  (best f seq)</pre><pre class="docstring-and-examples">Maximizes comparator function 'f' throughout seq.
+
+Examples:
+  arc&#62; (best &#62;
+             '(3 1 4 5 9 6))
+  9</pre></div><div class="help-entry"><a href="#bestn" name="bestn"></a><pre class="type-and-sig">[fn]  (bestn n f seq)</pre><pre class="docstring-and-examples">Returns a list of the top 'n' elements of 'seq' ordered by 'f'.
+
+Examples:
+  arc&#62; (bestn 3
+              &#62;
+              '(3 1 4 5 9 6))
+  (9 6 5)
+  arc&#62; (bestn 3
+              &#60;
+              '(3 1 4 5 9 6))
+  (1 3 4)</pre></div><div class="help-entry"><a href="#between" name="between"></a><pre class="type-and-sig">[mac] (between var expr within . body)</pre><pre class="docstring-and-examples">Like <a href="#each">each</a> but run 'within' between iterations.</pre></div><div class="help-entry"><a href="#blank" name="blank"></a><pre class="type-and-sig">[fn]  (blank s)</pre><pre class="docstring-and-examples">Is 's' empty or all whitespace?</pre></div><div class="help-entry"><a href="#blank-url" name="blank-url"></a><pre class="type-and-sig">[fn]  (blank-url)</pre><pre class="docstring-and-examples">s.gif</pre></div><div class="help-entry"><a href="#bool" name="bool"></a><pre class="type-and-sig">[fn]  (bool x)</pre><pre class="docstring-and-examples">Returns `t' if x is not nil, and `nil' otherwise.</pre></div><div class="help-entry"><a href="#bound" name="bound"></a><pre class="type-and-sig">[fn]  (bound x)</pre><pre class="docstring-and-examples">Does variable 'x' currently have a value?
+
+Examples:
+  arc&#62; (do (= y 10)
+           (bound 'y))
+  t</pre></div><div class="help-entry"><a href="#break-thread" name="break-thread"></a><pre class="type-and-sig">[fn]  (break-thread th)</pre><pre class="docstring-and-examples">Politely tries to interrupt a <a href="#thread">thread</a> of concurrently running expressions
+when it's ready to be interrupted.</pre></div><div class="help-entry"><a href="#butlast" name="butlast"></a><pre class="type-and-sig">[fn]  (butlast x)</pre><pre class="docstring-and-examples">Returns all elements of 'x' except the last.</pre></div><div class="help-entry"><a href="#caar" name="caar"></a><pre class="type-and-sig">[fn]  (caar xs)</pre><pre class="docstring-and-examples">Equivalent to (car (car xs))</pre></div><div class="help-entry"><a href="#cache" name="cache"></a><pre class="type-and-sig">[fn]  (cache timef valf)</pre><pre class="docstring-and-examples">Converts a function 'valf' into a version that saves and reuses the results
+of calls for a certain time. For greater configurability the caching time is
+determined by calling 'timef' rather than directly passing in a number.</pre></div><div class="help-entry"><a href="#cadar" name="cadar"></a><pre class="type-and-sig">[fn]  (cadar xs)</pre><pre class="docstring-and-examples">Equivalent to (car (cdar xs)).</pre></div><div class="help-entry"><a href="#cadr" name="cadr"></a><pre class="type-and-sig">[fn]  (cadr xs)</pre><pre class="docstring-and-examples">Equivalent to (car (cdr xs)). Returns the second element of the list 'xs'</pre></div><div class="help-entry"><a href="#car" name="car"></a><pre class="type-and-sig">[fn]  (car xs)</pre><pre class="docstring-and-examples">Returns the first element of list 'xs'</pre></div><div class="help-entry"><a href="#carif" name="carif"></a><pre class="type-and-sig">[fn]  (carif x)</pre><pre class="docstring-and-examples">Returns the first element of the given list 'x', or just 'x' if it isn't a list.
+
+Examples:
+  arc&#62; (carif '(1 2))
+  1
+  arc&#62; (carif 3)
+  3</pre></div><div class="help-entry"><a href="#case" name="case"></a><pre class="type-and-sig">[mac] (case expr . args)</pre><pre class="docstring-and-examples">Usage: (case expr test1 then1 test2 then2 ...)
+Matches 'expr' to the first satisfying 'test' and runs the corresponding 'then' branch.</pre></div><div class="help-entry"><a href="#caselet" name="caselet"></a><pre class="type-and-sig">[mac] (caselet var expr . args)</pre><pre class="docstring-and-examples">Like <a href="#case">case</a>, but 'expr' is also bound to 'var' and available inside the 'args'.</pre></div><div class="help-entry"><a href="#catch" name="catch"></a><pre class="type-and-sig">[mac] (catch . body)</pre><pre class="docstring-and-examples">Runs 'body', but any call to (throw x) immediately returns x.</pre></div><div class="help-entry"><a href="#cd" name="cd"></a><pre class="type-and-sig">[fn]  (cd path)</pre><pre class="docstring-and-examples">Changes the current directory.</pre></div><div class="help-entry"><a href="#cdar" name="cdar"></a><pre class="type-and-sig">[fn]  (cdar xs)</pre><pre class="docstring-and-examples">Equivalent to (cdr (car xs)).</pre></div><div class="help-entry"><a href="#cddr" name="cddr"></a><pre class="type-and-sig">[fn]  (cddr xs)</pre><pre class="docstring-and-examples">Equivalent to (cdr (cdr xs)). Returns all elements of list 'xs' but the first two.</pre></div><div class="help-entry"><a href="#cdr" name="cdr"></a><pre class="type-and-sig">[fn]  (cdr xs)</pre><pre class="docstring-and-examples">Returns all elements of list 'xs' but the first</pre></div><div class="help-entry"><a href="#check" name="check"></a><pre class="type-and-sig">[mac] (check x test (o alt))</pre><pre class="docstring-and-examples">Returns `x' if it satisfies `test', otherwise returns 'alt' (nil if it's not provided).</pre></div><div class="help-entry"><a href="#classify" name="classify"></a><pre class="type-and-sig">[fn]  (classify classifier seq)</pre><pre class="docstring-and-examples">Groups the elements of `seq' by `classifier', returning back a table,
+    whose keys are the results of `classifier' and whose values are lists
+    of the corresponding elements of `seq'. For example:
+
+      arc&#62; (classify type '(1 "foo" a 2 (b)))
+      #hash((cons . ((b))) (int . (2 1)) (string . ("foo")) (sym . (a)))
+
+    See also <a href="#partition">partition</a> <a href="#keep">keep</a> <a href="#rem">rem</a></pre></div><div class="help-entry"><a href="#coerce" name="coerce"></a><pre class="type-and-sig">[fn]  (coerce x totype . args)</pre><pre class="docstring-and-examples">Try to turn 'x' into a value of a different 'type'.</pre></div><div class="help-entry"><a href="#collect" name="collect"></a><pre class="type-and-sig">[mac] (collect expr . guards)</pre><pre class="docstring-and-examples">Creates a list of data based on a sort of 'set builder' notation.
+https://en.wikipedia.org/wiki/List_comprehension
+
+Examples:
+  arc&#62; (collect i
+         (for i from 1 to 3))
+  (1 2 3)
+  arc&#62; (collect (* i 2)
+         (for i from 1 to 3))
+  (2 4 6)
+  arc&#62; (collect (list i j)
+         (for i from 1 to 3)
+         (for j from 1 to 3)
+         (if (&#60; i j)))
+  ((1 2) (1 3) (2 3))</pre></div><div class="help-entry"><a href="#commonest" name="commonest"></a><pre class="type-and-sig">[fn]  (commonest seq)</pre><pre class="docstring-and-examples">Returns the most common element of 'seq' and the number of times it occurred
+in 'seq'.
+
+Examples:
+  arc&#62; (commonest '(b a n a n a))
+  a
+  arc&#62; (commonest nil)
+  nil</pre></div><div class="help-entry"><a href="#compare" name="compare"></a><pre class="type-and-sig">[fn]  (compare comparer scorer)</pre><pre class="docstring-and-examples">Creates a function to score two args using 'scorer' and compare them using
+'comparer'. Often passed to <a href="#sort">sort</a>.
+
+Examples:
+  arc&#62; ((compare &#60; len)
+        "yz"
+        "abc")
+  t
+  arc&#62; ((compare &#60; len)
+        '(1 2 3)
+        '(4 5))
+  nil</pre></div><div class="help-entry"><a href="#complement" name="complement"></a><pre class="type-and-sig">[fn]  (complement f)</pre><pre class="docstring-and-examples">Returns a function that behaves as if the result of calling 'f' was negated.
+For example, this is always true:
+  ((complement f) a b) &#60;=&#62; (no (f a b))</pre></div><div class="help-entry"><a href="#compose" name="compose"></a><pre class="type-and-sig">[mac] (compose . args)</pre><pre class="docstring-and-examples">Takes a list of functions and returns a function that behaves as if all its
+'args' were called in sequence.
+For example, this is always true:
+  ((compose f g h) a b c) &#60;=&#62; (f (g (h a b c))).
+Be wary of passing macros to compose.</pre></div><div class="help-entry"><a href="#cons" name="cons"></a><pre class="type-and-sig">[fn]  (cons x xs)</pre><pre class="docstring-and-examples">Returns a new list with element 'x' added to the start of list 'xs'.</pre></div><div class="help-entry"><a href="#consif" name="consif"></a><pre class="type-and-sig">[fn]  (consif x xs)</pre><pre class="docstring-and-examples">Like <a href="#cons">cons</a> on 'x' and 'xs' unless 'x' is nil.
+
+Examples:
+  arc&#62; (consif 1 '(2 3))
+  (1 2 3)
+  arc&#62; (consif nil '(2 3))
+  (2 3)</pre></div><div class="help-entry"><a href="#const" name="const"></a><pre class="type-and-sig">[fn]  (const x)</pre><pre class="docstring-and-examples">Creates a fn that takes any number of arguments and returns `x'.</pre></div><div class="help-entry"><a href="#conswhen" name="conswhen"></a><pre class="type-and-sig">[mac] (conswhen f x y)</pre><pre class="docstring-and-examples">Adds 'x' to the front of 'y' if 'x' satisfies test 'f'.
+
+Examples:
+  arc&#62; (conswhen 
+         [&#60; _ 3]
+         2
+         '(3 4))
+  (2 3 4)
+  arc&#62; (conswhen 
+         [&#60; _ 3]
+         4
+         '(5 6))
+  (5 6)</pre></div><div class="help-entry"><a href="#copy" name="copy"></a><pre class="type-and-sig">[fn]  (copy x . args)</pre><pre class="docstring-and-examples">Creates a deep copy of 'x'. Future changes to any part of 'x' are guaranteed
+to be isolated from the copy.</pre></div><div class="help-entry"><a href="#count" name="count"></a><pre class="type-and-sig">[fn]  (count test x)</pre><pre class="docstring-and-examples">Returns the number of elements of 'x' that pass 'test'.
+
+Examples:
+  arc&#62; (count #\a "banana")
+  3
+  arc&#62; (count odd
+              '(1 2 3 4))
+  2
+  arc&#62; (count odd:cadr
+              (obj a 1 b 2))
+  1</pre></div><div class="help-entry"><a href="#count-passes" name="count-passes"></a><pre class="type-and-sig">[fn]  (count-passes suite-results)</pre><pre class="docstring-and-examples">Count the total number of passed tests in SUITE-RESULTS, a list of suite-results templates.</pre></div><div class="help-entry"><a href="#counts" name="counts"></a><pre class="type-and-sig">[fn]  (counts seq)</pre><pre class="docstring-and-examples">Returns a table with counts of each unique element in 'seq'.
+
+Examples:
+  arc&#62; (counts '(b a n a n a))
+  #hash((a . 3) (b . 1) (n . 2))</pre></div><div class="help-entry"><a href="#cp" name="cp"></a><pre class="type-and-sig">[fn]  (cp src dst)</pre><pre class="docstring-and-examples">Copies the file `src' to `dst'.</pre></div><div class="help-entry"><a href="#curry" name="curry"></a><pre class="type-and-sig">[fn]  (curry f . xs)</pre><pre class="docstring-and-examples">Partially applies ("curries") `f' to `xs'.</pre></div><div class="help-entry"><a href="#cut" name="cut"></a><pre class="type-and-sig">[fn]  (cut seq start (o end))</pre><pre class="docstring-and-examples">Extract a chunk of 'seq' from index 'start' (inclusive) to 'end' (exclusive). 'end'
+can be left out or nil to indicate everything from 'start', and can be
+negative to count backwards from the end.
+
+Examples:
+  arc&#62; (cut '(a b c d e)
+            2)
+  (c d e)
+  arc&#62; (cut '(a b c d e)
+            2
+            -1)
+  (c d)
+  arc&#62; (cut "abcde" 2 4)
+  "cd"</pre></div><div class="help-entry"><a href="#date" name="date"></a><pre class="type-and-sig">[fn]  (date (o s (seconds)))</pre><pre class="docstring-and-examples">Converts time in seconds-since-epoch (now by default) into a list '(year month date).</pre></div><div class="help-entry"><a href="#datestring" name="datestring"></a><pre class="type-and-sig">[fn]  (datestring (o s (seconds)))</pre><pre class="docstring-and-examples">Converts time in seconds-since-epoch (now by default) into a string "YYYY-MM-DD".</pre></div><div class="help-entry"><a href="#dedup" name="dedup"></a><pre class="type-and-sig">[fn]  (dedup xs)</pre><pre class="docstring-and-examples">Returns list of elements in 'xs' with duplicates dropped.
+
+Examples:
+  arc&#62; (dedup '(1 2 3 2 1))
+  (1 2 3)
+  arc&#62; (dedup "abcba")
+  (a b c)</pre></div><div class="help-entry"><a href="#def" name="def"></a><pre class="type-and-sig">[mac] (def name parms . body)</pre><pre class="docstring-and-examples">Defines a new function called 'name'. When called, the function runs
+'body', parameterizing 'parms' with call arguments.
+For more information see the tutorial: http://ycombinator.com/arc/tut.txt
+Or come ask questions at http://arclanguage.org/forum</pre></div><div class="help-entry"><a href="#def-isa" name="def-isa"></a><pre class="type-and-sig">[mac] (def-isa name . body)</pre><pre class="docstring-and-examples">Declares a new predicate-based type that can be checked with 'isa'.</pre></div><div class="help-entry"><a href="#defcall" name="defcall"></a><pre class="type-and-sig">[mac] (defcall type-name parms . body)</pre><pre class="docstring-and-examples">Defines the calling function for type 'type-name.
+    See also: <a href="#defcoerce">defcoerce</a></pre></div><div class="help-entry"><a href="#defcoerce" name="defcoerce"></a><pre class="type-and-sig">[mac] (defcoerce to from parms . body)</pre><pre class="docstring-and-examples">Defines the coercion function from 'from to 'to.
+    See also: <a href="#set-coercer">set-coercer</a> <a href="#defcall">defcall</a></pre></div><div class="help-entry"><a href="#defextend" name="defextend"></a><pre class="type-and-sig">[mac] (defextend name args pred . body)</pre><pre class="docstring-and-examples">Extends an existing function to trigger only if 'pred' is non-nil.</pre></div><div class="help-entry"><a href="#defmemo" name="defmemo"></a><pre class="type-and-sig">[mac] (defmemo name parms . body)</pre><pre class="docstring-and-examples">Like <a href="#def">def</a> but defines a memoized function. See <a href="#memo">memo</a>.</pre></div><div class="help-entry"><a href="#defop" name="defop"></a><pre class="type-and-sig">[mac] (defop name parm . body)</pre><pre class="docstring-and-examples">Handles url /'name', giving 'body' access to the request in the variable
+named by 'parm'. 'body' should output the response to stdout.
+For example, to respond to a url called /hello,
+  (defop hello req
+    (prn "hello")</pre></div><div class="help-entry"><a href="#defopl" name="defopl"></a><pre class="type-and-sig">[mac] (defopl name parm . body)</pre><pre class="docstring-and-examples">Like <a href="#defop">defop</a>, but requires a logged in user.</pre></div><div class="help-entry"><a href="#defopr" name="defopr"></a><pre class="type-and-sig">[mac] (defopr name parm . body)</pre><pre class="docstring-and-examples">Like <a href="#defop">defop</a>, handles url /'name' but instead of printing response to
+stdout, returns a url to redirect requests to after processing.</pre></div><div class="help-entry"><a href="#defreq" name="defreq"></a><pre class="type-and-sig">[mac] (defreq name url (o fields) (o method "GET") (o cookies))</pre><pre class="docstring-and-examples">Defines a function 'name' that performs a HTTP request to 'url', whose query string is 'fields' with the 'values' passed 'name'.</pre></div><div class="help-entry"><a href="#deftem" name="deftem"></a><pre class="type-and-sig">[mac] (deftem tem . fields)</pre><pre class="docstring-and-examples">Defines a _template_, a table with defaults defined for various keys.
+
+Templates can be read from or written to file. See https://arclanguage.github.io/ref/template.html.
+
+When you read back a template that you wrote to a file, the results can be
+subtly different from (and hopefully better than) arc3.1. For a summary of the
+differences, compare lib/tem-report.arc3.1 and lib/tem-report.curr.</pre></div><div class="help-entry"><a href="#delay" name="delay"></a><pre class="type-and-sig">[mac] (delay expr)</pre><pre class="docstring-and-examples">delays the evaluation of expr</pre></div><div class="help-entry"><a href="#deq" name="deq"></a><pre class="type-and-sig">[fn]  (deq qq)</pre><pre class="docstring-and-examples">Delete last element from queue 'qq' and return it.</pre></div><div class="help-entry"><a href="#digit" name="digit"></a><pre class="type-and-sig">[fn]  (digit c)</pre><pre class="docstring-and-examples">Is 'c' a digit?</pre></div><div class="help-entry"><a href="#dir-tree" name="dir-tree"></a><pre class="type-and-sig">[fn]  (dir-tree path)</pre><pre class="docstring-and-examples">Returns a directory tree from the given path.</pre></div><div class="help-entry"><a href="#do" name="do"></a><pre class="type-and-sig">[mac] (do . args)</pre><pre class="docstring-and-examples">Evaluates each expression in sequence and returns the result of the
+last expression.
+
+Examples:
+  arc&#62; (do (prn "line 1")
+           (prn "line 2")
+           (prn "line 3"))</pre></div><div class="help-entry"><a href="#do-test-and-error-on-failure" name="do-test-and-error-on-failure"></a><pre class="type-and-sig">[fn]  (do-test-and-error-on-failure names)</pre><pre class="docstring-and-examples">Run the tests in NAMES, as in do-test.
+
+However, if there are any test failures, throw an error.
+This is intended for use in scripts, where the exit code
+from racket is needed to tell if all tests passed or not</pre></div><div class="help-entry"><a href="#do1" name="do1"></a><pre class="type-and-sig">[mac] (do1 . args)</pre><pre class="docstring-and-examples">Like <a href="#do">do</a>, but returns the value of the first arg rather than the last.</pre></div><div class="help-entry"><a href="#dol" name="dol"></a><pre class="type-and-sig">[mac] (dol parms (test result) . body)</pre><pre class="docstring-and-examples">Like the standard lisp/scheme do loop, but with redundant inner parens
+    removed.</pre></div><div class="help-entry"><a href="#dotted" name="dotted"></a><pre class="type-and-sig">[fn]  (dotted x)</pre><pre class="docstring-and-examples">Is 'x' an _improper_ list terminating in something other than nil?
+Name comes from (cons 1 2) being printed with a dot: (1 . 1).</pre></div><div class="help-entry"><a href="#down" name="down"></a><pre class="type-and-sig">[mac] (down v init min . body)</pre><pre class="docstring-and-examples">Counts 'v' down from 'init' (inclusive) to 'min' (also inclusive), running
+'body' with each value. Can also (break) and (continue) inside 'body'; see
+<a href="#for">for</a>.</pre></div><div class="help-entry"><a href="#downcase" name="downcase"></a><pre class="type-and-sig">[fn]  (downcase s)</pre><pre class="docstring-and-examples">Converts 'x' to lowercase.</pre></div><div class="help-entry"><a href="#drain" name="drain"></a><pre class="type-and-sig">[mac] (drain expr (o eos nil))</pre><pre class="docstring-and-examples">Repeatedly evaluates 'expr' until it returns 'eos' (nil by default). Returns
+a list of the results.</pre></div><div class="help-entry"><a href="#each" name="each"></a><pre class="type-and-sig">[mac] (each var expr . body)</pre><pre class="docstring-and-examples">Loops through expressions in 'body' with 'var' bound to each successive
+element of 'expr'.</pre></div><div class="help-entry"><a href="#ellipsize" name="ellipsize"></a><pre class="type-and-sig">[fn]  (ellipsize str (o limit 80))</pre><pre class="docstring-and-examples">Trim string 'str' and append ellipses '...' if its length exceeds 'limit'.</pre></div><div class="help-entry"><a href="#embed-ns/bare-bones" name="embed-ns/bare-bones"></a><pre class="type-and-sig">[fn]  (embed-ns/bare-bones result)</pre><pre class="docstring-and-examples">Makes a `"lib/ns.rkt"` expression out of the literal value
+    `result' by embedding it inside a procedure call. This is
+    necessary so that Racket doesn't translate it into immutable
+    syntax and back.</pre></div><div class="help-entry"><a href="#empty" name="empty"></a><pre class="type-and-sig">[fn]  (empty x)</pre><pre class="docstring-and-examples">Is 'seq' an empty container? Usually checks 'seq's <a href="#len">len</a>.</pre></div><div class="help-entry"><a href="#endmatch" name="endmatch"></a><pre class="type-and-sig">[fn]  (endmatch pat seq)</pre><pre class="docstring-and-examples">Does 'seq' end with 'pat'?</pre></div><div class="help-entry"><a href="#enq" name="enq"></a><pre class="type-and-sig">[fn]  (enq obj qq)</pre><pre class="docstring-and-examples">Insert 'obj' into queue 'qq'.</pre></div><div class="help-entry"><a href="#enq-limit" name="enq-limit"></a><pre class="type-and-sig">[fn]  (enq-limit val q (o limit 1000))</pre><pre class="docstring-and-examples">Like <a href="#enq">enq</a>, but never let the queue 'q' grow larger than 'limit'.</pre></div><div class="help-entry"><a href="#ensure-dir" name="ensure-dir"></a><pre class="type-and-sig">[fn]  (ensure-dir path)</pre><pre class="docstring-and-examples">Creates the directory 'path' if it doesn't exist.</pre></div><div class="help-entry"><a href="#ero" name="ero"></a><pre class="type-and-sig">[fn]  (ero . args)</pre><pre class="docstring-and-examples">Like <a href="#prn">prn</a> but prints to stderr rather than stdout.</pre></div><div class="help-entry"><a href="#errsafe" name="errsafe"></a><pre class="type-and-sig">[mac] (errsafe expr)</pre><pre class="docstring-and-examples">Runs 'expr' and returns the result, or nil if there were any errors.</pre></div><div class="help-entry"><a href="#even" name="even"></a><pre class="type-and-sig">[fn]  (even n)</pre><pre class="docstring-and-examples">Is n even?</pre></div><div class="help-entry"><a href="#examples" name="examples"></a><pre class="type-and-sig">[mac] (examples name . tests-and-expected-results)</pre><pre class="docstring-and-examples">Shows some example calls of a function as an enhancement of its docstring.
+Usually provided immediately after a function docstring+definition, so it
+isn't underfoot when it isn't needed.
+
+Usage: (examples name-being-tested
+          expr1
+          expected-result1
+          expr2
+          expected-result2
+          ...)
+
+Expected results are optional. When provided, they can remind you when
+documentation goes out of date. To avoid printing and checking them, use an _
+wildcard. For example:
+
+  (examples foo
+    (foo x)
+    _
+    (foo y z)
+    _)
+
+Expected results are compared directly, without evaluation. For example:
+
+  (def foo (a b c)
+    (list a b c))
+
+  (examples foo
+    (foo 1 2 3)
+    (1 2 3))            &#60;-- no quote
+
+If the result is an object that read can't handle, use valueof. For example:
+
+  (examples foo
+    (foo x)
+    (valueof (obj a x)))</pre></div><div class="help-entry"><a href="#file-join" name="file-join"></a><pre class="type-and-sig">[fn]  (file-join . parts)</pre><pre class="docstring-and-examples">Joins `parts' into a path string.</pre></div><div class="help-entry"><a href="#file-perms" name="file-perms"></a><pre class="type-and-sig">[fn]  (file-perms path)</pre><pre class="docstring-and-examples">Returns a list of the effective file permssions of `path'.</pre></div><div class="help-entry"><a href="#file-size" name="file-size"></a><pre class="type-and-sig">[fn]  (file-size path)</pre><pre class="docstring-and-examples">Returns the size, in bytes, of a file `path'.</pre></div><div class="help-entry"><a href="#filechars" name="filechars"></a><pre class="type-and-sig">[fn]  (filechars name)</pre><pre class="docstring-and-examples">Outputs all characters in a file.</pre></div><div class="help-entry"><a href="#fill-table" name="fill-table"></a><pre class="type-and-sig">[fn]  (fill-table table data)</pre><pre class="docstring-and-examples">Populates 'table' with alternating keys and values in 'data'.</pre></div><div class="help-entry"><a href="#filter-unique-names" name="filter-unique-names"></a><pre class="type-and-sig">[fn]  (filter-unique-names names)</pre><pre class="docstring-and-examples">Gets the unique names from NAMES.
+
+      If one name is a full prefix of another (only counting period-separated fragments),
+      only include the prefix. So if the input is '(whatever.thing whatever), the output
+      should be '(whatever).</pre></div><div class="help-entry"><a href="#find" name="find"></a><pre class="type-and-sig">[fn]  (find test seq)</pre><pre class="docstring-and-examples">Returns the first element of 'seq' that satisfies `test'.
+
+Examples:
+  arc&#62; (find 3 '(1 2 3 4))
+  3
+  arc&#62; (find odd
+             '(1 2 3 4))
+  1
+  arc&#62; (find odd '(2 4 6))
+  nil</pre></div><div class="help-entry"><a href="#firstn" name="firstn"></a><pre class="type-and-sig">[fn]  (firstn n xs)</pre><pre class="docstring-and-examples">Returns the first 'n' elements of 'xs'.
+
+Examples:
+  arc&#62; (firstn 3 '(1 2))
+  (1 2)
+  arc&#62; (firstn 3
+               '(a b c d e))
+  (a b c)</pre></div><div class="help-entry"><a href="#flat" name="flat"></a><pre class="type-and-sig">[fn]  (flat . x)</pre><pre class="docstring-and-examples">Flattens a list of lists.
+
+Examples:
+  arc&#62; (flat '(1 2 nil 3 (4 (5))))
+  (1 2 3 4 5)</pre></div><div class="help-entry"><a href="#flip" name="flip"></a><pre class="type-and-sig">[fn]  (flip f)</pre><pre class="docstring-and-examples">Flips the order of the first two arguments of `f'.
+    For example: ((flip cons) 1 2) =&#62; (2 . 1)</pre></div><div class="help-entry"><a href="#fn" name="fn"></a><pre class="type-and-sig">[sym] (fn params . body)</pre><pre class="docstring-and-examples">Creates an anonymous function. See the tutorial: http://ycombinator.com/arc/tut.txt</pre></div><div class="help-entry"><a href="#foot" name="foot"></a><pre class="type-and-sig">[fn]  (foot l)</pre><pre class="docstring-and-examples">Gets the last cons in a proper list. (Fails on dotted lists.)</pre></div><div class="help-entry"><a href="#for" name="for"></a><pre class="type-and-sig">[mac] (for var init test update . body)</pre><pre class="docstring-and-examples">Loops through expressions in 'body' as long as 'test' passes, first binding 'var' to 'init'. At the end of each iteration it runs 'update', which usually will modify 'var'.
+Can also be terminated from inside 'body' by calling '(break)', or interrupt a single iteration by calling '(continue)'.
+If you nest multiple loops with different 'var's like i and j, you can break out of either of them by calling (break-i), (break-j), etc.
+Always returns nil.
+
+Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc
+3.1's behavior, use <a href="#up">up</a>. For more information, see CHANGES/for.
+
+Examples:
+  arc&#62; (for i 1 (&#60;= i 10) ++.i
+         (pr i " "))</pre></div><div class="help-entry"><a href="#force" name="force"></a><pre class="type-and-sig">[fn]  (force delayed-fn)</pre><pre class="docstring-and-examples">evaluates a delayed expression</pre></div><div class="help-entry"><a href="#forever" name="forever"></a><pre class="type-and-sig">[mac] (forever . body)</pre><pre class="docstring-and-examples">Loops through the expressions in 'body' forever.
+May still terminate by calling '(break)'.</pre></div><div class="help-entry"><a href="#forlen" name="forlen"></a><pre class="type-and-sig">[mac] (forlen var s . body)</pre><pre class="docstring-and-examples">Loops through the length of sequence 's', binding each element to 'var'.</pre></div><div class="help-entry"><a href="#fromfile" name="fromfile"></a><pre class="type-and-sig">[mac] (fromfile f . body)</pre><pre class="docstring-and-examples">Redirects standard input from the file 'f' within 'body'.</pre></div><div class="help-entry"><a href="#fromstring" name="fromstring"></a><pre class="type-and-sig">[mac] (fromstring str . body)</pre><pre class="docstring-and-examples">Runs 'body', reading from 'str' as stdin.</pre></div><div class="help-entry"><a href="#fst" name="fst"></a><pre class="type-and-sig">[fn]  (fst a . _)</pre><pre class="docstring-and-examples">Returns its first argument. See also <a href="#snd">snd</a></pre></div><div class="help-entry"><a href="#get" name="get"></a><pre class="type-and-sig">[fn]  (get i)</pre><pre class="docstring-and-examples">Returns a function to pass 'i' to its input.
+Useful in higher-order functions, or to index into lists, strings, tables, etc.
+
+Examples:
+  arc&#62; (get.2 '(1 2 3 4))
+  3
+  arc&#62; (get!b (obj a 10 b 20))
+  20
+  arc&#62; (get.9 sqrt)
+  3
+  arc&#62; (map get.2
+            '((a b c)
+              (1 2 3)
+              (p q r)))
+  (c 3 r)</pre></div><div class="help-entry"><a href="#get-all-top-level-suite-names" name="get-all-top-level-suite-names"></a><pre class="type-and-sig">[fn]  (get-all-top-level-suite-names)</pre><pre class="docstring-and-examples">Get the names of all the top-level suites.
+
+      A top-level suite is a suite that doesn't have a parent.</pre></div><div class="help-entry"><a href="#get-name-fragments" name="get-name-fragments"></a><pre class="type-and-sig">[fn]  (get-name-fragments name)</pre><pre class="docstring-and-examples">Take a full suite name NAME, and return the fragments of it as a list of symbols.
+      For example, (get-name-fragments 'math.integers.subtracting)
+      returns '(math integers subtracting).
+      This function will also work for test names</pre></div><div class="help-entry"><a href="#get-nesting-level" name="get-nesting-level"></a><pre class="type-and-sig">[fn]  (get-nesting-level name)</pre><pre class="docstring-and-examples">Return how nested NAME is, where a top-level suite is level 0.
+      Each period in the name increases the level by one.</pre></div><div class="help-entry"><a href="#get-suite" name="get-suite"></a><pre class="type-and-sig">[fn]  (get-suite name)</pre><pre class="docstring-and-examples">Get the suite with full name NAME out of *unit-tests*
+      This method looks at nested suites; that is, for a NAME of math.adding,
+      it gets the 'math suite out of *unit-tests*, then looks for a nested
+      suite 'adding inside it, rather than looking for a suite named math.adding
+      at the top level of *unit-tests*.</pre></div><div class="help-entry"><a href="#get-suite-and-test-name" name="get-suite-and-test-name"></a><pre class="type-and-sig">[fn]  (get-suite-and-test-name test-full-name)</pre><pre class="docstring-and-examples">Return (suite-name test-name), as a list.</pre></div><div class="help-entry"><a href="#get-suite-structure-problems" name="get-suite-structure-problems"></a><pre class="type-and-sig">[fn]  (get-suite-structure-problems suite-sexp)</pre><pre class="docstring-and-examples">Return the problems with the structure of SUITE-SEXP, as a string.
+
+For example, a SUITE-SEXP of (suitex name (test a b)) should have an error about
+beginning with the symbol 'suitex .</pre></div><div class="help-entry"><a href="#get-test" name="get-test"></a><pre class="type-and-sig">[fn]  (get-test name)</pre><pre class="docstring-and-examples">Get the test obj referred to by NAME, or nil if it isn't found.</pre></div><div class="help-entry"><a href="#get-url" name="get-url"></a><pre class="type-and-sig">[fn]  (get-url url)</pre><pre class="docstring-and-examples">Submit a HTTP GET request to 'url' and return the body of the response.</pre></div><div class="help-entry"><a href="#get-user" name="get-user"></a><pre class="type-and-sig">[fn]  (get-user req)</pre><pre class="docstring-and-examples">Gets the user id string associated with 'req'.
+Returns nil if no logged-in user.</pre></div><div class="help-entry"><a href="#global-arcracket" name="global-arcracket"></a><pre class="type-and-sig">[fn]  (global-arcracket global)</pre><pre class="docstring-and-examples">Converts an Arc global variable name (a symbol) into the
+    corresponding Racket top-level variable name.</pre></div><div class="help-entry"><a href="#global-racketarc" name="global-racketarc"></a><pre class="type-and-sig">[fn]  (global-racketarc global)</pre><pre class="docstring-and-examples">Converts a Racket top-level variable name (a symbol) into the name
+    the variable is visible as from Arc.</pre></div><div class="help-entry"><a href="#goodname" name="goodname"></a><pre class="type-and-sig">[fn]  (goodname str (o min 1) (o max nil))</pre><pre class="docstring-and-examples">Is 'str' a valid username?</pre></div><div class="help-entry"><a href="#headmatch" name="headmatch"></a><pre class="type-and-sig">[fn]  (headmatch pat seq (o start 0))</pre><pre class="docstring-and-examples">Does 'seq' contain 'pat' at index 'start'?</pre></div><div class="help-entry"><a href="#help" name="help"></a><pre class="type-and-sig">[mac] (help (o name (quote help)))</pre><pre class="docstring-and-examples">Prints the documentation of the given symbol. To use, type
+    (help symbol) ; you may also use (help "string") to search
+    all documentation for that string.</pre></div><div class="help-entry"><a href="#helpsearch" name="helpsearch"></a><pre class="type-and-sig">[fn]  (helpsearch str)</pre><pre class="docstring-and-examples">Prints all symbols whose documentation matches or partly matches `str'.</pre></div><div class="help-entry"><a href="#helpsearch-core" name="helpsearch-core"></a><pre class="type-and-sig">[fn]  (helpsearch-core str)</pre><pre class="docstring-and-examples">Returns a list of symbols whose documentation matches or partly matches 
+    `str'.</pre></div><div class="help-entry"><a href="#helpstr" name="helpstr"></a><pre class="type-and-sig">[fn]  (helpstr name (o verbose t))</pre><pre class="docstring-and-examples">Returns a help string for the symbol `name'.</pre></div><div class="help-entry"><a href="#idfn" name="idfn"></a><pre class="type-and-sig">[fn]  (idfn x)</pre><pre class="docstring-and-examples">The identity function. Returns whatever is passed in.</pre></div><div class="help-entry"><a href="#if" name="if"></a><pre class="type-and-sig">[sym] (if test1 then1 test2 then2 ... else)</pre><pre class="docstring-and-examples">Version 1: (if test then) runs 'then' if 'test' passes.
+Version 2: (if test then else) runs 'then' or 'else' depending on whether
+'test' passes or fails.
+Version 3: takes arbitrary numbers of alternating tests and expressions,
+running the first expression whose test passes. Optionally might take an
+'else' branch to run if none of the tests pass.</pre></div><div class="help-entry"><a href="#iff" name="iff"></a><pre class="type-and-sig">[fn]  (iff . funs)</pre><pre class="docstring-and-examples">Put simply: iff is to if as andf is to and. Specifically:
+
+    (iff) =&#62; idfn
+    (iff fun) =&#62; fun
+    (iff test fun rest ...) =&#62; a fn that applies `fun' to its arguments if they
+    pass `test', otherwise applies `(iff rest...)' to them.
+
+    Examples:
+
+      arc&#62; ((iff alist car) '(x))
+      x
+      arc&#62; ((iff alist car) 2)
+      2
+      arc&#62; ((iff &#60; (fn (x y) x) (fn (x y) y)) 1 2)
+      1
+
+    See also <a href="#andf">andf</a> <a href="#orf">orf</a> <a href="#check">check</a> <a href="#idfn">idfn</a></pre></div><div class="help-entry"><a href="#iflet" name="iflet"></a><pre class="type-and-sig">[mac] (iflet var expr . branches)</pre><pre class="docstring-and-examples">If 'expr' is not nil, binds 'var' to it before running the first branch.
+Can be given multiple alternating test expressions and branches. The first
+passing test expression is bound to 'var' before running its corresponding branch.
+
+For examples, see <a href="#aif">aif</a>.</pre></div><div class="help-entry"><a href="#in" name="in"></a><pre class="type-and-sig">[mac] (in x . choices)</pre><pre class="docstring-and-examples">Does 'x' match one of the given 'choices'?</pre></div><div class="help-entry"><a href="#insert-sorted" name="insert-sorted"></a><pre class="type-and-sig">[fn]  (insert-sorted test elt seq)</pre><pre class="docstring-and-examples">Inserts 'elt' into a sequence 'seq' that is assumed to be sorted by 'test'.
+
+Examples:
+  arc&#62; (insert-sorted &#62;
+                      5
+                      '(10 3 1))
+  (10 5 3 1)
+  arc&#62; (insert-sorted &#62;
+                      5
+                      '(10 5 1))
+  (10 5 5 1)</pre></div><div class="help-entry"><a href="#insort" name="insort"></a><pre class="type-and-sig">[mac] (insort test elt seq)</pre><pre class="docstring-and-examples">Like <a href="#insert-sorted">insert-sorted</a> but modifies 'seq' in place'.</pre></div><div class="help-entry"><a href="#insortnew" name="insortnew"></a><pre class="type-and-sig">[mac] (insortnew test elt seq)</pre><pre class="docstring-and-examples">Like <a href="#insort">insort</a>, but only inserts 'elt' if it doesn't exist.
+
+Examples:
+  arc&#62; (ret x '(10 3 1)
+         (insortnew &#62; 5 x))
+  (10 5 3 1)
+  arc&#62; (ret x '(10 5 1)
+         (insortnew &#62; 5 x))
+  (10 5 1)</pre></div><div class="help-entry"><a href="#inst" name="inst"></a><pre class="type-and-sig">[fn]  (inst tem-type . args)</pre><pre class="docstring-and-examples">Instantiates a table with the given 'args', setting defaults for missing keys
+from template 'tem-type'.</pre></div><div class="help-entry"><a href="#instantiate-rmodule" name="instantiate-rmodule"></a><pre class="type-and-sig">[fn]  (instantiate-rmodule rmodule)</pre><pre class="docstring-and-examples">Instantiates a Racket module by first delving into its internal
+    Arc representation (a combination of a module path and an example
+    namespace which has the module attached on that path), and then
+    requiring that path in that namespace.</pre></div><div class="help-entry"><a href="#int" name="int"></a><pre class="type-and-sig">[fn]  (int x (o b 10))</pre><pre class="docstring-and-examples">Converts 'x' into an integer, optionally in the given base 'b' (decimal by default).</pre></div><div class="help-entry"><a href="#integers-from" name="integers-from"></a><pre class="type-and-sig">[fn]  (integers-from n)</pre><pre class="docstring-and-examples">creates the infinite stream of integers starting from n</pre></div><div class="help-entry"><a href="#intersperse" name="intersperse"></a><pre class="type-and-sig">[fn]  (intersperse x ys)</pre><pre class="docstring-and-examples">Inserts 'x' between the elements of 'ys'.
+
+Examples:
+  arc&#62; (intersperse 1
+                    '(a b (c d) e))
+  (a 1 b 1 (c d) 1 e)
+  arc&#62; (intersperse nil
+                    '(1 2 3))
+  (1 nil 2 nil 3)</pre></div><div class="help-entry"><a href="#is" name="is"></a><pre class="type-and-sig">[fn]  (is x y)</pre><pre class="docstring-and-examples">Are 'x' and 'y' identical?</pre></div><div class="help-entry"><a href="#is-valid-name" name="is-valid-name"></a><pre class="type-and-sig">[fn]  (is-valid-name name)</pre><pre class="docstring-and-examples">Return t if NAME, a symbol, is a valid name for a suite or test.
+
+      Valid names contain any characters but periods.</pre></div><div class="help-entry"><a href="#isa" name="isa"></a><pre class="type-and-sig">[fn]  (isa x y)</pre><pre class="docstring-and-examples">Is 'x' of type 'y'?</pre></div><div class="help-entry"><a href="#iso" name="iso"></a><pre class="type-and-sig">[fn]  (iso a b)</pre><pre class="docstring-and-examples">Are 'x' and 'y' equal-looking to each other? Non-atoms like lists and tables can contain
+the same elements (be *isomorphic*) without being identical.</pre></div><div class="help-entry"><a href="#join" name="join"></a><pre class="type-and-sig">[fn]  (join . args)</pre><pre class="docstring-and-examples">Concatenates/appends its arguments into a new list.
+
+Examples:
+  arc&#62; (join '(1 2)
+             nil
+             '(3 4))
+  (1 2 3 4)</pre></div><div class="help-entry"><a href="#join/d" name="join/d"></a><pre class="type-and-sig">[fn]  (join/d . ls)</pre><pre class="docstring-and-examples">Destructive join.
+    See also <a href="#join">join</a></pre></div><div class="help-entry"><a href="#jtime" name="jtime"></a><pre class="type-and-sig">[mac] (jtime expr)</pre><pre class="docstring-and-examples">Like <a href="#time">time</a> but always returns 'ok'.</pre></div><div class="help-entry"><a href="#keep" name="keep"></a><pre class="type-and-sig">[fn]  (keep test seq)</pre><pre class="docstring-and-examples">Returns all elements of 'seq' for which 'test' passes.
+
+Examples:
+  arc&#62; (keep odd
+             '(1 2 3 4 5))
+  (1 3 5)
+  arc&#62; (keep 3
+             '(1 2 3 4 5))
+  (3)
+  arc&#62; (keep 3
+             '(1 3 1 3 1))
+  (3 3)
+  arc&#62; (keep [in _ #\a #\b]
+             "banana")
+  "baaa"</pre></div><div class="help-entry"><a href="#keep-by-car" name="keep-by-car"></a><pre class="type-and-sig">[fn]  (keep-by-car sexp identifier)</pre><pre class="docstring-and-examples">Gets each element of SEXP where that element is a list, and the car of that element is IDENTIFIER.</pre></div><div class="help-entry"><a href="#keys" name="keys"></a><pre class="type-and-sig">[fn]  (keys h)</pre><pre class="docstring-and-examples">Returns list of keys in table 'h'.</pre></div><div class="help-entry"><a href="#kill-thread" name="kill-thread"></a><pre class="type-and-sig">[fn]  (kill-thread th)</pre><pre class="docstring-and-examples">Abruptly interrupt a <a href="#thread">thread</a> of concurrently running expressions given its id.</pre></div><div class="help-entry"><a href="#last" name="last"></a><pre class="type-and-sig">[fn]  (last xs)</pre><pre class="docstring-and-examples">Returns the last element of 'xs'.
+
+Examples:
+  arc&#62; (last '(1 2 3))
+  3</pre></div><div class="help-entry"><a href="#lastcons" name="lastcons"></a><pre class="type-and-sig">[fn]  (lastcons xs)</pre><pre class="docstring-and-examples">Returns the absolute last link of list 'xs'. Save this value to efficiently
+append to 'xs'.</pre></div><div class="help-entry"><a href="#lastn" name="lastn"></a><pre class="type-and-sig">[fn]  (lastn n xs)</pre><pre class="docstring-and-examples">Returns the last 'n' elements of 'xs'.</pre></div><div class="help-entry"><a href="#lazy-cons" name="lazy-cons"></a><pre class="type-and-sig">[mac] (lazy-cons first second-expr)</pre><pre class="docstring-and-examples">create a lazy stream that delays evaluation of second-expr</pre></div><div class="help-entry"><a href="#lazy-gen" name="lazy-gen"></a><pre class="type-and-sig">[fn]  (lazy-gen f)</pre><pre class="docstring-and-examples">turn a generator function f into a lazy stream</pre></div><div class="help-entry"><a href="#lazy-keep" name="lazy-keep"></a><pre class="type-and-sig">[fn]  (lazy-keep test xs)</pre><pre class="docstring-and-examples">lazily keep elements of xs satisfying test</pre></div><div class="help-entry"><a href="#lazy-map" name="lazy-map"></a><pre class="type-and-sig">[fn]  (lazy-map f xs)</pre><pre class="docstring-and-examples">lazily maps f over the stream xs
+   invariant: (as cons (lazy-map f lazy-stream)) == (map f lazy-stream)</pre></div><div class="help-entry"><a href="#lazy-range" name="lazy-range"></a><pre class="type-and-sig">[fn]  (lazy-range a b)</pre><pre class="docstring-and-examples">generates a stream of the range [a,b]</pre></div><div class="help-entry"><a href="#lazy-rem" name="lazy-rem"></a><pre class="type-and-sig">[fn]  (lazy-rem test xs)</pre><pre class="docstring-and-examples">lazily rem elements of xs satisfying test</pre></div><div class="help-entry"><a href="#len" name="len"></a><pre class="type-and-sig">[fn]  (len q)</pre><pre class="docstring-and-examples">Computes the size of a list, string, hash table or other user-defined type.
+
+Examples:
+  arc&#62; (len '(1 2 3))
+  3
+  arc&#62; (len "abcd")
+  4
+  arc&#62; (len (obj a 1 b 2))
+  2</pre></div><div class="help-entry"><a href="#len-dotted" name="len-dotted"></a><pre class="type-and-sig">[fn]  (len-dotted x)</pre><pre class="docstring-and-examples"><a href="#len">len</a> for dotted lists
+
+Examples:
+  arc&#62; (len-dotted '(1 2 3))
+  3
+  arc&#62; (len-dotted '(1 2 . 3))
+  3</pre></div><div class="help-entry"><a href="#len<" name="len<"></a><pre class="type-and-sig">[fn]  (len&#60; x n)</pre><pre class="docstring-and-examples">Is <a href="#len">len</a> of 'x' less than 'n'?
+
+Examples:
+  arc&#62; (len&#62; '(1 2 3) 2)
+  t
+  arc&#62; (len&#62; (obj a 1 b 2)
+             3)
+  nil</pre></div><div class="help-entry"><a href="#len>" name="len>"></a><pre class="type-and-sig">[fn]  (len&#62; x n)</pre><pre class="docstring-and-examples">Is <a href="#len">len</a> of 'x' greater than 'n'?</pre></div><div class="help-entry"><a href="#let" name="let"></a><pre class="type-and-sig">[mac] (let var val . body)</pre><pre class="docstring-and-examples">Like <a href="#with">with</a> but with just one binding.
+For example, (let x 1
+               (+ x 1))
+             =&#62; (with (x 1)
+                  (+ x 1))
+             =&#62; 2</pre></div><div class="help-entry"><a href="#let-or" name="let-or"></a><pre class="type-and-sig">[mac] (let-or var expr else . body)</pre><pre class="docstring-and-examples">Like <a href="#iflet">iflet</a> but provides an immediate escape hatch first if 'expr' is nil.
+Use let-or for <a href="#iflet">iflet</a> forms with just one test, many things to do if it
+passes, and a simple expression or error if it fails.
+
+Examples:
+  arc&#62; (let-or x (+ 3 4) (err "Error in adding 3 and 4")
+         ++.x
+         (+ x 3))
+  11</pre></div><div class="help-entry"><a href="#letf" name="letf"></a><pre class="type-and-sig">[mac] (letf name args expr . body)</pre><pre class="docstring-and-examples">Defines a (possibly recursive) local fn `(fn ,args ,expr)' named `name'
+    within `body'. Example:
+
+      arc&#62; (letf last (x) (aif cdr.x last.it car.x)
+             (last '(x y z)))
+      z
+
+    See also <a href="#withf">withf</a> <a href="#withr">withr</a></pre></div><div class="help-entry"><a href="#letter" name="letter"></a><pre class="type-and-sig">[fn]  (letter c)</pre><pre class="docstring-and-examples">Is 'c' a letter?</pre></div><div class="help-entry"><a href="#lines" name="lines"></a><pre class="type-and-sig">[fn]  (lines s)</pre><pre class="docstring-and-examples">Breaks up a multi-line string into lines, respecting either newlines or CRLF
+sequences.</pre></div><div class="help-entry"><a href="#list-suites" name="list-suites"></a><pre class="type-and-sig">[fn]  (list-suites)</pre><pre class="docstring-and-examples">Prints out all suites that can be run.</pre></div><div class="help-entry"><a href="#listtab" name="listtab"></a><pre class="type-and-sig">[fn]  (listtab al)</pre><pre class="docstring-and-examples">Converts association list 'al' of (key value) pairs into a table. Reverse of
+<a href="#tablist">tablist</a>.
+
+Examples:
+  arc&#62; (listtab '((a 1) (b 2)))
+  #hash((a . 1) (b . 2))</pre></div><div class="help-entry"><a href="#load" name="load"></a><pre class="type-and-sig">[fn]  (load file)</pre><pre class="docstring-and-examples">Successively reads and runs all expressions in 'file'.</pre></div><div class="help-entry"><a href="#load-table" name="load-table"></a><pre class="type-and-sig">[fn]  (load-table file)</pre><pre class="docstring-and-examples">Reads an association list from 'file' and turns it into a table.</pre></div><div class="help-entry"><a href="#load-tables" name="load-tables"></a><pre class="type-and-sig">[fn]  (load-tables file)</pre><pre class="docstring-and-examples">Reads multiple association lists from 'file' and returns a corresponding list
+of tables.</pre></div><div class="help-entry"><a href="#loop" name="loop"></a><pre class="type-and-sig">[mac] (loop withses . body)</pre><pre class="docstring-and-examples">Like 'with', but the body can also be rerun with new bindings by calling 'recur'.
+Often a more readable alternative to <a href="#rfn">rfn</a> or <a href="#afn">afn</a>.
+For example, this prints numbers ad infinitum:
+  (loop (x 1)
+    (prn x)
+    (recur (+ x 1)))</pre></div><div class="help-entry"><a href="#make-bare-bones-rmodule" name="make-bare-bones-rmodule"></a><pre class="type-and-sig">[fn]  (make-bare-bones-rmodule racket-module-body)</pre><pre class="docstring-and-examples">Makes a Racket module based on `"lib/ns.rkt"` and the given
+    Racket list of top-level module expressions. We create the module
+    by evaluating a Racket `(module ...) form in the main namespace of
+    Arc. The resulting module will have a gensym for a name (even if
+    Racket's `current-module-declare-name' would have overridden
+    that), and Racket's `compile-enforce-module-constants' parameter
+    will be `#f' while the module is being compiled, so that its
+    module-level variables can be redefined or assigned to later on.</pre></div><div class="help-entry"><a href="#make-suite" name="make-suite"></a><pre class="type-and-sig">[mac] (make-suite parent-suite-full-name suite-sexp)</pre><pre class="docstring-and-examples">Makes a suite.
+
+      PARENT-SUITE-FULL-NAME is the full name of the parent suite, or nil. Don't quote it.
+      FULL-SUITE is the full s-exp for the suite; something like (suite my-name (test...) ...).</pre></div><div class="help-entry"><a href="#make-test" name="make-test"></a><pre class="type-and-sig">[mac] (make-test suite-name test-name setup . body)</pre><pre class="docstring-and-examples">Make a test for SUITE-NAME named TEST-NAME. Quote both of these.
+
+The test should have SETUP and BODY.</pre></div><div class="help-entry"><a href="#map" name="map"></a><pre class="type-and-sig">[fn]  (map f . seqs)</pre><pre class="docstring-and-examples">Successively applies corresponding elements of 'seqs' to function 'f'.
+Generalizes <a href="#map1">map1</a> to functions with more than one argument.
+
+Examples:
+  arc&#62; (map cdr
+            '((1) (2 3) (4 5)))
+  (nil (3) (5))
+  arc&#62; (map [list _ (* _ 10)]
+            '(1 2 3))
+  ((1 10) (2 20) (3 30))
+  arc&#62; (map +
+            '(1 2 3)
+            '(4 5 6))
+  (5 7 9)
+  arc&#62; (map (fn (c n)
+              (coerce (+ n
+                         (coerce c 'int))
+                      'char))
+            "abc"
+            '(0 2 4))
+  "adg"
+  arc&#62; (map min "bird" "elephant")
+  "bied"</pre></div><div class="help-entry"><a href="#map1" name="map1"></a><pre class="type-and-sig">[fn]  (map1 f xs)</pre><pre class="docstring-and-examples">Returns a list containing the result of function 'f' applied to every element of 'xs'.
+
+Examples:
+  arc&#62; (map1 cdr
+             '((1) (2 3) (4 5)))
+  (nil (3) (5))
+  arc&#62; (map1 [list _ (* _ 10)]
+             '(1 2 3))
+  ((1 10) (2 20) (3 30))</pre></div><div class="help-entry"><a href="#mappend" name="mappend"></a><pre class="type-and-sig">[fn]  (mappend f . args)</pre><pre class="docstring-and-examples">Like <a href="#map">map</a> followed by append.
+
+Examples:
+  arc&#62; (mappend cdr
+                '((1) (2 3) (4 5)))
+  (3 5)
+  arc&#62; (mappend [list _ (* _ 10)]
+                '(1 2 3))
+  (1 10 2 20 3 30)</pre></div><div class="help-entry"><a href="#mappendeach" name="mappendeach"></a><pre class="type-and-sig">[mac] (mappendeach var lst . body)</pre><pre class="docstring-and-examples">As 'mapeach, but using 'mappend instead of 'map.
+    See also <span class="broken-link">mapeach</span> <a href="#mappend">mappend</a> <a href="#each">each</a></pre></div><div class="help-entry"><a href="#max" name="max"></a><pre class="type-and-sig">[fn]  (max . args)</pre><pre class="docstring-and-examples">Returns the greatest of 'args'.</pre></div><div class="help-entry"><a href="#med" name="med"></a><pre class="type-and-sig">[fn]  (med ns (o test &#62;))</pre><pre class="docstring-and-examples">Returns the median of a list of numbers 'ns' according to the comparison 'test'.</pre></div><div class="help-entry"><a href="#mem" name="mem"></a><pre class="type-and-sig">[fn]  (mem test seq)</pre><pre class="docstring-and-examples">Returns suffix of 'seq' after the first element to satisfy 'test'.
+This is the most reliable way to check for presence, even when searching for nil.
+
+Examples:
+  arc&#62; (mem odd
+            '(2 4 5 6 7))
+  (5 6 7)
+  arc&#62; (mem 6
+            '(2 4 5 6 7))
+  (6 7)</pre></div><div class="help-entry"><a href="#memo" name="memo"></a><pre class="type-and-sig">[fn]  (memo f)</pre><pre class="docstring-and-examples">Turns function 'f' into a _memoized_ version that also stores results returned
+by args passed in, so that future calls with the same inputs can save work.</pre></div><div class="help-entry"><a href="#memtable" name="memtable"></a><pre class="type-and-sig">[fn]  (memtable (o keys nil) (o val t))</pre><pre class="docstring-and-examples">Turns a list into a table indicating membership of all elements.</pre></div><div class="help-entry"><a href="#min" name="min"></a><pre class="type-and-sig">[fn]  (min . args)</pre><pre class="docstring-and-examples">Returns the least of 'args'.</pre></div><div class="help-entry"><a href="#mismatch" name="mismatch"></a><pre class="type-and-sig">[fn]  (mismatch s1 s2)</pre><pre class="docstring-and-examples">Returns the first index where 's1' and 's2' do not match.
+
+Examples:
+  arc&#62; (mismatch '(1 2 3)
+                 '(1 2 4))
+  2
+  arc&#62; (mismatch "abc" "acc")
+  1
+  arc&#62; (mismatch "abc" "abc")
+  nil</pre></div><div class="help-entry"><a href="#mklist" name="mklist"></a><pre class="type-and-sig">[fn]  (mklist x)</pre><pre class="docstring-and-examples">Wraps atoms in a list; does nothing if `x' is already a list.
+    See also <a href="#atom">atom</a> <a href="#alist">alist</a> <span class="broken-link">list</span></pre></div><div class="help-entry"><a href="#mkreq" name="mkreq"></a><pre class="type-and-sig">[fn]  (mkreq url (o querylist) (o method "GET") (o cookies) (o headers))</pre><pre class="docstring-and-examples">Submit a HTTP request with 'url'. 'querylist' contains field-value pairs, hence its length must be even.</pre></div><div class="help-entry"><a href="#most" name="most"></a><pre class="type-and-sig">[fn]  (most f seq)</pre><pre class="docstring-and-examples">Like <a href="#best">best</a>, but function 'f' is a scorer for each element rather than a
+comparator between elements.
+
+Examples:
+  arc&#62; (most len
+             '("cat" "bird" "dog"))
+  "bird"
+  arc&#62; (most abs
+             '(3 -10 5))
+  -10</pre></div><div class="help-entry"><a href="#mtime" name="mtime"></a><pre class="type-and-sig">[fn]  (mtime path)</pre><pre class="docstring-and-examples">Returns the modification time of the file or directory `path' in
+    seconds since the epoch.</pre></div><div class="help-entry"><a href="#multiple" name="multiple"></a><pre class="type-and-sig">[fn]  (multiple x y)</pre><pre class="docstring-and-examples">Is 'x' a multiple of 'y'?</pre></div><div class="help-entry"><a href="#multisubst" name="multisubst"></a><pre class="type-and-sig">[fn]  (multisubst pairs seq)</pre><pre class="docstring-and-examples">For each (old new) pair in 'pairs', substitute 'old' with 'new' in 'seq'.</pre></div><div class="help-entry"><a href="#mv" name="mv"></a><pre class="type-and-sig">[fn]  (mv src dst)</pre><pre class="docstring-and-examples">Moves the file or directory `src' to `dst'.</pre></div><div class="help-entry"><a href="#n-of" name="n-of"></a><pre class="type-and-sig">[mac] (n-of n expr)</pre><pre class="docstring-and-examples">Runs 'expr' 'n' times, and returns a list of the results.
+
+Examples:
+  arc&#62; (n-of 5 "a")
+  (a a a a a)
+  arc&#62; (w/instring ins "abcdefg"
+         (n-of 5 readc.ins))
+  (a b c d e)</pre></div><div class="help-entry"><a href="#nand" name="nand"></a><pre class="type-and-sig">[mac] (nand . args)</pre><pre class="docstring-and-examples">Computes args until one of them fails, then returns t.
+Returns nil if none of the args fails.</pre></div><div class="help-entry"><a href="#nappend" name="nappend"></a><pre class="type-and-sig">[fn]  (nappend l item)</pre><pre class="docstring-and-examples">Appends item to list, then returns list.</pre></div><div class="help-entry"><a href="#nearest" name="nearest"></a><pre class="type-and-sig">[fn]  (nearest n quantum)</pre><pre class="docstring-and-examples">Like <a href="#round">round</a> but generalized to arbitrary units.</pre></div><div class="help-entry"><a href="#nilfn" name="nilfn"></a><pre class="type-and-sig">[fn]  (nilfn . _)</pre><pre class="docstring-and-examples">Ignores its arguments and returns nil.</pre></div><div class="help-entry"><a href="#njoin" name="njoin"></a><pre class="type-and-sig">[fn]  (njoin a b)</pre><pre class="docstring-and-examples">Concatenates/appends second list to first, then returns entire result.</pre></div><div class="help-entry"><a href="#no" name="no"></a><pre class="type-and-sig">[fn]  (no x)</pre><pre class="docstring-and-examples">Is 'x' nil? Sometimes we say A passes if it's non-nil, in which case no.A is said to fail.</pre></div><div class="help-entry"><a href="#noisy-each" name="noisy-each"></a><pre class="type-and-sig">[mac] (noisy-each n var val . body)</pre><pre class="docstring-and-examples">Like <a href="#each">each</a> but print a progress indicator every 'n' iterations.</pre></div><div class="help-entry"><a href="#nonblank" name="nonblank"></a><pre class="type-and-sig">[fn]  (nonblank s)</pre><pre class="docstring-and-examples">Returns string 's' unless it's blank.</pre></div><div class="help-entry"><a href="#nonwhite" name="nonwhite"></a><pre class="type-and-sig">[fn]  (nonwhite c)</pre><pre class="docstring-and-examples">Is 'c' a non-whitespace char?</pre></div><div class="help-entry"><a href="#nor" name="nor"></a><pre class="type-and-sig">[mac] (nor . args)</pre><pre class="docstring-and-examples">Computes args until one of them passes, then returns nil.
+Returns t if none of the args passes.</pre></div><div class="help-entry"><a href="#norf" name="norf"></a><pre class="type-and-sig">[fn]  (norf . fns)</pre><pre class="docstring-and-examples">Creates a function which returns `t' iff none of `fns' return `t'
+    on its arguments.
+    See also <a href="#orf">orf</a> <a href="#andf">andf</a> <a href="#nor">nor</a></pre></div><div class="help-entry"><a href="#ns-get" name="ns-get"></a><pre class="type-and-sig">[fn]  (ns-get var (o ns current-ns))</pre><pre class="docstring-and-examples">Gets a variable from a namespace by evaluating it in Racket.
+      Actually, it's sent through Racket's 'expand-to-top-form so that
+      we can use the core #%top form if necessary rather than relying
+      on the namespace itself to have one.</pre></div><div class="help-entry"><a href="#ns-ownspace-set" name="ns-ownspace-set"></a><pre class="type-and-sig">[fn]  (ns-ownspace-set var val (o ns current-ns))</pre><pre class="docstring-and-examples">Sets a top-level variable in a namespace without changing the
+      corresponding identifier mapping to point to that variable.</pre></div><div class="help-entry"><a href="#ns-set" name="ns-set"></a><pre class="type-and-sig">[fn]  (ns-set var val (o ns current-ns))</pre><pre class="docstring-and-examples">Sets a variable in a namespace using Racket's 'set!.</pre></div><div class="help-entry"><a href="#ns-set-own" name="ns-set-own"></a><pre class="type-and-sig">[fn]  (ns-set-own var val (o ns current-ns))</pre><pre class="docstring-and-examples">Sets a top-level variable in a namespace and changes the
+      corresponding identifier mapping to point to that variable.</pre></div><div class="help-entry"><a href="#ns-set-renamer" name="ns-set-renamer"></a><pre class="type-and-sig">[fn]  (ns-set-renamer observing-var canonical-var (o canonical-ns current-ns))</pre><pre class="docstring-and-examples">Changes an identifier mapping in a namespace to point to a
+      rename transformer.</pre></div><div class="help-entry"><a href="#nthcdr" name="nthcdr"></a><pre class="type-and-sig">[fn]  (nthcdr n xs)</pre><pre class="docstring-and-examples">Returns all but the first 'n' elements of 'xs'.
+
+Examples:
+  arc&#62; (nthcdr 0 '(1 2 3))
+  (1 2 3)
+  arc&#62; (nthcdr 1 '(1 2 3))
+  (2 3)
+  arc&#62; (nthcdr 2 '(1 2 3))
+  (3)
+  arc&#62; (nthcdr 10
+               '(1 2 3))
+  nil</pre></div><div class="help-entry"><a href="#num" name="num"></a><pre class="type-and-sig">[fn]  (num n (o digits 2) (o trail-zeros nil) (o init-zero nil))</pre><pre class="docstring-and-examples">Formats 'n' as a string with the appropriate 'digits' of precision, padding
+trailing zeros and an initial zero before the decimal as desired.</pre></div><div class="help-entry"><a href="#number" name="number"></a><pre class="type-and-sig">[fn]  (number n)</pre><pre class="docstring-and-examples">Is 'n' a number?</pre></div><div class="help-entry"><a href="#obj" name="obj"></a><pre class="type-and-sig">[mac] (obj . args)</pre><pre class="docstring-and-examples">Creates a table out of a list of alternating keys and values.</pre></div><div class="help-entry"><a href="#odd" name="odd"></a><pre class="type-and-sig">[fn]  (odd n)</pre><pre class="docstring-and-examples">Is n odd?</pre></div><div class="help-entry"><a href="#on" name="on"></a><pre class="type-and-sig">[mac] (on var s . body)</pre><pre class="docstring-and-examples">Like <a href="#each">each</a>, but also maintains a variable calles 'index' counting the iterations.</pre></div><div class="help-entry"><a href="#only" name="only"></a><pre class="type-and-sig">[fn]  (only f)</pre><pre class="docstring-and-examples">Transforms a function 'f' info a variant that runs only if its first arg is
+non-nil.
+
+Examples:
+  arc&#62; (only.+ 1 2 3)
+  6
+  arc&#62; (only.+ nil 1 2 3)
+  nil
+  arc&#62; (only.+)
+  nil</pre></div><div class="help-entry"><a href="#or" name="or"></a><pre class="type-and-sig">[mac] (or . args)</pre><pre class="docstring-and-examples">Stops at the first argument to pass, and returns its result.</pre></div><div class="help-entry"><a href="#orf" name="orf"></a><pre class="type-and-sig">[fn]  (orf . fns)</pre><pre class="docstring-and-examples">Returns a function which calls all the functions in 'fns' on its args, and
+<a href="#or">or</a>s the results. ((orf f g) x y) &#60;=&#62; (or (f x y) (g x y))</pre></div><div class="help-entry"><a href="#pair" name="pair"></a><pre class="type-and-sig">[fn]  (pair xs (o f list))</pre><pre class="docstring-and-examples">Splits the elements of 'xs' into buckets of two, and optionally applies the
+function 'f' to them.
+
+Examples:
+  arc&#62; (pair '(a b c d))
+  ((a b) (c d))
+  arc&#62; (pair '(a b c d e))
+  ((a b) (c d) (e))
+  arc&#62; (pair '(1 2 3 4) +)
+  (3 7)
+  arc&#62; (pair '(10 2 3 40 50 6)
+             max)
+  (10 40 50)</pre></div><div class="help-entry"><a href="#partition" name="partition"></a><pre class="type-and-sig">[fn]  (partition test seq)</pre><pre class="docstring-and-examples">Equivalent to but more efficient than
+   `(list (keep test seq) (rem test seq))'. See also <a href="#keep">keep</a> <a href="#rem">rem</a></pre></div><div class="help-entry"><a href="#pipe-to" name="pipe-to"></a><pre class="type-and-sig">[mac] (pipe-to dest . body)</pre><pre class="docstring-and-examples">Redirects stdout for 'body' into stdin of 'dest'.</pre></div><div class="help-entry"><a href="#plural" name="plural"></a><pre class="type-and-sig">[fn]  (plural n x (o plural-form))</pre><pre class="docstring-and-examples">Returns a phrase like "3 apples", <a href="#pluralize">pluralize</a>ing depending on 'n'.</pre></div><div class="help-entry"><a href="#pluralize" name="pluralize"></a><pre class="type-and-sig">[fn]  (pluralize n str (o plural-form))</pre><pre class="docstring-and-examples">Returns plural form of 'str' if 'n' is not 1.</pre></div><div class="help-entry"><a href="#point" name="point"></a><pre class="type-and-sig">[mac] (point name . body)</pre><pre class="docstring-and-examples">Like <a href="#do">do</a>, but may be exited by calling 'name' from within 'body'.</pre></div><div class="help-entry"><a href="#pop" name="pop"></a><pre class="type-and-sig">[mac] (pop place)</pre><pre class="docstring-and-examples">Opposite of <a href="#push">push</a>: removes the first element of the sequence at 'place' and returns it.</pre></div><div class="help-entry"><a href="#pos" name="pos"></a><pre class="type-and-sig">[fn]  (pos test seq (o start 0))</pre><pre class="docstring-and-examples">Returns the index of the first element of 'seq' matching 'test', starting
+from index 'start' (0 by default).
+
+Examples:
+  arc&#62; (pos 'c '(a b c d))
+  2
+  arc&#62; (pos 'x '(a b c d))
+  nil
+  arc&#62; (pos #\b "abcba")
+  1
+  arc&#62; (pos #\b "abcba" 2)
+  3
+  arc&#62; (pos odd
+            '(2 4 5 6 7))
+  2</pre></div><div class="help-entry"><a href="#positions" name="positions"></a><pre class="type-and-sig">[fn]  (positions test seq)</pre><pre class="docstring-and-examples">Returns all the indices in 'seq' at which 'test' passes.</pre></div><div class="help-entry"><a href="#posmatch" name="posmatch"></a><pre class="type-and-sig">[fn]  (posmatch pat seq (o start 0))</pre><pre class="docstring-and-examples">Returns the first index after 'start' where substring 'pat' is found in 'seq'.</pre></div><div class="help-entry"><a href="#post-url" name="post-url"></a><pre class="type-and-sig">[fn]  (post-url url (o querylist))</pre><pre class="docstring-and-examples">Submit a HTTP POST request to 'url' and return the body of the response. 'querylist' contains field-value pairs, hence its length must be even.</pre></div><div class="help-entry"><a href="#ppr" name="ppr"></a><pre class="type-and-sig">[fn]  (ppr . l)</pre><pre class="docstring-and-examples">Pretty print. This function displays arc code with proper
+    indenting and representation of syntax.</pre></div><div class="help-entry"><a href="#ppr-main" name="ppr-main"></a><pre class="type-and-sig">[fn]  (ppr-main x (o col 0) (o noindent nil))</pre><pre class="docstring-and-examples">Recursive main body of the ppr function.</pre></div><div class="help-entry"><a href="#ppr-source" name="ppr-source"></a><pre class="type-and-sig">[fn]  (ppr-source name)</pre><pre class="docstring-and-examples">Pretty-prints the source code of the function `name'.
+    Is a function, so `name' is evaluated.
+    See also: <a href="#src">src</a></pre></div><div class="help-entry"><a href="#pr" name="pr"></a><pre class="type-and-sig">[fn]  (pr . args)</pre><pre class="docstring-and-examples">Prints all its 'args' to screen. Returns the first arg.</pre></div><div class="help-entry"><a href="#prall" name="prall"></a><pre class="type-and-sig">[fn]  (prall elts (o init "") (o sep ", "))</pre><pre class="docstring-and-examples">Prints elements of list 'elts' prefixed with 'init' and separated by 'sep'.
+Returns 'elts'.</pre></div><div class="help-entry"><a href="#pre" name="pre"></a><pre class="type-and-sig">[fn]  (pre s)</pre><pre class="docstring-and-examples">Compiles 's' to a regular expression using a Perl-like syntax. See also <a href="#re">re</a>.</pre></div><div class="help-entry"><a href="#pretty-results" name="pretty-results"></a><pre class="type-and-sig">[fn]  (pretty-results test-result)</pre><pre class="docstring-and-examples">Print out a pretty summary of TEST-RESULT.</pre></div><div class="help-entry"><a href="#prf" name="prf"></a><pre class="type-and-sig">[mac] (prf str . args)</pre><pre class="docstring-and-examples">Prints 'str' interpolating #exprs and replacing instances of ~ with
+successive elements of 'args'.
+
+Examples:
+  arc&#62; (let x 3
+         (prf "the square of #x is ~."
+           9))</pre></div><div class="help-entry"><a href="#print" name="print"></a><pre class="type-and-sig">[fn]  (print x)</pre><pre class="docstring-and-examples">Print an expression on one line, replacing quote, unquote,
+    quasiquote, unquote-splicing, and make-br-fn with their respective symbols.</pre></div><div class="help-entry"><a href="#print-run-summary" name="print-run-summary"></a><pre class="type-and-sig">[fn]  (print-run-summary name)</pre><pre class="docstring-and-examples">This should work on both suite and test names</pre></div><div class="help-entry"><a href="#print-spaced" name="print-spaced"></a><pre class="type-and-sig">[fn]  (print-spaced xs)</pre><pre class="docstring-and-examples">Print the expressions in the list separated by spaces.</pre></div><div class="help-entry"><a href="#prn" name="prn"></a><pre class="type-and-sig">[fn]  (prn . args)</pre><pre class="docstring-and-examples">Prints all its 'args' to screen followed by a newline. Returns the first arg.</pre></div><div class="help-entry"><a href="#prrn" name="prrn"></a><pre class="type-and-sig">[fn]  (prrn . args)</pre><pre class="docstring-and-examples">Like <a href="#prn">prn</a>, but prints both carriage return and newline, usually because the HTTP
+protocol requires them.</pre></div><div class="help-entry"><a href="#prs" name="prs"></a><pre class="type-and-sig">[fn]  (prs . args)</pre><pre class="docstring-and-examples">Prints elements of list 'args' separated by spaces.</pre></div><div class="help-entry"><a href="#prt" name="prt"></a><pre class="type-and-sig">[fn]  (prt . args)</pre><pre class="docstring-and-examples">Like <a href="#pr">pr</a>, but doesn't print nils.</pre></div><div class="help-entry"><a href="#pull" name="pull"></a><pre class="type-and-sig">[mac] (pull test place)</pre><pre class="docstring-and-examples">Removes all elements from 'place' that satisfy 'test'.</pre></div><div class="help-entry"><a href="#pull1" name="pull1"></a><pre class="type-and-sig">[mac] (pull1 test place)</pre><pre class="docstring-and-examples">Removes the first element that passes `test' from `place'.
+    See also <a href="#pull">pull</a> <a href="#rem1">rem1</a> <a href="#rem">rem</a> <a href="#keep">keep</a></pre></div><div class="help-entry"><a href="#punc" name="punc"></a><pre class="type-and-sig">[fn]  (punc c)</pre><pre class="docstring-and-examples">Is 'c' a punctuation char?</pre></div><div class="help-entry"><a href="#push" name="push"></a><pre class="type-and-sig">[mac] (push x place)</pre><pre class="docstring-and-examples">Adds 'x' to the start of the sequence at 'place'.</pre></div><div class="help-entry"><a href="#pushnew" name="pushnew"></a><pre class="type-and-sig">[mac] (pushnew x place)</pre><pre class="docstring-and-examples">Like <a href="#push">push</a> but first checks if 'x' is already present in 'place'.</pre></div><div class="help-entry"><a href="#pwd" name="pwd"></a><pre class="type-and-sig">[fn]  (pwd)</pre><pre class="docstring-and-examples">Returns the current directory.</pre></div><div class="help-entry"><a href="#q-with" name="q-with"></a><pre class="type-and-sig">[mac] (q-with . args)</pre><pre class="docstring-and-examples">Returns an Arc expression which will hygienically run a given piece
+of Arc code with the results of some given Arc expressions.
+
+For example, <a href="#n-of">n-of</a> usually generates code that looks up the caller's local variables <a href="#rev">rev</a>, <span class="broken-link">&#60;</span>, <span class="broken-link">+</span>, and <a href="#cons">cons</a>. This alternative definition always uses the global bindings regardless of whether local bindings exist at the call site:
+
+  (mac n-of (n expr)
+    (q-with n `(fn (break recur) ,n)
+            expr `(fn (break recur continue) ,expr)
+      (let a nil
+        (repeat (n break recur) (push (expr break recur continue) a))
+        rev.a)))</pre></div><div class="help-entry"><a href="#qualified-path" name="qualified-path"></a><pre class="type-and-sig">[fn]  (qualified-path path)</pre><pre class="docstring-and-examples">Returns the fully-qualified path of a possibly relative `path'.</pre></div><div class="help-entry"><a href="#queue" name="queue"></a><pre class="type-and-sig">[fn]  (queue)</pre><pre class="docstring-and-examples">A queue is like a list but with efficient insertion in one end and deletion
+in the other.</pre></div><div class="help-entry"><a href="#rand-choice" name="rand-choice"></a><pre class="type-and-sig">[mac] (rand-choice . exprs)</pre><pre class="docstring-and-examples">Runs one of the given 'exprs' at random and returns the result.</pre></div><div class="help-entry"><a href="#rand-elt" name="rand-elt"></a><pre class="type-and-sig">[fn]  (rand-elt seq)</pre><pre class="docstring-and-examples">Returns a random element of 'seq'. See also <a href="#rand-choice">rand-choice</a>.</pre></div><div class="help-entry"><a href="#rand-string" name="rand-string"></a><pre class="type-and-sig">[fn]  (rand-string n)</pre><pre class="docstring-and-examples">Generates a random string of letters and numbers.</pre></div><div class="help-entry"><a href="#range" name="range"></a><pre class="type-and-sig">[fn]  (range start end)</pre><pre class="docstring-and-examples">Returns the list of integers from 'start' to 'end' (both inclusive).
+
+Examples:
+  arc&#62; (range 0 10)
+  (0 1 2 3 4 5 6 7 8 9 10)</pre></div><div class="help-entry"><a href="#range-bounce" name="range-bounce"></a><pre class="type-and-sig">[fn]  (range-bounce i max)</pre><pre class="docstring-and-examples">Munges index 'i' in slices of a sequence of length 'max'. First element starts
+ at index 0. Negative indices count from the end. A nil index denotes the end.</pre></div><div class="help-entry"><a href="#re" name="re"></a><pre class="type-and-sig">[fn]  (re s)</pre><pre class="docstring-and-examples">Compiles 's' to a regular expression. See also <a href="#pre">pre</a>.</pre></div><div class="help-entry"><a href="#re-match" name="re-match"></a><pre class="type-and-sig">[fn]  (re-match pat i)</pre><pre class="docstring-and-examples">Returns the first match of 'pat' in 'i'.</pre></div><div class="help-entry"><a href="#re-match*" name="re-match*"></a><pre class="type-and-sig">[fn]  (re-match* pat i)</pre><pre class="docstring-and-examples">Returns each match of 'pat' in 'i'.</pre></div><div class="help-entry"><a href="#re-pos" name="re-pos"></a><pre class="type-and-sig">[fn]  (re-pos pat i)</pre><pre class="docstring-and-examples">Returns the start and end position of the first match of 'pat' in 'i'.</pre></div><div class="help-entry"><a href="#re-subst" name="re-subst"></a><pre class="type-and-sig">[fn]  (re-subst pat i sub)</pre><pre class="docstring-and-examples">Returns 'i' where first match of 'pat' has been replaced with 'sub'.</pre></div><div class="help-entry"><a href="#read" name="read"></a><pre class="type-and-sig">[fn]  (read (o x (stdin)))</pre><pre class="docstring-and-examples">Reads a single expression from string or stream 'x'. Returns the uninterned
+symbol stored as the global value of 'eof' if there's nothing left to read.</pre></div><div class="help-entry"><a href="#read-table" name="read-table"></a><pre class="type-and-sig">[fn]  (read-table (o i (stdin)))</pre><pre class="docstring-and-examples">Reads an association list from a stream 'i' (stdin by default) and turns it
+into a table.</pre></div><div class="help-entry"><a href="#readall" name="readall"></a><pre class="type-and-sig">[fn]  (readall src)</pre><pre class="docstring-and-examples">Like <a href="#readfile">readfile</a>, but can also accept a string 'src'.</pre></div><div class="help-entry"><a href="#readfile" name="readfile"></a><pre class="type-and-sig">[fn]  (readfile name)</pre><pre class="docstring-and-examples">Slurps the entire contents of file 'name' using <a href="#read">read</a> and returns the
+expressions  as a list.</pre></div><div class="help-entry"><a href="#readfile1" name="readfile1"></a><pre class="type-and-sig">[fn]  (readfile1 name)</pre><pre class="docstring-and-examples">Returns the first expression <a href="#read">read</a> from file 'name'.</pre></div><div class="help-entry"><a href="#readline" name="readline"></a><pre class="type-and-sig">[fn]  (readline (o str (stdin)))</pre><pre class="docstring-and-examples">Reads a string terminated by a newline from the stream 'str'.</pre></div><div class="help-entry"><a href="#readlines" name="readlines"></a><pre class="type-and-sig">[fn]  (readlines (o str (stdin)))</pre><pre class="docstring-and-examples">Slurps contents of stream 'str' as a list of lines.</pre></div><div class="help-entry"><a href="#readstring1" name="readstring1"></a><pre class="type-and-sig">[fn]  (readstring1 s)</pre><pre class="docstring-and-examples">Reads a single expression from string 's'. Returns the uninterned symbol
+stored as the global value of 'eof' if there's nothing left to read.</pre></div><div class="help-entry"><a href="#real" name="real"></a><pre class="type-and-sig">[fn]  (real x)</pre><pre class="docstring-and-examples">Converts 'x' into a real number.</pre></div><div class="help-entry"><a href="#reclist" name="reclist"></a><pre class="type-and-sig">[fn]  (reclist f xs)</pre><pre class="docstring-and-examples">Calls function 'f' with successive <a href="#cdr">cdr</a>s of 'xs' until one of the calls passes.
+
+Examples:
+  arc&#62; (reclist [caris _ 'b]
+                '(a b c))
+  t
+  arc&#62; (reclist [caris _ 'd]
+                '(a b c))
+  nil
+  arc&#62; (reclist [if (is 2 len._) _]
+                '(a b c d))
+  (c d)</pre></div><div class="help-entry"><a href="#recstring" name="recstring"></a><pre class="type-and-sig">[fn]  (recstring test s (o start 0))</pre><pre class="docstring-and-examples">Calls function 'test' with successive characters in string 's' until one of the calls passes.</pre></div><div class="help-entry"><a href="#redef" name="redef"></a><pre class="type-and-sig">[mac] (redef name parms . body)</pre><pre class="docstring-and-examples">Defines a new function like <a href="#def">def</a>, but doesn't warn if 'name' already exists.</pre></div><div class="help-entry"><a href="#reduce" name="reduce"></a><pre class="type-and-sig">[fn]  (reduce f xs)</pre><pre class="docstring-and-examples">Accumulates elements of 'xs' using binary function 'f'.
+
+Examples:
+  arc&#62; (reduce +
+               '(1 2 3 4 5))
+  15
+  arc&#62; (reduce +
+               '("a" "b" "c"))
+  "abc"
+  arc&#62; (reduce / '(1 2 3))
+  1/6</pre></div><div class="help-entry"><a href="#rem" name="rem"></a><pre class="type-and-sig">[fn]  (rem test seq)</pre><pre class="docstring-and-examples">Returns all elements of 'seq' except those satisfying 'test'.
+
+Examples:
+  arc&#62; (rem odd
+            '(1 2 3 4 5))
+  (2 4)
+  arc&#62; (rem 3
+            '(1 2 3 4 5))
+  (1 2 4 5)
+  arc&#62; (rem #\d "abcde")
+  "abce"
+  arc&#62; (rem [in _ #\a #\b]
+            "abcde")
+  "cde"</pre></div><div class="help-entry"><a href="#rem1" name="rem1"></a><pre class="type-and-sig">[fn]  (rem1 test seq)</pre><pre class="docstring-and-examples">Returns a copy of `seq' with the first element that passes `test' removed.
+    See also <a href="#rem">rem</a> <a href="#keep">keep</a> <a href="#pull1">pull1</a> <a href="#pull">pull</a></pre></div><div class="help-entry"><a href="#remove-thing" name="remove-thing"></a><pre class="type-and-sig">[fn]  (remove-thing name-fragments suites-obj)</pre><pre class="docstring-and-examples">Delete the thing referred to by NAME-FRAGMENTS from SUITES-OBJ.
+
+      To do this, take each non-terminal element of NAME-FRAGMENTS,
+      treat that symbol as a suite name, and look up that suite.
+
+      Then it takes the last element, and deletes any suites or tests with that name. Finally,
+      it will go back up the path and delete any empty suites.
+
+      For example, it might get called as (remove-thing '(top nested1 nested2 last-thing)).
+      It will remove a suite called top.nested1.nested2.last-thing, or a test named last-thing
+      inside top.nested1.nested2.</pre></div><div class="help-entry"><a href="#rep" name="rep"></a><pre class="type-and-sig">[fn]  (rep x)</pre><pre class="docstring-and-examples">Returns the contents of a user-defined tagged type object.</pre></div><div class="help-entry"><a href="#repeat" name="repeat"></a><pre class="type-and-sig">[mac] (repeat n . body)</pre><pre class="docstring-and-examples">Runs 'body' expression by expression 'n' times.</pre></div><div class="help-entry"><a href="#require" name="require"></a><pre class="type-and-sig">[fn]  (require files)</pre><pre class="docstring-and-examples">Loads `file(s)' if it/they has not yet been `require'd.  (Can be fooled by changing
+    the name ((require "foo.arc") as opposed to (require "./foo.arc")), but
+    this should not be a problem.)
+    See also <a href="#load">load</a>.</pre></div><div class="help-entry"><a href="#result-is-pass" name="result-is-pass"></a><pre class="type-and-sig">[fn]  (result-is-pass test-result)</pre><pre class="docstring-and-examples">Return t if TEST-RESULT, a test-result template instance, represents a passed test.</pre></div><div class="help-entry"><a href="#ret" name="ret"></a><pre class="type-and-sig">[mac] (ret var val . body)</pre><pre class="docstring-and-examples">Like <a href="#let">let</a>, but returns 'val' rather than the value of the final form in 'body'.</pre></div><div class="help-entry"><a href="#retest" name="retest"></a><pre class="type-and-sig">[fn]  (retest)</pre><pre class="docstring-and-examples">Rerun the last group of tests run.</pre></div><div class="help-entry"><a href="#retrieve" name="retrieve"></a><pre class="type-and-sig">[fn]  (retrieve n f xs)</pre><pre class="docstring-and-examples">Returns the first 'n' elements of 'xs' that satisfy 'f'.
+
+Examples:
+  arc&#62; (retrieve 3
+                 odd
+                 '(1 2 3 4 5 6 7 8))
+  (1 3 5)
+  arc&#62; (retrieve 3
+                 odd
+                 '(2 4 6 8))
+  nil</pre></div><div class="help-entry"><a href="#rev" name="rev"></a><pre class="type-and-sig">[fn]  (rev x)</pre><pre class="docstring-and-examples">Returns a list containing the elements of 'xs' back to front.
+
+Examples:
+  arc&#62; (rev '(1 (2 3) 4))
+  (4 (2 3) 1)</pre></div><div class="help-entry"><a href="#rfn" name="rfn"></a><pre class="type-and-sig">[mac] (rfn name parms . body)</pre><pre class="docstring-and-examples">Like <a href="#fn">fn</a> but permits the created function to call itself recursively as the given 'name'.</pre></div><div class="help-entry"><a href="#rns-get" name="rns-get"></a><pre class="type-and-sig">[fn]  (rns-get var (o rns current-rns))</pre><pre class="docstring-and-examples">Gets a variable from a Racket namespace by evaluating it in
+      Racket. Actually, it's sent through Racket's 'expand-to-top-form
+      so that we can use the core #%top form if necessary rather than
+      relying on the namespace itself to have one.</pre></div><div class="help-entry"><a href="#rns-ownspace-set" name="rns-ownspace-set"></a><pre class="type-and-sig">[fn]  (rns-ownspace-set var val (o rns current-rns))</pre><pre class="docstring-and-examples">Sets a top-level variable in a Racket namespace without changing
+      the corresponding identifier mapping to point to that
+      variable.</pre></div><div class="help-entry"><a href="#rns-set" name="rns-set"></a><pre class="type-and-sig">[fn]  (rns-set var val (o rns current-rns))</pre><pre class="docstring-and-examples">Sets a variable in a Racket namespace using Racket's 'set!.</pre></div><div class="help-entry"><a href="#rns-set-own" name="rns-set-own"></a><pre class="type-and-sig">[fn]  (rns-set-own var val (o rns current-rns))</pre><pre class="docstring-and-examples">Sets a top-level variable in a Racket namespace and changes the
+      corresponding identifier mapping to point to that variable.</pre></div><div class="help-entry"><a href="#rns-set-renamer" name="rns-set-renamer"></a><pre class="type-and-sig">[fn]  (rns-set-renamer observing-var canonical-var (o canonical-rns current-rns))</pre><pre class="docstring-and-examples">Changes an identifier mapping in a Racket namespace to point to
+      a rename transformer.</pre></div><div class="help-entry"><a href="#rotate" name="rotate"></a><pre class="type-and-sig">[mac] (rotate . places)</pre><pre class="docstring-and-examples">Like <a href="#swap">swap</a> but for more than two places.
+For example, after (rotate place1 place2 place3), place3 is moved to place2,
+place2 to place1, and place1 to place3.</pre></div><div class="help-entry"><a href="#round" name="round"></a><pre class="type-and-sig">[fn]  (round n)</pre><pre class="docstring-and-examples">Approximates a fractional value to the nearest integer.
+Exact halves are rounded down to the lower integer.
+Negative numbers are always treated exactly like their positive variants
+barring the sign.</pre></div><div class="help-entry"><a href="#roundup" name="roundup"></a><pre class="type-and-sig">[fn]  (roundup n)</pre><pre class="docstring-and-examples">Like <a href="#round">round</a> but halves are rounded up rather than down.</pre></div><div class="help-entry"><a href="#rreduce" name="rreduce"></a><pre class="type-and-sig">[fn]  (rreduce f xs)</pre><pre class="docstring-and-examples">Like <a href="#reduce">reduce</a> but accumulates elements of 'xs' in reverse order.
+
+Examples:
+  arc&#62; (rreduce +
+                '(1 2 3 4 5))
+  15
+  arc&#62; (rreduce /
+                '(1 2 3))
+  3/2</pre></div><div class="help-entry"><a href="#run-all-tests" name="run-all-tests"></a><pre class="type-and-sig">[fn]  (run-all-tests)</pre><pre class="docstring-and-examples">Run all tests. Return t if any were found, nil if none were.</pre></div><div class="help-entry"><a href="#run-specific-things" name="run-specific-things"></a><pre class="type-and-sig">[fn]  (run-specific-things names (o store-result nil))</pre><pre class="docstring-and-examples">Run the things in names, then if there were any, store that in *last-things-run*.
+      Return t if at least one of the names is found, nil otherwise.</pre></div><div class="help-entry"><a href="#run-these-things" name="run-these-things"></a><pre class="type-and-sig">[fn]  (run-these-things names (o store-result nil))</pre><pre class="docstring-and-examples">Each name in NAMES can either be a suite or a test.
+      If STORE-RESULT is t, store the result of each function in *test-results* or *suite-results*
+      Return t if at least one of the names is found, nil otherwise.</pre></div><div class="help-entry"><a href="#run-this-thing" name="run-this-thing"></a><pre class="type-and-sig">[fn]  (run-this-thing name (o store-result nil))</pre><pre class="docstring-and-examples">If NAME is a test or a suite, run it and return the template result.
+      If NAME is not either, return nil.</pre></div><div class="help-entry"><a href="#safe-load-table" name="safe-load-table"></a><pre class="type-and-sig">[fn]  (safe-load-table filename)</pre><pre class="docstring-and-examples">Loads a table from 'filename', or an empty table on any errors.</pre></div><div class="help-entry"><a href="#save-table" name="save-table"></a><pre class="type-and-sig">[fn]  (save-table h file)</pre><pre class="docstring-and-examples">Writes table 'h' to 'file'.</pre></div><div class="help-entry"><a href="#set" name="set"></a><pre class="type-and-sig">[mac] (set . args)</pre><pre class="docstring-and-examples">Sets each place in 'args' to t.</pre></div><div class="help-entry"><a href="#set-coercer" name="set-coercer"></a><pre class="type-and-sig">[fn]  (set-coercer to from fun)</pre><pre class="docstring-and-examples">Makes 'fun the coercion function from 'from to 'to.
+    See also: <a href="#defcoerce">defcoerce</a></pre></div><div class="help-entry"><a href="#set-pw" name="set-pw"></a><pre class="type-and-sig">[fn]  (set-pw user pw)</pre><pre class="docstring-and-examples">Updates password for 'user'.</pre></div><div class="help-entry"><a href="#shl" name="shl"></a><pre class="type-and-sig">[fn]  (shl n m)</pre><pre class="docstring-and-examples">Shifts the binary twos-complement representation of 'n' left by 'm' bits.</pre></div><div class="help-entry"><a href="#shr" name="shr"></a><pre class="type-and-sig">[fn]  (shr n m)</pre><pre class="docstring-and-examples">Shifts the binary twos-complement representation of 'n' right by 'm' bits.</pre></div><div class="help-entry"><a href="#single" name="single"></a><pre class="type-and-sig">[fn]  (single x)</pre><pre class="docstring-and-examples">Is 'x' a list with just one element?
+
+Examples:
+  arc&#62; (single 1)
+  nil
+  arc&#62; (single 'nil)
+  nil
+  arc&#62; (single '(1))
+  t
+  arc&#62; (single '(1 2))
+  nil</pre></div><div class="help-entry"><a href="#slices" name="slices"></a><pre class="type-and-sig">[fn]  (slices s test)</pre><pre class="docstring-and-examples">Like <a href="#tokens">tokens</a> but creates a new string at every character matching 'test',
+creating empty strings as necessary.</pre></div><div class="help-entry"><a href="#slurp-body" name="slurp-body"></a><pre class="type-and-sig">[fn]  (slurp-body (o s (stdin)))</pre><pre class="docstring-and-examples">Read remaining lines from port.</pre></div><div class="help-entry"><a href="#slurp-header" name="slurp-header"></a><pre class="type-and-sig">[fn]  (slurp-header (o s (stdin)))</pre><pre class="docstring-and-examples">Read each line from port until a blank line is reached.</pre></div><div class="help-entry"><a href="#snd" name="snd"></a><pre class="type-and-sig">[fn]  (snd a b . _)</pre><pre class="docstring-and-examples">Returns its second argument. See also <a href="#fst">fst</a></pre></div><div class="help-entry"><a href="#some" name="some"></a><pre class="type-and-sig">[fn]  (some test seq)</pre><pre class="docstring-and-examples">Does at least one element of 'seq' satisfy 'test'?</pre></div><div class="help-entry"><a href="#sort" name="sort"></a><pre class="type-and-sig">[fn]  (sort test seq)</pre><pre class="docstring-and-examples">Orders a list 'seq' by comparing its elements using 'test'.
+
+Examples:
+  arc&#62; (sort &#60;
+             '(3 0 10 -7))
+  (-7 0 3 10)
+  arc&#62; (sort (fn (a b)
+               (&#60; len.a len.b))
+             '("horse" "dog" "elephant" "cat"))
+  (dog cat horse elephant)
+  arc&#62; (sort &#62; "Test word")
+  "wtsroedT "</pre></div><div class="help-entry"><a href="#sort-by-commonest" name="sort-by-commonest"></a><pre class="type-and-sig">[fn]  (sort-by-commonest seq (o f idfn))</pre><pre class="docstring-and-examples">Reorders 'seq' with most common elements first.</pre></div><div class="help-entry"><a href="#sp" name="sp"></a><pre class="type-and-sig">[fn]  (sp (o n 1))</pre><pre class="docstring-and-examples">Print a number of spaces.</pre></div><div class="help-entry"><a href="#splice" name="splice"></a><pre class="type-and-sig">[fn]  (splice l)</pre><pre class="docstring-and-examples">Clears up to the last n items of a <a href="#spliceable-list">spliceable-list</a> defined with a suffix
+length of n, and returns everything else.
+
+Examples:
+  arc&#62; (splice (spliceable-list 3))
+  nil
+  arc&#62; (splice (spliceable-list 3
+                                '(1)))
+  nil
+  arc&#62; (splice (spliceable-list 3
+                                '(1 2)))
+  nil
+  arc&#62; (splice (spliceable-list 3
+                                '(1 2 3)))
+  nil
+  arc&#62; (splice (spliceable-list 3
+                                '(1 2 3 4)))
+  (1)</pre></div><div class="help-entry"><a href="#spliceable-list" name="spliceable-list"></a><pre class="type-and-sig">[fn]  (spliceable-list n (o init))</pre><pre class="docstring-and-examples">Create a spliceable list with a constant suffix length of n. A spliceable
+list is a special data structure that efficiently supports the following
+operations:
+
+1. Destructively appending items using <a href="#nappend">nappend</a>.
+2. Returning the last n items appended using <a href="#suffix">suffix</a> if there are at least
+n items to return.
+3. Dropping the last n items appended, and returning everything else. <a href="#splice">splice</a></pre></div><div class="help-entry"><a href="#split" name="split"></a><pre class="type-and-sig">[fn]  (split seq pos)</pre><pre class="docstring-and-examples">Partitions 'seq' at index 'pos'.
+
+Examples:
+  arc&#62; (split '(a b c) 0)
+  (nil (a b c))
+  arc&#62; (split '(a b c) 1)
+  ((a) (b c))
+  arc&#62; (split '(a b c) 2)
+  ((a b) (c))
+  arc&#62; (split '(a b c) 3)
+  ((a b c) nil)
+  arc&#62; (split '(a b c) 4)
+  ((a b c) nil)</pre></div><div class="help-entry"><a href="#split-at" name="split-at"></a><pre class="type-and-sig">[fn]  (split-at s delim)</pre><pre class="docstring-and-examples">Partitions string s at first instance of delimiter, dropping delimiter.</pre></div><div class="help-entry"><a href="#src" name="src"></a><pre class="type-and-sig">[mac] (src name)</pre><pre class="docstring-and-examples">Pretty prints the source code of the function `name'. 
+    Is a macro, so `name' is not evaluated.
+    See also: <a href="#ppr-source">ppr-source</a></pre></div><div class="help-entry"><a href="#sref" name="sref"></a><pre class="type-and-sig">[fn]  (sref tem v k)</pre><pre class="docstring-and-examples">Sets position 'indices' in 'aggregate' (which might be a list, string, hash
+table, or other user-defined type) to 'value'.
+
+Examples:
+  arc&#62; (ret x '(1 2 3)
+         (sref x 4 1))
+  (1 4 3)
+  arc&#62; (ret x "abc"
+         (sref x #\d 0))
+  "dbc"
+  arc&#62; (ret x (obj a 1 b 2)
+         (sref x 3 'd))
+  #hash((a . 1) (b . 2) (d . 3))</pre></div><div class="help-entry"><a href="#string" name="string"></a><pre class="type-and-sig">[fn]  (string . args)</pre><pre class="docstring-and-examples">Converts all 'args' into strings and concatenates the results.</pre></div><div class="help-entry"><a href="#subst" name="subst"></a><pre class="type-and-sig">[fn]  (subst old new seq)</pre><pre class="docstring-and-examples">Returns a copy of 'seq' with all values of 'old' replaced with 'new'.</pre></div><div class="help-entry"><a href="#suffix" name="suffix"></a><pre class="type-and-sig">[fn]  (suffix l)</pre><pre class="docstring-and-examples">Computes the last n elements of l -- as long as there are at least that many.
+
+Examples:
+  arc&#62; (suffix 3 '(1))
+  nil
+  arc&#62; (suffix 3 '(1 2))
+  nil
+  arc&#62; (suffix 3 '(1 2 3))
+  (1 2 3)
+  arc&#62; (suffix 3
+               '(1 2 3 4))
+  (2 3 4)</pre></div><div class="help-entry"><a href="#suite-has-content" name="suite-has-content"></a><pre class="type-and-sig">[fn]  (suite-has-content the-suite)</pre><pre class="docstring-and-examples">Return t if SUITE has either tests or nested suites.</pre></div><div class="help-entry"><a href="#sum" name="sum"></a><pre class="type-and-sig">[fn]  (sum f xs)</pre><pre class="docstring-and-examples">Returns total of all elements in (map f xs).
+
+Examples:
+  arc&#62; (sum idfn
+            '(1 2 3 4))
+  10
+  arc&#62; (sum len
+            '("this" "is" "a" "sentence"))
+  15
+  arc&#62; (sum cadr
+            (obj a 1 b 2 c 3))
+  6
+  arc&#62; (sum int "abc")
+  294</pre></div><div class="help-entry"><a href="#summarize-run" name="summarize-run"></a><pre class="type-and-sig">[fn]  (summarize-run names)</pre><pre class="docstring-and-examples">Summarize a given test run.
+      That is, print out information about the overall status
+      of a set of suites.</pre></div><div class="help-entry"><a href="#summarize-run-of-all-tests" name="summarize-run-of-all-tests"></a><pre class="type-and-sig">[fn]  (summarize-run-of-all-tests)</pre><pre class="docstring-and-examples">Summarise the run of all tests.</pre></div><div class="help-entry"><a href="#swap" name="swap"></a><pre class="type-and-sig">[mac] (swap place1 place2)</pre><pre class="docstring-and-examples">Exchanges the values of 'place1' and 'place2'.</pre></div><div class="help-entry"><a href="#switch" name="switch"></a><pre class="type-and-sig">[mac] (switch expr . cases)</pre><pre class="docstring-and-examples">'switch is to 'switchlet as 'case is to 'caselet.
+    See also <a href="#switchlet">switchlet</a> <a href="#case">case</a> <a href="#caselet">caselet</a></pre></div><div class="help-entry"><a href="#switchlet" name="switchlet"></a><pre class="type-and-sig">[mac] (switchlet var expr . cases)</pre><pre class="docstring-and-examples">Like 'caselet, except it (lazily) evals the expressions compared against.
+    See also <a href="#switch">switch</a> <a href="#caselet">caselet</a> <a href="#case">case</a></pre></div><div class="help-entry"><a href="#sym" name="sym"></a><pre class="type-and-sig">[fn]  (sym x)</pre><pre class="docstring-and-examples">Converts 'x' into a symbol.</pre></div><div class="help-entry"><a href="#tablist" name="tablist"></a><pre class="type-and-sig">[fn]  (tablist h)</pre><pre class="docstring-and-examples">Converts table 'h' into an association list of (key value) pairs. Reverse of
+<a href="#listtab">listtab</a>.
+
+Examples:
+  arc&#62; (listtab (map rev
+                     (tablist (obj a 1 b 2))))
+  #hash((1 . a) (2 . b))</pre></div><div class="help-entry"><a href="#testify" name="testify"></a><pre class="type-and-sig">[fn]  (testify x)</pre><pre class="docstring-and-examples">Turns an arbitrary value 'x' into a predicate function to compare with 'x'.</pre></div><div class="help-entry"><a href="#tfn" name="tfn"></a><pre class="type-and-sig">[fn]  (tfn . _)</pre><pre class="docstring-and-examples">Ignores its arguments and returns t.</pre></div><div class="help-entry"><a href="#thread" name="thread"></a><pre class="type-and-sig">[mac] (thread . body)</pre><pre class="docstring-and-examples">Concurrently run expressions in 'body', returning an id that can be used to
+check their progress, interrupt them, etc.
+
+Creating multiple threads doesn't currently cause arc to use more than one
+processor. See http://docs.racket-lang.org/guide/concurrency.html. Programs
+will still speed up while waiting for keyboard input, reading/writing files,
+or communicating over the network.</pre></div><div class="help-entry"><a href="#time" name="time"></a><pre class="type-and-sig">[mac] (time expr)</pre><pre class="docstring-and-examples">Runs 'expr', then prints the amount of time it took to do so.</pre></div><div class="help-entry"><a href="#time10" name="time10"></a><pre class="type-and-sig">[mac] (time10 expr)</pre><pre class="docstring-and-examples">Like <a href="#time">time</a> but runs 'expr' 10 times.</pre></div><div class="help-entry"><a href="#to-readable-string" name="to-readable-string"></a><pre class="type-and-sig">[fn]  (to-readable-string val)</pre><pre class="docstring-and-examples">Return a readable version of VAL.</pre></div><div class="help-entry"><a href="#tofile" name="tofile"></a><pre class="type-and-sig">[mac] (tofile f . body)</pre><pre class="docstring-and-examples">Redirects stdout to the file 'f' within 'body'.</pre></div><div class="help-entry"><a href="#tokens" name="tokens"></a><pre class="type-and-sig">[fn]  (tokens s (o sep whitec))</pre><pre class="docstring-and-examples">Breaks up the string 's' at characters matching the predicate 'sep'
+(whitespace by default). Continuous runs of such characters count as a single
+separation; no empty strings are returned.</pre></div><div class="help-entry"><a href="#tostring" name="tostring"></a><pre class="type-and-sig">[mac] (tostring . body)</pre><pre class="docstring-and-examples">Runs 'body' then collect all output to (stdout) and return it as a string.</pre></div><div class="help-entry"><a href="#total-tests" name="total-tests"></a><pre class="type-and-sig">[fn]  (total-tests suite-results)</pre><pre class="docstring-and-examples">Count the total number of tests in SUITE-RESULTS, a list of suite-results templates.</pre></div><div class="help-entry"><a href="#trav" name="trav"></a><pre class="type-and-sig">[mac] (trav x . fs)</pre><pre class="docstring-and-examples">Applies each function in 'fs' to 'x', letting the functions recurse on parts
+of 'x' by calling 'self'.
+
+Examples:
+  arc&#62; (accum acc
+         (trav '(1 2 3 4)
+           [acc _]
+           [self cdr._]))
+  ((1 2 3 4) (2 3 4) (3 4) (4))</pre></div><div class="help-entry"><a href="#trim" name="trim"></a><pre class="type-and-sig">[fn]  (trim s (o where (quote both)) (o test whitec))</pre><pre class="docstring-and-examples">Strips out characters matching 'test' from front/start/begin of 's',
+back/finish/end, or both.</pre></div><div class="help-entry"><a href="#trues" name="trues"></a><pre class="type-and-sig">[fn]  (trues f xs)</pre><pre class="docstring-and-examples">Returns (map f xs) dropping any nils.
+
+Examples:
+  arc&#62; (trues cdr
+              '((1 2) (3) (4 5)))
+  ((2) (5))</pre></div><div class="help-entry"><a href="#tuples" name="tuples"></a><pre class="type-and-sig">[fn]  (tuples xs (o n 2))</pre><pre class="docstring-and-examples">Splits 'xs' up into lists of size 'n'. Generalization of <a href="#pair">pair</a>.
+
+Examples:
+  arc&#62; (tuples '(1 2 3 4 5)
+               1)
+  ((1) (2) (3) (4) (5))
+  arc&#62; (tuples '(1 2 3 4 5)
+               2)
+  ((1 2) (3 4) (5))
+  arc&#62; (tuples '(1 2 3 4 5)
+               3)
+  ((1 2 3) (4 5))</pre></div><div class="help-entry"><a href="#type" name="type"></a><pre class="type-and-sig">[fn]  (type x)</pre><pre class="docstring-and-examples">Returns the type of 'x', even if 'x' is a user-defined tagged-type.</pre></div><div class="help-entry"><a href="#uform" name="uform"></a><pre class="type-and-sig">[mac] (uform user req after . body)</pre><pre class="docstring-and-examples">Like <span class="broken-link">aform</span> but also authenticates that the form is submitted by 'user'.</pre></div><div class="help-entry"><a href="#union" name="union"></a><pre class="type-and-sig">[fn]  (union f xs ys)</pre><pre class="docstring-and-examples">Merges 'xs' and 'ys', while filtering out duplicates using 'f'. Ordering is
+not preserved.
+
+Examples:
+  arc&#62; (union is
+              '(1 2 3)
+              '(2 3 4))
+  (1 2 3 4)
+  arc&#62; (union is "ab" "banana")
+  "abnn"
+  arc&#62; (union (fn (a b)
+                (is (mod a 10)
+                    (mod b 10)))
+              '(1 2 3)
+              '(13 24 35))
+  (1 2 3 24 35)</pre></div><div class="help-entry"><a href="#uniqs" name="uniqs"></a><pre class="type-and-sig">[fn]  (uniqs lst)</pre><pre class="docstring-and-examples">Returns a list of gensyms, one for each element of `lst'. Elements
+    of `lst' that are symbols are used as the base names for their
+    corresponding gensyms.
+    See also <span class="broken-link">uniq</span></pre></div><div class="help-entry"><a href="#unless" name="unless"></a><pre class="type-and-sig">[mac] (unless test . body)</pre><pre class="docstring-and-examples">Opposite of <a href="#when">when</a>; runs multiple expressions when 'test' is nil.</pre></div><div class="help-entry"><a href="#until" name="until"></a><pre class="type-and-sig">[mac] (until test . body)</pre><pre class="docstring-and-examples">Like <a href="#while">while</a>, but negates 'test'; loops through 'body' as long as 'test' fails.</pre></div><div class="help-entry"><a href="#unzip" name="unzip"></a><pre class="type-and-sig">[fn]  (unzip xs)</pre><pre class="docstring-and-examples">Precisely as `zip', except that zip's `ls' is unzip's `xs'; so it takes one
+    list of lists rather than any number of lists as arguments. Can be thought
+    of as performing the inverse operation.
+    See also <a href="#zip">zip</a></pre></div><div class="help-entry"><a href="#up" name="up"></a><pre class="type-and-sig">[mac] (up v init max . body)</pre><pre class="docstring-and-examples">Counts 'v' up from 'init' (inclusive) to 'max' (also inclusive), running
+'body' with each value. Can also (break) and (continue) inside 'body'; see
+<a href="#for">for</a>.
+
+Examples:
+  arc&#62; (up i 1 10
+         (pr i " "))</pre></div><div class="help-entry"><a href="#upcase" name="upcase"></a><pre class="type-and-sig">[fn]  (upcase s)</pre><pre class="docstring-and-examples">Converts 'x' to uppercase.</pre></div><div class="help-entry"><a href="#urform" name="urform"></a><pre class="type-and-sig">[mac] (urform user req after . body)</pre><pre class="docstring-and-examples">Like <span class="broken-link">arform</span> but also authenticates that the form is submitted by 'user'.</pre></div><div class="help-entry"><a href="#urldecode" name="urldecode"></a><pre class="type-and-sig">[fn]  (urldecode s)</pre><pre class="docstring-and-examples">Reverse <a href="#urlencode">urlencode</a>, replacing runs of encoded %sequences with
+corresponding (potentially multibyte) characters.</pre></div><div class="help-entry"><a href="#urlencode" name="urlencode"></a><pre class="type-and-sig">[fn]  (urlencode s)</pre><pre class="docstring-and-examples">Encode string 's' using only characters permitted in urls according to the http spec.
+Should behave just like javascript's encodeURIComponent.</pre></div><div class="help-entry"><a href="#vals" name="vals"></a><pre class="type-and-sig">[fn]  (vals h)</pre><pre class="docstring-and-examples">Returns list of values in table 'h'.</pre></div><div class="help-entry"><a href="#w/appendfile" name="w/appendfile"></a><pre class="type-and-sig">[mac] (w/appendfile var name . body)</pre><pre class="docstring-and-examples">Opens file 'name' into stream 'var' to <span class="broken-link">write</span> to it in 'body'.
+Unlike <a href="#w/outfile">w/outfile</a>, appends to existing contents of the file.
+Reliably closes the file when it's done.</pre></div><div class="help-entry"><a href="#w/bars" name="w/bars"></a><pre class="type-and-sig">[mac] (w/bars . body)</pre><pre class="docstring-and-examples">Assumes each expression in 'body' will print something, and intersperses them
+with '|'s.</pre></div><div class="help-entry"><a href="#w/infile" name="w/infile"></a><pre class="type-and-sig">[mac] (w/infile var name . body)</pre><pre class="docstring-and-examples">Opens file 'name' into stream 'var' to <a href="#read">read</a> from it in 'body'.
+Reliably closes the file when it's done.
+See also <a href="#read">read</a>.</pre></div><div class="help-entry"><a href="#w/instring" name="w/instring"></a><pre class="type-and-sig">[mac] (w/instring var str . body)</pre><pre class="docstring-and-examples">Creates a stream 'var' to <a href="#read">read</a> from 'str' in 'body'.
+Reliably closes the stream when it's done.</pre></div><div class="help-entry"><a href="#w/module" name="w/module"></a><pre class="type-and-sig">[mac] (w/module module . body)</pre><pre class="docstring-and-examples">Evaluates `module' at expansion time and uses Racket's
+    `local-require' to require the Arc variables of the resulting
+    module in a local scope for `body'.</pre></div><div class="help-entry"><a href="#w/outfile" name="w/outfile"></a><pre class="type-and-sig">[mac] (w/outfile var name . body)</pre><pre class="docstring-and-examples">Opens file 'name' into stream 'var' to <span class="broken-link">write</span> to it in 'body'.
+Reliably closes the file when it's done.</pre></div><div class="help-entry"><a href="#w/outstring" name="w/outstring"></a><pre class="type-and-sig">[mac] (w/outstring var . body)</pre><pre class="docstring-and-examples">Create an in-memory string and <span class="broken-link">write</span> to it in 'body'.
+The contents of the string can be accessed by calling 'inside'.</pre></div><div class="help-entry"><a href="#w/rmodule" name="w/rmodule"></a><pre class="type-and-sig">[mac] (w/rmodule rmodule . body)</pre><pre class="docstring-and-examples">Evaluates `rmodule' at expansion time and uses Racket's
+    `local-require' to require the resulting module in a local
+    scope for `body'.</pre></div><div class="help-entry"><a href="#w/socket" name="w/socket"></a><pre class="type-and-sig">[mac] (w/socket var port . body)</pre><pre class="docstring-and-examples">Creates a stream 'var' to listen to and <a href="#read">read</a> from 'port'.
+Reliably closes the stream when it's done.</pre></div><div class="help-entry"><a href="#w/stdin" name="w/stdin"></a><pre class="type-and-sig">[mac] (w/stdin str . body)</pre><pre class="docstring-and-examples">Redirects reads from (stdin) inside 'body' using calls to <a href="#read">read</a>, etc. to
+read from the stream 'str'.</pre></div><div class="help-entry"><a href="#w/stdout" name="w/stdout"></a><pre class="type-and-sig">[mac] (w/stdout str . body)</pre><pre class="docstring-and-examples">Redirects writes to (stdout) inside 'body' using calls to <span class="broken-link">write</span>, <a href="#prn">prn</a>,
+etc. to write to the stream 'str'.</pre></div><div class="help-entry"><a href="#w/table" name="w/table"></a><pre class="type-and-sig">[mac] (w/table var . body)</pre><pre class="docstring-and-examples">Runs 'body' to add to table 'var' and finally return it.</pre></div><div class="help-entry"><a href="#w/uniq" name="w/uniq"></a><pre class="type-and-sig">[mac] (w/uniq names . body)</pre><pre class="docstring-and-examples">Assigns a set of variables to unique symbols.
+Useful for avoiding name capture in macros; see the tutorial: http://ycombinator.com/arc/tut.txt</pre></div><div class="help-entry"><a href="#walk" name="walk"></a><pre class="type-and-sig">[fn]  (walk seq f)</pre><pre class="docstring-and-examples">Calls function 'f' on each element of 'seq'. See also <a href="#map">map</a>.</pre></div><div class="help-entry"><a href="#warn" name="warn"></a><pre class="type-and-sig">[fn]  (warn msg . args)</pre><pre class="docstring-and-examples">Displays args to screen as a warning.</pre></div><div class="help-entry"><a href="#when" name="when"></a><pre class="type-and-sig">[mac] (when test . body)</pre><pre class="docstring-and-examples">Like <a href="#if">if</a>, but can take multiple expressions to run when 'test' is not nil.
+Can't take an 'else' branch.</pre></div><div class="help-entry"><a href="#whenlet" name="whenlet"></a><pre class="type-and-sig">[mac] (whenlet var expr . body)</pre><pre class="docstring-and-examples">Like <a href="#when">when</a> but also puts the value of 'expr' in 'var' so 'body' can access it.</pre></div><div class="help-entry"><a href="#where" name="where"></a><pre class="type-and-sig">[mac] (where expr . parms)</pre><pre class="docstring-and-examples">Binds `parms' and evaluates `expr'. Examples:
+
+      arc&#62; (where (square x)
+              square [* _ _]
+              x 2)
+      4
+
+    Note that binding is recursive, but that actual assignment of values is done
+    in the reverse of the order given, so any variables which are both bound and
+    used in `parms' must be used in reverse dependency order:
+
+      arc&#62; (where x x (+ y y) y 0)    ; this works as expected
+      y
+      arc&#62; (where x y 0 x (+ y y))    ; this doesn't
+      nil
+
+    Essentially, this is a reversed form of Scheme's 'letrec,
+    with many fewer parentheses. Inspired by Haskell's "where".
+    See also <a href="#withr">withr</a> <a href="#withr/p">withr/p</a> <a href="#withf">withf</a></pre></div><div class="help-entry"><a href="#while" name="while"></a><pre class="type-and-sig">[mac] (while test . body)</pre><pre class="docstring-and-examples">Loops through the expressions in 'body' as long as 'test' passes.
+Can also terminate by calling '(break)', or terminate just one iteration by calling
+'(continue)'.</pre></div><div class="help-entry"><a href="#whiler" name="whiler"></a><pre class="type-and-sig">[mac] (whiler var expr end . body)</pre><pre class="docstring-and-examples">Repeatedly binds 'var' to 'expr' and runs 'body' until 'var' matches 'end'.</pre></div><div class="help-entry"><a href="#whilet" name="whilet"></a><pre class="type-and-sig">[mac] (whilet var test . body)</pre><pre class="docstring-and-examples">Like <a href="#while">while</a>, but successive values of 'test' are bound to 'var'.</pre></div><div class="help-entry"><a href="#whitec" name="whitec"></a><pre class="type-and-sig">[fn]  (whitec c)</pre><pre class="docstring-and-examples">Is 'c' a whitespace char?</pre></div><div class="help-entry"><a href="#wipe" name="wipe"></a><pre class="type-and-sig">[mac] (wipe . args)</pre><pre class="docstring-and-examples">Sets each place in 'args' to nil.</pre></div><div class="help-entry"><a href="#wipe-all-tests" name="wipe-all-tests"></a><pre class="type-and-sig">[fn]  (wipe-all-tests)</pre><pre class="docstring-and-examples">Delete all tests and suites.</pre></div><div class="help-entry"><a href="#wipe-tests" name="wipe-tests"></a><pre class="type-and-sig">[mac] (wipe-tests . names)</pre><pre class="docstring-and-examples">Delete the tests or suites from *unit-tests*, causing them to not exist anymore.
+
+      If this deletion results in a suite with no tests and no nested suites, that suite
+      will be removed also.</pre></div><div class="help-entry"><a href="#wipe-tests-helper" name="wipe-tests-helper"></a><pre class="type-and-sig">[fn]  (wipe-tests-helper name-list)</pre><pre class="docstring-and-examples">For each thing named in NAME-LIST, delete it from *unit-tests*.</pre></div><div class="help-entry"><a href="#with" name="with"></a><pre class="type-and-sig">[mac] (with parms . body)</pre><pre class="docstring-and-examples">Evaluates all expressions in 'body' under the bindings provided in 'parms'.
+Returns value of last expression in 'body'.
+For example, (with (x 1 y 2)
+               (+ x y))
+             =&#62; 3</pre></div><div class="help-entry"><a href="#with/p" name="with/p"></a><pre class="type-and-sig">[mac] (with/p vars-vals . body)</pre><pre class="docstring-and-examples">Scheme/Common Lisp's `let' - ie: 'with with the parens added back.
+    Easier to use in macro expansions than 'with.
+    See also <a href="#with">with</a> <a href="#withs/p">withs/p</a></pre></div><div class="help-entry"><a href="#withf" name="withf"></a><pre class="type-and-sig">[mac] (withf fns . body)</pre><pre class="docstring-and-examples">Defines a set `fns' of mutually recursive local fns within `body'. Each
+    three elements of `fn' correspond to a fn name, argument list, and body,
+    so you'll need to use 'do if you want a multi-expression fn body.
+    Example:
+
+      arc&#62; (withf (is-even (x) (case x 0 t (is-odd (- x 1)))
+                   is-odd (x) (case x 0 nil (is-even (- x 1))))
+             (keep is-odd (range 0 5)))
+      (1 3 5)
+
+    See also <a href="#letf">letf</a> <a href="#withr">withr</a></pre></div><div class="help-entry"><a href="#withf/p" name="withf/p"></a><pre class="type-and-sig">[mac] (withf/p fns . body)</pre><pre class="docstring-and-examples">Like 'withf, only with extra parens, as in 'with/p compared to 'with.
+    See also <a href="#withf">withf</a> <a href="#with/p">with/p</a> <a href="#withr">withr</a> <a href="#withr/p">withr/p</a></pre></div><div class="help-entry"><a href="#withr" name="withr"></a><pre class="type-and-sig">[mac] (withr bindings . body)</pre><pre class="docstring-and-examples">Scheme's 'letrec, with the redundant inner parens removed.
+    See also <a href="#withf">withf</a> <a href="#letf">letf</a> <a href="#where">where</a> <a href="#withr/p">withr/p</a></pre></div><div class="help-entry"><a href="#withr/p" name="withr/p"></a><pre class="type-and-sig">[mac] (withr/p bindings . body)</pre><pre class="docstring-and-examples">Scheme's 'letrec.
+    See also <a href="#withr">withr</a> <a href="#where">where</a></pre></div><div class="help-entry"><a href="#withs" name="withs"></a><pre class="type-and-sig">[mac] (withs parms . body)</pre><pre class="docstring-and-examples">Like <a href="#with">with</a>, but binding for a variable can refer to earlier variables.
+For example, (withs (x 1 y (+ x 1))
+               (+ x y))
+             =&#62; 3</pre></div><div class="help-entry"><a href="#withs/p" name="withs/p"></a><pre class="type-and-sig">[mac] (withs/p vars-vals . body)</pre><pre class="docstring-and-examples">Like Scheme/Common Lisp's `let*' - ie: 'withs with the parens added back.
+    Easier to use in macro expansions than 'withs.
+    See also <a href="#withs">withs</a> <a href="#with/p">with/p</a></pre></div><div class="help-entry"><a href="#would-shadow" name="would-shadow"></a><pre class="type-and-sig">[fn]  (would-shadow cur-suite thing-name)</pre><pre class="docstring-and-examples">Returns t iff CUR-SUITE has a test or suite named THING-NAME.</pre></div><div class="help-entry"><a href="#write-table" name="write-table"></a><pre class="type-and-sig">[fn]  (write-table h (o o (stdout)))</pre><pre class="docstring-and-examples">Writes table as an association list to stream 'o' (stdout by default).</pre></div><div class="help-entry"><a href="#writefile" name="writefile"></a><pre class="type-and-sig">[fn]  (writefile val name)</pre><pre class="docstring-and-examples">Outputs 'val' to file 'name' using <span class="broken-link">write</span>.</pre></div><div class="help-entry"><a href="#zap" name="zap"></a><pre class="type-and-sig">[mac] (zap op place . args)</pre><pre class="docstring-and-examples">Replaces 'place' with (apply op place args)</pre></div><div class="help-entry"><a href="#zip" name="zip"></a><pre class="type-and-sig">[fn]  (zip . ls)</pre><pre class="docstring-and-examples">Returns a list of lists; the n-th element of the result is a list of the
+    n-th elements of the lists in `ls'. The length of the result is the length
+    of the shortest list in `ls'; extra elements in other lists are discarded.
+    See also <a href="#unzip">unzip</a></pre></div></body></head></html>
