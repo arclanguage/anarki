@@ -11,9 +11,11 @@
 set -o errexit -o nounset
 
 # We only proceed if this deployment was initiated by a commit to
-# `master`.
+# `master` and only if it's using the Racket version we've marked as
+# `SHOULD_COMMIT_TO_GH_PAGES=true`.
 test "$TRAVIS_PULL_REQUEST" == "false" || exit 0
 test "$TRAVIS_BRANCH" == "master" || exit 0
+test "$SHOULD_COMMIT_TO_GH_PAGES" == "true" || exit 0
 
 # We clone the `gh-pages` branch. If it doesn't exist yet, we create a
 # new branch with an empty history.

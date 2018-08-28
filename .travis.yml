@@ -34,22 +34,22 @@ env:
     # `ssl-connect` from `openssl`.
 
     # This is the earliest known supported version.
-    - RACKET_VERSION=6.11
+    - RACKET_VERSION=6.11 SHOULD_COMMIT_TO_GH_PAGES=false
 
     # Racket 7.0 made big internal changes, including migrating its
     # language implementation to Chez Scheme, so Racket 6.12 may have
     # some oddities not shared by its neighbors. We test on it to make
     # sure we haven't run into one of those.
-    - RACKET_VERSION=6.12
+    - RACKET_VERSION=6.12 SHOULD_COMMIT_TO_GH_PAGES=false
 
     # This is the latest known supported version.
-    - RACKET_VERSION=7.0
+    - RACKET_VERSION=7.0 SHOULD_COMMIT_TO_GH_PAGES=true
 
     # We include the latest Racket version in the build matrix, but
     # since it's part of `allow_failures` below, a failure here
     # doesn't count. This is purely to make it easy to check whether
     # we're already compatible with a newer Racket release.
-    - RACKET_VERSION=HEAD
+    - RACKET_VERSION=HEAD SHOULD_COMMIT_TO_GH_PAGES=false
 
 
 matrix:
