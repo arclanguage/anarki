@@ -1,9 +1,9 @@
-(require '(lib/app.arc
- lib/prompt.arc
-; search.arc  search bar
-; events.arc  event calendar
-; blog.arc    community blogging
- ))
+(require "lib/app.arc")
+(require "lib/prompt.arc")
+(require "lib/files.arc")
+
+;(require (qualified-path "../events.arc"))
+;(require (qualified-path "../blog.arc"))
 
 
 (= this-site*    "Anarki"
