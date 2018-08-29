@@ -1,4 +1,10 @@
-(require 'lib/app.arc)
+(require "lib/app.arc")
+(require "lib/prompt.arc")
+(require "lib/files.arc")
+
+;(require (qualified-path "../events.arc"))
+;(require (qualified-path "../blog.arc"))
+
 
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
@@ -541,7 +547,12 @@
       (tag (img src logo-url* alt 'a width 18 height 18
                 style "border:1px #@(hexrep border-color*) solid;")))))
 
-(= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "blog" "events" "*"))
+(= toplabels* '(nil "welcome" "new" 
+  "threads" "comments" 
+  "ask" 
+;  "blog" 
+;  "events" 
+  "*"))
 
 (= welcome-url* "welcome")
 
@@ -555,8 +566,18 @@
     (toplink "comments" "newcomments" label)
     (hook 'toprow user label)
     (toplink "ask" "ask" label)
+
+; in case anyone else was confused, 'posts* and 'events*
+; become bound if blog.arc and events.arc are included.
+
     (if (bound 'posts*) (toplink "blog" "blog" label))
     (if (bound 'events*) (toplink "events" "events" label))
+
+    (if (admin user) (do
+      (toplink "prompt" "prompt" label)
+      (pr "&nbsp;|&nbsp;")
+      (toplink "repl" "repl" label)))
+
     (when
       (and user (> (karma user) poll-threshold*))
       (toplink "poll" "newpoll" label))
