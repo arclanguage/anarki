@@ -10,12 +10,85 @@
 # unset environment variable is used, exit the script.
 set -o errexit -o nounset
 
-# We only proceed if this deployment was initiated by a commit to
-# `master` and only if it's using the Racket version we've marked as
-# `SHOULD_COMMIT_TO_GH_PAGES=true`.
-test "$TRAVIS_PULL_REQUEST" == "false" || exit 0
-test "$TRAVIS_BRANCH" == "master" || exit 0
-test "$SHOULD_COMMIT_TO_GH_PAGES" == "true" || exit 0
+
+# We only proceed only under a specific set of conditions. Most of
+# these messages are worded as though someone will be reading them
+# from a Travis build log.
+#
+# In a Travis build, most of these variables will be set to something.
+#
+# If SHOULD_COMMIT_TO_GH_PAGES isn't set, that's probably because the
+# build matrix in .travis.yml was accidentally updated in a way that
+# omitted that variable.
+#
+# If ROCKETNIABOT_GH_TOKEN isn't set, that's probably because an entry
+# hasn't been configured for it in Travis. See the notes below about
+# how this should be set up.
+
+# NOTE: In Bash, "${foo-}" substitutes the value of foo if it's set
+# and the value "" if it isn't. We're using it here as a way to work
+# around the `nounset` option specifically for the purpose of giving a
+# better status message.
+
+if [ "${TRAVIS-}" == "" ]; then
+  echo \
+    'This script is designed to run only during the continuous' \
+    'integration tests. Aborting.'
+  exit 1
+fi
+
+if ! (
+  [ "${TRAVIS_REPO_SLUG-}" == "arclanguage/anarki" ] &&
+  [ "${TRAVIS_BRANCH-}" == "master" ]
+); then
+  echo \
+    'Not a build of the arclanguage/anarki repo'\''s master branch.' \
+    'Aborting.'
+  exit 0
+fi
+
+if [ "${TRAVIS_PULL_REQUEST-}" != "false" ]; then
+  echo 'The build was initiated by a pull request. Aborting.'
+  exit 0
+fi
+
+if [ "${SHOULD_COMMIT_TO_GH_PAGES-}" != "true" ]; then
+  echo \
+    'The build was initiated by a build matrix entry that was not' \
+    'designated for committing to the `gh-pages` branch. Aborting.'
+  exit 0
+fi
+
+if [ "${ROCKETNIABOT_GH_TOKEN-}" == "" ]; then
+
+  # This variable should be bound to a GitHub personal access token
+  # with the public_repo permission. The token should be configured in
+  # Travis CI as an "encrypted environment variable" so that
+  # contributors typically don't have access to its value unless they
+  # push a build script designed to reveal it.
+  #
+  # If someone ever gains access to this token, please revoke both
+  # that user's and rocketniabot's contributor access to the repo to
+  # inhibit abuse until the situation can be worked out, and inform
+  # GitHub user rocketniabot (well, rocketnia) about this so they can
+  # revoke the token.
+  #
+  # The user who grants this personal access token essentially takes
+  # responsibility for the automated pushes, as far as GitHub is
+  # concerned. If this role changes hands, please rename the variable.
+  #
+  # If at times nobody is available and willing to take responsibility
+  # for automated pushes, it's no great loss; the `gh-pages` branch
+  # will just need to be updated manually.
+
+  echo \
+    'The Travis CI settings for the repo do not have a' \
+    'ROCKETNIABOT_GH_TOKEN environment variable configured. A' \
+    'GitHub personal access token is necessary in order to push the' \
+    'build to GitHub. Aborting.'
+  exit 0
+fi
+
 
 # We clone the `gh-pages` branch. If it doesn't exist yet, we create a
 # new branch with an empty history.
