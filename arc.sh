@@ -101,7 +101,7 @@ case $(uname) in
         ;;
 
     *)
-	arc_dir=$(pwd)
+        arc_dir=$(pwd)
 esac
 
 if [ $# -gt 0 ]; then
