@@ -19,7 +19,6 @@
 (def prompt-page (user . msg)
   (ensure-dir appdir*)
   (ensure-dir (string appdir* user))
-;  (ensure-dir (string appdir* "public"))
   (whitepage
     (prbold "Prompt")
     (sp)

@@ -1,9 +1,7 @@
 (require "lib/app.arc")
-(require "lib/prompt.arc")
 (require "lib/files.arc")
 
-;(require (qualified-path "../events.arc"))
-;(require (qualified-path "../blog.arc"))
+(require "appeditor.arc")
 
 
 (= this-site*    "Anarki"
@@ -570,13 +568,11 @@
 ; in case anyone else was confused, 'posts* and 'events*
 ; become bound if blog.arc and events.arc are included.
 
-    (if (bound 'posts*) (toplink "blog" "blog" label))
-    (if (bound 'events*) (toplink "events" "events" label))
+;    (if (bound 'posts*) (toplink "blog" "blog" label))
+;    (if (bound 'events*) (toplink "events" "events" label))
 
     (if (admin user) (do
-      (toplink "prompt" "prompt" label)
-      (pr "&nbsp;|&nbsp;")
-      (toplink "repl" "repl" label)))
+      (toplink "editor" "editor" label)))
 
     (when
       (and user (> (karma user) poll-threshold*))
