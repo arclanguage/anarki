@@ -1,8 +1,6 @@
-(require "lib/app.arc")
-(require "lib/files.arc")
-
-(require "appeditor.arc")
-
+(require 'lib/app.arc)
+(require 'lib/files.arc)
+(require 'appeditor.arc)
 
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
@@ -471,8 +469,9 @@
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
       (link "settings" "newsadmin")
-      (link "repl")
-      (link "prompt")
+      ;(link "repl")
+      ;(link "prompt")
+      (link "editor")
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
@@ -570,9 +569,6 @@
 
 ;    (if (bound 'posts*) (toplink "blog" "blog" label))
 ;    (if (bound 'events*) (toplink "events" "events" label))
-
-    (if (admin user) (do
-      (toplink "editor" "editor" label)))
 
     (when
       (and user (> (karma user) poll-threshold*))

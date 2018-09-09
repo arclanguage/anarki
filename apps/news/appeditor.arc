@@ -44,9 +44,7 @@
             (td (hspace 40)
                 (ulink user 'delete (app-delete user app))))))
 
-    (prbold "Repl")
-
-    
+    (prbold "Repl")    
     
     (aform (fn (req) 
       (do 
@@ -55,7 +53,7 @@
                       (fn ()
                         (= that (eval expr) thatexpr expr)
                         (push (list expr that) repl-history*))))
-        (editor-page (get-user req))))
+        (editor-page (get-user req) nil)))
       (textarea "expr" 8 60)
       (sp)
       (submit))
@@ -85,7 +83,7 @@
 (def app-delete (user app)
   (let file (app-filepath app)
     (if (file-exists file)
-      (do (app-unhook user app)
+      (do (= (hooks* app) nil)
           (rmfile (app-filepath app))
           (editor-page user "Program " app " deleted."))
       (editor-page user "No such app."))))
