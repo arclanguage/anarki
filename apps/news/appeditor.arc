@@ -1,8 +1,7 @@
 ; App Manager: Web-based programming application based on prompt.arc
 
-(require '(
-  lib/files.arc
-  lib/srv.arc))
+(require 'lib/files.arc)
+(require 'lib/srv.arc)
 
 (= mgappdir* (qualified-path (+ srvdir* "../../managed/")))
    
@@ -24,7 +23,7 @@
     (link "logout")
 
     (when msg (hspace 10) (apply pr msg))
-
+    (pr hooks*)
     (br2)
     (aform (fn (req)
       (aif (goodname (arg req "app")) ; check if file exists
