@@ -23,7 +23,7 @@
     (link "logout")
 
     (when msg (hspace 10) (apply pr msg))
-    (pr hooks*)
+
     (br2)
     (aform (fn (req)
       (aif (goodname (arg req "app")) ; check if file exists
