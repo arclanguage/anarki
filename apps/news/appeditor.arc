@@ -1,5 +1,3 @@
-; App Manager: Web-based programming application based on prompt.arc
-
 (require 'lib/files.arc)
 (require 'lib/srv.arc)
 
