@@ -1,10 +1,6 @@
-(require "lib/app.arc")
-(require "lib/prompt.arc")
-(require "lib/files.arc")
-
-;(require (qualified-path "../events.arc"))
-;(require (qualified-path "../blog.arc"))
-
+(require 'lib/app.arc)
+(require 'lib/files.arc)
+(require 'appeditor.arc)
 
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
@@ -473,8 +469,9 @@
       (pr (round (/ (memory) 1000000)) " mb")
       (pr elapsed " msec")
       (link "settings" "newsadmin")
-      (link "repl")
-      (link "prompt")
+      ;(link "repl")
+      ;(link "prompt")
+      (link "editor")
       (hook 'admin-bar user whence))))
 
 (def bottom-bar ()
@@ -570,13 +567,8 @@
 ; in case anyone else was confused, 'posts* and 'events*
 ; become bound if blog.arc and events.arc are included.
 
-    (if (bound 'posts*) (toplink "blog" "blog" label))
-    (if (bound 'events*) (toplink "events" "events" label))
-
-    (if (admin user) (do
-      (toplink "prompt" "prompt" label)
-      (pr "&nbsp;|&nbsp;")
-      (toplink "repl" "repl" label)))
+;    (if (bound 'posts*) (toplink "blog" "blog" label))
+;    (if (bound 'events*) (toplink "events" "events" label))
 
     (when
       (and user (> (karma user) poll-threshold*))
