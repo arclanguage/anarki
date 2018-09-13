@@ -12,7 +12,7 @@
     lib/collect.arc
 
 ;   ; optional
-;   lib/files.arc
+    lib/files.arc
 ;   lib/streams.arc
 ;   lib/lru-cache.arc
 ;   lib/tree.arc
