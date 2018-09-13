@@ -1,3 +1,8 @@
+(unless bound appdir* 
+  (do
+    (app-start "news")
+))
+
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
    parent-url*   "http://github.com/arclanguage/anarki"
@@ -10,13 +15,10 @@
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
    prefer-url*   t
-
-   newsdir*   (canonical-path-ts  "apps/news/www/news")
-   storydir*  (canonical-path-ts  "apps/news/www/news/story")
-   profdir*   (canonical-path-ts  "apps/news/www/news/profile")
-   votedir*   (canonical-path-ts  "apps/news/www/news/vote")
-   logdir*    (canonical-path-ts  "apps/news/www/logs")
-   staticdir* (canonical-path-ts  "apps/news/static")
+   newsdir*   srvdir*
+   storydir*  (+ newsdir* "story/")
+   profdir*   (+ newsdir* "profile/")
+   votedir*   (+ newsdir* "vote/")
 
 ; remember to set caching to 0 when testing non-logged-in
 
@@ -33,7 +35,6 @@
 
    (max-age* 'news.css) 86400   
 )
-
 
 ; Look up title on Searx, a free metasearch engine
 
