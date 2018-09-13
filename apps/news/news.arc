@@ -1,9 +1,3 @@
-(require "lib/app.arc")
-(require "lib/prompt.arc")
-(require "lib/files.arc")
-
-;(require (qualified-path "../events.arc"))
-;(require (qualified-path "../blog.arc"))
 
 
 (= this-site*    "Anarki"
@@ -18,10 +12,13 @@
    site-color*   (color 180 180 180)
    border-color* (color 180 180 180)
    prefer-url*   t
-   newsdir*  (+ srvdir* "news/")
-   storydir* (+ srvdir* "news/story/")
-   profdir*  (+ srvdir* "news/profile/")
-   votedir*  (+ srvdir* "news/vote/")
+
+   newsdir*   (canonical-path-ts "apps/news/www/news")
+   storydir*  (canonical-path-ts "apps/news/www/news/story")
+   profdir*   (canonical-path-ts "apps/news/www/news/profile")
+   votedir*   (canonical-path-ts "apps/news/www/news/vote")
+   logdir*    (canonical-path-ts "apps/news/www/logs")
+   staticdir* (canonical-path-ts "apps/news/static")
 
 ; remember to set caching to 0 when testing non-logged-in
 
@@ -570,8 +567,8 @@
 ; in case anyone else was confused, 'posts* and 'events*
 ; become bound if blog.arc and events.arc are included.
 
-    (if (bound 'posts*) (toplink "blog" "blog" label))
-    (if (bound 'events*) (toplink "events" "events" label))
+;   (if (bound 'posts*) (toplink "blog" "blog" label))
+;   (if (bound 'events*) (toplink "events" "events" label))
 
     (if (admin user) (do
       (toplink "prompt" "prompt" label)
