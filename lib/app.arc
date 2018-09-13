@@ -220,32 +220,32 @@ Returns nil if no logged-in user."
 
 ($ (require net/smtp net/head))
 (def email-forgotpw-link (user email)
-  (withs (app-email (map string (readfile "www/app-email"))
-         to         ($.list email)
-         message    ($.list (string
-                            (trim site-url* 'end #\/)
-                            (flink (fn ignore (forgotpw-reset-page user)))))
-         from       (app-email 0)
-         smtp-srv   (app-email 1)
-         auth-user  (app-email 2)
-         pw         (app-email 3)
-         header     ($.standard-message-header
-                      from
-                      to
-                      $.null
-                      $.null
-                      "Reset your password"))
-        ($.keyword-apply
-          $.smtp-send-message
-          ($.map $.string->keyword ($.list
-            "auth-passwd"
-            "auth-user"
-            "tls-encode"))
-          ($.list
-            pw
-            auth-user
-            $.ports->ssl-ports)
-          ($.list smtp-srv from to header message))))
+  (withs (app-email  (map string (readfile "www/app-email"))
+          to         ($.list email)
+          message    ($.list (string
+                             (trim site-url* 'end #\/)
+                             (flink (fn ignore (forgotpw-reset-page user)))))
+          from       (app-email 0)
+          smtp-srv   (app-email 1)
+          auth-user  (app-email 2)
+          pw         (app-email 3)
+          header     ($.standard-message-header
+                       from
+                       to
+                       $.null
+                       $.null
+                       "Reset your password"))
+    ($.keyword-apply
+      $.smtp-send-message
+      ($.map $.string->keyword ($.list
+        "auth-passwd"
+        "auth-user"
+        "tls-encode"))
+      ($.list
+        pw
+        auth-user
+        $.ports->ssl-ports)
+      ($.list smtp-srv from to header message))))
 
 (def forgotpw-reset-page (user (o msg))
   (if msg (pr msg))
