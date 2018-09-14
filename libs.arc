@@ -30,4 +30,7 @@
     ; helpers for the repl
     lib/ppr.arc
     lib/help.arc
+
+    ; apps
+    apps/applib.arc
 ))
