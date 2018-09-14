@@ -1,4 +1,3 @@
-
 (def app-start (name (o startfile (string "run-" name ".arc")))
   (= appdir*    (canonical-path-ts (string "apps/" name ))
      apprun*    (+ appdir* startfile))
@@ -24,4 +23,3 @@
         (require apprun*))
 
         (prn (string "bootstrap file " apprun* "not found!"))))
-

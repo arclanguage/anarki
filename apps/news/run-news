@@ -3,4 +3,4 @@
 #change to the directory of the script
 cd $(dirname "$0")
 
-../../arc.sh -i ./run-news.arc
+../../arc.sh -i ../appcmd.arc "app-start" "news"

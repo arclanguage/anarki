@@ -32,5 +32,5 @@
     lib/help.arc
 
     ; apps
-    apps/appconfig.arc
+    apps/applib.arc
 ))
