@@ -14,7 +14,8 @@ First [install **Racket** (v6.11 or later)](http://racket-lang.org), then
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
     $ ./arc.sh    # start the interactive repl
-    $ (app-start "news")  # or start News (also with the repl)
+    $cd apps/news
+    $ ./run-news  # or start News (also with the repl)
 
 ### Tutorial
 
@@ -45,23 +46,16 @@ To run **News**, first pick your (the admin's) username,
 
 You can have multiple admins. Add them all to `www/admins`, separated by whitespace.
 
+
 ### Starting the server
  
 **Warning**: *If you are already running a **News** site, migrating to this fork
 might mess up your site's data. Come [talk to us](http://arclanguage.org/forum)
 first, and be sure to make a backup before the migration.*
 
-To start news while in the arc repl:
-    
-    (app-start "news")
+Now bring up the server,
 
-Alternatively:
-
-    $ cd /apps/news
-    $ ./run-news (or ./run-news.cmd for Windows users)
-
-Note: ./run-news and .run-news.cmd should be considered deprecated and 
-may be removed in the future. 
+    $ ./run-news
 
 There'll be a pause while the server loads up, with some messages, then you'll
 see the `arc>` prompt.

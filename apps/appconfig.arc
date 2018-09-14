@@ -22,6 +22,6 @@
           staticdir* (+ appdir* "static/"))
 
         (require apprun*))
-    
-    (prn (string "bootstrap file " apprun* "not found!"))))
+
+        (prn (string "bootstrap file " apprun* "not found!"))))
 
