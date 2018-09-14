@@ -1,8 +1,3 @@
-(unless bound appdir* 
-  (do
-    (app-start "news")
-))
-
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
    parent-url*   "http://github.com/arclanguage/anarki"

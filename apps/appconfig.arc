@@ -1,31 +1,27 @@
 
 (def app-start (name (o startfile (string "run-" name ".arc")))
-
-  (do
-
-    (= appdir*    (canonical-path-ts (string "apps/" name ))
-       apprun*    (+ appdir* startfile))
+  (= appdir*    (canonical-path-ts (string "apps/" name ))
+     apprun*    (+ appdir* startfile))
 
   ; to match run-news,arc, each app needs an arc file
   ; named "run-" appname ".arc" 
 
-      (if (file-exists apprun*)
-        (do
-          (prn (string "starting app " name " ... "))
+  (if (file-exists apprun*)
+    (do
+      (prn (string "starting app " name " ... "))
   
   ; reset the variables required by the app server 
 
-		  (= srvdir*    (+ appdir* "www/")
-		     hpwfile*   (+ srvdir* "hpw")
-		     emailfile* (+ srvdir* "emails")
-		     oidfile*   (+ srvdir* "openids")
-		     adminfile* (+ srvdir* "admins")
-		     cookfile*  (+ srvdir* "cooks")
-		     logdir*    (+ srvdir* "logs/")  
-		     staticdir* (+ appdir* "static/"))
+       (= srvdir*    (+ appdir* "www/")
+          hpwfile*   (+ srvdir* "hpw")
+          emailfile* (+ srvdir* "emails")
+          oidfile*   (+ srvdir* "openids")
+          adminfile* (+ srvdir* "admins")
+          cookfile*  (+ srvdir* "cooks")
+          logdir*    (+ srvdir* "logs/")  
+          staticdir* (+ appdir* "static/"))
 
-		    (require apprun*))
-
-		(prn (string "bootstrap file " apprun* "not found!")))
-))
+        (require apprun*))
+    
+    (prn (string "bootstrap file " apprun* "not found!"))))
 
