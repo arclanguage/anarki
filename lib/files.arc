@@ -57,3 +57,9 @@
   " Returns a directory tree from the given path. "
   (if (~dir-exists path) path
       (map dir-tree (map [$.path->string:$.build-path path _] (dir path)))))
+
+(def textfile-write (path . lines)
+   (w/outfile outf path 
+    (w/stdout outf
+      (each line lines 
+        (prn line)))))

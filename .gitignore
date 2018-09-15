@@ -9,6 +9,8 @@ apps/*/logs
 # accident.
 /unit-test.arc/
 
+www/
+
 # The build-web-help.arc script generates this directory.
 /build-gh-pages/
 
