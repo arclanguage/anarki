@@ -414,10 +414,10 @@
 
 (mac npage (title . body)
   `(do 
-;    (doctype "html")
+    (doctype "html")
      (html
        (head
-;        (meta-charset "UTF-8")
+         (meta-charset "UTF-8")
          (css-ext "news.css")
          (favicon "favicon.ico")
          (meta-viewport "width=device-width")
