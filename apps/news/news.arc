@@ -1008,13 +1008,16 @@
 ; since only uparrow is shown; could straight memoize
 
 (def votelink (i user whence dir)
-  (tag (a id      (if user (string dir '_ i!id))
-          onclick (if user "return vote(this)")
+    (tag (a class "votelink" 
+            "data-id" (string i!id) 
+;           "data-score" (string i!score)
+            "data-dir" (string dir)
+;  (tag (a id      (if user (string dir '_ i!id))
+;          onclick (if user "return vote(this)")
           href    (vote-url user i dir whence))
     (if (is dir 'up)
       (out (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2))
       (out (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2)))))
-
 
 (= lowest-score* -4)
 
@@ -1057,7 +1060,7 @@
         (canvote user i dir)
          (do (vote-for by i dir)
              (logvote ip by i)
-             ; Redirect w/o JavaScript when votejs* can't be run
+             ; Redirect w/o JavaScript
              (pr (redirect whence 1))
              (pr "Thank you for voting."))
          (pr "Can't make that vote."))))
