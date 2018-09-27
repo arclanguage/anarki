@@ -582,7 +582,8 @@
 
 (def topright (user whence (o showkarma t))
   (when user
-    (userlink user user nil)
+
+    (tag (span "id" "userlink") (userlink user user nil))
     (when showkarma (pr  "&nbsp;(@(karma user))"))
     (pr "&nbsp;|&nbsp;"))
   (if user
