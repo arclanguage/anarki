@@ -1,13 +1,18 @@
 
 window.onload = function() {
-  var votelinks = byClass(document, "votelink");
-  for (var i = votelinks.length - 1; i >= 0; i--) {
-    votelinks[i].addEventListener('click', function (e) {
-      e.preventDefault();
-      vote(this);
-    }, false);
+  if(byId(document, "userlink")) {
+
+    var votelinks = byClass(document, "votelink");
+
+    for (var i = votelinks.length - 1; i >= 0; i--) {
+      votelinks[i].addEventListener('click', function (e) {
+        e.preventDefault();
+        vote(this);
+      }, false);
+    }
   }
 }
+
 
 function byId(e, id) {
   return e.getElementById(id);
