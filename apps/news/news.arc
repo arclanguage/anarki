@@ -1010,7 +1010,6 @@
 (def votelink (i user whence dir)
     (tag (a class "votelink" 
             "data-id" (string i!id) 
-;           "data-score" (string i!score)
             "data-dir" (string dir)
 ;  (tag (a id      (if user (string dir '_ i!id))
 ;          onclick (if user "return vote(this)")
@@ -1075,7 +1074,11 @@
     (byline i user)))
 
 (def itemscore (i (o user))
-  (tag (span id (+ "score_" i!id))
+  (tag (span 
+  "class" "itemscore"
+  "data-score" (string i!score)
+   id (+ "score_" i!id))
+   
     (pr (plural (if (is i!type 'pollopt) (realscore i) i!score)
                 "point")))
     (if (isnt i!type 'pollopt)
