@@ -14,7 +14,7 @@ First [install **Racket** (v6.11 or later)](http://racket-lang.org), then
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
     $ ./arc.sh    # start the interactive repl
-    $cd apps/news
+    $ cd apps/news
     $ ./run-news  # or start News (also with the repl)
 
 ### Tutorial
