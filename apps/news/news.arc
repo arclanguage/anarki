@@ -410,98 +410,140 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-;(defopr favicon.ico req favicon-url*)
-
-(mac npage (title . body)
-  `(do 
-    (doctype "html")
-     (html
-       (head
-         (meta-charset "UTF-8")
-         (css-ext "news.css")
-         (favicon "favicon.ico")
-         (meta-viewport "width=device-width")
-         (js-ext "news.js")
-         (title ,title))
-       (body
-         (center
-           (tag (table border 0 cellpadding 0 cellspacing 0 width "85%"
-                       bgcolor sand)
-             ,@body))))))
+(def userstyle (user)
+  (tag ("style" "type" "text/css")
+    (pr (string ".topcolor { 
+                  background-color: #" (hexrep (main-color user)) ";"
+                  "}"))))
 
 (= pagefns* nil)
 
-(mac fulltop (user lid label title whence . body)
-  (w/uniq (gu gi gl gt gw)
-    `(with (,gu ,user ,gi ,lid ,gl ,label ,gt ,title ,gw ,whence)
-       (npage (+ this-site* (if ,gt (+ bar* ,gt) ""))
-         (if (check-procrast ,gu)
-           (do (pagetop 'full ,gi ,gl ,gt ,gu ,gw)
+; page top
+
+(= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "*")
+   showkarma* t)
+
+;RTS: once this works, add it to the default app layout as an
+;html5 template. Also, get the label to work or remove it. 
+
+; whence is broken for login again (and in the same way)
+(mac longpage (user time label title whence . body)
+  (w/uniq (gu gl gt gw gd)
+    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) (do 
+       (prn "<!DOCTYPE html>")
+       (tag html
+         (tag head
+           (gentag meta "charset" "UTF-8")
+           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
+           (userstyle ,gu)
+           (gentag link "rel" "icon" "href" "/favicon.ico")
+           (gentag "meta" "name" "viewport" "value" "width=device-width")
+           (tag (script "type" "text/javascript" "src" "/news.js"))
+           (tag title (pr (+ this-site* (if ,gt (+ bar* ,gt) "")))))
+           (tag body 
+            (tag (div "class" "layout sand") 
+           ; NTS this would be a good place to add a ban page
+           (if (check-procrast ,gu) (do
+             (tag (div "class" "topcolor page-header")
+               (tag (span "id" "navleft")
+                 (tag (link rel "icon" href logo-url*))
+                 (tag (a "id" "logo" href parent-url*)
+                   (tag (img src logo-url*)))               
+                   (link this-site* "news"))
+               (tag (span "id" "navmain")
+                 (w/bars 
+                   (toplink "new" "newest" ,gl)
+                   (toplink "comments" "newcomments" ,gl)
+                   (toplink "ask" "ask" ,gl)
+                   (link  "submit")))
+                (tag (span "id" "navright")
+                    (when ,gu
+                      (if (noob ,gu)
+                        (toplink "welcome" "welcome" ,gl))
+                      (tag (span "id" "userlink") 
+                        (userlink ,gu ,gu nil)) 
+                      (when showkarma* 
+                        (pr (string "&nbsp;(" (karma ,gu) ")"))
+                        (pr "&nbsp;|"))
+                      (pr "&nbsp;")
+                      (toplink "threads" (threads-url ,gu) ,gl)
+                      (pr "&nbsp;|&nbsp;")
+                      (when (and ,gu (> (karma ,gu) poll-threshold*))
+                        (toplink "poll" "newpoll" ,gl)
+                        (pr "&nbsp;|&nbsp;")))
+                      (if ,gu
+                        (rlinkf 'logout (req)
+                          (when-umatch/r ,gu req
+                            (logout-user ,gu)
+                        ,gw))
+                        (onlink "login"
+                          (news-login-page nil
+                                (list (fn (u ip)
+                                        (ensure-news-user u)
+                                        (newslog ip u 'top-login))
+                                      ,gw)))))
+                 (hook 'toprow ,gu ,gl))
+               (map [_ ,gu] pagefns*)
                (hook 'page ,gu ,gl)
-               ,@body)
-           (row (procrast-msg ,gu ,gw)))))))
+               (tag (div "class" "page-content") ,@body)
+                (tag (div "class" "page-footer")
+                  (hook 'longfoot)
+                  (tag (span "class" "yclinks")
+                    (w/bars
+                      (link "faq")
+                      (link "lists")
+                      (link "rss")
+                      (link "bookmarklet")))
+                  (if (bound 'search-bar) 
+                    (search-bar ,gu))
+                  ; this may not even work -- items is not in scope.
+                  (when (admin ,gu) ;TODO move these into the user page
+                      (br2)
+                      (w/bars
+                        (pr (len items*) "/" maxid* " loaded")
+                        (pr (round (/ (memory) 1000000)) " mb")
+                        (pr (- (msec) ,gd) " msec")
+                        (link "settings" "newsadmin")
+                        (link "repl")
+                        (link "prompt")
+                        (hook 'admin-bar ,gu ,gw)))))
+             (tag (div "class" "noprocrast")
+               (procrast-msg ,gu ,gw)))
+)))))))
 
-(mac longpage (user t1 lid label title whence . body)
-  (w/uniq (gu gt gi)
-    `(with (,gu ,user ,gt ,t1 ,gi ,lid)
-       (fulltop ,gu ,gi ,label ,title ,whence
-         (trtd ,@body)
-         (trtd (vspace 10)
-               (color-stripe (main-color ,gu))
-               (br)
-               (center
-                 (hook 'longfoot)
-                 (bottom-bar)
-                 (br2)
-                 (if (bound 'search-bar) (search-bar user))
-                 (admin-bar ,gu (- (msec) ,gt) ,whence)))))))
-
-(def admin-bar (user elapsed whence)
-  (when (admin user)
-    (br2)
-    (w/bars
-      (pr (len items*) "/" maxid* " loaded")
-      (pr (round (/ (memory) 1000000)) " mb")
-      (pr elapsed " msec")
-      (link "settings" "newsadmin")
-      (link "repl")
-      (link "prompt")
-      (hook 'admin-bar user whence))))
-
-(def bottom-bar ()
-     (spanclass yclinks
-     (w/bars
-       (link "faq")
-       (link "lists")
-       (link "rss")
-       (link "bookmarklet"))))
-
-(def color-stripe (c)
-  (tag (table width "100%" cellspacing 0 cellpadding 1)
-    (tr (tdcolor c))))
-
-(mac shortpage (user lid label title whence . body)
-  `(fulltop ,user ,lid ,label ,title ,whence
-     (trtd ,@body)))
+; should I be expanding body here?
+(mac shortpage (user label title whence . body)
+  `(longpage ,user (msec) ,label ,title ,whence ,@body))
 
 (mac minipage (label . body)
-  `(npage (+ this-site* bar* ,label)
-     (pagetop nil nil ,label)
-     (trtd ,@body)))
+  `(longpage nil (msec) ,label (+ this-site* bar* ,label) "/" ,@body))
 
 (def msgpage (user msg (o title))
   (minipage (or title "Message")
-    (spanclass admin
-      (center (if (len> msg 80)
-                (widtable 500 msg)
-                (pr msg))))
-    (br2)))
+    (tag ("span" "class" "admin")
+      (pr msg))))
 
+(def listpage (user t1 items label title (o url label) (o number t))
+  (hook 'listpage user)
+  (longpage user t1 label title url
+    (display-items user items label title url 0 perpage* number)))
 
+(def news-login-page ((o msg nil) (o afterward hello-page))
+     (minipage "Login"
+      (pagemessage msg)
+      (login-form afterward)
+      (hook 'login-form afterward)
+      (br2)
+      (signup-form afterward)))
+
+(def toplink (name dest label)
+  (tag-if (is name label) (span class 'topsel)
+    (link name dest)))
+
+(def noob (user)
+  (and user (< (days-since (uvar user created)) 1)))
 
 ; turn off server caching via (= caching* 0) or won't see changes
-
-; Page top
 
 (= sand (color 246 246 239) textgray (gray 130))
 
@@ -510,97 +552,6 @@
     (hex>color it)
     site-color*))
 
-(def pagetop (switch lid label (o title) (o user) (o whence))
-; (tr (tdcolor black (vspace 5)))
-  (tr (tdcolor (main-color user)
-        (tag (table border 0 cellpadding 0 cellspacing 0 width "100%"
-                    style "padding:2px")
-          (tr (gen-logo)
-              (when (is switch 'full)
-                (tag (td style "line-height:12pt; height:10px;")
-                  (spanclass pagetop
-                    (tag b (link this-site* "news"))
-                    (sp)
-                    (hspace 5)
-                    (toprow user label))))
-             (if (is switch 'full)
-               (tag (td style "text-align:right;padding-right:4px;")
-                 (spanclass pagetop (topright user whence)))
-               (tag (td style "line-height:12pt; height:10px;")
-                 (spanclass pagetop (prbold label))))))))
-  (map [_ user] pagefns*)
-  (spacerow 10))
-
-(def gen-logo ()
-  (tag (link rel "icon" href logo-url*))
-  (tag (td style "width:18px;padding-right:4px")
-    (tag (a href parent-url*)
-      (tag (img src logo-url* alt 'a width 18 height 18
-                style "border:1px #@(hexrep border-color*) solid;")))))
-
-(= toplabels* '(nil "welcome" "new" 
-  "threads" "comments" 
-  "ask" 
-;  "blog" 
-;  "events" 
-  "*"))
-
-(= welcome-url* "welcome")
-
-(def toprow (user label)
-  (w/bars
-    (when (noob user)
-      (toplink "welcome" welcome-url* label))
-    (toplink "new" "newest" label)
-    (when user
-      (toplink "threads" (threads-url user) label))
-    (toplink "comments" "newcomments" label)
-    (hook 'toprow user label)
-    (toplink "ask" "ask" label)
-
-; in case anyone else was confused, 'posts* and 'events*
-; become bound if blog.arc and events.arc are included.
-
-   (if (bound 'posts*) (toplink "blog" "blog" label))
-   (if (bound 'events*) (toplink "events" "events" label))
-
-    (if (admin user) (do
-      (toplink "prompt" "prompt" label)
-      (pr "&nbsp;|&nbsp;")
-      (toplink "repl" "repl" label)))
-
-    (when
-      (and user (> (karma user) poll-threshold*))
-      (toplink "poll" "newpoll" label))
-    (link  "submit")
-    (unless (mem label toplabels*)
-      (fontcolor white (pr label)))))
-
-(def toplink (name dest label)
-  (tag-if (is name label) (span class 'topsel)
-    (link name dest)))
-
-(def topright (user whence (o showkarma t))
-  (when user
-
-    (tag (span "id" "userlink") (userlink user user nil))
-    (when showkarma (pr  "&nbsp;(@(karma user))"))
-    (pr "&nbsp;|&nbsp;"))
-  (if user
-    (rlinkf 'logout (req)
-      (when-umatch/r user req
-        (logout-user user)
-        whence))
-    (onlink "login"
-      (login-page nil
-                  (list (fn (u ip)
-                          (ensure-news-user u)
-                          (newslog ip u 'top-login))
-                        whence)))))
-
-(def noob (user)
-  (and user (< (days-since (uvar user created)) 1)))
-
 
 ; News-Specific Defop Variants
 
@@ -608,7 +559,7 @@
   `(defop ,name ,parm
      (if (,test (get-user ,parm))
        (do ,@body)
-       (login-page (+ "Please log in" ,msg ".")
+       (news-login-page (+ "Please log in" ,msg ".")
                    (list (fn (u ip) (ensure-news-user u))
                          (string ',name (reassemble-args ,parm)))))))
 
@@ -640,14 +591,14 @@
   (w/uniq g
     `(opexpand defopa ,name ,parms
        (let ,g (string ',name)
-         (shortpage user nil ,g ,g ,g
+         (shortpage user ,g ,g ,g
            ,@body)))))
 
 (mac edop (name parms . body)
   (w/uniq g
     `(opexpand defope ,name ,parms
        (let ,g (string ',name)
-         (shortpage user nil ,g ,g ,g
+         (shortpage user ,g ,g ,g
            ,@body)))))
 
 
@@ -670,7 +621,7 @@
 ; Or could generalize vars-form to think of places (in the setf sense).
 
 (def newsadmin-page (user)
-  (shortpage user nil nil "newsadmin" "newsadmin"
+  (shortpage user nil "newsadmin" "newsadmin"
     (vars-form user
                (nad-fields)
                (fn (name val)
@@ -702,11 +653,11 @@
 (newsop user (id)
   (if (only.profile id)
     (user-page user id)
-    (pr "No such user.")))
+    (msgpage nil "No such user.")))
 
 (def user-page (user subject)
   (let here (user-url subject)
-    (shortpage user nil nil (+ "Profile: " subject) here
+    (shortpage user nil (+ "Profile: " subject) here
       (profile-form user subject)
       (when (some astory:item (uvar subject submitted))
         (underlink "submissions" (submitted-url subject)))
@@ -775,12 +726,10 @@
   (tostring (underlink "reset password" "resetpw")))
 
 (newsop welcome ()
-  (pr "Welcome to " this-site* ", " user "!"))
+  (msgpage user (string "Welcome to " this-site* ", " user "!")))
 
 
 ; Main Operators
-
-
 
 ; Limiting that newscache can't take any arguments except the user.
 ; To allow other arguments, would have to turn the cache from a single
@@ -805,12 +754,6 @@
 (newscache newspage user 90
   (listpage user (msec) (topstories user maxend*) nil nil "news"))
 
-(def listpage (user t1 items label title (o url label) (o number t))
-  (hook 'listpage user)
-  (longpage user t1 nil label title url
-    (display-items user items label title url 0 perpage* number)))
-
-
 (newsop newest () (newestpage user))
 
 ; Note: dead/deleted items will persist for the remaining life of the
@@ -822,7 +765,6 @@
 (def newstories (user n)
   (retrieve n [cansee user _] stories*))
 
-
 (newsop best () (bestpage user))
 
 (newscache bestpage user 1000
@@ -832,7 +774,6 @@
 
 (def beststories (user n)
   (bestn n (compare > realscore) (visible user stories*)))
-
 
 (newsop noobstories () (noobspage user stories*))
 (newsop noobcomments () (noobspage user comments*))
@@ -858,7 +799,7 @@
 
 
 (newsop lists ()
-  (longpage user (msec) nil "lists" "Lists" "lists"
+  (longpage user (msec) "lists" "Lists" "lists"
     (sptab
       (row (link  "leaders")      "Users with most karma.")
       (row (link  "best")         "Highest voted recent links.")
@@ -895,19 +836,16 @@
 
 (def display-items (user items label title whence
                     (o start 0) (o end perpage*) (o number))
-  (zerotable
+    (tag (ol "class" "items-list") 
     (let n start
       (each i (cut items start end)
-        (display-item (and number (++ n)) i user whence t)
-        (spacerow (if (acomment i) 15 5))))
+        (tag li (display-item (and number (++ n)) i user whence t))))
     (when end
       (let newend (+ end perpage*)
         (when (and (<= newend maxend*) (< end (len items)))
-          (spacerow 10)
-          (tr (tag (td colspan (if number 2 1)))
-              (tag (td class 'title)
-                (morelink display-items
-                          items label title end newend number))))))))
+          (tag li 
+            (morelink display-items
+              items label title end newend number)))))))
 
 ; This code is inevitably complex because the More fn needs to know
 ; its own fnid in order to supply a correct whence arg to stuff on
@@ -921,18 +859,17 @@
                      (with (url  (url-for it)     ; it bound by afnid
                             user (get-user req))
                        (newslog req!ip user 'more label)
-                       (longpage user (msec) nil label title url
+                       (longpage user (msec) label title url
                          (apply f user items label title url args))))))
           rel 'nofollow)
     (pr "More")))
 
 (def display-story (i s user whence)
   (when (or (cansee user s) (s 'kids))
-    (tr (display-item-number i)
-        (td (votelinks s user whence))
+    (tag (div "class" "itemhead") 
+        (votelinks s user whence)
         (titleline s s!url user whence))
-    (tr (tag (td colspan (if i 2 1)))
-        (tag (td class 'subtext)
+        (tag (div "class" "subtext")
           (hook 'itemline s user)
           (itemline s user)
           (when (isnt whence "news") (weblink s!title))
@@ -944,21 +881,17 @@
           (killlink s user whence)
           (blastlink s user whence)
           (blastlink s user whence t)
-          (deletelink s user whence)))))
-
-(def display-item-number (i)
-  (when i (tag (td align 'right valign 'top class 'title)
-            (pr i "."))))
+          (deletelink s user whence))))
 
 (= follow-threshold* 5)
 
 (def titleline (s url user whence)
-  (tag (td class 'title)
+  (tag (span "class" "title")
     (if (cansee user s)
       (do (deadmark s user)
           (titlelink s url user)
           (awhen (sitename url)
-            (spanclass comhead
+            (tag (span "class" "comhead")
               (pr " ("
                   (tostring (link it (string "from?site=" (sitename url))))
                   ")"))))
@@ -988,7 +921,7 @@
 (= votewid* 14)
 
 (def votelinks (i user whence (o downtoo))
-  (center
+    (tag (span "class" "votelinks")
     (if (and (cansee user i)
              (or (no user)
                  (no ((votes user) i!id))))
@@ -997,13 +930,9 @@
                         (or (admin user)
                             (< (item-age i) downvote-time*))
                         (canvote user i 'down))
-               (br)
                (votelink i user whence 'down)))
         (author user i)
-         (do (fontcolor orange (pr "*"))
-             (br)
-             (hspace votewid*))
-         (hspace votewid*))))
+         (do (fontcolor orange (pr "*"))))))
 
 ; could memoize votelink more, esp for non-logged in users,
 ; since only uparrow is shown; could straight memoize
@@ -1012,12 +941,10 @@
     (tag (a class "votelink" 
             "data-id" (string i!id) 
             "data-dir" (string dir)
-;  (tag (a id      (if user (string dir '_ i!id))
-;          onclick (if user "return vote(this)")
           href    (vote-url user i dir whence))
     (if (is dir 'up)
-      (out (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2))
-      (out (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2)))))
+      (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2)
+      (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2))))
 
 (= lowest-score* -4)
 
@@ -1049,7 +976,7 @@
         (and by (or (isnt by user) (isnt (sym auth) (user->cookie* user))))
          (pr "User mismatch.")
         (no user)
-         (login-page "You have to be logged in to vote."
+         (news-login-page "You have to be logged in to vote."
                      (list (fn (u ip)
                              (ensure-news-user u)
                              (newslog ip u 'vote-login)
@@ -1378,7 +1305,7 @@
 
 (def submit-login-warning ((o url) (o title) (o showtext) (o text)
                            (o req)) ; unused
-  (login-page "You have to be logged in to submit."
+  (news-login-page "You have to be logged in to submit."
               (fn (user ip)
                 (ensure-news-user user)
                 (newslog ip user 'submit-login)
@@ -1732,7 +1659,7 @@
     (spacerow 7)))
 
 (def display-pollopt (n o user whence)
-  (tr (display-item-number n)
+  (tr 
       (tag (td valign 'top)
         (votelinks o user whence))
       (tag (td class 'comment)
@@ -1784,20 +1711,18 @@
   (with (title (and (cansee user i)
                     (or i!title (aand i!text (ellipsize (striptags it)))))
          here (item-url i!id))
-    (longpage user (msec) nil nil title here
-      (tab (display-item nil i user here)
-           (display-item-text i user)
-           (when (apoll i)
-             (spacerow 10)
-             (tr (td)
-                 (td (tab (display-pollopts i user here)))))
-           (when (and (cansee user i) (comments-active i))
-             (spacerow 10)
-             (row "" (comment-form i user here))))
-      (br2)
+    (longpage user (msec) nil title here
+    (tag (div "class" "item")
+      (display-item nil i user here)
+      (display-item-text i user)
+      (when (apoll i)
+        (display-pollopts i user here))
+      (when (and (cansee user i) (comments-active i))
+        (comment-form i user here)))
+
       (when (and i!kids (commentable i))
-        (tab (display-subcomments i user here))
-        (br2)))))
+        (display-subcomments i user here))
+)))
 
 (def commentable (i) (in i!type 'story 'comment 'poll))
 
@@ -1903,7 +1828,7 @@
 
 (def edit-page (user i)
   (let here (edit-url i)
-    (shortpage user nil nil "Edit" here
+    (shortpage user nil "Edit" here
       (tab (display-item nil i user here)
            (display-item-text i user))
       (br2)
@@ -1929,7 +1854,7 @@
 ; Comment Submission
 
 (def comment-login-warning (parent whence (o text))
-  (login-page "You have to be logged in to comment."
+  (news-login-page "You have to be logged in to comment."
               (fn (u ip)
                 (ensure-news-user u)
                 (newslog ip u 'comment-login)
@@ -2007,22 +1932,20 @@
 
 (def display-comment-tree (c user whence (o indent 0) (o initialpar))
   (when (cansee-descendant user c)
-    (display-1comment c user whence indent initialpar)
-    (display-subcomments c user whence (+ indent 1))))
-
-(def display-1comment (c user whence indent showpar)
-  (row (tab (display-comment nil c user whence t indent showpar showpar))))
+      (tag (li "class" "comment")
+        (display-comment nil c user whence t indent initialpar initialpar)
+        (display-subcomments c user whence (+ indent 1)))))
 
 (def display-subcomments (c user whence (o indent 0))
-  (each k (sort (compare > frontpage-rank:item) c!kids)
-    (display-comment-tree (item k) user whence indent)))
+  (if c!kids
+    (tag (ul "class" "comments-list") 
+      (each k (sort (compare > frontpage-rank:item) c!kids)
+        (display-comment-tree (item k) user whence indent)))))
 
 (def display-comment (n c user whence (o astree) (o indent 0)
                                       (o showpar) (o showon))
-  (tr (display-item-number n)
-      (when astree (td (tag pre (repeat (* 5 indent) (pr " ")))))
-      (tag (td valign 'top) (votelinks c user whence t))
-      (display-comment-body c user whence astree indent showpar showon)))
+      (votelinks c user whence t)
+      (display-comment-body c user whence astree indent showpar showon))
 
 ; Comment caching doesn't make generation of comments significantly
 ; faster, but may speed up everything else by generating less garbage.
@@ -2073,10 +1996,10 @@
                (* (+ (trunc (/ age 86400)) 1) 86400)))))
 
 (def gen-comment-body (c user whence astree indent showpar showon)
-  (tag (td class 'default)
+  (tag (div class 'default)
     (let parent (and (or (no astree) showpar) (c 'parent))
-      (tag (div style "margin-top:2px; margin-bottom:-10px; ")
-        (spanclass comhead
+      (tag div
+        (tag (span "class" "comhead")
           (itemline c user)
           (when parent
             (when (cansee user c) (pr bar*))
@@ -2107,7 +2030,7 @@
                    (replyable c indent)
                    (comments-active c))
             (underline (replylink c whence))
-            (fontcolor sand (pr "-----"))))))))
+))))))
 
 ; For really deeply nested comments, caching could add another reply
 ; delay, but that's ok.
@@ -2130,7 +2053,7 @@
     (if (only.comments-active i)
       (if user
           (addcomment-page i user whence)
-          (login-page "You have to be logged in to comment."
+          (news-login-page "You have to be logged in to comment."
                       (fn (u ip)
                         (ensure-news-user u)
                         (newslog ip u 'comment-login)
@@ -2158,7 +2081,7 @@
     (withs (title (+ subject "'s comments")
             label (if (is user subject) "threads" title)
             here  (threads-url subject))
-      (longpage user (msec) nil label title here
+      (longpage user (msec) label title here
         (awhen (keep [and (cansee user _) (~subcomment _)]
                      (comments subject maxend*))
           (display-threads user it label title here))))
@@ -2166,18 +2089,15 @@
 
 (def display-threads (user comments label title whence
                       (o start 0) (o end threads-perpage*))
-  (tab
+  (tag (ul "class" "threads-list")
     (each c (cut comments start end)
       (display-comment-tree c user whence 0 t))
     (when end
       (let newend (+ end threads-perpage*)
         (when (and (<= newend maxend*) (< end (len comments)))
-          (spacerow 10)
-          (row (tab (tr (td (hspace 0))
-                        (td (hspace votewid*))
-                        (tag (td class 'title)
-                          (morelink display-threads
-                                    comments label title end newend))))))))))
+          (tag (li)
+            (morelink display-threads
+              comments label title end newend)))))))
 
 (def submissions (user (o limit))
   (map item (firstn limit (uvar user submitted))))
@@ -2206,7 +2126,7 @@
   (if (profile subject)
     (with (label (+ subject "'s submissions")
            here  (submitted-url subject))
-      (longpage user (msec) nil label label here
+      (longpage user (msec) label label here
         (if (or (no (ignored subject))
                 (is user subject)
                 (seesdead user))
@@ -2266,13 +2186,13 @@
 (= nleaders* 20)
 
 (newscache leaderspage user 1000
-  (longpage user (msec) nil "leaders" "Leaders" "leaders"
+  (longpage user (msec) "leaders" "Leaders" "leaders"
     (sptab
       (let i 0
         (each u (firstn nleaders* (leading-users))
           (tr (tdr:pr (++ i) ".")
               (td (userlink user u nil))
-              (tdr:pr (karma u))
+              (if showkarma* (tdr:pr (karma u)))
               (when (admin user)
                 (tdr:prt (only.num (uvar u avg) 2 t t))))
           (if (is i 10) (spacerow 30)))))))
@@ -2597,7 +2517,7 @@ It is the number of minutes you can edit your comments before they appear to oth
 (def display-selected-items (user f whence)
   (display-items user (f stories*) nil nil whence)
   (vspace 35)
-  (color-stripe textgray)
+  ;(color-stripe textgray)
   (vspace 35)
   (display-items user (f comments*) nil nil whence))
 
@@ -2618,7 +2538,7 @@ It is the number of minutes you can edit your comments before they appear to oth
            (row time ip user))))
 
 ; personal data export in machine readable format as required by GDPR
-; TODO: should include logs
+; TODO: should include logs (and export as JSON)
 (newsop personal-data ()
   (tag code
     (pr (obj
@@ -2643,12 +2563,6 @@ It is the number of minutes you can edit your comments before they appear to oth
             (let n (opcounts* name)
               (tdr:prt n)
               (tdr:prt (and n (round (/ (* n ms) 1000))))))))))
-
-(defop topcolors req
-  (minipage "Custom Colors"
-    (tab
-      (each c (dedup (map downcase (trues [uvar _ topcolor] (users))))
-        (tr (td c) (tdcolor (hex>color c) (hspace 30)))))))
 
 ; since Arc has no modules we have to turn off global settings turned on just
 ; in this file
