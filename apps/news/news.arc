@@ -434,11 +434,11 @@
        (tag html
          (tag head
            (gentag meta "charset" "UTF-8")
-           (gentag link "rel" "stylesheet" "type" "text/css" "href" "news.css")
+           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
            (userstyle ,gu)
-           (gentag link "rel" "icon" "href" "favicon.ico")
+           (gentag link "rel" "icon" "href" "/favicon.ico")
            (gentag "meta" "name" "viewport" "value" "width=device-width")
-           (tag (script "type" "text/javascript" "src" "news.js"))
+           (tag (script "type" "text/javascript" "src" "/news.js"))
            (tag title (pr (+ this-site* (if ,gt (+ bar* ,gt) "")))))
            (tag body 
             (tag (div "class" "layout sand") 
