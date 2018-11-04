@@ -423,10 +423,6 @@
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "*")
    showkarma* t)
 
-;RTS: once this works, add it to the default app layout as an
-;html5 template. Also, get the label to work or remove it. 
-
-; whence is broken for login again (and in the same way)
 (mac longpage (user time label title whence . body)
   (w/uniq (gu gl gt gw gd)
     `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) (do 
@@ -441,8 +437,7 @@
            (tag (script "type" "text/javascript" "src" "/news.js"))
            (tag title (pr (+ this-site* (if ,gt (+ bar* ,gt) "")))))
            (tag body 
-            (tag (div "class" "layout sand") 
-           ; NTS this would be a good place to add a ban page
+           (tag (div "class" "layout sand") 
            (if (check-procrast ,gu) (do
              (tag (div "class" "topcolor page-header")
                (tag (span "id" "navleft")
@@ -496,8 +491,7 @@
                       (link "bookmarklet")))
                   (if (bound 'search-bar) 
                     (search-bar ,gu))
-                  ; this may not even work -- items is not in scope.
-                  (when (admin ,gu) ;TODO move these into the user page
+                  (when (admin ,gu)
                       (br2)
                       (w/bars
                         (pr (len items*) "/" maxid* " loaded")
@@ -511,7 +505,6 @@
                (procrast-msg ,gu ,gw)))
 )))))))
 
-; should I be expanding body here?
 (mac shortpage (user label title whence . body)
   `(longpage ,user (msec) ,label ,title ,whence ,@body))
 
@@ -833,7 +826,7 @@
 
 
 ; Story Display
-
+; TODO: only display list numbers for newest items page
 (def display-items (user items label title whence
                     (o start 0) (o end perpage*) (o number))
     (tag (ol "class" "items-list") 
