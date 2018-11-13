@@ -1176,7 +1176,8 @@
 
 (xdef table (lambda args
               (let ([h (make-hash)])
-                (if (pair? args) ((car args) h) null)
+                (when (pair? args)
+                  ((car args) h))
                 h)))
 
 ;(xdef table (lambda args
@@ -1309,12 +1310,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 
 (define (trash-whitespace)
-  (if (char-ready?)
-    (if (not (char-whitespace? (peek-char)))
-      '()
-      (begin (read-char)
-             (trash-whitespace)))
-    null))
+  (when (and (char-ready?) (char-whitespace? (peek-char)))
+    (read-char)
+    (trash-whitespace)))
 
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
@@ -1329,10 +1327,10 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (lambda ()
       (let ([expr (read)])
         (trash-whitespace)          ; throw away until we hit non-white or leading newline
-        (if (eof-object? expr)
-             (begin (when interactive? (newline))
-                    (exit))
-            null)
+        (when (eof-object? expr)
+          (when interactive?
+            (newline))
+          (exit))
         (if (eqv? expr ':a)
             'done
             (let ([val (arc-eval expr)])
@@ -1371,11 +1369,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
           (write x)
           (newline)
           (let ([v (arc-eval x)])
-            (if (ar-false? v)
-                (begin
-                  (display "  FAILED")
-                  (newline))
-                null))
+            (when (ar-false? v)
+              (display "  FAILED")
+              (newline)))
           (atests1 p)))))
 
 (define (aload filename)
@@ -1404,9 +1400,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; useful to examine the Arc compiler output
 (define (acompile inname)
   (let ([outname (string-append inname ".scm")])
-    (if (file-exists? outname)
-        (delete-file outname)
-        null)
+    (when (file-exists? outname)
+      (delete-file outname))
     (call-with-input-file inname
       (lambda (ip)
         (call-with-output-file outname
@@ -1606,9 +1601,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef force-close (lambda args
                        (map (lambda (p)
-                              (if (not (try-custodian p))
-                                  (ar-close p)
-                                  null))
+                              (when (not (try-custodian p))
+                                (ar-close p)))
                             args)
                        'nil))
 
