@@ -5,6 +5,8 @@ apps/*/tmp/
 
 apps/*/logs
 
+apps/managed/*
+
 # Let's not commit the unit-test.arc repo to the Anarki repo by
 # accident.
 /unit-test.arc/

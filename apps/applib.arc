@@ -62,5 +62,3 @@
     ; main
     (textfile-write (string appdir* name ".arc")
       "(defop || req (pr \"This is the home page.\"))"))
-      
-
