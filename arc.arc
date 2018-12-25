@@ -26,6 +26,7 @@
 
 1. `for`. See (help for).
 2. Templates (arc's lightweight object database system). See (help deftem).
+3. `writefile` has been changed to `save-file` to be consistent with `save-table` / `write-table`
 
 If you find others, please report them at http://arclanguage.org/forum.
 ")))
@@ -1595,7 +1596,7 @@ expressions  as a list."
   (fromfile name
     (read)))
 
-(def writefile (val name)
+(def save-file (val name)
 "Outputs 'val' to file 'name' using [[write]]."
   (tofile name
     (write val)))
@@ -2898,7 +2899,7 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
             (= (savers* ',var) (fn (,gv) (,save ,gv ,file)))))))
 
 (mac diskvar (var file)
-  `(fromdisk ,var ,file nil readfile1 writefile))
+  `(fromdisk ,var ,file nil readfile1 save-file))
 
 (mac disktable (var file)
   `(fromdisk ,var ,file (table) load-table save-table))
