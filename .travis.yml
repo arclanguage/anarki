@@ -73,7 +73,7 @@ before_install:
 
 install:
   # We obtain the unit test dependencies.
-  - hg clone https://bitbucket.org/zck/unit-test.arc
+  - hg --config hostsecurity.disabletls10warning=true clone https://bitbucket.org/zck/unit-test.arc  # travis-ci.org running some ancient Python
   - cd unit-test.arc
   - hg update v1.0
   - cd ..
