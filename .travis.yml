@@ -1,3 +1,4 @@
+dist: xenial
 language: c
 
 sudo: false
@@ -73,7 +74,7 @@ before_install:
 
 install:
   # We obtain the unit test dependencies.
-  - hg --config hostsecurity.disabletls10warning=true clone https://bitbucket.org/zck/unit-test.arc  # travis-ci.org running some ancient Python
+  - hg clone https://bitbucket.org/zck/unit-test.arc
   - cd unit-test.arc
   - hg update v1.0
   - cd ..
