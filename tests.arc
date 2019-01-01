@@ -17,6 +17,7 @@
     lib/html.arc.t
     lib/ns.arc.t
     lib/queue.arc.t
+    lib/re.arc.t
     lib/spliceable-list.arc.t
     lib/strings.arc.t
     lib/streams.arc.t
