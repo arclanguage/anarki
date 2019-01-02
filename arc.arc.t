@@ -236,6 +236,8 @@
                                      (tree '((1 2) (5 6)))))))
 
 (suite nappend
+       (test lists
+             (assert-same '(1 2 3) (nappend '(1 2) 3)))
        (test destructive
              (let x '(1 2)
                (nappend x 3)

@@ -961,7 +961,7 @@ append to 'xs'."
 
 (def nappend (l item)
 "Appends item to list, then returns list."
-  (ret l
+  (do1 l
     (= (cdr lastcons.l) list.item)))
 
 ; http://arclanguage.org/item?id=12229
