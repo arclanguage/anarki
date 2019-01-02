@@ -744,23 +744,6 @@ Generalizes [[map1]] to functions with more than one argument."
   (nthcdr 10 '(1 2 3))
   nil)
 
-(def lastcons (xs)
-"Returns the absolute last link of list 'xs'. Save this value to efficiently
-append to 'xs'."
-  (if cdr.xs
-    (lastcons cdr.xs)
-    xs))
-
-(def njoin (a b)
-"Concatenates/appends second list to first, then returns entire result."
-  (ret a
-    (= (cdr lastcons.a) b)))
-
-(def nappend (l item)
-"Appends item to list, then returns list."
-  (ret l
-    (= (cdr lastcons.l) list.item)))
-
 ; Generalization of pair: (tuples x) = (pair x)
 
 (def tuples (xs (o n 2))
@@ -797,6 +780,8 @@ append to 'xs'."
   (disp (+ "Warning: " msg ". "))
   (map [do (write _) (disp " ")] args)
   (disp #\newline))
+
+;; more powerful assignment to arbitrary places
 
 (mac atomic body
 "Runs expressions in 'body' with exclusive access to system resources.
@@ -961,6 +946,23 @@ See [[atomic]]."
   _
   (= x 2 y 4)
   _)
+
+(def lastcons (xs)
+"Returns the absolute last link of list 'xs'. Save this value to efficiently
+append to 'xs'."
+  (if cdr.xs
+    (lastcons cdr.xs)
+    xs))
+
+(def njoin (a b)
+"Concatenates/appends second list to first, then returns entire result."
+  (ret a
+    (= (cdr lastcons.a) b)))
+
+(def nappend (l item)
+"Appends item to list, then returns list."
+  (ret l
+    (= (cdr lastcons.l) list.item)))
 
 ; http://arclanguage.org/item?id=12229
 (mac for (var init test update . body)

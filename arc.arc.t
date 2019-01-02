@@ -235,6 +235,12 @@
                                      '(3 4)
                                      (tree '((1 2) (5 6)))))))
 
+(suite nappend
+       (test destructive
+             (let x '(1 2)
+               (nappend x 3)
+               (assert-same '(1 2 3) x))))
+
 (suite cut
        (test finds-element-in-list
              (assert-same '(3 4 5) (cut '(1 2 3 4 5) 2)))
