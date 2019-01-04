@@ -28,9 +28,7 @@ https://en.wikipedia.org/wiki/List_comprehension"
   (when lists
     (ret x car.lists
       (when cdr.lists
-        (let lastx lastcons.x
-          (= cdr.lastx
-             (list (apply ingest cdr.lists))))))))
+        (nappend x (apply ingest cdr.lists))))))
 
 (def collect-transform (guard)
   (if (is 'for guard.0)
