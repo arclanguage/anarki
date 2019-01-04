@@ -26,9 +26,9 @@ https://en.wikipedia.org/wiki/List_comprehension"
 
 (def ingest lists
   (when lists
-    (ret x car.lists
+    (ret result car.lists
       (when cdr.lists
-        (nappend x (apply ingest cdr.lists))))))
+        (nappend result (apply ingest cdr.lists))))))
 
 (def collect-transform (guard)
   (if (is 'for guard.0)
