@@ -153,13 +153,12 @@
         (pd-con from (car to) outlet inlet)
         (pd-con from (cdr to) (inc outlet) inlet))
     (push
-      (ret c
-        (inst
-          'pd-con
-          'from   from
-          'outlet outlet
-          'to     to
-          'inlet  inlet))
+      (inst
+        'pd-con
+        'from   from
+        'outlet outlet
+        'to     to
+        'inlet  inlet)
       pd-cons*)))
 
 (def -> (from to . then)
