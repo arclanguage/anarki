@@ -122,10 +122,10 @@ script:
   # Racket package dependencies using the `raco pkg install` command
   # above.
   #
-  # Running build-web-help.arc actually runs test.arc too, so we don't
-  # need to do both.
+  # Running build-web-help.arc actually runs tests.arc too, so we
+  # don't need to do both.
   #
-#  - ./arc.sh -n test.arc
+#  - ./arc.sh -n tests.arc
   - ./arc.sh -n build-web-help.arc
 
 
