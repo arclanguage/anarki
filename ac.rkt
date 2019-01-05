@@ -1374,8 +1374,14 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
               (newline)))
           (atests1 p)))))
 
+(define (call-with-line-counting-input-file filename body)
+  (call-with-input-file filename
+    (lambda (p)
+      (port-count-lines! p)
+      (body p))))
+
 (define (aload filename)
-  (call-with-input-file filename aload1))
+  (call-with-line-counting-input-file filename aload1))
 
 (define (aload-with-main-settings filename)
   (parameterize ([current-namespace main-namespace]
@@ -1383,7 +1389,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (aload filename)))
 
 (define (test filename)
-  (call-with-input-file filename atests1))
+  (call-with-line-counting-input-file filename atests1))
 
 (define (acompile1 ip op)
   (let ([x (read ip)])
@@ -1402,7 +1408,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (let ([outname (string-append inname ".scm")])
     (when (file-exists? outname)
       (delete-file outname))
-    (call-with-input-file inname
+    (call-with-line-counting-input-file inname
       (lambda (ip)
         (call-with-output-file outname
           (lambda (op)
