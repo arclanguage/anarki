@@ -956,13 +956,12 @@ append to 'xs'."
 
 (def njoin (a b)
 "Concatenates/appends second list to first, then returns entire result."
-  (ret a
+  (do1 a
     (= (cdr lastcons.a) b)))
 
 (def nappend (l item)
 "Appends item to list, then returns list."
-  (do1 l
-    (= (cdr lastcons.l) list.item)))
+  (njoin l list.item))
 
 ; http://arclanguage.org/item?id=12229
 (mac for (var init test update . body)
