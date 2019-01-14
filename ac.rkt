@@ -1049,9 +1049,14 @@
    (string  (int    ,number->string)
             (num    ,number->string)
             (char   ,string)
-            (cons   ,(lambda (l) (apply string-append
-                                        (map (lambda (y) (ar-coerce y 'string))
-                                             (ar-denil-last l)))))
+            (cons   ,(lambda (l . utf8?)
+                       (if (byte? (xcar l))
+                           (if (null? utf8?)
+                               (bytes->string/latin-1 (list->bytes (ar-denil-last l)))
+                               (bytes->string/utf-8 (list->bytes (ar-denil-last l))))
+                           (apply string-append
+                                          (map (lambda (y) (ar-coerce y 'string))
+                                               (ar-denil-last l))))))
             (sym    ,(lambda (x) (if (eqv? x 'nil) "" (symbol->string x)))))
 
    (sym     (string ,string->symbol)
@@ -1070,7 +1075,10 @@
             (int    ,(lambda (x) x)))
 
    (cons    (string ,(lambda (x) (ac-niltree (string->list x)))))
-
+   (bytes   (string ,(lambda (x . utf8?)
+                       (if (null? utf8?)
+                           (bytes->list (string->bytes/latin-1 x))
+                           (bytes->list (string->bytes/utf-8 x))))))
    (char    (int    ,ascii->char)
             (num    ,(lambda (x) (ascii->char (iround x)))))))
 
