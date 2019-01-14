@@ -62,7 +62,7 @@ from template 'tem-type'."
   (fromfile file (drain:temread tem)))
 
 (def temstore (tem val file)
-  (writefile (temlist tem val) file))
+  (save-file (temlist tem val) file))
 
 (def temread (tem (o str (stdin)))
   (let fields (read str)

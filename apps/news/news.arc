@@ -334,7 +334,7 @@
   (= ranked-stories* (rank-stories 180 1000 (memo frontpage-rank))))
 
 (def save-topstories ()
-  (writefile (map !id (firstn 180 ranked-stories*))
+  (save-file (map !id (firstn 180 ranked-stories*))
              (+ newsdir* "topstories")))
 
 (def rank-stories (n consider scorefn)
