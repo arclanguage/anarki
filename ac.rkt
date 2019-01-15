@@ -1028,6 +1028,9 @@
 (define (coercions)
   (namespace-variable-value (ac-global-name 'coerce*)))
 
+(define (keyword->symbol x) (string->symbol (keyword->string x)))
+(define (symbol->keyword x) (string->keyword (symbol->string x)))
+
 (for-each (lambda (e)
             (add-init-step
               (let ([target-type (car e)]
@@ -1050,6 +1053,9 @@
                                   [(k d) (hash-ref h k d)])))
             (vector ,(lambda (v) (lambda (i) (vector-ref v i)))))
 
+   (keyword (sym    ,symbol->keyword)
+            (string ,string->keyword))
+
    (string  (int    ,number->string)
             (num    ,number->string)
             (char   ,string)
@@ -1061,9 +1067,11 @@
                            (apply string-append
                                           (map (lambda (y) (ar-coerce y 'string))
                                                (ar-denil-last l))))))
+            (keyword ,keyword->string)
             (sym    ,(lambda (x) (if (ar-nil? x) "" (symbol->string x)))))
 
    (sym     (string ,string->symbol)
+            (keyword ,keyword->symbol)
             (char   ,(lambda (c) (string->symbol (string c)))))
 
    (int     (char   ,(lambda (c . args) (char->ascii c)))
