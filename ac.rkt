@@ -109,7 +109,6 @@
 (defarc (ac s env)
   (cond [(string? s) (ac-string s env)]
         [(literal? s) s]
-        [(keyword? s) s]
         [(eqv? s 'nil) (list 'quote 'nil)]
         [(ssyntax? s) (ac (expand-ssyntax s) env)]
         [(symbol? s) (ac-var-ref s env)]
@@ -155,7 +154,8 @@
       (char? x)
       (string? x)
       (number? x)
-      (eq? x '())))
+      (eq? x '())
+      (keyword? x)))
 
 (define (ssyntax? x)
   (and (symbol? x)
