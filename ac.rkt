@@ -794,6 +794,7 @@
 
 (xdef is (lambda args (pairwise ar-is2 args)))
 
+(xdef raise raise)
 (xdef err err)
 (xdef nil 'nil)
 (xdef t   't)
