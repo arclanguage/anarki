@@ -1441,6 +1441,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (xdef eval (lambda (e)
               (arc-eval (ac-denil e))))
 
+(xdef seval (lambda (e)
+               (arc-exec (ac-denil e))))
+
 ; If an err occurs in an on-err expr, no val is returned and code
 ; after it doesn't get executed.  Not quite what I had in mind.
 
