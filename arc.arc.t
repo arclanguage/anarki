@@ -119,7 +119,11 @@
 
 (suite coerce
        (test nil-to-cons
-             (assert-nil (as cons nil))))
+             (assert-nil (as cons nil)))
+       (test nil-to-string
+             (assert-same "" (as string nil)))
+       (test empty-list-to-string
+             (assert-same "" (as string (list)))))
 
 (suite copy
        (setup old-list    '(1 2 3)
