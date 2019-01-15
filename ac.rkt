@@ -146,8 +146,8 @@
           (let ([result (ac target-expression env)])
             (hash-set! (ar-declarations) 'atstrings 't)
             result))
-        (list string-copy (unescape-ats s)))
-      (list string-copy s)))     ; avoid immutable strings
+        (list 'string-copy (unescape-ats s)))
+      (list 'string-copy s)))     ; avoid immutable strings
 
 (defarc ac-literal (literal? x)
   (or (boolean? x)
