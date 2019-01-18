@@ -1288,7 +1288,7 @@
   (display "Arc> ")
   (let ([expr (read)])
     (when (not (eqv? expr ':a))
-      (write (arc-eval expr))
+      (pretty-print (arc-eval expr))
       (newline)
       (tle))))
 
@@ -1356,7 +1356,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
             'done
             (let ([val (arc-eval expr)])
               (when interactive?
-                (write (ac-denil val))
+                (pretty-print (ac-denil val))
                 (newline))
               (namespace-set-variable-value!
                 (ac-global-name 'that)
@@ -1387,7 +1387,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (if (eof-object? x)
         #t
         (begin
-          (write x)
+          (pretty-print x)
           (newline)
           (let ([v (arc-eval x)])
             (when (ar-false? v)
