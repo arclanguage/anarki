@@ -279,10 +279,15 @@ function 'f' to them."
   (pair '(10 2 3 40 50 6) max)
   (10 40 50))
 
-(mac make-br-fn (body)
+(mac %brackets body
 "The function invoked on square-bracket calls.
-For example, [car _] => (make-br-fn (car _)) => (fn (_) (car _))"
+For example, [car _] => (%brackets car _) => (fn (_) (car _))"
   `(fn (_) ,body))
+
+(mac %braces body
+"The function invoked on curly-bracket calls.
+For example, {a 1 b 2} => (%braces a 1 b 2) => (obj a 1 b 2)"
+  `(obj ,@body))
 
 (mac and args
 "Stops at the first argument to fail (return nil). Returns the last argument before stopping."

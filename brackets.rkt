@@ -5,7 +5,7 @@
 ;> (require "brackets.rkt")
 ;> (current-readtable bracket-readtable)
 ;> '([+ _ 1] 10)
-;'((make-br-fn (+ _ 1)) 10)
+;'((%brackets + _ 1) 10)
 
 
 (provide
@@ -18,13 +18,16 @@
 ; but nested reads still use the curent readtable:
 
 (define (read-square-brackets ch port src line col pos)
-  `(make-br-fn
-     ,(read/recursive port #\[ #f)))
+  `(%brackets ,@(read/recursive port #\[ #f)))
+
+(define (read-curly-braces ch port src line col pos)
+  `(%braces ,@(read/recursive port #\{ #f)))
 
 ; a readtable that is just like the builtin except for []s
 
 (define bracket-readtable
-  (make-readtable #f #\[ 'terminating-macro read-square-brackets))
+  (make-readtable #f #\[ 'terminating-macro read-square-brackets
+                     #\{ 'terminating-macro read-curly-braces))
 
 ; these two implement the required functionality for #reader
 
