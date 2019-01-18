@@ -108,7 +108,7 @@
 
 (defarc (ac s env)
   (cond [(string? s) (ac-string s env)]
-        [(literal? s) s]
+        [(literal? s) (list 'quote s)]
         [(eqv? s 'nil) (list 'quote 'nil)]
         [(ssyntax? s) (ac (expand-ssyntax s) env)]
         [(symbol? s) (ac-var-ref s env)]
