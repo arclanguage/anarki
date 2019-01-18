@@ -16,14 +16,16 @@
 
 (def print (x)
   " Print an expression on one line, replacing quote, unquote,
-    quasiquote, unquote-splicing, and make-br-fn with their respective symbols. " 
+    quasiquote, unquote-splicing, %brackets, and %braces with their respective symbols. " 
   (do (aif (or atom.x dotted.x (isa x 'string))
              write.x
            (pprsyms* car.x)
              (do pr.it
                (print cadr.x))
-           (is car.x 'make-br-fn)
-             (do (pr "[") (print-spaced cadr.x) (pr "]"))
+           (is car.x '%brackets)
+             (do (pr "[") (print-spaced cdr.x) (pr "]"))
+           (is car.x '%braces)
+             (do (pr "{") (print-spaced cdr.x) (pr "}"))
            (do (pr "(") print-spaced.x (pr ")")))
       x))
 
@@ -164,11 +166,16 @@
          (do (unless noindent sp.col)
              print.x
              nil)
-       (is car.x 'make-br-fn)           ;if the expression is a br-fn, print the brackets and then the contents
+       (is car.x '%brackets)           ;if the expression is %brackets, print the brackets and then the contents
          (ppr-sub
            (pr "[")
-           (ppr-main cadr.x (+ col 1) t)
+           (ppr-main cdr.x (+ col 1) t)
            (pr "]"))
+       (is car.x '%braces)           ;if the expression is %braces, print the braces and then the contents
+         (ppr-sub
+           (pr "{")
+           (ppr-main cdr.x (+ col 1) t)
+           (pr "}"))
        (pprsyms* car.x)
          (ppr-sub
            pr.it

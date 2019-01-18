@@ -8,7 +8,7 @@
     lib/queue.arc
     lib/tem.arc
     lib/declare.arc
-    lib/make-br-fn.arc
+    lib/brackets.arc
     lib/collect.arc
 
 ;   ; optional
