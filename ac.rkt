@@ -427,7 +427,7 @@
 ;   (not destructuring), so they must be passed or be optional.
 
 (define (ac-complex-args args env ra is-params)
-  (cond [(ar-nil? args) '()]
+  (cond [(or (eqv? args '()) (eqv? args 'nil)) '()]
         [(symbol? args) (list (list args ra))]
         [(pair? args)
          (let* ([x (if (and (pair? (car args)) (eqv? (caar args) 'o))
@@ -697,7 +697,7 @@
 ; Scheme lists (e.g. . body of a macro).
 
 (define (ar-false? x)
-  (or (ar-nil? x) (eq? x #f)))
+  (or (eq? x 'nil) (eq? x '()) (eq? x #f)))
 
 ; call a function or perform an array ref, hash ref, &c
 
@@ -799,14 +799,11 @@
 (xdef nil 'nil)
 (xdef t   't)
 
-(define (ar-nil? x)
-  (or (eq? x 'nil) (null? x)))
-
 (define (all test seq)
   (or (null? seq)
       (and (test (car seq)) (all test (cdr seq)))))
 
-(define (arc-list? x) (or (pair? x) (ar-nil? x)))
+(define (arc-list? x) (or (pair? x) (eqv? x 'nil) (eqv? x '())))
 
 ; Generic +: strings, lists, numbers.
 ; Return val has same type as first argument.
@@ -1068,7 +1065,7 @@
                                           (map (lambda (y) (ar-coerce y 'string))
                                                (ar-denil-last l))))))
             (keyword ,keyword->string)
-            (sym    ,(lambda (x) (if (ar-nil? x) "" (symbol->string x)))))
+            (sym    ,(lambda (x) (if (ar-false? x) "" (symbol->string x)))))
 
    (sym     (string ,string->symbol)
             (keyword ,keyword->symbol)
@@ -1507,7 +1504,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (xdef sref
   (lambda (com val ind)
-    (cond [(hash? com)  (if (ar-nil? val)
+    (cond [(hash? com)  (if (eqv? val 'nil)
                                   (hash-remove! com ind)
                                   (hash-set! com ind val))]
           [(string? com) (string-set! com ind val)]
