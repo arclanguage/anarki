@@ -4,24 +4,16 @@
 (= read-json $.read-json)
 (= write-json $.write-json)
 
-; read in JSON string, return hash
-(def read-json-fromstring (str (o port stdin))
-  (fromstring str 
-    (read-json (port))))
+(def json-string (j)
+  (tostring (write-json j)))
 
-; read JSON from file
+; read JSON from file, return hash
 (def read-json-file (file)
-    (w/infile inf file (read-json inf)))
+  (w/infile inf file 
+    (read-json inf)))
 
-; create JSON from table, hash or other object
-; TODO: test that (read-json-file "test.json") 
-; and (obj-to-json (read-json-file "test.json"))
-; are equivalent
-(def obj-to-json (obj)
-    (tostring (write-json obj)))
-
-; write object to JSON file, disp won't escape quotes
-(def write-json-file (file obj)
-    (w/outfile outf file 
-        (w/stdout outf (disp (obj-to-json obj)))))
+; write object to JSON file
+(def write-json-file (file j)
+  (w/outfile outf file 
+    (w/stdout outf (write-json j))))
 
