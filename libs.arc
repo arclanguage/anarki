@@ -34,3 +34,7 @@
     ; apps
     apps/applib.arc
 ))
+
+(errsafe
+  (= uuid (do (seval '(require "lib/uuid.rkt"))
+              (seval 'uuid))))
