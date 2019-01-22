@@ -2002,7 +2002,7 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
 (def read-table ((o i (stdin)))
 "Reads an association list from a stream 'i' (stdin by default) and turns it
 into a table."
-  (let e (read i)
+  (let e (read-data i)
     (if (alist e) (listtab e) e)))
 
 (def load-tables (file)
@@ -2018,7 +2018,7 @@ of tables."
 
 (def write-table (h (o o (stdout)))
 "Writes table as an association list to stream 'o' (stdout by default)."
-  (write tablist.h o))
+  (write-data tablist.h o))
 
 ; Optional predicate-based typing
 
@@ -2864,8 +2864,14 @@ of 'x' by calling 'self'."
     (readstring1 x)
     (unserialize:sread x)))
 
+(def read-data ((o port (stdin)))
+  (quoted:read port))
+
 (def write (x (o port (stdout)))
   (swrite serialize.x port))
+
+(def write-data (x (o port (stdin)))
+  (write unquoted.x port))
 
 (= hooks* (table))
 
