@@ -114,7 +114,7 @@
         [(symbol? s) (ac-var-ref s env)]
         [(ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env)]
         [(eq? (xcar s) '$) (ac-$ (cadr s) env)]
-        [(eq? (xcar s) 'quote) (list 'quote (ac-niltree (cadr s)))]
+        [(eq? (xcar s) 'quote) (list 'quote (ac-quoted (ac-niltree (cadr s))))]
         [(and (eq? (xcar s) 'quasiquote)
               (not (ac-macro? 'quasiquote)))
          (ac-qq (cadr s) env)]
@@ -155,6 +155,7 @@
       (string? x)
       (number? x)
       (eq? x '())
+      (hash? x)
       (keyword? x)))
 
 (define (ssyntax? x)
@@ -329,6 +330,34 @@
     (lambda (x) (ac x env))
     (lambda (x) (error 'ac-$ "Can't use ,@ from within $ in: ~a" args))))
 
+; quote
+
+(define (ac-quoted x)
+  (cond ((pair? x)
+         (let ((x (imap ac-quoted x)))
+           (if (eqv? (xcar x) '%braces)
+               ((arc-eval 'listtab:pair) (ac-denil (cdr x)))
+               x)))
+        (#t x)))
+
+(xdef quoted ac-quoted)
+
+(define (ac-unquoted x)
+  (cond ((hash? x)
+         (cons '%braces (imap ac-unquoted (tabflat x))))
+        ((pair? x)
+         (imap ac-unquoted x))
+        (#t x)))
+
+(xdef unquoted ac-unquoted)
+
+(define (tabflat h (l (list)))
+    (hash-for-each h
+       (lambda (k v) 
+         (set! l (cons k l))
+         (set! l (cons (ac-unquoted v) l))))
+    l)
+
 ; quasiquote
 
 (define (ac-qq args env)
@@ -344,6 +373,7 @@
 (define (ac-qqx x unq splice)
   (cond
     [(not (pair? x)) x]
+    [(eqv? (car x) '%braces) (ac-quoted x)]
     [(eqv? (car x) 'unquote) (unq (cadr x))]
     [(eqv? (car x) 'unquote-splicing) (splice (cadr x))]
     [(eqv? (car x) 'quasiquote)
