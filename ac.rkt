@@ -1326,9 +1326,8 @@
     (display (apply format x args))))
 
 (define (arc-print-with output x (port (current-output-port)))
-  (unless (ar-nil? x)
-    (cond [(pair? x)   (output (ar-denil-last x) port)]
-          [#t          (output x port)])))
+  (cond [(pair? x)   (output (ar-denil-last x) port)]
+        [#t          (output x port)]))
 
 (define (arc-print . args) (apply arc-print-with display args))
 (define (arc-pp . args) (apply arc-print-with pretty-print args))
