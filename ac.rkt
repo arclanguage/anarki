@@ -914,7 +914,7 @@
         [(symbol? x)        'sym]
         [(null? x)          'sym]
         [(boolean? x)       'sym]
-        [(eof-object? x)    'sym]
+        [(eof-object? x)    'eof]
         [(procedure? x)     'fn]
         [(char? x)          'char]
         [(string? x)        'string]
@@ -1318,23 +1318,21 @@
   (arc-message "Arc> ")
   (let ([expr (read)])
     (when (not (eof-object? expr))
-      (arc-print (arc-eval expr))
+      (arc-write (arc-eval expr))
       (tle))))
-
-(define (arc-newline)
-  (when (arc-interactive?)
-    (newline)))
 
 (define (arc-message x . args)
   (when (arc-interactive?)
     (display (apply format x args))))
 
-(define (arc-print x)
+(define (arc-print-with output x (port (current-output-port)))
   (unless (ar-nil? x)
-    (when (interactive*)
-      (if (string? x)
-          (display x)
-          (pretty-print x)))))
+    (cond [(string? x) (output x port)]
+          [(pair? x)   (pretty-print (ar-denil-last x) port)]
+          [#t          (pretty-print x port)])))
+
+(define (arc-print . args) (apply arc-print-with display args))
+(define (arc-write . args) (apply arc-print-with write args))
 
 ; With default settings, the Racket REPL loads the XREPL module,
 ; which loads the Readline module, which replaces
@@ -1399,8 +1397,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
           (#t `(ac-prompt-eval ',form)))))
 
 (define (ac-prompt-write x)
-  (unless (ar-nil? x)
-    (arc-print x)))
+  (when (arc-interactive?)
+    (arc-write x)))
 
 (define (arc-set name value)
   (namespace-set-variable-value! (ac-global-name name) value)
@@ -1433,7 +1431,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (if (eof-object? x)
         #t
         (begin
-          (arc-print x)
+          (arc-write x)
           (newline)
           (let ([v (arc-eval x)])
             (when (ar-false? v)
@@ -1464,7 +1462,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
         #t
         (let ([scm (ac x '())])
           (arc-exec scm)
-          (arc-print scm op)
+          (arc-write scm op)
           (newline op)
           (newline op)
           (acompile1 ip op)))))
