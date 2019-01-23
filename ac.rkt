@@ -830,7 +830,7 @@
 (xdef t   't)
 
 (define (ar-nil? x)
-  (or (eq? x 'nil) (null? x)))
+  (or (eq? x 'nil) (null? x) (void? x)))
 
 (define (all test seq)
   (or (null? seq)
@@ -914,6 +914,7 @@
         [(symbol? x)        'sym]
         [(null? x)          'sym]
         [(boolean? x)       'sym]
+        [(eof-object? x)    'sym]
         [(procedure? x)     'fn]
         [(char? x)          'char]
         [(string? x)        'string]
@@ -1035,10 +1036,6 @@
 
 (xdef swrite (lambda args (printwith write args)))
 (xdef disp  (lambda args (printwith display args)))
-
-; a special end-of-file uninterned symbol guaranteed never to be equal to the
-; result of any call to `(read)` or similar.
-(define eof (gensym 'eof))
 (xdef eof eof)
 
 ; sread = scheme read. eventually replace by writing read
@@ -1314,29 +1311,54 @@
 (define (arc-eval expr)
   (arc-exec (ac expr '())))
 
+(define (arc-interactive?)
+  (yes? (interactive*)))
+
 (define (tle)
-  (display "Arc> ")
+  (arc-message "Arc> ")
   (let ([expr (read)])
-    (when (not (eqv? expr ':a))
-      (pretty-print (arc-eval expr))
-      (newline)
+    (when (not (eof-object? expr))
+      (arc-print (arc-eval expr))
       (tle))))
 
-(define (tl)
-  (define input (current-input-port))
-  ; With default settings, the Racket REPL loads the XREPL module,
-  ; which loads the Readline module, which replaces
-  ; `current-input-port` with something that technically doesn't
-  ; satisfy `terminal-port?`. It gives us some trouble with flushing
-  ; the output port too. The way that XREPL detects whether Readline
-  ; is already installed is to check that the port's name is
-  ; `readline-input`, so that's how we determine that information here
-  ; too.
-  (define readline? (eq? (object-name input) 'readline-input))
-  (define interactive? (or readline? (terminal-port? input)))
-  (when interactive?
-    (display
-"
+(define (arc-newline)
+  (when (arc-interactive?)
+    (newline)))
+
+(define (arc-message x . args)
+  (when (arc-interactive?)
+    (display (apply format x args))))
+
+(define (arc-print x)
+  (unless (ar-nil? x)
+    (when (interactive*)
+      (if (string? x)
+          (display x)
+          (pretty-print x)))))
+
+; With default settings, the Racket REPL loads the XREPL module,
+; which loads the Readline module, which replaces
+; `current-input-port` with something that technically doesn't
+; satisfy `terminal-port?`. It gives us some trouble with flushing
+; the output port too. The way that XREPL detects whether Readline
+; is already installed is to check that the port's name is
+; `readline-input`, so that's how we determine that information here
+; too.
+(define input (current-input-port))
+(define readline* (make-parameter (eq? (object-name input) 'readline-input)))
+(define interactive* (make-parameter (or (readline*) (terminal-port? input))))
+
+(xdef readline* readline*)
+(xdef interactive* interactive*)
+
+(define (yes? x) (not (no? x)))
+(define (no? x) (ar-false? x))
+
+(define (tl (interactive? (arc-interactive?)))
+  (parameterize ([interactive* interactive?]
+                 [current-prompt-read ac-prompt-read]
+                 [current-print ac-prompt-write])
+    (arc-message "
 To quit:
   arc> (quit)
   (or press ctrl and 'd' at once)
@@ -1351,8 +1373,8 @@ To run all automatic tests:
 
 If you have questions or get stuck, come to http://arclanguage.org/forum.
 Arc 3.1 documentation: https://arclanguage.github.io/ref.
-"))
-  (tl2 interactive?))
+")
+    (read-eval-print-loop)))
 
 (define (tl-with-main-settings)
   (parameterize ([current-namespace main-namespace]
@@ -1360,41 +1382,35 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (tl)))
 
 
-(define (trash-whitespace)
+(define (drain-whitespace)
   (when (and (char-ready?) (char-whitespace? (peek-char)))
     (read-char)
-    (trash-whitespace)))
+    (drain-whitespace)))
 
-(define (tl2 interactive?)
-  (when interactive? (display "arc> "))
-  (on-err (lambda (c)
-            (parameterize ([current-output-port (current-error-port)])
-              ((error-display-handler) (exn-message c) c)
-              (newline))
-            (namespace-set-variable-value!
-              (ac-global-name 'last-condition*)
-              c)
-            (tl2 interactive?))
-    (lambda ()
-      (let ([expr (read)])
-        (trash-whitespace)          ; throw away until we hit non-white or leading newline
-        (when (eof-object? expr)
-          (when interactive?
-            (newline))
-          (exit))
-        (if (eqv? expr ':a)
-            'done
-            (let ([val (arc-eval expr)])
-              (when interactive?
-                (pretty-print (ac-denil val))
-                (newline))
-              (namespace-set-variable-value!
-                (ac-global-name 'that)
-                val)
-              (namespace-set-variable-value!
-                (ac-global-name 'thatexpr)
-                expr)
-              (tl2 interactive?)))))))
+(define (ac-prompt-read-1)
+  (let* ((in ((current-get-interaction-input-port)))
+         (form ((current-read-interaction) (object-name in) in)))
+    (if (eof-object? form) form (syntax->datum form))))
+
+(define (ac-prompt-read)
+  (arc-message "arc> ")
+  (let ((form (ac-prompt-read-1)))
+    (cond ((eof-object? form) eof)
+          (#t `(ac-prompt-eval ',form)))))
+
+(define (ac-prompt-write x)
+  (unless (ar-nil? x)
+    (arc-print x)))
+
+(define (arc-set name value)
+  (namespace-set-variable-value! (ac-global-name name) value)
+  value)
+
+(define (ac-prompt-eval expr)
+  (let ((val (arc-eval expr)))
+    (arc-set 'that val)
+    (arc-set 'thatexpr expr)
+    val))
 
 (let ([current-function '()])
   (define (set-current-fn name)
@@ -1417,7 +1433,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (if (eof-object? x)
         #t
         (begin
-          (pretty-print x)
+          (arc-print x)
           (newline)
           (let ([v (arc-eval x)])
             (when (ar-false? v)
@@ -1448,7 +1464,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
         #t
         (let ([scm (ac x '())])
           (arc-exec scm)
-          (pretty-print scm op)
+          (arc-print scm op)
           (newline op)
           (newline op)
           (acompile1 ip op)))))
