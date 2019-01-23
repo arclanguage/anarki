@@ -1318,7 +1318,7 @@
   (arc-message "Arc> ")
   (let ([expr (read)])
     (when (not (eof-object? expr))
-      (arc-write (arc-eval expr))
+      (arc-pp (arc-eval expr))
       (tle))))
 
 (define (arc-message x . args)
@@ -1327,12 +1327,11 @@
 
 (define (arc-print-with output x (port (current-output-port)))
   (unless (ar-nil? x)
-    (cond [(string? x) (output x port)]
-          [(pair? x)   (pretty-print (ar-denil-last x) port)]
-          [#t          (pretty-print x port)])))
+    (cond [(pair? x)   (output (ar-denil-last x) port)]
+          [#t          (output x port)])))
 
 (define (arc-print . args) (apply arc-print-with display args))
-(define (arc-write . args) (apply arc-print-with write args))
+(define (arc-pp . args) (apply arc-print-with pretty-print args))
 
 ; With default settings, the Racket REPL loads the XREPL module,
 ; which loads the Readline module, which replaces
@@ -1398,7 +1397,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 
 (define (ac-prompt-write x)
   (when (arc-interactive?)
-    (arc-write x)))
+    (arc-pp x)))
 
 (define (arc-set name value)
   (namespace-set-variable-value! (ac-global-name name) value)
@@ -1431,8 +1430,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (if (eof-object? x)
         #t
         (begin
-          (arc-write x)
-          (newline)
+          (arc-pp x)
           (let ([v (arc-eval x)])
             (when (ar-false? v)
               (display "  FAILED")
@@ -1462,8 +1460,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
         #t
         (let ([scm (ac x '())])
           (arc-exec scm)
-          (arc-write scm op)
-          (newline op)
+          (arc-pp scm op)
           (newline op)
           (acompile1 ip op)))))
 
