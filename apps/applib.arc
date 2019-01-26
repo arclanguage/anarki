@@ -1,5 +1,5 @@
 (def app-getpath (name)
-  (canonical-path-ts (string "apps/" name )))
+  (string "apps/" name "/"))
 
 (def app-setsrv (path)
   (= srvdir*    (+ path    "www/")
@@ -12,24 +12,24 @@
      staticdir* (+ path    "static/")))
 
 (def app-start (name)
-  
+  "Starts application (name). ex: (app-start \"news\")"
   (= appdir* (app-getpath name)
      apprun* (+ appdir* (string "run-" name ".arc")))
 
   ; to match run-news,arc, each app needs an arc file
   ; named "run-" appname ".arc" 
 
-  (if (file-exists apprun*)
+  (if (file-exists ($.normalize-path apprun*))
     (do
-      (app-setsrv appdir*)
-      (prn (string "starting app " name " ... "))
+      (app-setsrv (string appdir* (path-separator))) ; this needs the end separator
+      (prn (string "starting app " name " from " appdir*))
       (require apprun*))
     (prn (string "bootstrap file " apprun* "not found!"))))
 
 (def app-create (name)
-
+  "Creates a skeleton web application."
    (= appdir* (app-getpath name) 
-      appcmd* (canonical-path "/apps/appcmd.arc"))
+      appcmd* ($.normalize-path "/apps/appcmd.arc"))
 
    (unless (dir-exists appdir*)
       (app-setsrv appdir*)
@@ -55,7 +55,7 @@
 
     ; bootstrap
      (textfile-write (string appdir* "run-" name ".arc") 
-      (string "(require (canonical-path \"apps/" name "/" name ".arc\"))")
+      (string "(require \"apps/" name "/" name ".arc\")")
       "(thread (asv 8080)) ; run in a thread so repl remains usable"
       "(sleep 3)  ; wait for asv's initial messages to appear before printing first prompt")
 

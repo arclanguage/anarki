@@ -13,14 +13,17 @@
   (only-in racket/contract/base -> any any/c)
   (only-in racket/contract/region define/contract)
   racket/file
+  file/md5
   racket/path
   racket/pretty
   racket/port
+  racket/format
   (only-in racket/promise delay force)
   (only-in racket/runtime-path define-runtime-path)
   racket/system
   racket/tcp
   openssl
+  racket/string
   racket/random
 
   (only-in "brackets.rkt" bracket-readtable)
@@ -1408,6 +1411,31 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (parameterize ([current-namespace main-namespace]
                  [current-readtable bracket-readtable])
     (aload filename)))
+
+;create a normalized, absolute path from the Arc install, 
+;where p is a relative path.
+
+(define (normalize-path p)
+  (simple-form-path 
+    (apply build-path 
+      (path-only arc-arc-path)
+; to get a list of path segments, we need to normalize slashes,
+; split on those slashes, then remove any blank elements.
+   (remove* (list "") 
+      (string-split 
+        (string-replace (~a p) "\\" "/") 
+      "/")))))
+
+(define arc-loaded-files (make-hash))
+
+; 
+(define (aload-unique p)
+  (let* ([np (~a (normalize-path p)) ]
+         [k  (md5 (string-downcase np))])
+    (and (file-exists? np) (not (hash-has-key? arc-loaded-files k))
+      (begin
+        (hash-set! arc-loaded-files k np)
+        (aload np)))))
 
 (define (test filename)
   (call-with-line-counting-input-file filename atests1))
