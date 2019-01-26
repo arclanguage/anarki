@@ -1413,8 +1413,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
     (aload filename)))
 
 ;create a normalized, absolute path from the Arc install, 
-;where p is a relative path.
-
+;where p is a relative path. The returned path will not
+;be case insensitive. 
 (define (normalize-path p)
   (simple-form-path 
     (apply build-path 
@@ -1426,15 +1426,19 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
         (string-replace (~a p) "\\" "/") 
       "/")))))
 
-(define arc-loaded-files (make-hash))
+(xdef required-files* (make-hash))
+(define (arc-required-files)
+  (namespace-variable-value (ac-global-name 'required-files*)))
 
-; 
+(define (list-required-files)
+  (hash-values (arc-required-files)))
+
 (define (aload-unique p)
   (let* ([np (~a (normalize-path p)) ]
-         [k  (md5 (string-downcase np))])
-    (and (file-exists? np) (not (hash-has-key? arc-loaded-files k))
+         [k  (string-downcase np)])
+    (and (file-exists? np) (not (hash-has-key? (arc-required-files) k))
       (begin
-        (hash-set! arc-loaded-files k np)
+        (hash-set! (arc-required-files) k np)
         (aload np)))))
 
 (define (test filename)
