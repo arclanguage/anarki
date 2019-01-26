@@ -13,7 +13,6 @@
   (only-in racket/contract/base -> any any/c)
   (only-in racket/contract/region define/contract)
   racket/file
-  file/md5
   racket/path
   racket/pretty
   racket/port
