@@ -1,6 +1,6 @@
 ; managed script editor, based on prompt.arc
 
-(= mgappdir* (canonical-path-ts "/apps/managed"))
+(= mgappdir* "apps/managed")
    
 (defop appeditor req
   (let user (get-user req)

@@ -3,8 +3,7 @@
 
 (defmemo canonical-path (path)
  " builds an absolute file path from the root anarki directory "
-  ($.path->string 
-        (apply $.build-path ($.path-only $.arc-arc-path) (tokens path #\/))))
+  ($.normalize-path path ))
 
 (defmemo canonical-path-ts (path)
 " builds a canonical path with a trailing separator "
