@@ -720,7 +720,7 @@
 ; convert #f from a Scheme predicate to NIL.
 
 (define (ar-nill x)
-  (if (or (eq? x '()) (eq? x #f))
+  (if (or (eq? x '()) (eq? x #f) (void? x))
       'nil
       x))
 
@@ -929,6 +929,8 @@
         [(exn? x)           'exception]
         [(thread? x)        'thread]
         [(thread-cell? x)   'thread-cell]
+        ((channel? x)       'channel)
+        ((async-channel? x) 'channel)
         [(keyword? x)       'keyword]
         [#t                 (err "Type: unknown type" x)]))
 (xdef type ar-type)
@@ -1634,6 +1636,48 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                                 (thread-cell-set! ar-atomic-cell #f)))))))
 
 (xdef dead (lambda (x) (tnil (thread-dead? x))))
+
+(require racket/async-channel)
+
+(xdef chan (lambda args
+             (cond
+               ((null? args)           (make-channel))
+               ((ar-false? (car args)) (make-async-channel #f))
+               ((positive? (car args)) (make-async-channel (car args)))
+               ((zero? (car args))     (make-channel))
+               (#t (err "Channel limit must be > 0 or nil: " (car args))))))
+
+(define (chan-fn c method)
+  (cond ((channel? c)
+         (cond ((eq? method 'get)     channel-get)
+               ((eq? method 'try-get) channel-try-get)
+               ((eq? method 'put)     channel-put)
+               ((eq? method 'put-evt) channel-put-evt)
+               (#t (err "chan-fn: invalid method: " method))))
+        ((async-channel? c)
+         (cond ((eq? method 'get)     async-channel-get)
+               ((eq? method 'try-get) async-channel-try-get)
+               ((eq? method 'put)     async-channel-put)
+               ((eq? method 'put-evt) async-channel-put-evt)
+               (#t (err "chan-fn: invalid method: " method))))
+        (#t (err "chan-fn: invalid channel: " c))))
+
+(xdef <- (lambda (c . args)
+           (ar-nill
+             (if (null? args)
+                 ((chan-fn c 'get) c)
+                 (begin ((chan-fn c 'put) c args)
+                        args)))))
+
+(xdef <-? (lambda (c . args)
+            (ar-nill
+              (if (null? args)
+                  ((chan-fn c 'try-get) c)
+                  (let* ((evt ((chan-fn c 'put-evt) c args))
+                         (ret (sync/timeout 0 evt)))
+                    (if (eq? ret #f)
+                        'nil
+                        args))))))
 
 ; Added because Racket buffers output.  Not a permanent part of Arc.
 ; Only need to use when declare explicit-flush optimization.
