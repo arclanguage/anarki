@@ -34,7 +34,7 @@
 
 ; Get a list of numbers shuffled in a random order.
 (ero "Generating 1000 values")
-(= shuffle (compose $.ac-niltree $.shuffle $.ar-denil-last))
+(= shuffle $.shuffle)
 (= numbers (shuffle (range 0 1000)))
 
 ; And now let's create an AVL tree by inserting the numbers into it, in sorted

@@ -219,10 +219,10 @@
                         $.compile.expr)
           (parameterize $.current-module-declare-name scheme-f
             $.eval.compiled))))
-    (pathed-rmodule (anchor-empty-rns) (ac-denil `',name))))
+    (pathed-rmodule (anchor-empty-rns) `',name)))
 
 (def make-simple-rmodule binds
-  (make-bare-bones-rmodule:ac-denil:mappend
+  (make-bare-bones-rmodule:mappend
     (fn ((var val))
       (with (box $.box.val g-var (uniq))
         `((define-customvar ,g-var
@@ -246,14 +246,14 @@
 
 (def make-sub-rmodule (rmodule var-test)
   (let (rns path) (rep rmodulify.rmodule)
-    (make-bare-bones-rmodule:ac-denil
+    (make-bare-bones-rmodule
       `((#%require ,path)
         ,@(map [do `(#%provide ,_)]
                (keep var-test rmodule-keys.rmodule))))))
 
 (def make-renaming-rmodule (rmodule renamer)
   (let (rns path) (rep rmodulify.rmodule)
-    (make-bare-bones-rmodule:ac-denil
+    (make-bare-bones-rmodule
       `((#%require ,path)
         ,@(map [do `(#%provide (rename ,_ ,renamer._))]
                rmodule-keys.rmodule)))))

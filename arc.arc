@@ -24,6 +24,7 @@
 (assign incompatibilities (fn () (disp
 "The following behave differently from arc 3.1:
 
+0. `nil` now evaluates to `()`.
 1. `for`. See (help for).
 2. Templates (arc's lightweight object database system). See (help deftem).
 3. `writefile` has been changed to `save-file` to be consistent with `save-table` / `write-table`
@@ -248,13 +249,13 @@ Or come ask questions at http://arclanguage.org/forum"
 (def map1 (f xs)
 "Returns a list containing the result of function 'f' applied to every element of 'xs'."
   (if (no xs)
-    nil
+    ()
     (cons (f car.xs)
           (map1 f cdr.xs))))
 
 (examples map1
   (map1 cdr '((1) (2 3) (4 5)))
-  (nil (3) (5))
+  (() (3) (5))
   (map1 [list _ (* _ 10)]
         '(1 2 3))
   ((1 10) (2 20) (3 30)))
@@ -541,7 +542,7 @@ Can't take an 'else' branch."
   (reclist [caris _ 'b] '(a b c))
   t
   (reclist [caris _ 'd] '(a b c))
-  nil
+  ()
   (reclist [if (is 2 len._) _] '(a b c d))
   (c d))
 
@@ -605,7 +606,7 @@ Pronounced 'anaphoric check'."
   (find odd '(1 2 3 4))
   1
   (find odd '(2 4 6))
-  nil)
+  ())
 
 (defextend find (test seq) (isa seq 'string)
   (let f testify.test
@@ -691,7 +692,7 @@ Generalizes [[map1]] to functions with more than one argument."
 
 (examples map
   (map cdr '((1) (2 3) (4 5)))
-  (nil (3) (5))
+  (() (3) (5))
   (map [list _ (* _ 10)]
        '(1 2 3))
   ((1 10) (2 20) (3 30))
@@ -748,7 +749,7 @@ Generalizes [[map1]] to functions with more than one argument."
   (nthcdr 2 '(1 2 3))
   (3)
   (nthcdr 10 '(1 2 3))
-  nil)
+  ())
 
 ; Generalization of pair: (tuples x) = (pair x)
 
@@ -779,7 +780,7 @@ Generalizes [[map1]] to functions with more than one argument."
   (caris '(1 2) 1)
   t
   (caris 1 1)
-  nil)
+  ())
 
 (def warn (msg . args)
 "Displays args to screen as a warning."
@@ -1463,7 +1464,7 @@ from index 'start' (0 by default)."
   (pos 'c '(a b c d))
   2
   (pos 'x '(a b c d))
-  nil
+  ()
   (pos #\b "abcba")
   1
   (pos #\b "abcba" 2)
@@ -1656,9 +1657,7 @@ protocol requires them."
   (w/stdout (stderr)
     (apply prn args)))
 
-(= ac-denil       ($ ac-denil))
 (= ac-global-name ($ ac-global-name))
-(= ac-niltree     ($ ac-niltree))
 
 ; for when we can't use assign
 
@@ -2199,15 +2198,15 @@ barring the sign."
 
 (examples split
   (split '(a b c) 0)
-  (nil (a b c))
+  (() (a b c))
   (split '(a b c) 1)
   ((a) (b c))
   (split '(a b c) 2)
   ((a b) (c))
   (split '(a b c) 3)
-  ((a b c) nil)
+  ((a b c) ())
   (split '(a b c) 4)
-  ((a b c) nil))
+  ((a b c) ()))
 
 (def split-at (s delim)
 "Partitions string s at first instance of delimiter, dropping delimiter."
@@ -2368,13 +2367,13 @@ Simple syntax: f&g <=> (andf f g)"
   (before 2 3 '(1 2 3 4))
   t
   (before 2 1 '(1 2 3 4))
-  nil
+  ()
   (before 1 even '(1 2 3 4))
   t
   (before #\a #\n "banana")
   t
   (before #\a #\n "banana" 2)
-  nil)
+  ())
 
 (def atend (i s)
 "Is index 'i' at or past the end of sequence 's'?"
@@ -2409,7 +2408,7 @@ Returns nil if none of the args fails."
   ((compare < len) "yz" "abc")
   t
   ((compare < len) '(1 2 3) '(4 5))
-  nil)
+  ())
 
 ; Cleaner thus, but may only ever need in 2 arg case.
 
@@ -2427,9 +2426,9 @@ non-nil."
   (only.+ 1 2 3)
   6
   (only.+ nil 1 2 3)
-  nil
+  ()
   (only.+)
-  nil)
+  ())
 
 (mac conswhen (f x y)
 "Adds 'x' to the front of 'y' if 'x' satisfies test 'f'."
@@ -2456,7 +2455,7 @@ non-nil."
   (retrieve 3 odd '(1 2 3 4 5 6 7 8))
   (1 3 5)
   (retrieve 3 odd '(2 4 6 8))
-  nil)
+  ())
 
 (def dedup (xs)
 "Returns list of elements in 'xs' with duplicates dropped."
@@ -2479,13 +2478,13 @@ non-nil."
 
 (examples single
   (single 1)
-  nil
+  ()
   (single '())
-  nil
+  ()
   (single '(1))
   t
   (single '(1 2))
-  nil)
+  ())
 
 (def intersperse (x ys)
 "Inserts 'x' between the elements of 'ys'."
@@ -2496,7 +2495,7 @@ non-nil."
   (intersperse 1 '(a b (c d) e))
   (a 1 b 1 (c d) 1 e)
   (intersperse nil '(1 2 3))
-  (1 nil 2 nil 3))
+  (1 () 2 () 3))
 
 (def counts (seq)
 "Returns a table with counts of each unique element in 'seq'."
@@ -2517,7 +2516,7 @@ in 'seq'."
   (commonest '(b a n a n a))
   a
   (commonest nil)
-  nil)
+  ())
 
 (def sort-by-commonest (seq (o f idfn))
 "Reorders 'seq' with most common elements first."
@@ -2651,7 +2650,7 @@ successive elements of 'args'."
   (mismatch "abc" "acc")
   1
   (mismatch "abc" "abc")
-  nil)
+  ())
 
 (def memtable ((o keys nil) (o val t))
 "Turns a list into a table indicating membership of all elements."
@@ -2683,7 +2682,7 @@ with '|'s."
   (len< (obj a 1 b 2) 3)
   t
   (len< '(1 2 3) 3)
-  nil)
+  ())
 
 (def len> (x n)
 "Is [[len]] of 'x' greater than 'n'?"
@@ -2693,7 +2692,7 @@ with '|'s."
   (len> '(1 2 3) 2)
   t
   (len> (obj a 1 b 2) 3)
-  nil)
+  ())
 
 (mac thread body
 "Concurrently run expressions in 'body', returning an id that can be used to
@@ -2713,13 +2712,13 @@ when it's ready to be interrupted."
   (atomic ($:break-thread th)))
 
 (def thread-send (thd v)
-  (ac-niltree:$:thread-send thd v))
+  ($.thread-send thd v))
 (def thread-receive ()
-  (ac-niltree:$:thread-receive))
+  ($.thread-receive))
 (def thread-try-receive ()
-  (ac-niltree:$:thread-try-receive))
+  ($.thread-try-receive))
 (def thread-rewind-receive args
-  (ac-niltree:$:thread-rewind-receive (ac-denil ,args)))
+  ($.thread-rewind-receive args))
 
 (= tmpdir* "tmp")  ; default tmp directory -- use scheme-f for system default, but renames then fail on some platforms because /tmp can be a special filesystem
 (def mktemp ((o prefix "arc") (o dir tmpdir*))

@@ -95,6 +95,6 @@ from template 'tem-type'."
                (= x2 (temlist 'foo x1))
                (= x3 (listtem 'foo x2))
                x3!field)
-    (each template '(absent nil 1)
-      (each init '(absent nil 2)
+    (each template '(absent () 1)
+      (each init '(absent () 2)
         (prn "  if default was " template " and inst field was " init " => read back " (value template init))))))
