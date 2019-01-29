@@ -851,6 +851,8 @@
                               args))]
                  [(arc-list? (car args))
                   (ac-niltree (apply append (map ar-denil-last args)))]
+                 [(evt? (car args))
+                  (apply choice-evt args)]
                  [#t (apply + args)])))
 
 (define (char-or-string? x) (or (string? x) (char? x)))
@@ -931,6 +933,7 @@
         [(thread-cell? x)   'thread-cell]
         ((channel? x)       'channel)
         ((async-channel? x) 'channel)
+        ((evt? x)           'event)
         [(keyword? x)       'keyword]
         [#t                 (err "Type: unknown type" x)]))
 (xdef type ar-type)
@@ -1647,6 +1650,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                ((zero? (car args))     (make-channel))
                (#t (err "Channel limit must be > 0 or nil: " (car args))))))
 
+(define (sync? . args)
+  (apply sync/timeout 0 args))
+
 (define (chan-fn c method)
   (cond ((channel? c)
          (cond ((eq? method 'get)     channel-get)
@@ -1660,6 +1666,8 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                ((eq? method 'put)     async-channel-put)
                ((eq? method 'put-evt) async-channel-put-evt)
                (#t (err "chan-fn: invalid method: " method))))
+        ((and (evt? c) (or (eq? method 'get) (eq? method 'try-get)))
+         sync?)
         (#t (err "chan-fn: invalid channel: " c))))
 
 (xdef <- (lambda (c . args)
