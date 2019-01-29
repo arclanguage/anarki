@@ -918,6 +918,7 @@
         [(symbol? x)        'sym]
         [(null? x)          'sym]
         [(boolean? x)       'sym]
+        [(eof-object? x)    'sym]
         [(procedure? x)     'fn]
         [(char? x)          'char]
         [(string? x)        'string]
@@ -1045,7 +1046,6 @@
 
 ; a special end-of-file uninterned symbol guaranteed never to be equal to the
 ; result of any call to `(read)` or similar.
-(define eof (gensym 'eof))
 (xdef eof eof)
 
 ; sread = scheme read. eventually replace by writing read
