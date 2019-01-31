@@ -796,7 +796,7 @@
                   (apply string-append
                          (map (lambda (a) (ar-coerce a 'string))
                               args))]
-                 [(arc-list? (car args))
+                 [(andmap arc-list? args)
                   (apply append args)]
                  [(evt? (car args))
                   (apply choice-evt args)]
@@ -1700,7 +1700,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
   (namespace-variable-value (ac-global-name 'declarations*)))
 
 (define (ar-bflag key)
-  (not (ar-false? (hash-ref (ar-declarations) key 'nil))))
+  (not (ar-false? (hash-ref (ar-declarations) key ar-nil))))
 
 (define (utc-date sec) (seconds->date sec #f))
 
