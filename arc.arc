@@ -1361,12 +1361,13 @@ place2 to place1, and place1 to place3."
 "Runs 'body' (usually containing a loop) and then returns in order all the
 values that were called with 'accfn' in the process.
 Can be cleaner than map for complex anonymous functions."
-  ; TODO: Rename `gacc-from-accum` back to `gacc` once the Travis CI
-  ; tests pass.
+  ; TODO: Rename `gacc-from-accum` back to `gacc` and remove the debug
+  ; printing once the Travis CI tests pass.
   (w/uniq gacc-from-accum
-    `(withs (,gacc-from-accum nil ,accfn [push _ ,gacc-from-accum])
-       ,@body
-       (rev ,gacc-from-accum))))
+    ( [do ($.displayln "blah accum expansion result:") ($.writeln _) _]
+      `(withs (,gacc-from-accum nil ,accfn [push _ ,gacc-from-accum])
+        ,@body
+        (rev ,gacc-from-accum)))))
 
 (examples accum
   (accum accfn (each x '(1 2 3) (accfn (* x 10))))

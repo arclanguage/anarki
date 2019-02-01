@@ -10,7 +10,7 @@ https://en.wikipedia.org/wiki/List_comprehension"
   ; TODO: Rename `gacc-from-collect` back to `gacc` and remove the
   ; debug printing once the Travis CI tests pass.
   (w/uniq gacc-from-collect
-    ([do (prn "blah collect expansion result:") (write _) (prn) _]
+    ( [do (prn "blah collect expansion result:") (write _) (prn) _]
       `(accum ,gacc-from-collect
           ,(apply ingest
                   (join (map collect-transform guards)
