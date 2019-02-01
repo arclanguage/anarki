@@ -6,6 +6,7 @@ sudo: false
 branches:
   only:
   - master
+  - drop-nil--debugging-travis-ci
 
 env:
   global:
