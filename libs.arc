@@ -9,8 +9,7 @@
     lib/tem.arc
     lib/declare.arc
     lib/brackets.arc
-    ; TODO: Uncomment this once the Travis CI tests pass.
-;    lib/collect.arc
+    lib/collect.arc
 
 ;   ; optional
     lib/files.arc
