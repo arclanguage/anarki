@@ -35,8 +35,15 @@ https://en.wikipedia.org/wiki/List_comprehension"
     (do (pr "declarations* = ") (write declarations*) (prn))
     (collect (* i 2) (for i from 1 to 3) (if (< i 3))))
   (2 4)
+  ; TODO: See if we should remove this example again once the
+  ; Travis CI tests pass.
   (do
-    (prn "blah compiled collect example 4 (originally 3), now executing it")
+    (prn "blah compiled collect example 4 (created for debugging), now executing it")
+    (do (pr "declarations* = ") (write declarations*) (prn))
+    (collect (* i 2) (for i from 1 to 3) (for j from 1 to 3)))
+  (2 2 2 4 4 4 6 6 6)
+  (do
+    (prn "blah compiled collect example 5 (originally 3), now executing it")
     (do (pr "declarations* = ") (write declarations*) (prn))
     (collect (list i j)
             (for i from 1 to 3)
