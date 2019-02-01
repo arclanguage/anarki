@@ -1361,6 +1361,8 @@ place2 to place1, and place1 to place3."
 "Runs 'body' (usually containing a loop) and then returns in order all the
 values that were called with 'accfn' in the process.
 Can be cleaner than map for complex anonymous functions."
+  ; TODO: Rename `gacc-from-accum` back to `gacc` once the Travis CI
+  ; tests pass.
   (w/uniq gacc-from-accum
     `(withs (,gacc-from-accum nil ,accfn [push _ ,gacc-from-accum])
        ,@body
@@ -1410,6 +1412,8 @@ May still terminate by calling '(break)'."
 (mac drain (expr (o eos nil))
 "Repeatedly evaluates 'expr' until it returns 'eos' (nil by default). Returns
 a list of the results."
+  ; TODO: Rename `gacc-from-drain` back to `gacc` once the Travis CI
+  ; tests pass.
   (w/uniq (gacc-from-drain gres)
     `(accum ,gacc-from-drain
        (whiler ,gres ,expr ,eos

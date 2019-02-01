@@ -7,11 +7,13 @@
 (mac collect (expr . guards)
 "Creates a list of data based on a sort of 'set builder' notation.
 https://en.wikipedia.org/wiki/List_comprehension"
-  (w/uniq gacc
-    `(accum ,gacc
+  ; TODO: Rename `gacc-from-collect` back to `gacc` once the Travis CI
+  ; tests pass.
+  (w/uniq gacc-from-collect
+    `(accum ,gacc-from-collect
         ,(apply ingest
                 (join (map collect-transform guards)
-                      (list `(,gacc ,expr)))))))
+                      (list `(,gacc-from-collect ,expr)))))))
 
 (examples collect
   (collect i (for i from 1 to 3))
