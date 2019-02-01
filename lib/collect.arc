@@ -19,15 +19,25 @@ https://en.wikipedia.org/wiki/List_comprehension"
 (examples collect
   ; TODO: Remove the debug printing once the Travis CI tests pass.
   (do
-    (prn "blah beginning collect example 1")
+    (prn "blah compiled collect example 1, now executing it")
+    (do (pr "declarations* = ") (write declarations*) (prn))
     (collect i (for i from 1 to 3)))
   (1 2 3)
   (do
-    (prn "blah beginning collect example 2")
+    (prn "blah compiled collect example 2, now executing it")
+    (do (pr "declarations* = ") (write declarations*) (prn))
     (collect (* i 2) (for i from 1 to 3)))
   (2 4 6)
+  ; TODO: See if we should remove this example again once the
+  ; Travis CI tests pass.
   (do
-    (prn "blah beginning collect example 3")
+    (prn "blah compiled collect example 3 (created for debugging), now executing it")
+    (do (pr "declarations* = ") (write declarations*) (prn))
+    (collect (* i 2) (for i from 1 to 3) (if (< i 3))))
+  (2 4)
+  (do
+    (prn "blah compiled collect example 4 (originally 3), now executing it")
+    (do (pr "declarations* = ") (write declarations*) (prn))
     (collect (list i j)
             (for i from 1 to 3)
             (for j from 1 to 3)
