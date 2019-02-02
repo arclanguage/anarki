@@ -42,7 +42,7 @@
 ; check examples
 (prn "checking examples interspersed in the codebase")
 (each (name examples-and-expected) examples*
-  (each (example expected) pair.examples-and-expected
+  (each (example expected) (pair copy.examples-and-expected)  ; copy to protect against macros mutating their arguments: https://github.com/arclanguage/anarki/pull/148#issuecomment-459923195
     (when (and (~is expected '_)
                (~iso eval.example expected)
                (~and (caris expected 'valueof)
