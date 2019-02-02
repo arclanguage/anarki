@@ -2768,7 +2768,11 @@ of 'x' by calling 'self'."
            (iso y.k v))
          tablist.x)))
 
-; default impl for tagged types
+; default impls for tagged types
+(defextend copy (x . args)   ($.vector? x)
+  ; tagged type
+  ($.vector-map copy x))
+
 (defextend iso (a b) ($.vector? a)
   (iso ($.vector->list a)
        ($.vector->list b)))
