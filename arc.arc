@@ -220,7 +220,7 @@ Or come ask questions at http://arclanguage.org/forum"
 
 (def acons (x)
 "Is 'x' a non-nil list?"
-  (if (is type.x 'cons) t (annotated x)))
+  (is type.x 'cons))
 
 (def list args args)
 
@@ -2047,12 +2047,9 @@ of tables."
 "Creates a deep copy of 'x'. Future changes to any part of 'x' are guaranteed
 to be isolated from the copy."
   (if (or (atom x) (isa x 'fn))
-       x
-      (annotated x)
-       (annotate (copy car.x)
-                 (copy cdr.x))
-       (cons (copy car.x)
-             (copy cdr.x))))
+    x
+    (cons (copy car.x)
+          (copy cdr.x))))
 
 (defextend copy (x) (isa x 'string)
   (ret new (newstring len.x)
@@ -2769,13 +2766,12 @@ of 'x' by calling 'self'."
          tablist.x)))
 
 ; default impls for tagged types
-(defextend copy (x . args)   ($.vector? x)
-  ; tagged type
-  ($.vector-map copy x))
+(defextend copy (x . args)   (annotated x)
+  (annotate type.x (copy rep.x)))
 
-(defextend iso (a b) ($.vector? a)
-  (iso ($.vector->list a)
-       ($.vector->list b)))
+(defextend iso (a b) (annotated a)
+  (and (iso type.a type.b)
+       (iso rep.a rep.b)))
 
 (defextend len (x) (isa x 'sym)
   0)

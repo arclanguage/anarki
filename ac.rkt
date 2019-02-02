@@ -784,7 +784,6 @@
   (cond [(pair? x)     (car x)]
         [(eqv? x 'nil) 'nil]
         [(eqv? x '())  'nil]
-        [(ar-tagged? x) (ar-tagged-type x)]
         [#t            (err "Can't take car of" x)]))
 (xdef car ar-car)
 
@@ -792,7 +791,6 @@
   (cond [(pair? x)     (cdr x)]
         [(eqv? x 'nil) 'nil]
         [(eqv? x '())  'nil]
-        [(ar-tagged? x) (ar-tagged-rep x)]
         [#t            (err "Can't take cdr of" x)]))
 (xdef cdr ar-cdr)
 
