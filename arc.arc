@@ -2766,10 +2766,10 @@ of 'x' by calling 'self'."
          tablist.x)))
 
 ; default impls for tagged types
-(defextend copy (x . args)   (annotated x)
+(defextend copy (x . args)   (annotated? x)
   (annotate type.x (copy rep.x)))
 
-(defextend iso (a b) (annotated a)
+(defextend iso (a b) (annotated? a)
   (and (iso type.a type.b)
        (iso rep.a rep.b)))
 

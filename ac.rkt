@@ -907,7 +907,7 @@
         [#t (ar-tagged type rep)]))
 
 (xdef annotate ar-tag)
-(xdef annotated ar-tagged?)
+(xdef annotated? ar-tagged?)
 
 ; (type nil) -> sym
 
