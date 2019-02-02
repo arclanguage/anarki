@@ -1037,10 +1037,25 @@ Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc
       (f car.l)
       (recur cdr.l))))
 
+(mac accum (accfn . body)
+"Runs 'body' (usually containing a loop) and then returns in order all the
+values that were called with 'accfn' in the process.
+Can be cleaner than map for complex anonymous functions."
+  (w/uniq gacc
+    `(withs (,gacc nil ,accfn (fn (x) (push x ,gacc)))
+       ,@body
+       (rev ,gacc))))
+
+(examples accum
+  (accum accfn (each x '(1 2 3) (accfn (* x 10))))
+  (10 20 30)
+  (accum yield (each x "abcd" (yield x)))
+  (#\a #\b #\c #\d))
+
 (mac each (var expr . body)
 "Loops through expressions in 'body' with 'var' bound to each successive
 element of 'expr'."
-  `(walk ,expr (fn (,var) ,@body)))
+  `(accum out (walk ,expr (fn (,var) ,@body))))
 
 (defextend walk (seq f) (isa seq 'table)
   (maptable (fn (k v)
@@ -1355,21 +1370,6 @@ place2 to place1, and place1 to place3."
 (mac set args
 "Sets each place in 'args' to t."
   `(do ,@(map (fn (a) `(= ,a t)) args)))
-
-(mac accum (accfn . body)
-"Runs 'body' (usually containing a loop) and then returns in order all the
-values that were called with 'accfn' in the process.
-Can be cleaner than map for complex anonymous functions."
-  (w/uniq gacc
-    `(withs (,gacc nil ,accfn [push _ ,gacc])
-       ,@body
-       (rev ,gacc))))
-
-(examples accum
-  (accum accfn (each x '(1 2 3) (accfn (* x 10))))
-  (10 20 30)
-  (accum yield (each x "abcd" (yield x)))
-  (#\a #\b #\c #\d))
 
 (mac whilet (var test . body)
 "Like [[while]], but successive values of 'test' are bound to 'var'."
@@ -1962,11 +1962,11 @@ Name comes from (cons 1 2) being printed with a dot: (1 . 1)."
 
 (def keys (h)
 "Returns list of keys in table 'h'."
-  (accum a (each (k v) h (a k))))
+  (each (k v) h (out k)))
 
 (def vals (h)
 "Returns list of values in table 'h'."
-  (accum a (each (k v) h (a v))))
+  (each (k v) h (out v)))
 
 (def tablist (h)
 "Converts table 'h' into an association list of (key value) pairs. Reverse of
@@ -2874,8 +2874,6 @@ of 'x' by calling 'self'."
 
 (mac defhook (name . rest)
   `(= (hooks* ',name) (fn ,@rest)))
-
-(mac out (expr) `(pr ,(tostring (eval expr))))
 
 ; if renamed this would be more natural for (map [_ user] pagefns*)
 
