@@ -5,6 +5,16 @@
 ; docstrings.
 
 
+; Load the docstrings by running the unit tests.
+(require 'tests.arc)
+
+
+(assign-and-warn web-help-dir* "build-gh-pages/site/help")
+(assign-and-warn web-help-file* (+ web-help-dir* "/index.html"))
+
+(prn "Generating HTML documentation at " web-help-file* " ...")
+
+
 (def display-web-help-section (heading section-defs)
   (when section-defs
     (tag section
@@ -34,12 +44,8 @@
               (tag (pre class "docstring-and-examples")
                 (pr:trim docstring)))))))))
 
-
-; Load the docstrings by running the unit tests.
-(require 'tests.arc)
-
-(ensure-dir "build-gh-pages/site/help")
-(w/outfile out "build-gh-pages/site/help/index.html"
+(ensure-dir web-help-dir*)
+(w/outfile out web-help-file*
   (w/stdout out
     (doctype "html")
     (tag (html lang "en")
@@ -150,3 +156,5 @@
                 other-defs.source))
             (display-web-help-section "Documented elsewhere"
               unknown-defs)))))))
+
+(prn "HTML documentation complete.")
