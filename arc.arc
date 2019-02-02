@@ -220,7 +220,7 @@ Or come ask questions at http://arclanguage.org/forum"
 
 (def acons (x)
 "Is 'x' a non-nil list?"
-  (is type.x 'cons))
+  (if (is type.x 'cons) t (annotated x)))
 
 (def list args args)
 
@@ -2046,10 +2046,13 @@ of tables."
 (def copy (x)
 "Creates a deep copy of 'x'. Future changes to any part of 'x' are guaranteed
 to be isolated from the copy."
-  (if (atom x)
-    x
-    (cons (copy car.x)
-          (copy cdr.x))))
+  (if (or (atom x) (isa x 'fn))
+       x
+      (annotated x)
+       (annotate (copy car.x)
+                 (copy cdr.x))
+       (cons (copy car.x)
+             (copy cdr.x))))
 
 (defextend copy (x) (isa x 'string)
   (ret new (newstring len.x)
