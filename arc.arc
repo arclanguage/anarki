@@ -1042,9 +1042,14 @@ Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc
 values that were called with 'accfn' in the process.
 Can be cleaner than map for complex anonymous functions."
   (w/uniq gacc
-    `(withs (,gacc nil ,accfn (fn (x) (push x ,gacc)))
+    `(withs (,gacc nil
+             ,accfn (fn args
+                      (let n (len args)
+                        (if (is n 0) (atomic:do1 (rev ,gacc) (wipe ,gacc))
+                            (is n 1) (push (car args) ,gacc)
+                                     (push args ,gacc)))))
        ,@body
-       (rev ,gacc))))
+       (,accfn))))
 
 (examples accum
   (accum accfn (each x '(1 2 3) (accfn (* x 10))))
