@@ -24,6 +24,7 @@
   openssl
   racket/string
   racket/random
+  racket/struct
 
   (only-in "brackets.rkt" bracket-readtable)
 
@@ -102,6 +103,8 @@
   (parameterize
     ([anarki-init-in-main-namespace-func anarki-init-verbose])
     (anarki-init-in-main-namespace)))
+
+(struct ar-tagged (type rep) #:prefab)
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
@@ -781,6 +784,7 @@
   (cond [(pair? x)     (car x)]
         [(eqv? x 'nil) 'nil]
         [(eqv? x '())  'nil]
+        [(ar-tagged? x) (ar-tagged-type x)]
         [#t            (err "Can't take car of" x)]))
 (xdef car ar-car)
 
@@ -788,6 +792,7 @@
   (cond [(pair? x)     (cdr x)]
         [(eqv? x 'nil) 'nil]
         [(eqv? x '())  'nil]
+        [(ar-tagged? x) (ar-tagged-rep x)]
         [#t            (err "Can't take cdr of" x)]))
 (xdef cdr ar-cdr)
 
@@ -899,21 +904,19 @@
                    [(hash? x) (hash-count x)]
                    [#t (length (ar-denil-last x))])))
 
-(define (ar-tagged? x)
-  (and (vector? x) (eq? (vector-ref x 0) 'tagged)))
-
 (define (ar-tag type rep)
   (cond [(eqv? (ar-type rep) type) rep]
-        [#t (vector 'tagged type rep)]))
+        [#t (ar-tagged type rep)]))
 
 (xdef annotate ar-tag)
+(xdef annotated ar-tagged?)
 
 ; (type nil) -> sym
 
 (define (exint? x) (and (integer? x) (exact? x)))
 
 (define (ar-type x)
-  (cond [(ar-tagged? x)     (vector-ref x 1)]
+  (cond [(ar-tagged? x)     (ar-tagged-type x)]
         [(pair? x)          'cons]
         [(symbol? x)        'sym]
         [(null? x)          'sym]
@@ -941,7 +944,7 @@
 
 (define (ar-rep x)
   (if (ar-tagged? x)
-      (vector-ref x 2)
+      (ar-tagged-rep x)
       x))
 
 (xdef rep ar-rep)
