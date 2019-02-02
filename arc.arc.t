@@ -203,7 +203,7 @@
        (test improper-list-element-already-exists
              (assert-same 3 (ret x 3 (pushnew 3 x))))
        (test nil-can-be-pushed
-             (assert-same '(nil 3)
+             (assert-same '(() 3)
                           (ret x '(3) (pushnew nil x)))))
 
 (suite map

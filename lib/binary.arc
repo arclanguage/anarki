@@ -25,4 +25,4 @@
   ($.bytes-length x))
 
 (defextend iso (x y) (isa x 'binary)
-  (ac-denil:$.bytes=? x y))
+  ($.bytes=? x y))

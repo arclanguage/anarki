@@ -85,7 +85,7 @@
              (assert-nil (let x (fn (n) (fn (p) (is (mod n p) 0)))
                            (~odd&x.9 3))))
        (test everything-as-argument
-             (assert-same '(nil t t)
+             (assert-same '(() t t)
                           (let x (fn (n) (fn (p) (is (mod n p) 0)))
                             (map ~odd&x.9 '(3 4 5))))))
 
