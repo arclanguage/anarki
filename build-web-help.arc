@@ -9,30 +9,30 @@
   (when section-defs
     (tag section
       (tag h2 (pr:esc-tags heading))
-        (each name (sort < section-defs)
-          (tag (div class "help-entry")
-            (let doc helpstr.name
-              (zap string name)
-              (zap
-                [$.regexp-replace*
-                  '#px"(.*?)(?:\\[\\[([^\\]\\s]*)\\]\\]|$)"
-                  _
-                  (fn (entire-match normal-text possible-link)
-                    (tostring
-                      (pr:esc-tags normal-text)
-                      (when possible-link
-                        (if (help*:sym possible-link)
-                          (tag (a href (+ "#" possible-link))
-                            (pr:esc-tags possible-link))
-                          (tag (span class "broken-link")
-                            (pr:esc-tags possible-link))))))]
-                doc)
-              (let (sig docstring) (split-at doc "\n")
-                (tag:a href (+ "#" name) name name)
-                (tag (pre class "type-and-sig")
-                  (pr sig))
-                (tag (pre class "docstring-and-examples")
-                  (pr:trim docstring)))))))))
+      (each name (sort < section-defs)
+        (tag (div class "help-entry")
+          (let doc helpstr.name
+            (zap string name)
+            (zap
+              [$.regexp-replace*
+                '#px"(.*?)(?:\\[\\[([^\\]\\s]*)\\]\\]|$)"
+                _
+                (fn (entire-match normal-text possible-link)
+                  (tostring
+                    (pr:esc-tags normal-text)
+                    (when possible-link
+                      (if (help*:sym possible-link)
+                        (tag (a href (+ "#" possible-link))
+                          (pr:esc-tags possible-link))
+                        (tag (span class "broken-link")
+                          (pr:esc-tags possible-link))))))]
+              doc)
+            (let (sig docstring) (split-at doc "\n")
+              (tag:a href (+ "#" name) name name)
+              (tag (pre class "type-and-sig")
+                (pr sig))
+              (tag (pre class "docstring-and-examples")
+                (pr:trim docstring)))))))))
 
 
 ; Load the docstrings by running the unit tests.
