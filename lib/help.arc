@@ -69,8 +69,10 @@
 (def print-example-session (expr expected)
   (pr "  ")
   (print-like-repl expected)
+  (ero "\\blah print-example-session " (tostring:write expr) "\n")
   (if (~iso expected eval.expr)
     (pr " <-- this seems outdated"))
+  (ero "/blah print-example-session\n")
   (prn))
 
 (def print-like-repl (x)
