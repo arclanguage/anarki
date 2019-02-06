@@ -954,6 +954,17 @@ See [[atomic]]."
   (= x 2 y 4)
   _)
 
+(mac or= args
+  `(do ,@(map [cons 'or-assign _] (pair args))))
+
+(mac or-assign (slot value)
+  `(atomic
+     ,(if (ssyntax slot)
+          `(or-assign ,(ssexpand slot) ,value)
+          (alist slot)
+          `(or ,slot (= ,slot ,value))
+        `(or (if (bound ',slot) ,slot) (= ,slot ,value)))))
+
 (def lastcons (xs)
 "Returns the absolute last link of list 'xs'. Save this value to efficiently
 append to 'xs'."
@@ -2749,11 +2760,6 @@ of 'x' by calling 'self'."
    (2 3 4)
    (3 4)
    (4)))
-
-(mac or= (place expr)
-  (let (binds val setter) (setforms place)
-    `(atwiths ,binds
-       (or ,val (,setter ,expr)))))
 
 (defextend iso (x y) (isa x 'table)
   (and (isa x 'table)
