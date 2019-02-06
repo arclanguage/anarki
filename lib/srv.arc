@@ -26,12 +26,11 @@
 ; To adjust this while running, adjust the req-window* time, not
 ; req-limit*, because algorithm doesn't enforce decreases in the latter.
 
-  req-times* (table) 
   req-limit* 30 
   req-window* 10 ;10 
   dos-window* 2 ;2
 )
-
+(or= req-times* (table))
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
@@ -65,8 +64,8 @@
 ; a thread to handle it. also arrange to kill that thread
 ; if it has not completed in threadlife* seconds.
 
-(= threadlife* 30  requests* 0  requests/ip* (table)
-   throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
+(or= threadlife* 30  requests* 0  requests/ip* (table)
+     throttle-ips* (table)  ignore-ips* (table)  spurned* (table))
 
 (def accept-request-with-deadline (s)
   (with ((in out ip) (socket-accept s)
@@ -332,7 +331,7 @@
 
 ;; extending the server with new ops
 
-(= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
+(or= srvops* (table) redirector* (table) optimes* (table) opcounts* (table))
 
 (def save-optime (name elapsed)
   ; this is the place to put a/b testing
@@ -392,7 +391,7 @@ stdout, returns a url to redirect requests to after processing."
                                         it)))
     ""))
 
-(= fns* (table) fnids* nil timed-fnids* nil)
+(or= fns* (table) fnids* nil timed-fnids* nil)
 
 ; count on huge (expt 64 10) size of fnid space to avoid clashes
 
@@ -600,7 +599,7 @@ stdout, returns a url to redirect requests to after processing."
 
 ; only unique per server invocation
 
-(= unique-ids* (table))
+(or= unique-ids* (table))
 
 (def unique-id ((o len 8))
   (let id (sym (rand-string (max 5 len)))
@@ -661,7 +660,7 @@ stdout, returns a url to redirect requests to after processing."
 
 ; Background Threads
 
-(= bgthreads* (table) pending-bgthreads* nil)
+(or= bgthreads* (table) pending-bgthreads* nil)
 
 (def new-bgthread (id f sec)
   (aif (bgthreads* id) (break-thread it))

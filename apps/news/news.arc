@@ -180,9 +180,9 @@
 (def author (u i) (is u i!by))
 
 
-(= stories* nil ranked-stories* nil comments* nil
-   items* (table) url->story* (table)
-   maxid* 0 initload* 15000)
+(or= stories* nil ranked-stories* nil comments* nil
+     items* (table) url->story* (table)
+     maxid* 0 initload* 15000)
 
 ; The dir expression yields stories in order of file creation time
 ; (because arc infile truncates), so could just rev the list instead of
@@ -233,7 +233,7 @@
 (def register-url (i url)
   (= (url->story* (canonical-url url)) i!id))
 
-(= stemmable-sites* (table))
+(or= stemmable-sites* (table))
 
 (def canonical-url (url)
   (if (stemmable-sites* (sitename url))
@@ -268,7 +268,7 @@
     (set i!dead)
     (save-item i)))
 
-(= kill-log* nil)
+(or= kill-log* nil)
 
 (def log-kill (i how)
   (push (list i!id how) kill-log*))
@@ -416,7 +416,7 @@
                   background-color: #" (hexrep (main-color user)) ";"
                   "}"))))
 
-(= pagefns* nil)
+(or= pagefns* nil)
 
 ; page top
 
@@ -573,7 +573,7 @@
            (newslog ip user ',name ,@parms)
            ,@body)))))
 
-(= newsop-names* nil)
+(or= newsop-names* nil)
 
 (mac newsop args
   `(do (pushnew ',(car args) newsop-names*)
@@ -1051,7 +1051,7 @@
 
 (= user-changetime* 120 editor-changetime* 1440)
 
-(= everchange* (table) noedit* (table))
+(or= everchange* (table) noedit* (table))
 
 (def canedit (user i)
   (or (admin user)
@@ -1685,7 +1685,7 @@
       (do (note-baditem user ip)
           (pr "No such item.")))))
 
-(= baditemreqs* (table) baditem-threshold* 1/100)
+(or= baditemreqs* (table) baditem-threshold* 1/100)
 
 ; Something looking at a lot of deleted items is probably the bad sort
 ; of crawler.  Throttle it for this server invocation.
@@ -1730,7 +1730,7 @@
            (mem 'commentable i!keys))))
 
 
-(= displayfn* (table))
+(or= displayfn* (table))
 
 (= (displayfn* 'story)   (fn (n i user here inlist)
                            (display-story n i user here)))
@@ -1773,7 +1773,7 @@
 
 (def editable-type (i) (fieldfn* i!type))
 
-(= fieldfn* (table))
+(or= fieldfn* (table))
 
 (= (fieldfn* 'story)
    (fn (user s)

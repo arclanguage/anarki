@@ -1,6 +1,6 @@
 ; by twilightsentry@gmail.com
 
-(= declare-fns* (table))
+(or= declare-fns* (table))
 
 (defs decl-idfn (old new args) new
       decl-bool (old new args) (no:no new))

@@ -2880,7 +2880,7 @@ of 'x' by calling 'self'."
 (def write (x (o port (stdout)))
   (swrite serialize.x port))
 
-(= hooks* (table))
+(or= hooks* (table))
 
 (def hook (name . args)
   (aif (hooks* name) (apply it args)))
@@ -2905,7 +2905,7 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
   (map get.2 '((a b c) (1 2 3) (p q r)))
   (c 3 r))
 
-(= savers* (table))
+(or= savers* (table))
 
 (mac fromdisk (var file init load save)
   (w/uniq (gf gv)

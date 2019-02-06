@@ -99,7 +99,7 @@
         (fn () (map eval exprs)))
       (prompt-page user "Error: No application " app " for user " user))))
 
-(wipe repl-history*)
+(or= repl-history* nil)
 
 (defop repl req
   (if (admin (get-user req))
