@@ -36,6 +36,13 @@ If you find others, please report them at http://arclanguage.org/forum.
 (assign source-file* (table))
 (assign source* (table))
 (assign help* (table))
+(assign original-stdin* (stdin))
+(assign original-stdout* (stdout))
+(assign original-stderr* (stderr))
+
+(assign dbg (annotate 'mac
+              (fn ((o expr 'nil))
+                `(debugger (lexenv) ',expr))))
 
 (assign remac (annotate 'mac
                 (fn (name parms . body)
