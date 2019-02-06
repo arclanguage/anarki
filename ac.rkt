@@ -119,6 +119,7 @@
         [(ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env)]
         [(eq? (xcar s) '$) (ac-$ (cadr s) env)]
         [(eq? (xcar s) 'quote) (list 'quote (ac-quoted (cadr s)))]
+        ((eq? (xcar s) 'lexenv) (ac-lenv (cdr s) env))
         [(and (eq? (xcar s) 'quasiquote)
               (not (ac-macro? 'quasiquote)))
          (ac-qq (cadr s) env)]
@@ -323,7 +324,8 @@
   #f)
 
 (define (ac-var-ref s env)
-  (cond [(lex? s env)        s]
+  (cond [(ac-boxed? 'get s) (ac-boxed-get s)]
+        [(lex? s env)        s]
         [(ac-defined-var? s) (list (ac-global-name s))]
         [#t                  (ac-global-name s)]))
 
@@ -550,6 +552,7 @@
         (list 'let `([zz ,b])
                (cond [(eqv? a 'nil) (err "Can't rebind nil")]
                      [(eqv? a 't) (err "Can't rebind t")]
+                     [(ac-boxed? 'set a)  `(begin ,(ac-boxed-set a b) ,(ac-boxed-get a))]
                      [(lex? a env) `(set! ,a zz)]
                      [(ac-defined-var? a) `(,(ac-global-name a) zz)]
                      [#t `(set! ,(ac-global-name a) zz)])
@@ -567,6 +570,52 @@
             (ac-args (if (pair? names) (cdr names) '())
                      (cdr exprs)
                      env))))
+
+(define (ac-lexname env)
+  (let ((name (ac-dbname env)))
+    (if (eqv? name #f)
+        'fn
+        (apply string-append
+               (map (lambda (x) (string-append (symbol->string x) "-"))
+                    (apply append (keep pair? env)))))))
+
+(define (ac-lenv args env)
+  (ac-lexenv (ac-lexname env) env))
+
+(define (ac-lexenv name env)
+  `(list (list '*name ',name)
+         ,@(imap (lambda (var)
+                   (let ((val (gensym)))
+                     `(list ',var
+                            (lambda ,val ,var)
+                            (lambda (,val) (set! ,var ,val)))))
+                 (filter (lambda (x) (not (or (ar-false? x) (pair? x)))) env))))
+
+(define boxed* '())
+
+(define (ac-boxed? op name)
+  (let ((result
+    (when (not (ar-false? name))
+      (when (not (ar-false? boxed*))
+        (let ((slot (assoc name boxed*)))
+          (case op
+            ((get) (when (and slot (>= (length slot) 2)) (cadr slot)))
+            ((set) (when (and slot (>= (length slot) 3)) (caddr slot)))
+            (else (err "ac-boxed?: bad op" name op))))))))
+    (if (void? result) #f result)))
+
+(define (ac-boxed-set name val)
+  (let ((setter (ac-boxed? 'set name)))
+     (if (procedure? setter)
+       `(,setter ,val)
+       (err "invalid setter" name val setter))))
+
+(define (ac-boxed-get name)
+  (let ((getter (ac-boxed? 'get name)))
+    (if (procedure? getter)
+      `(,getter 'nil)
+      getter)))
+
 
 ; generate special fast code for ordinary two-operand
 ; calls to the following functions. this is to avoid
@@ -1265,8 +1314,26 @@
   (eval (parameterize ([compile-allow-set!-undefined #t])
           (compile racket-expr))))
 
-(define (arc-eval expr)
-  (arc-exec (ac expr '())))
+(define (arc-eval expr . args)
+  (if (null? args)
+      (arc-exec (ac expr '()))
+      (apply arc-eval-boxed expr args)))
+
+(define-syntax w/restore
+  (syntax-rules ()
+    ((_ var val body ...)
+     (let ((w/restore-prev var)
+           (w/restore-val  val))
+       (dynamic-wind (lambda () (set! var w/restore-val))
+                     (lambda () body ...)
+                     (lambda () (set! var w/restore-prev)))))))
+
+(define (arc-eval-boxed expr lexenv)
+  (w/restore boxed* (if (or (ar-false? boxed*)
+                            (ar-false? lexenv))
+                      lexenv
+                      (append lexenv boxed*))
+    (arc-eval expr)))
 
 (define (tle)
   (display "Arc> ")
