@@ -1366,7 +1366,6 @@ For help on say 'string':
 For a list of differences with arc 3.1:
   arc> (incompatibilities)
 To run all automatic tests:
-  $ hg clone https://bitbucket.org/zck/unit-test.arc
   $ ./arc.sh
   arc> (load \"tests.arc\")
 
