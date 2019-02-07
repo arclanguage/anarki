@@ -90,10 +90,9 @@ For password reset mails to be sent out, your must set up an email account to se
 
 ### Tests
 
-**Anarki** has thorough automated tests. To run them, install [**Mercurial**](https://www.mercurial-scm.org), then,
+**Anarki** has thorough automated tests. 
 
     # start in the anarki directory
-    $ hg clone https://bitbucket.org/zck/unit-test.arc
     $ ./arc.sh
     arc> (load "tests.arc")
 

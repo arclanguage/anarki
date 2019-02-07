@@ -1,5 +1,4 @@
-; first hg clone https://bitbucket.org/zck/unit-test.arc
-(require 'unit-test.arc/unit-test.arc)
+(require 'lib/unit-test.arc/unit-test.arc)
 
 ; ensure that all News libs are loaded
 (require 'apps/news/news.arc)
