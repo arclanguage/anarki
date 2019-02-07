@@ -1049,7 +1049,7 @@
 
 (xdef sread (lambda (p)
                (let ([expr (read p)])
-                 (if (eof-object? expr) eof expr))))
+                 expr)))
 
 ; these work in PLT but not scheme48
 
