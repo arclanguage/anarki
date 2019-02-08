@@ -1,10 +1,8 @@
-#lang racket/base
+#lang racket/load
 
 ; Arc Compiler.
 
-
 (require
-
   ; This defines names like _list, so it would conflict with the
   ; naming convention for Arc global variables if we didn't prefix it.
   (prefix-in ffi: ffi/unsafe)
@@ -28,10 +26,12 @@
 
   (only-in "brackets.rkt" bracket-readtable)
 
-  (for-syntax racket/base))
+  (for-syntax racket/base)
+  )
 
-(provide (all-defined-out))
+; (provide (all-defined-out))
 
+(read-accept-bar-quote #f)
 
 (define-runtime-path ac-rkt-path "ac.rkt")
 (define-runtime-path arc-arc-path "arc.arc")
@@ -41,8 +41,112 @@
 (define main-namespace
   (namespace-anchor->namespace main-namespace-anchor))
 
+(define lang* (make-parameter 'arc))
+
+(define ac-global-names '(
+  (do %do)
+  (cons %cons)
+  (car %car)
+  (cdr %cdr)
+  (caar %caar)
+  (cadr %cadr)
+  (cdar %cdar)
+  (cadar %cadar)
+  ; (_ %_)
+  (new %new)
+  (parameterize %parameterize)
+  (split-at %split-at)
+  (nand %nand)
+  (kill-thread %kill-thread)
+  (break-thread %break-thread)
+  (thread-send %thread-send)
+  (thread-receive %thread-receive)
+  (thread-try-receive %thread-try-receive)
+  (thread-rewind-receive %thread-rewind-receive)
+  (write %write)
+  (require %require)
+  (normalize-path %normalize-path)
+  (base64-encode %base64-encode)
+  (base64-decode %base64-decode)
+  (print %print)
+  (uuid %uuid)
+  (file-size %file-size)
+  (cddr %cddr)
+  (list %list)
+  (and %and)
+  (or %or)
+  (assoc %assoc)
+  (let %let)
+  (for %for)
+  (when %when)
+  (unless %unless)
+  (+ %add)
+  (- %sub)
+  (* %mul)
+  (/ %divide)
+  (% %mod)
+  (= %eql)
+  (< %lt)
+  (<= %le)
+  (>= %ge)
+  (> %gt)
+  (empty %empty)
+  (map %map)
+  (map1 %map1)
+  (map2 %map2)
+  (all %all)
+  (any %any)
+  (apply %apply)
+  (eval %eval)
+  (uniq %uniq)
+  (system %system)
+  (fill-table %fill-table)
+  (tokens %tokens)
+  (tag %tag)
+  (link %link)
+  (private %private)
+  (member %member)
+  (concat %concat)
+  (compose %compose)
+  (last %last)
+  (keep %keep)
+  (case %case)
+  (set %set)
+  (eof %eof)
+  (string %string)
+  (read %read)
+  (max %max)
+  (min %min)
+  (abs %abs)
+  (round %round)
+  (sort %sort)
+  (quasiquote %quasiquote)
+  (time %time)
+  (date %date)
+  (count %count)
+  (nor %nor)
+  (only %only)
+  (load %load)
+  (range %range)
+  (thread %thread)
+  (foldl %foldl)
+  (foldr %foldr)
+  (partition %parition)
+  (curry %curry)
+  (const %const)
+  (force %force)
+  (delay %delay)
+  (read-json %read-json)
+  (write-json %write-json)
+  ))
+
 (define (ac-global-name s)
-  (string->symbol (string-append "_" (symbol->string s))))
+  (if (eqv? (lang*) 'arc)
+      (let ((x (assoc s ac-global-names)))
+        (if ;#f
+           x 
+            (cadr x) (string->symbol (string-append "" (symbol->string s)))))
+      s))
 
 (define init-steps-reversed* (list))
 
@@ -111,14 +215,33 @@
 ; env is a list of lexically bound variables, which we
 ; need in order to decide whether set should create a global.
 
+(define (id-literal? x)
+  (and (symbol? x) (> (string-length (symbol->string x)) 0) (eqv? #\| (string-ref (symbol->string x) 0))))
+
+(define (id-literal x)
+  (let ((s (substring (symbol->string x) 1 (- (string-length (symbol->string x)) 1))))
+    (when (> (string-length s) 0)
+      (string->symbol s))))
+
+(define (ac-do body env)
+  (cons 'begin (ac-body* body env)))
+
 (defarc (ac s env)
   (cond [(string? s) (ac-string s env)]
-        [(literal? s) (list 'quote s)]
+        ((keyword? s) s)
+        ((literal? s) (if (eqv? (lang*) 'arc) (list 'quote (ac-quoted s)) s))
+        ((id-literal? s) (id-literal s))
         [(ssyntax? s) (ac (expand-ssyntax s) env)]
         [(symbol? s) (ac-var-ref s env)]
         [(ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env)]
+        ((eq? (xcar s) '%id) (cadr s))
+        ((eq? (xcar s) '%arc) (parameterize ((lang* 'arc)) (ac-do (cdr s) env)))
+        ((eq? (xcar s) '%do)   (parameterize ((lang* 'arc)) (ac-do (cdr s) env)))
+        ; ((eq? (xcar s) 'begin)(parameterize ((lang* 'rkt)) (ac-do (cadr s) env)))
+        ((eq? (xcar s) '%scm) (parameterize ((lang* 'scm)) (ac-do (cadr s) env)))
+        ((eq? (xcar s) '%rkt) (parameterize ((lang* 'rkt)) (ac-do (cadr s) env)))
         [(eq? (xcar s) '$) (ac-$ (cadr s) env)]
-        [(eq? (xcar s) 'quote) (list 'quote (ac-quoted (cadr s)))]
+        ((eq? (xcar s) 'quote) (if (eqv? (lang*) 'arc) (list 'quote (ac-quoted (cadr s))) s))
         ((eq? (xcar s) 'lexenv) (ac-lenv (cdr s) env))
         [(and (eq? (xcar s) 'quasiquote)
               (not (ac-macro? 'quasiquote)))
@@ -165,6 +288,7 @@
 
 (define (ssyntax? x)
   (and (symbol? x)
+       (eqv? (lang*) 'arc)
        (not (or (eqv? x '+) (eqv? x '++) (eqv? x '_)))
        (let ([name (symbol->string x)])
          (has-ssyntax-char? name (- (string-length name) 2)))))
@@ -644,10 +768,24 @@
 ;   and it's bound to a function, generate (foo bar) instead of
 ;   (ar-funcall1 foo bar)
 
+(define (stx? expr)
+  (and (symbol? expr) (eqv? (bound? expr) 'syntax)))
+
 (define (ac-call fn args env)
+  (if (not (eqv? (lang*) 'arc))
+      `(,(ac fn env) ,@(map (lambda (x) (ac x env)) args))
   (let ([macfn (ac-macro? fn)])
     (cond [macfn
            (ac-mac-call macfn args env)]
+          [(stx? fn)
+           (parameterize ((lang* 'rkt))
+             `(,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))]
+          ((and (id-literal? fn)
+                (void? (id-literal fn)))
+           (map (lambda (x) (ac x env)) args))
+          ((or (memf keyword? args)
+               (id-literal? fn))
+           `(,(ac fn env) ,@(map (lambda (x) (ac x env)) args)))
           [(and (pair? fn) (eqv? (car fn) 'fn))
            `(,(ac fn env) ,@(ac-args (cadr fn) args env))]
           [(and (ar-bflag 'direct-calls) (symbol? fn) (not (lex? fn env)) (bound? fn)
@@ -655,7 +793,7 @@
            (ac-global-call fn args env)]
           [#t
            `((ar-coerce ,(ac fn env) 'fn)
-             ,@(map (lambda (x) (ac x env)) args))])))
+             ,@(map (lambda (x) (ac x env)) args))]))))
 
 (define (ac-mac-call m args env)
   (let ([x1 (apply m args)])
@@ -666,7 +804,7 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-    (let ([v (and (bound? fn) (arc-eval fn))])
+    (let ([v (and (bound? fn) (not (eqv? (bound? fn) 'syntax)) (arc-eval fn))])
       (if (and v
                (ar-tagged? v)
                (eq? (ar-type v) 'mac))
@@ -801,11 +939,11 @@
 ; reduce?
 
 (define (pairwise pred lst)
-  (cond [(null? lst) ar-t]
-        [(null? (cdr lst)) ar-t]
+  (cond [(null? lst) #t]
+        [(null? (cdr lst)) #t]
         [(not (ar-nil? (pred (car lst) (cadr lst))))
          (pairwise pred (cdr lst))]
-        [#t ar-nil]))
+        [#t #f]))
 
 ; not quite right, because behavior of underlying eqv unspecified
 ; in many cases according to r5rs
@@ -933,7 +1071,8 @@
         ((async-channel? x) 'channel)
         ((evt? x)           'event)
         [(keyword? x)       'keyword]
-        [#t                 (err "Type: unknown type" x)]))
+        ; [#t                 (err "Type: unknown type" x)]))
+        [#t                 (vector-ref (struct->vector x) 0)]))
 (xdef type ar-type)
 
 (define (ar-rep x)
@@ -1603,10 +1742,9 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
               val))
 
 (define (bound? arcname)
-  (with-handlers ([exn:fail:syntax? (lambda (e) #t)]
+  (with-handlers ([exn:fail:syntax? (lambda (e) (if (eqv? arcname '_) #f 'syntax))]
                   [exn:fail:contract:variable? (lambda (e) #f)])
-    (namespace-variable-value (ac-global-name arcname))
-    #t))
+    (namespace-variable-value (ac-global-name arcname))))
 
 (xdef bound (lambda (x) (tnil (bound? x))))
 

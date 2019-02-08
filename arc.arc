@@ -1031,12 +1031,15 @@ Incompatibility alert: 'for' is different in Anarki from Arc 3.1. For Arc
   `(up ,var 0 (- (len ,s) 1)
      ,@body))
 
+(|require| racket/generator)
+
 (def walk (seq f)
 "Calls function 'f' on each element of 'seq'. See also [[map]]."
   (loop (l seq)
-    (when acons.l
-      (f car.l)
-      (recur cdr.l))))
+    (if acons.l
+        (do (f car.l) (recur cdr.l))
+        (generator? l) (let x (l) (unless (void? x) (f x) (recur l)))
+        (sequence? l) (walk (sequence->generator l) f))))
 
 (mac accum (accfn . body)
 "Runs 'body' (usually containing a loop) and then returns in order all the
