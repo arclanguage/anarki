@@ -1459,20 +1459,6 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                  [current-readtable bracket-readtable])
     (aload filename)))
 
-;create a normalized, absolute path from the Arc install, 
-;where p is a relative path. The returned path will not
-;be case insensitive. 
-(define (normalize-path p)
-  (simple-form-path 
-    (apply build-path 
-      (path-only arc-arc-path)
-; to get a list of path segments, we need to normalize slashes,
-; split on those slashes, then remove any blank elements.
-   (remove* (list "") 
-      (string-split 
-        (string-replace (~a p) "\\" "/") 
-      "/")))))
-
 (xdef required-files* (make-hash))
 (define (arc-required-files)
   (namespace-variable-value (ac-global-name 'required-files*)))
