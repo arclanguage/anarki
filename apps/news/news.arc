@@ -3,8 +3,8 @@
    parent-url*   "http://github.com/arclanguage/anarki"
 ;  favicon-url*  "favicon.ico"
    ; Page Layout
-   up-url*       "grayarrow.gif" 
-   down-url*     "graydown.gif" 
+;   up-url*       "grayarrow.gif" 
+;   down-url*     "graydown.gif" 
    logo-url*     "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
@@ -17,18 +17,18 @@
 
 ; remember to set caching to 0 when testing non-logged-in
 
-   caching*  1
+   caching*  0
    perpage* 30 
    threads-perpage* 10 
    maxend* 210
 
 ; browsers can cache static files for 7200 sec
-   static-max-age* 7200
+   ;static-max-age* 7200
 
 ; cache css in browser for 1 day
 ; .. how does this work with static-max-age above?
 
-   (max-age* 'news.css) 86400   
+   ;(max-age* 'news.css) 86400   
 )
 
 ; Look up title on Searx, a free metasearch engine
@@ -410,11 +410,21 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
+;todo: set body font size via a query param, setting as a user variable as well
+;?font=12
 (def userstyle (user)
   (tag ("style" "type" "text/css")
     (pr (string ".topcolor { 
-                  background-color: #" (hexrep (main-color user)) ";"
-                  "}"))))
+                  background-color: #" (hexrep (main-color user)) "; }"))))
+
+;this is not being used yet
+;todo: set theme via a query param, and user variable
+;?theme=0
+(def usertheme (user)
+  (gentag link "rel" "stylesheet" "type" "text/css" "href" 
+    (case (aif (and user (uvar user theme)) it 0)
+       0 "/theme-default.css"
+         "theme-default.css")))
 
 (= pagefns* nil)
 
@@ -423,14 +433,18 @@
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "*")
    showkarma* t)
 
+;Other page templates have been deprecated and folded into this, which
+;provides a single macro for generating HTML pages for News (thus its size.)
 (mac longpage (user time label title whence . body)
   (w/uniq (gu gl gt gw gd)
-    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) (do 
+    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) 
+      (do 
        (prn "<!DOCTYPE html>")
        (tag html
          (tag head
            (gentag meta "charset" "UTF-8")
-           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
+           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/theme-default.css")
+         ;  (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news-layout.css")
            (userstyle ,gu)
            (gentag link "rel" "icon" "href" "/favicon.ico")
            (gentag "meta" "name" "viewport" "value" "width=device-width")
@@ -438,28 +452,35 @@
            (tag title (pr (+ this-site* (if ,gt (+ bar* ,gt) "")))))
            (tag body 
            (tag (div "class" "layout sand") 
-           (if (check-procrast ,gu) (do
+           (if (check-procrast ,gu) 
+            (do
              (tag (div "class" "topcolor page-header")
+               
                (tag (span "id" "navleft")
+                 
                  (tag (link rel "icon" href logo-url*))
+                 
                  (tag (a "id" "logo" href parent-url*)
-                   (tag (img src logo-url*)))               
-                   (link this-site* "news"))
+                   (tag (img src logo-url*)))
+
+                   (tag (span "id" "page-title") 
+                     (link this-site* "news")))
+               
                (tag (span "id" "navmain")
                  (w/bars 
                    (toplink "new" "newest" ,gl)
                    (toplink "comments" "newcomments" ,gl)
                    (toplink "ask" "ask" ,gl)
                    (link  "submit")))
+                
                 (tag (span "id" "navright")
                     (when ,gu
                       (if (noob ,gu)
-                        (toplink "welcome" "welcome" ,gl))
+                        (toplink "welcome " "welcome " ,gl))
                       (tag (span "id" "userlink") 
-                        (userlink ,gu ,gu nil)) 
+                        (userlink ,gu ,gu nil))
                       (when showkarma* 
-                        (pr (string "&nbsp;(" (karma ,gu) ")"))
-                        (pr "&nbsp;|"))
+                        (pr (string " (" (karma ,gu) ") |")))
                       (pr "&nbsp;")
                       (toplink "threads" (threads-url ,gu) ,gl)
                       (pr "&nbsp;|&nbsp;")
@@ -478,10 +499,13 @@
                                         (newslog ip u 'top-login))
                                       ,gw)))))
                  (hook 'toprow ,gu ,gl))
+
                (map [_ ,gu] pagefns*)
                (hook 'page ,gu ,gl)
+
                (tag (div "class" "page-content") ,@body)
-                (tag (div "class" "page-footer")
+
+               (tag (div "class" "page-footer topcolor")
                   (hook 'longfoot)
                   (tag (span "class" "yclinks")
                     (w/bars
@@ -500,6 +524,7 @@
                         (link "settings" "newsadmin")
                         (link "appeditor")
                         (hook 'admin-bar ,gu ,gw)))))
+
              (tag (div "class" "noprocrast")
                (procrast-msg ,gu ,gw)))
 )))))))
@@ -543,7 +568,6 @@
   (aif (and user (uvar user topcolor))
     (hex>color it)
     site-color*))
-
 
 ; News-Specific Defop Variants
 
@@ -878,7 +902,7 @@
 (= follow-threshold* 5)
 
 (def titleline (s url user whence)
-  (tag (span "class" "title")
+  (tag (span "class" "comtitle")
     (if (cansee user s)
       (do (deadmark s user)
           (titlelink s url user)
@@ -908,35 +932,47 @@
   (when (and i!deleted (admin user))
     (pr " [deleted] ")))
 
-(= downvote-threshold* 200 downvote-time* 1440)
-
-(= votewid* 14)
+(= downvote-threshold* 200 
+   downvote-time* 1440
+   votewid* 14
+   uparrow-black "&#9650;"
+   uparrow-white "&#9651;"
+   downarrow-black "&#9660;"
+   downarrow-white "&#9660;")
 
 (def votelinks (i user whence (o downtoo))
-    (tag (span "class" "votelinks")
+  (tag (span "class" "votelinks")
     (if (and (cansee user i)
              (or (no user)
                  (no ((votes user) i!id))))
-         (do (votelink i user whence 'up)
+         (do (votelink-up i user whence)
              (when (and downtoo
                         (or (admin user)
                             (< (item-age i) downvote-time*))
                         (canvote user i 'down))
-               (votelink i user whence 'down)))
-        (author user i)
-         (do (fontcolor orange (pr "*"))))))
+               (votelink-down i user whence)))
+        ;(author user i) (do (fontcolor orange (pr "*"))))
+)))
 
 ; could memoize votelink more, esp for non-logged in users,
 ; since only uparrow is shown; could straight memoize
 
-(def votelink (i user whence dir)
-    (tag (a class "votelink" 
-            "data-id" (string i!id) 
-            "data-dir" (string dir)
-          href    (vote-url user i dir whence))
-    (if (is dir 'up)
-      (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2)
-      (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2))))
+(def votelink-up (i user whence)
+  (tag (a "class" "votelink uplink" "data-id" (string i!id) "alt" "upvote" "href" (vote-url user i 'up whence))
+    (pr uparrow-black)))
+
+(def votelink-down (i user whence)
+  (tag (a "class" "votelink downlink" "data-id" (string i!id) "alt" "downvote" "href" (vote-url user i 'up whence))
+    (pr downarrow-black)))
+
+;(def votelink (i user whence dir)
+;    (tag (a class "votelink" 
+;            "data-id" (string i!id) 
+;            "data-dir" (string dir)
+;          href    (vote-url user i dir whence))
+;    (if (is dir 'up)
+;      (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2)
+;      (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2))))
 
 (= lowest-score* -4)
 
@@ -994,11 +1030,9 @@
     (byline i user)))
 
 (def itemscore (i (o user))
-  (tag (span 
-  "class" "itemscore"
-  "data-score" (string i!score)
-   id (+ "score_" i!id))
-   
+  (tag (span "class" "itemscore" 
+             "data-score" (string i!score)
+             id (+ "score_" i!id))
     (pr (plural (if (is i!type 'pollopt) (realscore i) i!score)
                 "point")))
     (if (isnt i!type 'pollopt)
@@ -1023,9 +1057,11 @@
 
 (def user-name (user subject)
   (if (and (editor user) (ignored subject))
-       (tostring (fontcolor darkred (pr subject)))
+       ;(tag ("span" "class" "editor") (pr subject))
+       (tostring (spanclass "editor" (pr subject)))
       (and (editor user) (< (user-age subject) 1440))
-       (tostring (fontcolor noob-color* (pr subject)))
+       ; (tag ("span" "class" "noob") (pr subject))
+       (tostring (spanclass "noob" (pr subject)))
       subject))
 
 (= show-threadavg* nil)
@@ -1653,15 +1689,19 @@
 (def display-pollopt (n o user whence)
   (tr 
       (tag (td valign 'top)
-        (votelinks o user whence))
+      (votelinks o user whence))
       (tag (td class 'comment)
-        (tag (div style "margin-top:1px;margin-bottom:0px")
+        (tag (div "class" "pollopt")
           (if (~cansee user o) (pr (pseudo-text o))
               (~live o)        (spanclass dead
                                  (pr (if (~blank o!title) o!title o!text)))
                                (if (and (~blank o!title) (~blank o!url))
                                    (link o!title o!url)
-                                   (fontcolor black (pr o!text)))))))
+                                   ;(fontcolor black (pr o!text))
+                                   (pr o!text)
+                                   )
+                               )))
+  )
   (tr (if n (td))
       (td)
       (tag (td class 'default)
@@ -1754,8 +1794,10 @@
              (in s!type 'story 'poll)
              (blank s!url)
              (~blank s!text))
-    (spacerow 2)
-    (row "" s!text)))
+;    (spacerow 2)
+;    (row "" s!text)
+    (tag ("div" "class" "itemtext") (prn s!text))
+    ))
 
 
 ; Edit Item
@@ -1924,7 +1966,7 @@
 
 (def display-comment-tree (c user whence (o indent 0) (o initialpar))
   (when (cansee-descendant user c)
-      (tag (li "class" "comment")
+      (tag (li)
         (display-comment nil c user whence t indent initialpar initialpar)
         (display-subcomments c user whence (+ indent 1)))))
 
@@ -1988,11 +2030,11 @@
                (* (+ (trunc (/ age 86400)) 1) 86400)))))
 
 (def gen-comment-body (c user whence astree indent showpar showon)
-  (tag (div class 'default)
     (let parent (and (or (no astree) showpar) (c 'parent))
-      (tag div
-        (tag (span "class" "comhead")
-          (itemline c user)
+      (tag ("div" "class" "comhead")
+         (tag-if (author user c) 
+            (span class "opcomment topcol") 
+          (itemline c user))
           (when parent
             (when (cansee user c) (pr bar*))
             (link "parent" (item-url ((item parent) 'id))))
@@ -2007,22 +2049,21 @@
           (when showon
             (pr " | on: ")
             (let s (superparent c)
-              (link (ellipsize s!title 50) (item-url s!id))))))
-      (when (or parent (cansee user c))
-        (br))
-      (spanclass comment
+              (link (ellipsize s!title 50) (item-url s!id)))))
+      (when (or parent (cansee user c)))
+      (tag ("div" "class"  "comment"
+        "data-score" (string c!score) "style" (string "color: #" (hexrep (comment-color c))))
         (if (~cansee user c)               (pr (pseudo-text c))
             (nor (live c) (author user c)) (spanclass dead (pr c!text))
-                                           (fontcolor (comment-color c)
-                                             (pr c!text))))
+                                             (pr c!text)))
       (when (and astree (cansee user c) (live c))
-        (para)
-        (tag (font size 1)
+        
+        (tag ("div" "class" "comfoot")
           (if (and (~mem 'neutered c!keys)
                    (replyable c indent)
                    (comments-active c))
-            (underline (replylink c whence))
-))))))
+            (replylink c whence)
+)))))
 
 ; For really deeply nested comments, caching could add another reply
 ; delay, but that's ok.
@@ -2138,7 +2179,6 @@
 
 (newsop ask ()
   (listpage user (msec) (keep [empty (_ 'url)] stories*) "ask" "Ask"))
-
 
 ; RSS
 
@@ -2408,11 +2448,17 @@ It is the number of minutes you can edit your comments before they appear to oth
             (tdr (when deads (pr (round (days-since ((car deads) 'time))))))
             (td site)
             (td (w/rlink (do (set-site-ban user site nil) "badsites")
-                  (fontcolor (if ban gray.220 black) (pr "x"))))
+                  ;(fontcolor (if ban gray.220 black) (pr "x"))
+              (tag-if ban (span class "banned") (pr "x"))
+            ))
             (td (w/rlink (do (set-site-ban user site 'kill) "badsites")
-                  (fontcolor (case ban kill darkred gray.220) (pr "x"))))
+              (spanclass (case ban kill "killed") (pr "x"))
+                  ;(fontcolor (case ban kill darkred gray.220) (pr "x"))
+            ))
             (td (w/rlink (do (set-site-ban user site 'ignore) "badsites")
-                  (fontcolor (case ban ignore darkred gray.220) (pr "x"))))
+              (spanclass (case ban ignore "ignored") (pr "x"))
+                  ;(fontcolor (case ban ignore darkred gray.220) (pr "x"))
+            ))
             (td (each u (dedup (map !by deads))
                   (userlink user u nil)
                   (pr " "))))))))
@@ -2450,7 +2496,10 @@ It is the number of minutes you can edit your comments before they appear to oth
         (tr (td (let banned (banned-ips* ip)
                   (w/rlink (do (set-ip-ban user ip (no banned))
                                "badips")
-                    (fontcolor (if banned darkred) (pr ip)))))
+
+                    ;(fontcolor (if banned darkred) (pr ip))
+                    (tag-if banned (span class "banned") (pr ip))
+                    )))
             (tdr (when (or (goods ip) (bads ip))
                    (pr (round (days-since
                                 (max (aif (car (goods ip)) it!time 0)

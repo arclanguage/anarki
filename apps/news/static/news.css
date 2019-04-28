@@ -1,5 +1,5 @@
 body  { font-family:Verdana, sans-serif; font-size:10pt; }
-td    { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }
+/*td    { font-family:Verdana, sans-serif; font-size:10pt; color:#828282; }*/
 
 form {
 	padding-top:1em;
@@ -13,19 +13,13 @@ form {
 
 .items-list {
   margin-left:0;
-  padding-left:1em;
+  padding-left:0;
 }
 
-.comments-list li { 
+li { 
 	list-style: none;
-	margin-bottom:1em;
-	padding:0px; 
 }
 
-.items-list li { 
-	margin-bottom:1em;
-	padding:0px; 
-}
 
 #logo {
 	display:inline;
@@ -93,28 +87,49 @@ form {
 	background-color: rgb(246, 246, 239);
 }
 
+.noob 
+{
+	color:#3c963c
+}
 
-.admin td   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
-.subtext td { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; }
+.banned
+{
+	color:#400000;
+}
 
-input    { font-family:Courier, monospace; font-size:10pt; color:#000000; }
+.editor
+{
+	color:#000040;
+}
+
+
+.admin td   { font-family:Verdana, sans-serif; font-size:8.5pt; }
+.subtext td { font-family:Verdana, sans-serif; font-size:  7pt;}
+
+input    { font-family:Courier, monospace; font-size:10pt;}
 input[type="submit"] { font-family:Verdana, sans-serif; }
-textarea { font-family:Courier, monospace; font-size:10pt; color:#000000; }
+textarea { font-family:Courier, monospace; font-size:10pt;}
 
 a:link    { color:#000000; text-decoration:none; }
 a:visited { color:#828282; text-decoration:none; }
 
+.pollopt {display:block;margin-top:0.5em;margin-bottom:0.5em}
 .votelink{ display:block; }
+.uplink {color: #82dd82!important;}
+.downlink {color: #dd8282!important;}
+
 .sitelink { font-weight:bold;}
-.default { font-family:Verdana, sans-serif; font-size: 10pt; color:#828282; }
-.admin   { font-family:Verdana, sans-serif; font-size:8.5pt; color:#000000; }
-.title   { font-family:Verdana, sans-serif; font-size: 10pt; color:#828282; }
-.adtitle { font-family:Verdana, sans-serif; font-size:  9pt; color:#828282; }
-.subtext { font-family:Verdana, sans-serif; font-size:  7pt; color:#828282; margin-bottom:10px;}
-.yclinks { font-family:Verdana, sans-serif; font-size:  8pt; color:#828282;}
-.pagetop { font-family:Verdana, sans-serif; font-size: 10pt; color:#222222; }
-.comhead { font-family:Verdana, sans-serif; font-size:  8pt; color:#828282; }
-.comment { font-family:Verdana, sans-serif; font-size:  9pt; }
+/*.default { font-family:Verdana, sans-serif; font-size: 10pt;  }*/
+.op { }
+.admin   { font-family:Verdana, sans-serif; font-size:8.5pt;  }
+.title   { font-family:Verdana, sans-serif; font-size: 10pt;  }
+.adtitle { font-family:Verdana, sans-serif; font-size:  9pt; }
+.subtext { font-family:Verdana, sans-serif; font-size:  7pt;  margin-bottom:1em;}
+.yclinks { font-family:Verdana, sans-serif; font-size:  8pt; }
+.pagetop { font-family:Verdana, sans-serif; font-size: 10pt; }
+.comhead { font-family:Verdana, sans-serif; font-size:  8pt;  }
+.comment,.opcomment { font-family:Verdana, sans-serif; font-size:  9pt; margin-left:2px; padding-left:5px;}
+.comfoot { font-size:8pt;}
 .dead    { font-family:Verdana, sans-serif; font-size:  9pt; color:#dddddd; }
 
 .comment a:link, .comment a:visited { text-decoration:none;}
@@ -154,8 +169,9 @@ in a comment. In this case by setting the bottom spacing of p to 0, I'm
 making it the same as no p, which is what the first para has.
 
 supplied by pb
-*/
+
 .vote { padding-left:2px; vertical-align:top; }
 .comment { margin-top:0.5em; margin-bottom:0.5em; line-height: 150%; font-size:12px;}
 .vote IMG { border:0px; margin: 3px 2px 3px 2px; }
 .reply { font-size:smaller; text-decoration:underline !important; }
+*/
