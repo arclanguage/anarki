@@ -1,0 +1,147 @@
+body  { 
+	font-family:Verdana, sans-serif; 
+	font-size:12pt;
+}
+
+a:link, a:visited { text-decoration: none;}
+
+form {
+	padding-top:1em;
+	padding-bottom:3em;
+	padding-left:2em;
+}
+
+.layout {
+	width:85%;
+	min-width:85%;
+	margin:0px auto;
+	display:block;
+}
+
+.page-header,.page-footer {
+    display: block;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    height: 18px;
+    font-size: 80%;
+    margin: 0 auto;
+    padding-left: 2px;
+}
+
+.topnav 
+{
+
+}
+
+#logo
+{
+	margin-right:4px;
+}
+
+#page-title {
+	position:relative;
+	bottom:4px;
+	font-weight:bold;
+}
+
+.comtitle {
+	
+}
+
+#navmain {
+	width:auto;
+	padding-left:1em;
+	position:relative;
+	height:10px;
+	border:0;
+	margin-top:0;
+	margin-bottom:0;
+	bottom:4px;
+}
+
+#navright {
+	float:right;
+	margin-right:0.5em;
+	padding-left:1em;
+}
+
+.page-content {
+	font-size: 80%;
+	padding-top:1em;
+	padding-bottom:1em;
+	padding-left:1em;
+
+}
+
+.comments-list {
+  margin-left:2em;
+  padding-left:0px;
+  margin-bottom:1em;
+}
+
+.comments-list li {
+	list-style-type:none;
+	margin-top:1em;
+	margin-bottom:1em;
+	margin-left:1em;
+}
+
+.items-list 
+{
+	padding-top: 0;
+	padding-left: 2em;
+	margin-top: 0;
+}
+
+.items-list li 
+{
+	margin-bottom:0.5em;
+	margin-top:0;
+}
+.itemhead {
+	font-size:100%;
+	margin-bottom:0.2em;
+} 
+.comhead { font-size:80%;}
+.comment {
+	padding-top: 0.5em;
+	padding-bottom: 0.25em;
+	margin-left: 1.4em;
+	font-size: 90%;
+}
+
+
+.comfoot {
+font-size: 85%;
+margin-left: 1.5em;
+margin-top: 0.5em;
+margin-bottom: 0.5em;
+}
+
+.comfoot a:link {
+	text-decoration:underline;
+}
+
+.subtext{
+	font-size:85%;
+	position:relative;
+	left:1.4em;
+}
+
+.itemtext
+{
+	padding:1em;
+	font-size:90%;
+	line-height:150%;
+}
+
+.votelinks{
+	display:inline;
+	float:left;
+	margin-right:0.2em;
+}
+
+.page-footer {
+	text-align:center;
+}
+
