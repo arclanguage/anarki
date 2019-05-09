@@ -416,20 +416,9 @@
   (tag ("style" "type" "text/css")
     (pr (string ".topcolor { 
                   background-color: #" (hexrep (main-color user)) "; }"))))
-
-;this is not being used yet
-;todo: set theme via a query param, and user variable
-;?theme=0
-(def usertheme (user)
-  (gentag link "rel" "stylesheet" "type" "text/css" "href" 
-    (case (aif (and user (uvar user theme)) it 0)
-       0 "/theme-default.css"
-         "theme-default.css")))
-
 (= pagefns* nil)
 
 ; page top
-
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "*")
    showkarma* t)
 
@@ -443,7 +432,7 @@
        (tag html
          (tag head
            (gentag meta "charset" "UTF-8")
-           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/theme-default.css")
+           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
          ;  (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news-layout.css")
            (userstyle ,gu)
            (gentag link "rel" "icon" "href" "/favicon.ico")

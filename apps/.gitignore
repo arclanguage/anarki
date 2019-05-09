@@ -1,1 +1,7 @@
 # ignore everything but the app files and news
+*
+
+!.gitignore
+!appcmd.arc
+!appeditor.arc
+!applib.arc
