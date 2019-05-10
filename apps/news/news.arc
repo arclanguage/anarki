@@ -23,12 +23,12 @@
    maxend* 210
 
 ; browsers can cache static files for 7200 sec
-   ;static-max-age* 7200
+   static-max-age* 7200
 
 ; cache css in browser for 1 day
 ; .. how does this work with static-max-age above?
 
-   ;(max-age* 'news.css) 86400   
+   (max-age* 'news.css) 86400   
 )
 
 ; Look up title on Searx, a free metasearch engine
@@ -410,8 +410,6 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
-;todo: set body font size via a query param, setting as a user variable as well
-;?font=12
 (def userstyle (user)
   (tag ("style" "type" "text/css")
     (pr (string ".topcolor { 
@@ -433,7 +431,6 @@
          (tag head
            (gentag meta "charset" "UTF-8")
            (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
-         ;  (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news-layout.css")
            (userstyle ,gu)
            (gentag link "rel" "icon" "href" "/favicon.ico")
            (gentag "meta" "name" "viewport" "value" "width=device-width")

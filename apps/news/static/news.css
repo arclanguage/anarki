@@ -182,3 +182,8 @@ a:visited {color:#828282;}
 	color:#000040;
 }
 
+/*supplied by pb
+*/
+.vote { padding-left:2px; vertical-align:top; }
+.comment { margin-top:0.5em; margin-bottom:0.5em; line-height: 150%; font-size:12px;}
+.reply { font-size:smaller; text-decoration:underline !important; }
