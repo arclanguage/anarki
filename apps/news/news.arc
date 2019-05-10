@@ -29,7 +29,13 @@
 ; .. how does this work with static-max-age above?
 
    (max-age* 'news.css) 86400   
-)
+
+; defops which will return custom (non html) content-types
+   op-ctypes* {
+    rss         "text/xml" 
+    rss-stories "text/xml" 
+    follow      "text/xml"
+})
 
 ; Look up title on Searx, a free metasearch engine
 
@@ -2167,27 +2173,26 @@
   (listpage user (msec) (keep [empty (_ 'url)] stories*) "ask" "Ask"))
 
 ; RSS
-
 (newsop rss () (rsspage nil))
 
 (newscache rsspage user 90
   (rss-stories (retrieve perpage* live ranked-stories*)))
 
 (def rss-stories (stories (o title this-site*) (o url site-url*) (o desc site-desc*))
-  (tag (rss version "2.0")
-    (tag channel
-      (tag title (pr title))
-      (tag link (pr url))
-      (tag description (pr desc))
-      (each s stories
-        (tag item
-          (let comurl (+ site-url* (item-url s!id))
-            (tag title    (pr (eschtml s!title)
-                              (aif (sitename s!url) (+ " (" it ")") "")))
-            (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
-            (tag comments (pr comurl))
-            (tag description
-              (cdata (link "Comments" comurl)))))))))
+    (tag (rss version "2.0")
+      (tag channel
+        (tag title (pr title))
+        (tag link (pr url))
+        (tag description (pr desc))
+        (each s stories
+          (tag item
+            (let comurl (+ site-url* (item-url s!id))
+              (tag title    (pr (eschtml s!title)
+                                (aif (sitename s!url) (+ " (" it ")") "")))
+              (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
+              (tag comments (pr comurl))
+              (tag description
+                (cdata (link "Comments" comurl)))))))))
 
 ; RSS feed of user
 (newsop follow (subject)
