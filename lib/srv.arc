@@ -104,7 +104,7 @@
       (close in out))
     (harvest-fnids)))
 
-(= max-age* (table) static-max-age* nil)
+(= max-age* (table) static-max-age* nil op-ctypes* (table))
 
 (def respond (out req)
   (w/stdout out
@@ -114,7 +114,13 @@
             (prrn "Location: " (f out req))
             (prrn))
         (do (prrn "HTTP/1.1 200 OK")
-            (prrn "Content-Type: text/html; charset=utf-8")
+          (let ctype (op-ctypes* req!op)
+            (if ctype 
+              (prrn (string "Content-Type: " ctype 
+                (if (headmatch "text" ctype)
+                      "; charset=utf-8"
+                      "")))
+              (prrn (string "Content-Type: text/html;charset=utf-8"))))
             (prrn "Connection: close")
             (awhen (max-age* req!op)
               (prrn "Cache-Control: max-age=" it))
