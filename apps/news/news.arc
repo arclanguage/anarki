@@ -84,6 +84,7 @@
   lastview   nil
   maxvisit   20
   minaway    180
+  font-size  12
   topcolor   nil
   keys       nil
   delay      0)
@@ -418,8 +419,13 @@
 
 (def userstyle (user)
   (tag ("style" "type" "text/css")
-    (pr (string ".topcolor { 
-                  background-color: #" (hexrep (main-color user)) "; }"))))
+    (pr (string "body {
+      font-size: " (aif (and user (uvar user font-size)) it 12) "pt!important;
+      }
+      .topcolor { 
+                  background-color: #" (hexrep (main-color user)) "; 
+      }"))))
+
 (= pagefns* nil)
 
 ; page top
@@ -719,6 +725,7 @@
       (posint  minaway    ,(p 'minaway)                            ,u  ,u)
       (sexpr   keys       ,(p 'keys)                               ,a  ,a)
       (hexcol  topcolor   ,(or (p 'topcolor) (hexrep site-color*)) ,k  ,k)
+      (int font-size      ,(p 'font-size)                          ,u  ,u)
       (int     delay      ,(p 'delay)                              ,u  ,u))))
 
 (def saved-link (user subject)
