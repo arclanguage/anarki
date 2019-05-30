@@ -2050,8 +2050,10 @@
             (let s (superparent c)
               (link (ellipsize s!title 50) (item-url s!id)))))
       (when (or parent (cansee user c)))
-      (tag ("div" "class"  "comment"
-        "data-score" (string c!score) "style" (string "color: #" (hexrep (comment-color c))))
+      (tag ("div" "class"  (if (> c!score 0) "comment" (string "comment-" c!score))
+        "data-score" (string c!score) 
+        ;"style" (string "color: #" (hexrep (comment-color c)))
+        )
         (if (~cansee user c)               (pr (pseudo-text c))
             (nor (live c) (author user c)) (spanclass dead (pr c!text))
                                              (pr c!text)))
@@ -2092,11 +2094,11 @@
                         (addcomment-page i u whence))))
       (pr "No such item."))))
 
-(def comment-color (c)
-  (if (> c!score 0) black (grayrange c!score)))
+;(def comment-color (c)
+;  (if (> c!score 0) black (grayrange c!score)))
 
-(defmemo grayrange (s)
-  (gray (min 230 (round (expt (* (+ (abs s) 2) 900) .6)))))
+;(defmemo grayrange (s)
+;  (gray (min 230 (round (expt (* (+ (abs s) 2) 900) .6)))))
 
 
 ; Threads
