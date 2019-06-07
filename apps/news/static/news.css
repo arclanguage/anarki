@@ -71,17 +71,18 @@ form {
 	font-size: 80%;
 	padding-top:1em;
 	padding-bottom:1em;
-	padding-left:1em;
+	padding-left:2em;
+	margin-right:5em;
 
 }
 
-.comments-list {
+.comments-list, .threads-list {
   margin-left:2em;
   padding-left:0px;
   margin-bottom:1em;
 }
 
-.comments-list li {
+.comments-list li, .threads-list li {
 	list-style-type:none;
 	margin-top:1em;
 	margin-bottom:1em;
@@ -100,11 +101,16 @@ form {
 	margin-bottom:0.5em;
 	margin-top:0;
 }
+
+
 .itemhead {
 	font-size:100%;
 	margin-bottom:0.2em;
 } 
-.comhead { font-size:80%;}
+.comhead { 
+	font-size:85%;
+}
+
 .comment {
 	padding-top: 0.5em;
 	padding-bottom: 0.25em;
@@ -153,15 +159,19 @@ a:visited {color:#828282;}
 .page-content {background-color: #f6f6ef; }
 
 .subtext a:link, .subtext a:visited {color: #828282;}
-.items-list { 
-	color: #828282;
-}
+=
 .comhead a:link, .subtext a:visited { color:#828282; }
 .comhead a:hover { text-decoration:underline; }
 .opcomment { font-weight:bold;}
 .uplink a:link{color: #82dd82;}
 .downlink {color: #dd8282;}
 .dead {color:#dddddd; }
+
+.comment-0 { opacity:1; }
+.comment-1 { opacity:0.5; filter:alpha(opacity=50);}
+.comment-2 { opacity:0.4; filter:alpha(opacity=40);}
+.comment-3 { opacity:0.3; filter:alpha(opacity=30);}
+.comment-4 { opacity:0.2; filter:alpha(opacity=20);}
 
 .sand {
 	background-color: rgb(246, 246, 239);
@@ -181,9 +191,3 @@ a:visited {color:#828282;}
 {
 	color:#000040;
 }
-
-/*supplied by pb
-*/
-.vote { padding-left:2px; vertical-align:top; }
-.comment { margin-top:0.5em; margin-bottom:0.5em; line-height: 150%; font-size:12px;}
-.reply { font-size:smaller; text-decoration:underline !important; }
