@@ -8,7 +8,7 @@
    logo-url*     "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
-   border-color* (color 180 180 180)
+;   border-color* (color 180 180 180)
    prefer-url*   t
    newsdir*   srvdir*
    storydir*  (+ newsdir* "story/")
@@ -25,17 +25,21 @@
 ; browsers can cache static files for 7200 sec
    static-max-age* 7200
 
-; cache css in browser for 1 day
-; .. how does this work with static-max-age above?
+   (max-age* 'news.css) 86400
+   (max-age* 'custom.css) 86400
 
-   (max-age* 'news.css) 86400   
-
-; defops which will return custom (non html) content-types
+; non static file defops which will return custom (non html) content-types
    op-ctypes* {
     rss         "text/xml" 
     rss-stories "text/xml" 
     follow      "text/xml"
-})
+}
+
+;themes. names should correspond to the name of a css file
+
+   themes* `("default" "dark")
+
+)
 
 ; Look up title on Searx, a free metasearch engine
 
@@ -85,6 +89,7 @@
   maxvisit   20
   minaway    180
   font-size  12
+  theme      0
   topcolor   nil
   keys       nil
   delay      0)
@@ -418,13 +423,21 @@
   (and u (or (admin u) (uvar u member))))
 
 (def userstyle (user)
-  (tag ("style" "type" "text/css")
-    (pr (string "body {
-      font-size: " (aif (and user (uvar user font-size)) it 12) "pt!important;
-      }
-      .topcolor { 
-                  background-color: #" (hexrep (main-color user)) "; 
-      }"))))
+  (with (font-size (aif (and user (uvar user font-size)) it 12)
+         bgcolor (hexrep (main-color user)))
+    (pr 
+      (tag ("style" "type" "text/css")
+        (string  "body { 
+                    font-size:" font-size "pt!important; 
+                  }
+                  .topcolor { 
+                     background-color: #" bgcolor 
+                  "};")))))
+(def usertheme (user)
+  (let theme (string "/" (themes* (aif (and user (uvar user theme)) it 0)) ".css")
+   (gentag link "rel" "stylesheet" "type" "text/css" "href"
+      (if (file-exists (+ staticdir* theme)) theme "/default.css"))))
+
 
 (= pagefns* nil)
 
@@ -442,14 +455,15 @@
        (tag html
          (tag head
            (gentag meta "charset" "UTF-8")
-           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
            (userstyle ,gu)
+           (usertheme, gu)
            (gentag link "rel" "icon" "href" "/favicon.ico")
            (gentag "meta" "name" "viewport" "value" "width=device-width")
            (tag (script "type" "text/javascript" "src" "/news.js"))
            (tag title (pr (+ this-site* (if ,gt (+ bar* ,gt) "")))))
            (tag body 
-           (tag (div "class" "layout sand") 
+           ;(tag (div "class" "layout sand") 
+           (tag (div "class" "layout")
            (if (check-procrast ,gu) 
             (do
              (tag (div "class" "topcolor page-header")
@@ -560,7 +574,7 @@
 
 ; turn off server caching via (= caching* 0) or won't see changes
 
-(= sand (color 246 246 239) textgray (gray 130))
+;(= sand (color 246 246 239) textgray (gray 130))
 
 (def main-color (user)
   (aif (and user (uvar user topcolor))
@@ -725,6 +739,7 @@
       (posint  minaway    ,(p 'minaway)                            ,u  ,u)
       (sexpr   keys       ,(p 'keys)                               ,a  ,a)
       (hexcol  topcolor   ,(or (p 'topcolor) (hexrep site-color*)) ,k  ,k)
+      (int     theme      ,(or (p 'theme) 0)                       ,u  ,u)
       (int font-size      ,(p 'font-size)                          ,u  ,u)
       (int     delay      ,(p 'delay)                              ,u  ,u))))
 
