@@ -10,10 +10,12 @@
    site-color*   (color 180 180 180)
 ;   border-color* (color 180 180 180)
    prefer-url*   t
+;
    newsdir*   srvdir*
    storydir*  (+ newsdir* "story/")
    profdir*   (+ newsdir* "profile/")
    votedir*   (+ newsdir* "vote/")
+   pagedir*  "apps/news/page/"
 
 ; remember to set caching to 0 when testing non-logged-in
 
@@ -114,17 +116,127 @@
   kids       nil
   keys       nil)
 
-; Load and Save
+(deftem page 
+  id 0
+  url nil
+  title nil
+  text nil)
 
+(= pages* (table) pageid* 0)
+
+; basically the blog code, but for "pages"
+; https://github.com/laarc/laarc/blob/master/blog.arc
+
+(def load-pages ()
+  (= (pages*) nil)
+  (each id (map int (dir pagedir*))
+    (= pageid* (max pageid* id)
+      (pages* id) (temload 'page (string pagedir* id)))))
+
+
+
+;url is not a full url, but the endpoint of a defop ex: "faq"
+(def save-page (url title text id)
+  (let p (inst 'page 'id id 
+               'url url 
+               'title title 
+               'text text)
+    (temstore 'page p (string pagedir* id))
+    (= (pages* id) p)))
+
+(def get-page (id) 
+  (pages* (errsafe:int id)))
+
+(def page-editlink (id) 
+  (link "edit" (string "/editpage?id=" id)))
+
+(def page-createlink () 
+  (link "new page" "/newpage"))
+
+(def page-link (url id) 
+  (link url (string "/page?id=" id)))
+
+(def page-menu () 
+  (each (k p) pages* 
+    (do 
+      (page-link p!url p!id)
+      (pr " | "))))
+
+; returns the new id 
+ (def new-page (url title text)
+  (let i (++ pageid*) 
+    (save-page url title text i) i))
+
+ (def edit-page (url title text id)
+  (save-page url title text id))
+
+ (def delete-page (id)
+  (= (pages* (errsafe:int id)) nil) 
+  (if (file-exists (string pagedir* id))
+    (rmfile (string pagedir* id))))
+
+(def page-deletelink (id)
+  (link "delete" (rflink (fn (req) (delete-page id) "/"))))
+
+; need to delay macro expansion or else
+; the following error occurs: 
+; Can't coerce  #s(ar-tagged mac #<procedure: minipage>) fn
+; see http://arclanguage.org/item?id=18018
+;     http://arclanguage.org/item?id=13306
+
+(def show-page (user id tt tx)
+  (eval `(shortpage ,user nil ,tt "/" 
+    (do 
+      (tag ("h4") (pr ,tt))
+      
+      (tag ("div") (pr (markdown (trim (rem #\return ,tx) 'both) 80)))
+      
+      (when (admin ,user)
+        (page-editlink ,id)
+        (pr " | ")
+        (page-deletelink, id))))))
+
+(defop page req 
+  (iflet p (get-page (arg req "id"))
+    (show-page (get-user req) p!id p!title p!text)))
+
+(defop newpage req (when (admin (get-user req))
+  (arform (fn (req) 
+     (let i (new-page (arg req "url") 
+                      (arg req "title") 
+                      (arg req "text"))
+     (string "/page?id=" i)))
+     (tag table 
+       (row (prn "create a page"))
+       (row "url:" (input "url"))
+       (row "title:" (input "title"))
+       (row "text:" (textarea "text" 8 60)) 
+       (row (submit "create")))))) 
+
+(defop editpage req (when (admin (get-user req))
+  (whenlet p (get-page (arg req "id"))
+    (arform (fn (req) 
+      (edit-page p!url (arg req "title") (arg req "text") p!id)
+      (string "/page?id=" p!id))
+    (tag table 
+      (row (prn "edit a page"))
+      (row "title:" (input "title" (prn p!title)))
+      (row "text:" (textarea "text" 8 60 (prn p!text))) 
+      (row (submit "edit")))))))
+
+(defop deletepage req (when (admin (get-user req))
+  (delete-page (arg req "id"))))
 
 (= votes* (table) profs* (table))
-
+; Load and Save
 (= initload-users* nil)
 
 (def nsv ((o port 8080))
-  (map ensure-dir (list srvdir* newsdir* storydir* votedir* profdir*))
+  (map ensure-dir (list srvdir* newsdir* storydir* votedir* profdir* pagedir*))
   (unless stories* (load-items))
-  (if (and initload-users* (empty profs*)) (load-users))
+  (if (and initload-users* (empty profs*)) 
+    (load-users))
+    (load-pages)
   (asv port))
 
 (def load-users ()
@@ -519,12 +631,15 @@
 
                (tag (div "class" "page-footer topcolor")
                   (hook 'longfoot)
-                  (tag (span "class" "yclinks")
-                    (w/bars
-                      (link "faq")
-                      (link "lists")
-                      (link "rss")
-                      (link "bookmarklet")))
+                  (tag ("span" "class" "yclinks") 
+                    (page-menu)
+                    (when (admin, gu)
+                      (page-createlink)
+                      (pr " | "))
+                    (link "rss")
+                    (pr " | ")
+                    (link "bookmarklet"))
+                  
                   (if (bound 'search-bar) 
                     (search-bar ,gu))
                   (when (admin ,gu)
@@ -826,22 +941,6 @@
 
 (def bestcomments (user n)
   (bestn n (compare > realscore) (visible user comments*)))
-
-
-(newsop lists ()
-  (longpage user (msec) "lists" "Lists" "lists"
-    (sptab
-      (row (link  "leaders")      "Users with most karma.")
-      (row (link  "best")         "Highest voted recent links.")
-      (row (link  "active")       "Most active current discussions.")
-      (row (link  "bestcomments") "Highest voted recent comments.")
-      (row (link  "noobstories")  "Submissions from new accounts.")
-      (row (link  "noobcomments") "Comments from new accounts.")
-      (when (admin user)
-        (map row:link
-             '(optimes topips flagged killed badguys badlogins goodlogins)))
-      (hook 'listspage user))))
-
 
 (def saved-url (user) (+ "saved?id=" user))
 
@@ -1824,7 +1923,7 @@
              (cansee user i)
              (editable-type i)
              (or (news-type i) (admin user) (author user i)))
-      (edit-page user i)
+      (edit-item user i)
       (pr "No such item."))))
 
 (def editable-type (i) (fieldfn* i!type))
@@ -1874,7 +1973,7 @@
 ; does everything that has to happen after submitting a story,
 ; and call it both there and here.
 
-(def edit-page (user i)
+(def edit-item (user i)
   (let here (edit-url i)
     (shortpage user nil "Edit" here
       (tab (display-item nil i user here)
@@ -1891,7 +1990,7 @@
                         (save-item i)
                         (metastory&adjust-rank i)
                         (wipe (comment-cache* i!id))
-                        (edit-page user i)))
+                        (edit-item user i)))
       (hook 'edit user i))))
 
 (def ignore-edit (user i name val)
@@ -2308,42 +2407,6 @@
 (newscache newcomments-page user 60
   (listpage user (msec) (visible user (firstn maxend* comments*))
             "comments" "New Comments" "newcomments" nil))
-
-
-; Doc
-
-(= formatdoc-url* "formatdoc")
-
-(defop formatdoc req
-  (msgpage (get-user req) formatdoc* "Formatting Options"))
-
-(= formatdoc*
-"Blank lines separate paragraphs.
-<p> Text after a blank line that is indented by two or more spaces is
-reproduced verbatim.  (This is intended for code.)
-<p> Text surrounded by asterisks is italicized, if the character after the
-first asterisk isn't whitespace.
-<p> Urls become links, except in the text field of a submission.<br><br>")
-
-
-; FAQ
-
-(defop faq req
-  (let user (get-user req)
-  (msgpage user (faq user) "FAQ")))
-
-(def faq (user)
-  (string
-"<b>Anarki FAQ</b><br><br>
-<b>What kind of formatting can you use in comments?</b><br>
-See the <a href=formatdoc>formatting options</a>.<br><br>
-<b>In my profile, what is showdead?</b><br>
-It lets you see stories that have been killed.<br><br>
-<b>In my profile, what is noprocrast?</b><br>
-If you enable noprocrast, you'll only be allowed to visit this site for maxvisit minutes at a time, with gaps of minaway minutes in between.<br><br>
-<b>In my profile, what is delay?</b><br>
-It is the number of minutes you can edit your comments before they appear to others.<br><br>"
-))
 
 ; Noprocrast
 
