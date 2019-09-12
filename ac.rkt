@@ -1463,30 +1463,29 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 (define (arc-required-files)
   (namespace-variable-value (ac-global-name 'required-files*)))
 
-;create a normalized, absolute path from the Arc install, 
-;where p is a relative path. The returned path will not
-;be case insensitive. 
-(define (normalize-path p)
-  (simple-form-path 
-    (apply build-path 
-      (path-only arc-arc-path)
-; to get a list of path segments, we need to normalize slashes,
-; split on those slashes, then remove any blank elements.
-   (remove* (list "") 
-      (string-split 
-        (string-replace (~a p) "\\" "/") 
-      "/")))))
+; create a normalized, absolute path from an Arc base path, where
+; p is a relative path from that base path. 
+(define (arc-normalize-path p [b arc-arc-path])
+  (path->string (normalize-path p (path-only b))))
+
+;'canonicalize' an absolute path by making it lowercase
+(define (arc-path-key p [b arc-arc-path])
+  (string-downcase (arc-normalize-path p b)))
+
+;replicates the former behavior of require.arc by keeping a hash of
+;loaded filepaths, preventing multiple reloads. 
 
 (define (list-required-files)
   (hash-values (arc-required-files)))
 
-(define (aload-unique p)
-  (let* ([np (~a (normalize-path p)) ]
-         [k  (string-downcase np)])
+(define (aload-unique p [b arc-arc-path])
+  (let* ([np (~a (arc-normalize-path p b)) ]
+         [k  (arc-path-key np b)])
     (and (file-exists? np) (not (hash-has-key? (arc-required-files) k))
       (begin
         (hash-set! (arc-required-files) k np)
-        (aload np)))))
+        (aload np)
+))))
 
 (define (test filename)
   (call-with-line-counting-input-file filename atests1))
