@@ -15,7 +15,7 @@
    storydir*  (+ newsdir* "story/")
    profdir*   (+ newsdir* "profile/")
    votedir*   (+ newsdir* "vote/")
-   pagedir*  "apps/news/page/"
+   pagedir*   (+ newsdir* "page/")
 
 ; remember to set caching to 0 when testing non-logged-in
 
