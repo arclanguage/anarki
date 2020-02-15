@@ -26,6 +26,7 @@
     lib/srv.arc
     lib/app.arc
     lib/prompt.arc
+    lib/json.arc
 
     ; helpers for the repl
     lib/ppr.arc
