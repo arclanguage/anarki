@@ -35,6 +35,7 @@
     rss         "text/xml" 
     rss-stories "text/xml" 
     follow      "text/xml"
+    personal-data "application/json"
 }
 
 ;themes. names should correspond to the name of a css file
@@ -2659,8 +2660,7 @@
 ; personal data export in machine readable format as required by GDPR
 ; TODO: should include logs (and export as JSON)
 (newsop personal-data ()
-  (tag code
-    (pr (obj
+    (pr (tojson (obj
            votes     (votes* user)
            comments  (keep [author user _] comments*)
            stories   (keep [author user _] stories*)))))
