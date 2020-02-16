@@ -97,7 +97,7 @@
 (def json-number-character? (c)
   (find c ".-+eE1234567890"))
 
-(def span (tst lst)
+(def jspan (tst lst)
   ((afn (a lst)
      (if (and lst (tst (car lst)))
           (self (cons (car lst) a) (cdr lst))
@@ -106,7 +106,7 @@
 
 ; returns unparsed string of json number
 (def parse-json-number (j)
-  (let (a b) (span json-number-character? j)
+  (let (a b) (jspan json-number-character? j)
     (if a (list b (coerce a 'string)))))
 
 (def parse-json-sym (jsym out j)
