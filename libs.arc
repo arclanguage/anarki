@@ -18,7 +18,7 @@
 ;   lib/tree.arc
 ;   lib/util.arc
 ;   lib/spliceable-list.arc
-;   lib/client.arc
+    lib/client.arc
 ;   lib/pd.arc
 
     ; web
