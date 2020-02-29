@@ -32,9 +32,9 @@
 
 ; non static file defops which will return custom (non html) content-types
    op-ctypes* {
-    rss         "text/xml" 
-    rss-stories "text/xml" 
-    follow      "text/xml"
+    rss           "text/xml" 
+    rss-stories   "text/xml" 
+    follow        "text/xml"
     personal-data "application/json"
 }
 
@@ -104,6 +104,7 @@
   ip         nil
   time       (seconds)
   url        nil
+  archive-url nil
   title      nil
   text       nil
   votes      nil   ; elts each (time ip user type score)
@@ -1024,8 +1025,32 @@
             (tag (span "class" "comhead")
               (pr " ("
                   (tostring (link it (string "from?site=" (sitename url))))
-                  ")"))))
+                  ") ")
+                  ; TODO? don't show if archive is unavailable
+                  (ia-archivelink s whence)
+            )))
       (pr (pseudo-text s)))))
+
+; site archival
+
+; check the Internet Archive for the item (s) url, if it exists, store the data locally
+; and return whence, otherwise return a link to IA to archive the url. 
+(def set-ia-archive (s whence (o port stdin))
+  (let arch (fromstring ((mkreq (string "https://archive.org/wayback/available?url=" s!url)) 1) (read-json (port)))
+    (if (len> arch!archived_snapshots 0)
+      (do
+        (= (s "archive-url") arch!archived_snapshots!closest!url
+           (items* s!id)     s)
+         whence)
+      (string "https://web.archive.org/save/" s!url))))
+
+; display the archival link
+(def ia-archivelink (s whence)
+  (if (s "archive-url")
+    (tag ("a" "href" (s "archive-url")) (pr "archived"))
+    (tag ("a" "href" (rflink (fn (req)
+      (set-ia-archive s whence)))) 
+      (pr "archive"))))
 
 (def titlelink (s url user)
   (let toself (blank url)
@@ -1912,7 +1937,6 @@
 ;    (row "" s!text)
     (tag ("div" "class" "itemtext") (prn s!text))
     ))
-
 
 ; Edit Item
 
