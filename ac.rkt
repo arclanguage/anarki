@@ -354,7 +354,7 @@
         ((pair? x)
          (imap ac-unquoted x))
         ((ar-nil? x)
-         'nil)
+         ar-nil)
         ((eqv? x ar-t)
          't)
         (#t x)))
@@ -734,7 +734,7 @@
 
 (define (ar-nill x)
   (if (or (eq? x '()) (eq? x #f) (void? x))
-      'nil
+      ar-nil
       x))
 
 ; definition of falseness for Arc if.
@@ -1694,7 +1694,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                   (let* ((evt ((chan-fn c 'put-evt) c args))
                          (ret (sync/timeout 0 evt)))
                     (if (eq? ret #f)
-                        'nil
+                        ar-nil
                         args))))))
 
 ; Added because Racket buffers output.  Not a permanent part of Arc.
@@ -1748,7 +1748,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                [#t (err "Can't close " p)]))
        args)
   (map (lambda (p) (try-custodian p)) args) ; free any custodian
-  'nil)
+  ar-nil)
 
 (xdef close ar-close)
 
@@ -1757,7 +1757,7 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                               (when (not (try-custodian p))
                                 (ar-close p)))
                             args)
-                       'nil))
+                       ar-nil))
 
 (xdef memory current-memory-use)
 
