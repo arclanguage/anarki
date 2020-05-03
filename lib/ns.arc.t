@@ -108,7 +108,8 @@
              (assert-same 9 (do (= foo!a 9) foo!a))))
 
 (suite submodule
-       (setup foo (simple-rmod t 1 nil 2))
+       (setup foo (simple-rmod t 1 nil 2)
+              bar (make-sub-rmodule foo idfn))
 
        ; We can get the keys to a Racket module using 'rns-keys.
        (test get-keys-with-rns-keys
@@ -135,7 +136,7 @@
 
        ; We can use 'make-sub-rmodule.
        (test can-use-make-sub-rmodule
-             (assert-same '(t) (rmodule-keys (make-sub-rmodule foo [~is 'nil _])))))
+             (assert-same '(t) rmodule-keys.bar)))
 
 (suite local-require
 

@@ -188,7 +188,9 @@
                                   "foo"
                                   '("bar" "baz" "toto" "extra" "and some more"))))
               (test empty-body-is-nil
-                    (assert-nil ((fn ())))))
+                    (assert-nil ((fn ()))))
+              (test nil-can-be-argument-name
+                    (assert-nil ((fn (nil) nil) 3))))
        (suite assign
               (test sets-value-in-top-namespace
                     (assert-same 10.3

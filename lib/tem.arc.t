@@ -37,7 +37,7 @@
                           (normalize:temlist 'foo
                                              (inst 'foo 'new-field 3))))
        (test temlist-keeps-nil-non-default-fields
-             (assert-same '((field1 ()))
+             (assert-same '((field1 nil))
                           (normalize:temlist 'foo
                                              (inst 'foo 'field1 nil))))
        (test temlist-includes-explicitly-set-default-fields
@@ -46,7 +46,7 @@
                                              (inst 'foo 'field1 'default))))
        (test temlist-includes-unknown-nil-fields
              (assert-same '((field1 default)
-                            (new-field1 ())
+                            (new-field1 nil)
                             (new-field2 3))
                           (normalize:temlist 'foo
                                              (inst 'foo 'new-field1 nil 'new-field2 3))))

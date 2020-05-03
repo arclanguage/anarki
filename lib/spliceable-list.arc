@@ -70,13 +70,13 @@ length of n, and returns everything else."
 
 (examples splice
   (splice (spliceable-list 3))
-  ()
+  nil
   (splice (spliceable-list 3 '(1)))
-  ()
+  nil
   (splice (spliceable-list 3 '(1 2)))
-  ()
+  nil
   (splice (spliceable-list 3 '(1 2 3)))
-  ()
+  nil
   (splice (spliceable-list 3 '(1 2 3 4)))
   (1))
 
@@ -88,9 +88,9 @@ length of n, and returns everything else."
 
 (examples suffix
   (suffix 3 '(1))
-  ()
+  nil
   (suffix 3 '(1 2))
-  ()
+  nil
   (suffix 3 '(1 2 3))
   (1 2 3)
   (suffix 3 '(1 2 3 4))
