@@ -128,7 +128,7 @@ Examples:
   arc&#62; (before 2
                1
                '(1 2 3 4))
-  ()
+  nil
   arc&#62; (before 1
                even
                '(1 2 3 4))
@@ -136,7 +136,7 @@ Examples:
   arc&#62; (before #\a #\n "banana")
   t
   arc&#62; (before #\a #\n "banana" 2)
-  ()</pre></div><div class="help-entry"><a href="#best" name="best"></a><pre class="type-and-sig">[fn]  (best f seq)</pre><pre class="docstring-and-examples">Maximizes comparator function 'f' throughout seq.
+  nil</pre></div><div class="help-entry"><a href="#best" name="best"></a><pre class="type-and-sig">[fn]  (best f seq)</pre><pre class="docstring-and-examples">Maximizes comparator function 'f' throughout seq.
 
 Examples:
   arc&#62; (best &#62;
@@ -173,7 +173,7 @@ Examples:
   arc&#62; (commonest '(b a n a n a))
   a
   arc&#62; (commonest nil)
-  ()</pre></div><div class="help-entry"><a href="#compare" name="compare"></a><pre class="type-and-sig">[fn]  (compare comparer scorer)</pre><pre class="docstring-and-examples">Creates a function to score two args using 'scorer' and compare them using
+  nil</pre></div><div class="help-entry"><a href="#compare" name="compare"></a><pre class="type-and-sig">[fn]  (compare comparer scorer)</pre><pre class="docstring-and-examples">Creates a function to score two args using 'scorer' and compare them using
 'comparer'. Often passed to <a href="#sort">sort</a>.
 
 Examples:
@@ -184,7 +184,7 @@ Examples:
   arc&#62; ((compare &#60; len)
         '(1 2 3)
         '(4 5))
-  ()</pre></div><div class="help-entry"><a href="#complement" name="complement"></a><pre class="type-and-sig">[fn]  (complement f)</pre><pre class="docstring-and-examples">Returns a function that behaves as if the result of calling 'f' was negated.
+  nil</pre></div><div class="help-entry"><a href="#complement" name="complement"></a><pre class="type-and-sig">[fn]  (complement f)</pre><pre class="docstring-and-examples">Returns a function that behaves as if the result of calling 'f' was negated.
 For example, this is always true:
   ((complement f) a b) &#60;=&#62; (no (f a b))</pre></div><div class="help-entry"><a href="#compose" name="compose"></a><pre class="type-and-sig">[mac] (compose . args)</pre><pre class="docstring-and-examples">Takes a list of functions and returns a function that behaves as if all its
 'args' were called in sequence.
@@ -301,7 +301,7 @@ Examples:
              '(1 2 3 4))
   1
   arc&#62; (find odd '(2 4 6))
-  ()</pre></div><div class="help-entry"><a href="#firstn" name="firstn"></a><pre class="type-and-sig">[fn]  (firstn n xs)</pre><pre class="docstring-and-examples">Returns the first 'n' elements of 'xs'.
+  nil</pre></div><div class="help-entry"><a href="#firstn" name="firstn"></a><pre class="type-and-sig">[fn]  (firstn n xs)</pre><pre class="docstring-and-examples">Returns the first 'n' elements of 'xs'.
 
 Examples:
   arc&#62; (firstn 3 '(1 2))
@@ -311,7 +311,7 @@ Examples:
   (a b c)</pre></div><div class="help-entry"><a href="#flat" name="flat"></a><pre class="type-and-sig">[fn]  (flat . x)</pre><pre class="docstring-and-examples">Flattens a list of lists.
 
 Examples:
-  arc&#62; (flat '(1 2 () 3 (4 (5))))
+  arc&#62; (flat '(1 2 nil 3 (4 (5))))
   (1 2 3 4 5)</pre></div><div class="help-entry"><a href="#fn" name="fn"></a><pre class="type-and-sig">[sym] (fn params . body)</pre><pre class="docstring-and-examples">Creates an anonymous function. See the tutorial: http://ycombinator.com/arc/tut.txt</pre></div><div class="help-entry"><a href="#for" name="for"></a><pre class="type-and-sig">[mac] (for var init test update . body)</pre><pre class="docstring-and-examples">Loops through expressions in 'body' as long as 'test' passes, first binding 'var' to 'init'. At the end of each iteration it runs 'update', which usually will modify 'var'.
 Can also be terminated from inside 'body' by calling '(break)', or interrupt a single iteration by calling '(continue)'.
 If you nest multiple loops with different 'var's like i and j, you can break out of either of them by calling (break-i), (break-j), etc.
@@ -372,7 +372,7 @@ Examples:
   (a 1 b 1 (c d) 1 e)
   arc&#62; (intersperse nil
                     '(1 2 3))
-  (1 () 2 () 3)</pre></div><div class="help-entry"><a href="#is" name="is"></a><pre class="type-and-sig">[fn]  (is x y)</pre><pre class="docstring-and-examples">Are 'x' and 'y' identical?</pre></div><div class="help-entry"><a href="#isa" name="isa"></a><pre class="type-and-sig">[fn]  (isa x y)</pre><pre class="docstring-and-examples">Is 'x' of type 'y'?</pre></div><div class="help-entry"><a href="#iso" name="iso"></a><pre class="type-and-sig">[fn]  (iso a b)</pre><pre class="docstring-and-examples">Are 'x' and 'y' equal-looking to each other? Non-atoms like lists and tables can contain
+  (1 nil 2 nil 3)</pre></div><div class="help-entry"><a href="#is" name="is"></a><pre class="type-and-sig">[fn]  (is x y)</pre><pre class="docstring-and-examples">Are 'x' and 'y' identical?</pre></div><div class="help-entry"><a href="#isa" name="isa"></a><pre class="type-and-sig">[fn]  (isa x y)</pre><pre class="docstring-and-examples">Is 'x' of type 'y'?</pre></div><div class="help-entry"><a href="#iso" name="iso"></a><pre class="type-and-sig">[fn]  (iso a b)</pre><pre class="docstring-and-examples">Are 'x' and 'y' equal-looking to each other? Non-atoms like lists and tables can contain
 the same elements (be *isomorphic*) without being identical.</pre></div><div class="help-entry"><a href="#join" name="join"></a><pre class="type-and-sig">[fn]  (join . args)</pre><pre class="docstring-and-examples">Concatenates/appends its arguments into a new list.
 
 Examples:
@@ -413,7 +413,7 @@ Examples:
   t
   arc&#62; (len&#62; (obj a 1 b 2)
              3)
-  ()</pre></div><div class="help-entry"><a href="#len>" name="len>"></a><pre class="type-and-sig">[fn]  (len&#62; x n)</pre><pre class="docstring-and-examples">Is <a href="#len">len</a> of 'x' greater than 'n'?</pre></div><div class="help-entry"><a href="#let" name="let"></a><pre class="type-and-sig">[mac] (let var val . body)</pre><pre class="docstring-and-examples">Like <a href="#with">with</a> but with just one binding.
+  nil</pre></div><div class="help-entry"><a href="#len>" name="len>"></a><pre class="type-and-sig">[fn]  (len&#62; x n)</pre><pre class="docstring-and-examples">Is <a href="#len">len</a> of 'x' greater than 'n'?</pre></div><div class="help-entry"><a href="#let" name="let"></a><pre class="type-and-sig">[mac] (let var val . body)</pre><pre class="docstring-and-examples">Like <a href="#with">with</a> but with just one binding.
 For example, (let x 1
                (+ x 1))
              =&#62; (with (x 1)
@@ -443,7 +443,7 @@ Generalizes <a href="#map1">map1</a> to functions with more than one argument.
 Examples:
   arc&#62; (map cdr
             '((1) (2 3) (4 5)))
-  (() (3) (5))
+  (nil (3) (5))
   arc&#62; (map [list _ (* _ 10)]
             '(1 2 3))
   ((1 10) (2 20) (3 30))
@@ -464,7 +464,7 @@ Examples:
 Examples:
   arc&#62; (map1 cdr
              '((1) (2 3) (4 5)))
-  (() (3) (5))
+  (nil (3) (5))
   arc&#62; (map1 [list _ (* _ 10)]
              '(1 2 3))
   ((1 10) (2 20) (3 30))</pre></div><div class="help-entry"><a href="#mappend" name="mappend"></a><pre class="type-and-sig">[fn]  (mappend f . args)</pre><pre class="docstring-and-examples">Like <a href="#map">map</a> followed by append.
@@ -494,7 +494,7 @@ Examples:
   arc&#62; (mismatch "abc" "acc")
   1
   arc&#62; (mismatch "abc" "abc")
-  ()</pre></div><div class="help-entry"><a href="#most" name="most"></a><pre class="type-and-sig">[fn]  (most f seq)</pre><pre class="docstring-and-examples">Like <a href="#best">best</a>, but function 'f' is a scorer for each element rather than a
+  nil</pre></div><div class="help-entry"><a href="#most" name="most"></a><pre class="type-and-sig">[fn]  (most f seq)</pre><pre class="docstring-and-examples">Like <a href="#best">best</a>, but function 'f' is a scorer for each element rather than a
 comparator between elements.
 
 Examples:
@@ -523,16 +523,16 @@ Examples:
   (3)
   arc&#62; (nthcdr 10
                '(1 2 3))
-  ()</pre></div><div class="help-entry"><a href="#number" name="number"></a><pre class="type-and-sig">[fn]  (number n)</pre><pre class="docstring-and-examples">Is 'n' a number?</pre></div><div class="help-entry"><a href="#obj" name="obj"></a><pre class="type-and-sig">[mac] (obj . args)</pre><pre class="docstring-and-examples">Creates a table out of a list of alternating keys and values.</pre></div><div class="help-entry"><a href="#odd" name="odd"></a><pre class="type-and-sig">[fn]  (odd n)</pre><pre class="docstring-and-examples">Is n odd?</pre></div><div class="help-entry"><a href="#on" name="on"></a><pre class="type-and-sig">[mac] (on var s . body)</pre><pre class="docstring-and-examples">Like <a href="#each">each</a>, but also maintains a variable calles 'index' counting the iterations.</pre></div><div class="help-entry"><a href="#only" name="only"></a><pre class="type-and-sig">[fn]  (only f)</pre><pre class="docstring-and-examples">Transforms a function 'f' info a variant that runs only if its first arg is
+  nil</pre></div><div class="help-entry"><a href="#number" name="number"></a><pre class="type-and-sig">[fn]  (number n)</pre><pre class="docstring-and-examples">Is 'n' a number?</pre></div><div class="help-entry"><a href="#obj" name="obj"></a><pre class="type-and-sig">[mac] (obj . args)</pre><pre class="docstring-and-examples">Creates a table out of a list of alternating keys and values.</pre></div><div class="help-entry"><a href="#odd" name="odd"></a><pre class="type-and-sig">[fn]  (odd n)</pre><pre class="docstring-and-examples">Is n odd?</pre></div><div class="help-entry"><a href="#on" name="on"></a><pre class="type-and-sig">[mac] (on var s . body)</pre><pre class="docstring-and-examples">Like <a href="#each">each</a>, but also maintains a variable calles 'index' counting the iterations.</pre></div><div class="help-entry"><a href="#only" name="only"></a><pre class="type-and-sig">[fn]  (only f)</pre><pre class="docstring-and-examples">Transforms a function 'f' info a variant that runs only if its first arg is
 non-nil.
 
 Examples:
   arc&#62; (only.+ 1 2 3)
   6
   arc&#62; (only.+ nil 1 2 3)
-  ()
+  nil
   arc&#62; (only.+)
-  ()</pre></div><div class="help-entry"><a href="#or" name="or"></a><pre class="type-and-sig">[mac] (or . args)</pre><pre class="docstring-and-examples">Stops at the first argument to pass, and returns its result.</pre></div><div class="help-entry"><a href="#orf" name="orf"></a><pre class="type-and-sig">[fn]  (orf . fns)</pre><pre class="docstring-and-examples">Returns a function which calls all the functions in 'fns' on its args, and
+  nil</pre></div><div class="help-entry"><a href="#or" name="or"></a><pre class="type-and-sig">[mac] (or . args)</pre><pre class="docstring-and-examples">Stops at the first argument to pass, and returns its result.</pre></div><div class="help-entry"><a href="#orf" name="orf"></a><pre class="type-and-sig">[fn]  (orf . fns)</pre><pre class="docstring-and-examples">Returns a function which calls all the functions in 'fns' on its args, and
 <a href="#or">or</a>s the results. ((orf f g) x y) &#60;=&#62; (or (f x y) (g x y))</pre></div><div class="help-entry"><a href="#pair" name="pair"></a><pre class="type-and-sig">[fn]  (pair xs (o f list))</pre><pre class="docstring-and-examples">Splits the elements of 'xs' into buckets of two, and optionally applies the
 function 'f' to them.
 
@@ -552,7 +552,7 @@ Examples:
   arc&#62; (pos 'c '(a b c d))
   2
   arc&#62; (pos 'x '(a b c d))
-  ()
+  nil
   arc&#62; (pos #\b "abcba")
   1
   arc&#62; (pos #\b "abcba" 2)
@@ -594,7 +594,7 @@ Examples:
   t
   arc&#62; (reclist [caris _ 'd]
                 '(a b c))
-  ()
+  nil
   arc&#62; (reclist [if (is 2 len._) _]
                 '(a b c d))
   (c d)</pre></div><div class="help-entry"><a href="#recstring" name="recstring"></a><pre class="type-and-sig">[fn]  (recstring test s (o start 0))</pre><pre class="docstring-and-examples">Calls function 'test' with successive characters in string 's' until one of the calls passes.</pre></div><div class="help-entry"><a href="#redef" name="redef"></a><pre class="type-and-sig">[mac] (redef name parms . body)</pre><pre class="docstring-and-examples">Defines a new function like <a href="#def">def</a>, but doesn't warn if 'name' already exists.</pre></div><div class="help-entry"><a href="#reduce" name="reduce"></a><pre class="type-and-sig">[fn]  (reduce f xs)</pre><pre class="docstring-and-examples">Accumulates elements of 'xs' using binary function 'f'.
@@ -630,7 +630,7 @@ Examples:
   arc&#62; (retrieve 3
                  odd
                  '(2 4 6 8))
-  ()</pre></div><div class="help-entry"><a href="#rev" name="rev"></a><pre class="type-and-sig">[fn]  (rev x)</pre><pre class="docstring-and-examples">Returns a list containing the elements of 'xs' back to front.
+  nil</pre></div><div class="help-entry"><a href="#rev" name="rev"></a><pre class="type-and-sig">[fn]  (rev x)</pre><pre class="docstring-and-examples">Returns a list containing the elements of 'xs' back to front.
 
 Examples:
   arc&#62; (rev '(1 (2 3) 4))
@@ -652,13 +652,13 @@ Examples:
 
 Examples:
   arc&#62; (single 1)
-  ()
-  arc&#62; (single '())
-  ()
+  nil
+  arc&#62; (single 'nil)
+  nil
   arc&#62; (single '(1))
   t
   arc&#62; (single '(1 2))
-  ()</pre></div><div class="help-entry"><a href="#some" name="some"></a><pre class="type-and-sig">[fn]  (some test seq)</pre><pre class="docstring-and-examples">Does at least one element of 'seq' satisfy 'test'?</pre></div><div class="help-entry"><a href="#sort" name="sort"></a><pre class="type-and-sig">[fn]  (sort test seq)</pre><pre class="docstring-and-examples">Orders a list 'seq' by comparing its elements using 'test'.
+  nil</pre></div><div class="help-entry"><a href="#some" name="some"></a><pre class="type-and-sig">[fn]  (some test seq)</pre><pre class="docstring-and-examples">Does at least one element of 'seq' satisfy 'test'?</pre></div><div class="help-entry"><a href="#sort" name="sort"></a><pre class="type-and-sig">[fn]  (sort test seq)</pre><pre class="docstring-and-examples">Orders a list 'seq' by comparing its elements using 'test'.
 
 Examples:
   arc&#62; (sort &#60;
@@ -673,15 +673,15 @@ Examples:
 
 Examples:
   arc&#62; (split '(a b c) 0)
-  (() (a b c))
+  (nil (a b c))
   arc&#62; (split '(a b c) 1)
   ((a) (b c))
   arc&#62; (split '(a b c) 2)
   ((a b) (c))
   arc&#62; (split '(a b c) 3)
-  ((a b c) ())
+  ((a b c) nil)
   arc&#62; (split '(a b c) 4)
-  ((a b c) ())</pre></div><div class="help-entry"><a href="#split-at" name="split-at"></a><pre class="type-and-sig">[fn]  (split-at s delim)</pre><pre class="docstring-and-examples">Partitions string s at first instance of delimiter, dropping delimiter.</pre></div><div class="help-entry"><a href="#sref" name="sref"></a><pre class="type-and-sig">[fn]  (sref tem v k)</pre><pre class="docstring-and-examples">Sets position 'indices' in 'aggregate' (which might be a list, string, hash
+  ((a b c) nil)</pre></div><div class="help-entry"><a href="#split-at" name="split-at"></a><pre class="type-and-sig">[fn]  (split-at s delim)</pre><pre class="docstring-and-examples">Partitions string s at first instance of delimiter, dropping delimiter.</pre></div><div class="help-entry"><a href="#sref" name="sref"></a><pre class="type-and-sig">[fn]  (sref tem v k)</pre><pre class="docstring-and-examples">Sets position 'indices' in 'aggregate' (which might be a list, string, hash
 table, or other user-defined type) to 'value'.
 
 Examples:
@@ -960,16 +960,16 @@ length of n, and returns everything else.
 
 Examples:
   arc&#62; (splice (spliceable-list 3))
-  ()
+  nil
   arc&#62; (splice (spliceable-list 3
                                 '(1)))
-  ()
+  nil
   arc&#62; (splice (spliceable-list 3
                                 '(1 2)))
-  ()
+  nil
   arc&#62; (splice (spliceable-list 3
                                 '(1 2 3)))
-  ()
+  nil
   arc&#62; (splice (spliceable-list 3
                                 '(1 2 3 4)))
   (1)</pre></div><div class="help-entry"><a href="#spliceable-list" name="spliceable-list"></a><pre class="type-and-sig">[fn]  (spliceable-list n (o init))</pre><pre class="docstring-and-examples">Create a spliceable list with a constant suffix length of n. A spliceable
@@ -988,9 +988,9 @@ See https://html.spec.whatwg.org/multipage/syntax.html#start-tags</pre></div><di
 
 Examples:
   arc&#62; (suffix 3 '(1))
-  ()
+  nil
   arc&#62; (suffix 3 '(1 2))
-  ()
+  nil
   arc&#62; (suffix 3 '(1 2 3))
   (1 2 3)
   arc&#62; (suffix 3
