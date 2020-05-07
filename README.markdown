@@ -102,6 +102,15 @@ depending on who takes an interest. To see a list of what's different, type
 `(incompatibilities)` at the repl. If you make an incompatible change, please
 update this list.
 
+Anybody is welcome to make changes to Anarki, but please make sure the tests
+continue to pass. Since we rely on the unit-test.arc test harness, please also
+run its tests before committing any changes:
+
+  $ ./arc.sh
+  (require 'lib/unit-test.arc/unit-test.arc)
+  (load "unit-test.arc/tests.arc")
+  (test-and-error-on-failure)
+
 ### Racket interop
 
 **Racket** expressions can be evaluated with the `($ ...)` syntax. For instance, `(($ crypto-random-bytes) 16)` obtains the `crypto-random-bytes` function from **Racket** and makes a call to it.
