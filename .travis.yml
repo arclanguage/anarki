@@ -73,13 +73,7 @@ before_install:
   - export PATH="${RACKET_DIR}/bin:${PATH}"
 
 install:
-  # We obtain the unit test dependencies.
-  # (Currently, there are no dependencies; unit-test.arc is now part
-  # of this repo.)
-#  - hg clone https://hg.sr.ht/~zck/unit-test.arc
-#  - cd unit-test.arc
-#  - hg update v1.0
-#  - cd ..
+  # Nothing
 
 script:
   # We test that the Racket package installs and sets up properly, and

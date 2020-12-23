@@ -2,6 +2,8 @@
 
 A unit test library for the [Arc](http://www.arclanguage.org/) programming language. It lets test suites be written and run simply.
 
+_(This directory is a copy of [https://hg.sr.ht/~zck/unit-test.arc](https://hg.sr.ht/~zck/unit-test.arc).)_
+
 ## Quickstart
 
 Let's get started and make some unit tests!
