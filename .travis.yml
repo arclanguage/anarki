@@ -34,16 +34,13 @@ env:
     # require `crypto-random-bytes` from `racket/random` or
     # `ssl-connect` from `openssl`.
 
-    # Versions prior to 7.6 don't define the `ffi/unsafe/vm` module,
+    # Versions prior to 7.6.0.7 don't define the `ffi/unsafe/vm` module,
     # which is needed to mutate pairs in the Chez-Scheme-based (CS)
-    # releases of Racket. (As of version 7.9, the Ches Scheme releases
+    # releases of Racket. (As of version 7.9, the Chez Scheme releases
     # still aren't the default.)
 
     # This is the earliest known supported version.
-    - RACKET_VERSION=7.6 SHOULD_COMMIT_TO_GH_PAGES=false
-
-    # Racket 7.7 introduced a new HAMT-based implementation of hash
-    # tables, which changes the iteration order.
+    - RACKET_VERSION=7.7 SHOULD_COMMIT_TO_GH_PAGES=false
 
     # This is the latest known supported version.
     - RACKET_VERSION=7.9 SHOULD_COMMIT_TO_GH_PAGES=true
