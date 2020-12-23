@@ -294,20 +294,24 @@
              (assert-nil (before 6 5 '(1 2 3 4)))))
 
 (suite serialize
+       (setup sort-tagged-table
+         [do (zap copy _)
+             (zap [sort (compare < !0) _] _.2)
+             _])
        (test nil (assert-nil (serialize ())))
        (test lists
              (assert-same '(1 2 3) (serialize '(1 2 3))))
        (test strings
              (assert-same "abc" (serialize "abc")))
        (test tables
-             (assert-same '(tagged table ((3 4) (1 2)))
-                          (serialize (obj 1 2 3 4))))
+             (assert-same '(tagged table ((1 2) (3 4)))
+                          (sort-tagged-table (serialize (obj 1 2 3 4)))))
        (test tables-inside-lists
              (assert-same '(1 (tagged table ()) 2 3)
                           (serialize `(1 ,(table) 2 3))))
        (test nested-tables
-             (assert-same '(tagged table ((2 3) (1 (tagged table ()))))
-                          (serialize (obj 1 (table) 2 3)))))
+             (assert-same '(tagged table ((1 (tagged table ())) (2 3)))
+                          (sort-tagged-table (serialize (obj 1 (table) 2 3))))))
 
 (suite deserialize
        (test nil
