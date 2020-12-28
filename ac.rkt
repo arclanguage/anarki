@@ -1620,14 +1620,20 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; We could almost use `unsafe-set-mcar!` and `unsafe-set-mcdr!`
 ; directly, but these do a sanity check to make sure we don't unsafely
 ; set the car or cdr of something that isn't an immutable pair.
-
-(define/contract (x-set-car! p x)
+(require ffi/unsafe/vm)
+(define/contract x-set-car!
   (-> pair? any/c any)
-  (unsafe-set-mcar! p x))
+  (if (eq? 'chez-scheme (system-type 'vm))
+      (let ([f (vm-primitive 'set-car!)])
+        (lambda (p x) (f p x)))
+      (lambda (p x) (unsafe-set-mcar! p x))))
 
-(define/contract (x-set-cdr! p x)
+(define/contract x-set-cdr!
   (-> pair? any/c any)
-  (unsafe-set-mcdr! p x))
+  (if (eq? 'chez-scheme (system-type 'vm))
+      (let ([f (vm-primitive 'set-cdr!)])
+        (lambda (p x) (f p x)))
+      (lambda (p x) (unsafe-set-mcdr! p x))))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
 ; say (if (string? x) (string-replace! x val 1) ...) in scdr, but
