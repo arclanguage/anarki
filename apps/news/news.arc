@@ -1,16 +1,13 @@
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
    parent-url*   "http://github.com/arclanguage/anarki"
-;  favicon-url*  "favicon.ico"
-   ; Page Layout
-;   up-url*       "grayarrow.gif" 
-;   down-url*     "graydown.gif" 
+; Page Layout
+
    logo-url*     "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
-;   border-color* (color 180 180 180)
    prefer-url*   t
-;
+
    newsdir*   srvdir*
    storydir*  (+ newsdir* "story/")
    profdir*   (+ newsdir* "profile/")
@@ -39,7 +36,6 @@
 }
 
 ;themes. names should correspond to the name of a css file
-
    themes* `("default" "dark")
 
 )
@@ -691,8 +687,6 @@
 
 ; turn off server caching via (= caching* 0) or won't see changes
 
-;(= sand (color 246 246 239) textgray (gray 130))
-
 (def main-color (user)
   (aif (and user (uvar user topcolor))
     (hex>color it)
@@ -1103,15 +1097,6 @@
 (def votelink-down (i user whence)
   (tag (a "class" "votelink downlink" "data-id" (string i!id) "alt" "downvote" "href" (vote-url user i 'up whence))
     (pr downarrow-black)))
-
-;(def votelink (i user whence dir)
-;    (tag (a class "votelink" 
-;            "data-id" (string i!id) 
-;            "data-dir" (string dir)
-;          href    (vote-url user i dir whence))
-;    (if (is dir 'up)
-;      (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2)
-;      (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2))))
 
 (= lowest-score* -4)
 
@@ -1933,8 +1918,6 @@
              (in s!type 'story 'poll)
              (blank s!url)
              (~blank s!text))
-;    (spacerow 2)
-;    (row "" s!text)
     (tag ("div" "class" "itemtext") (prn s!text))
     ))
 
@@ -2232,12 +2215,6 @@
                         (newslog ip u 'comment-login)
                         (addcomment-page i u whence))))
       (pr "No such item."))))
-
-;(def comment-color (c)
-;  (if (> c!score 0) black (grayrange c!score)))
-
-;(defmemo grayrange (s)
-;  (gray (min 230 (round (expt (* (+ (abs s) 2) 900) .6)))))
 
 
 ; Threads
