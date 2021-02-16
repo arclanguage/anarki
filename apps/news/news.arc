@@ -35,7 +35,9 @@
     personal-data "application/json"
 }
 
-;themes. names should correspond to the name of a css file
+;theme css files. Names here should match a css filename
+;in the static dir (eg default.css). First element in this
+;list will be used as the default
    themes* `("default" "dark")
 
 )
@@ -532,6 +534,7 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
+;inline stylesheet with user-set font size and topcolor
 (def userstyle (user)
   (with (font-size (aif (and user (uvar user font-size)) it 12)
          bgcolor (hexrep (main-color user)))
@@ -543,9 +546,11 @@
                   .topcolor { 
                      background-color: #" bgcolor 
                   "};")))))
+
+; css link to user-specified theme or default on fail
 (def usertheme (user)
-  (let theme (string "/" (themes* (aif (and user (uvar user theme)) it 0)) ".css")
-   (gentag link "rel" "stylesheet" "type" "text/css" "href"
+   (let theme (string "/" (aif (and user (uvar user theme)) it (themes* 0)) ".css")
+    (gentag link "rel" "stylesheet" "type" "text/css" "href"
       (if (file-exists (+ staticdir* theme)) theme "/default.css"))))
 
 
@@ -850,7 +855,7 @@
       (posint  minaway    ,(p 'minaway)                            ,u  ,u)
       (sexpr   keys       ,(p 'keys)                               ,a  ,a)
       (hexcol  topcolor   ,(or (p 'topcolor) (hexrep site-color*)) ,k  ,k)
-      (int     theme      ,(or (p 'theme) 0)                       ,u  ,u)
+      (choice   theme     ,themes*                                 ,u  ,u)     
       (int font-size      ,(p 'font-size)                          ,u  ,u)
       (int     delay      ,(p 'delay)                              ,u  ,u))))
 
