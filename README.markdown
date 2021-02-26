@@ -8,7 +8,7 @@ privileges, just submit your first pull request or ask on [**Arc Language Forum*
 
 ### Installation
 
-First [install **Racket** (v6.11 or later)](http://racket-lang.org), then
+First [install **Racket** (v7.7 or later)](http://racket-lang.org), then
 
     $ raco pkg install sha
     $ git clone http://github.com/arclanguage/anarki
@@ -90,10 +90,9 @@ For password reset mails to be sent out, your must set up an email account to se
 
 ### Tests
 
-**Anarki** has thorough automated tests. To run them, install [**Mercurial**](https://www.mercurial-scm.org), then,
+**Anarki** has thorough automated tests. 
 
     # start in the anarki directory
-    $ hg clone https://bitbucket.org/zck/unit-test.arc
     $ ./arc.sh
     arc> (load "tests.arc")
 
@@ -102,6 +101,15 @@ releases, and compatibility status may swing wildly from commit to commit
 depending on who takes an interest. To see a list of what's different, type
 `(incompatibilities)` at the repl. If you make an incompatible change, please
 update this list.
+
+Anybody is welcome to make changes to Anarki, but please make sure the tests
+continue to pass. Since we rely on the unit-test.arc test harness, please also
+run its tests before committing any changes:
+
+  $ ./arc.sh
+  (require 'lib/unit-test.arc/unit-test.arc)
+  (load "unit-test.arc/tests.arc")
+  (test-and-error-on-failure)
 
 ### Racket interop
 

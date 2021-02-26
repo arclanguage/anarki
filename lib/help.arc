@@ -63,13 +63,17 @@
                 (prn)
                 (when (~is '_ expected)
                   (if (caris expected 'valueof)
-                    (print-example-session expr (eval expected.1))
-                    (print-example-session expr expected)))))))))))
+                    ; We copy to protect against macros mutating their
+                    ; arguments:
+                    ; https://github.com/arclanguage/anarki/pull/148#issuecomment-459923195
+                    (print-example-session (eval:copy expr)
+                      (eval:copy expected.1))
+                    (print-example-session (eval:copy expr) expected)))))))))))
 
-(def print-example-session (expr expected)
+(def print-example-session (actual expected)
   (pr "  ")
   (print-like-repl expected)
-  (if (~iso expected eval.expr)
+  (unless (iso actual expected)
     (pr " <-- this seems outdated"))
   (prn))
 

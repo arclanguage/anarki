@@ -28,34 +28,41 @@ env:
 
     # Versions prior to 6.3 don't define the `racket/random` module,
     # which is needed for news.arc and one of the tests.
-    
+
     # Versions prior to 6.11 have a bug in unmarshaling namespace
     # information, which prevents us from having ac.scm statically
     # require `crypto-random-bytes` from `racket/random` or
     # `ssl-connect` from `openssl`.
 
-    # This is the earliest known supported version.
-    - RACKET_VERSION=6.11 SHOULD_COMMIT_TO_GH_PAGES=false
+    # Versions prior to 7.6.0.7 don't define the `ffi/unsafe/vm` module,
+    # which is needed to mutate pairs in the Chez-Scheme-based (CS)
+    # releases of Racket. (As of version 7.9, the Chez Scheme releases
+    # still aren't the default.)
 
-    # Racket 7.0 made big internal changes, including migrating its
-    # language implementation to Chez Scheme, so Racket 6.12 may have
-    # some oddities not shared by its neighbors. We test on it to make
-    # sure we haven't run into one of those.
-    - RACKET_VERSION=6.12 SHOULD_COMMIT_TO_GH_PAGES=false
+    # This is the earliest known supported version.
+    - RACKET_VERSION=7.7 SHOULD_COMMIT_TO_GH_PAGES=false
 
     # This is the latest known supported version.
-    - RACKET_VERSION=7.0 SHOULD_COMMIT_TO_GH_PAGES=true
+    - RACKET_VERSION=7.9 SHOULD_COMMIT_TO_GH_PAGES=true
 
     # We include the latest Racket version in the build matrix, but
     # since it's part of `allow_failures` below, a failure here
     # doesn't count. This is purely to make it easy to check whether
     # we're already compatible with a newer Racket release.
-    - RACKET_VERSION=HEAD SHOULD_COMMIT_TO_GH_PAGES=false
+    #
+    # We test on both the "before Chez"/"bytecode" [bc] version and
+    # the "Chez Scheme" [cs] version. As of version 7.9, the
+    # Chez Scheme releases of Racket still aren't the default, but
+    # this way we can be prepared for when they are.
+    #
+    - RACKET_VERSION=HEADBC SHOULD_COMMIT_TO_GH_PAGES=false
+    - RACKET_VERSION=HEADCS SHOULD_COMMIT_TO_GH_PAGES=false
 
 
 matrix:
   allow_failures:
-    - env: RACKET_VERSION=HEAD
+    - env: RACKET_VERSION=HEADBC SHOULD_COMMIT_TO_GH_PAGES=false
+    - env: RACKET_VERSION=HEADCS SHOULD_COMMIT_TO_GH_PAGES=false
   # Fast finish: The overall build result is determined as soon as any
   # of the rows have failed or all of the rows that aren't allowed to
   # fail have succeeded.
@@ -71,13 +78,6 @@ before_install:
   - git clone https://github.com/greghendershott/travis-racket.git "${TRAVIS_RACKET_DIR}"
   - cat "${TRAVIS_RACKET_DIR}/install-racket.sh" | bash
   - export PATH="${RACKET_DIR}/bin:${PATH}"
-
-install:
-  # We obtain the unit test dependencies.
-  - hg clone https://bitbucket.org/zck/unit-test.arc
-  - cd unit-test.arc
-  - hg update v1.0
-  - cd ..
 
 script:
   # We test that the Racket package installs and sets up properly, and

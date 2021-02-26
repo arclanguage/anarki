@@ -1,4 +1,4 @@
-;; unit tests in various styles prior to https://bitbucket.org/zck/unit-test.arc
+;; unit tests in various styles prior to lib/unit-test.arc
 
 ; tests from conanite's rainbow
 (require '(

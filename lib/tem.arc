@@ -46,10 +46,6 @@ from template 'tem-type'."
       (if (no rep.tem.2.k)
         (aif (alref (templates* rep.tem.0) k) (it)))))
 
-(defextend copy (x . args)   ($.vector? x)
-  ; tagged type
-  ($.vector-map copy x))
-
 (defextend iso (a b) (isa a 'tem)
   (and (isa a 'tem)
        (isa b 'tem)

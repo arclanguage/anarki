@@ -25,10 +25,10 @@ https://en.wikipedia.org/wiki/List_comprehension"
   ((1 2) (1 3) (2 3)))
 
 (def ingest lists
-  (when lists
-    (ret result car.lists
-      (when cdr.lists
-        (nappend result (apply ingest cdr.lists))))))
+  (whenlet (first . rest) lists
+    (if rest
+      `(,@first ,(apply ingest rest))
+      first)))
 
 (def collect-transform (guard)
   (if (is 'for guard.0)

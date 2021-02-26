@@ -1,11 +1,11 @@
 body  { 
 	font-family:Verdana, sans-serif; 
 	font-size:12pt;
-	background-color: #ffffff;  
-	color:#000000;
 }
 
-a:link, a:visited { text-decoration: none;}
+a:link, a:visited { 
+	text-decoration: none;
+}
 
 form {
 	padding-top:1em;
@@ -30,13 +30,11 @@ form {
     padding-left: 2px;
 }
 
-.topnav 
-{
+.topnav {
 
 }
 
-#logo
-{
+#logo {
 	margin-right:4px;
 }
 
@@ -72,7 +70,8 @@ form {
 	padding-top:1em;
 	padding-bottom:1em;
 	padding-left:2em;
-	margin-right:5em;
+	padding-right:5em;
+	line-height:150%;
 
 }
 
@@ -89,24 +88,22 @@ form {
 	margin-left:1em;
 }
 
-.items-list 
-{
+.items-list {
 	padding-top: 0;
 	padding-left: 2em;
 	margin-top: 0;
 }
 
-.items-list li 
-{
+.items-list li {
 	margin-bottom:0.5em;
 	margin-top:0;
 }
-
 
 .itemhead {
 	font-size:100%;
 	margin-bottom:0.2em;
 } 
+
 .comhead { 
 	font-size:85%;
 }
@@ -118,32 +115,30 @@ form {
 	font-size: 90%;
 }
 
-
 .comfoot {
-font-size: 85%;
-margin-left: 1.5em;
-margin-top: 0.5em;
-margin-bottom: 0.5em;
+	font-size: 85%;
+	margin-left: 1.5em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
 }
 
 .comfoot a:link {
 	text-decoration:underline;
 }
 
-.subtext{
+.subtext {
 	font-size:85%;
 	position:relative;
 	left:1.4em;
 }
 
-.itemtext
-{
+.itemtext {
 	padding:1em;
 	font-size:90%;
 	line-height:150%;
 }
 
-.votelinks{
+.votelinks {
 	display:inline;
 	float:left;
 	margin-right:0.2em;
@@ -153,41 +148,16 @@ margin-bottom: 0.5em;
 	text-align:center;
 }
 
-a:link    {color:#000000;}
-a:visited {color:#828282;}
+.comhead a:hover { 
+	text-decoration:underline; 
+}
 
-.page-content {background-color: #f6f6ef; }
-
-.subtext a:link, .subtext a:visited {color: #828282;}
-=
-.comhead a:link, .subtext a:visited { color:#828282; }
-.comhead a:hover { text-decoration:underline; }
-.opcomment { font-weight:bold;}
-.uplink a:link{color: #82dd82;}
-.downlink {color: #dd8282;}
-.dead {color:#dddddd; }
+.opcomment { 
+	font-weight:bold;
+}
 
 .comment-0 { opacity:1; }
 .comment-1 { opacity:0.5; filter:alpha(opacity=50);}
 .comment-2 { opacity:0.4; filter:alpha(opacity=40);}
 .comment-3 { opacity:0.3; filter:alpha(opacity=30);}
 .comment-4 { opacity:0.2; filter:alpha(opacity=20);}
-
-.sand {
-	background-color: rgb(246, 246, 239);
-}
-
-.noob 
-{
-	color:#3c963c
-}
-
-.banned
-{
-	color:#400000;
-}
-
-.editor
-{
-	color:#000040;
-}

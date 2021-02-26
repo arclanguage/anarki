@@ -24,7 +24,8 @@
   openssl
   racket/string
   racket/random
-  syntax/stx
+
+  racket/struct
 
   (only-in "brackets.rkt" bracket-readtable)
 
@@ -105,28 +106,7 @@
     (anarki-init-in-main-namespace)))
 
 
-(print-hash-table #t)
-(print-syntax-width 10000)
-
-; sread = scheme read. eventually replace by writing read
-
-(define (sread p (eof eof))
-  (parameterize ((read-accept-lang #t)
-                 (read-accept-reader #t))
-    (port-count-lines! p)
-    (let ((expr (read-syntax (object-name p) p)))
-      (if (eof-object? expr) eof expr))))
-
-(define (syn x (src #f))
-  (if (syntax? x)
-      (syn (syntax->datum x) (or src x))
-      (datum->syntax #f x (if (syntax? src) src #f))))
-
-(define (datum x)
-  (let ((s (syn x)))
-    (syntax->datum s)))
-
-(define env* (make-parameter (list)))
+(struct ar-tagged (type rep) #:prefab)
 
 ; compile an Arc expression into a Scheme expression,
 ; both represented as s-expressions.
@@ -148,6 +128,7 @@
         [(ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env)]
         [(eq? (xcar s) '$) (ac-$ (cadr s) env)]
         [(eq? (xcar s) 'quote) (list 'quote (ac-quoted (ac-niltree (cadr s))))]
+        ((eq? (xcar s) 'lexenv) (ac-lenv (cdr s) env))
         [(and (eq? (xcar s) 'quasiquote)
               (not (ac-macro? 'quasiquote)))
          (ac-qq (cadr s) env)]
@@ -361,7 +342,8 @@
   #f)
 
 (define (ac-var-ref s env)
-  (cond [(lex? s env)        s]
+  (cond [(ac-boxed? 'get s) (ac-boxed-get s)]
+        [(lex? s env)        s]
         [(ac-defined-var? s) (list (ac-global-name s))]
         [#t                  (ac-global-name s)]))
 
@@ -389,6 +371,10 @@
          (cons '%braces (imap ac-unquoted (tabflat x))))
         ((pair? x)
          (imap ac-unquoted x))
+        ((ar-nil? x)
+         'nil)
+        ((eqv? x 't)
+         't)
         (#t x)))
 
 (xdef unquoted ac-unquoted)
@@ -579,18 +565,17 @@
 
 (define (ac-set1 a b1 env)
   (if (symbol? a)
-      (let ((n (string->symbol (string-append " " (symbol->string a))))
-            (b (ac b1 (ac-dbname! a env))))
-        (list 'let `((,n ,b))
-               (cond ((eqv? a 'nil) (err "Can't rebind nil"))
-                     ((eqv? a 't) (err "Can't rebind t"))
-                     ((eqv? a 'true) (err "Can't rebind true"))
-                     ((eqv? a 'false) (err "Can't rebind false"))
-                     ((eqv? a 'null) (err "Can't rebind null"))
-                     ((lex? a env) `(set! ,a ,n))
-                     [(ac-defined-var? a) `(,(ac-global-name a) ,n)]
-                     (#t `(set! ,(ac-global-name a) ,n)))
-               n))
+
+      (let ([b (ac b1 (ac-dbname! a env))])
+        (list 'let `([zz ,b])
+               (cond [(eqv? a 'nil) (err "Can't rebind nil")]
+                     [(eqv? a 't) (err "Can't rebind t")]
+                     [(ac-boxed? 'set a)  `(begin ,(ac-boxed-set a b) ,(ac-boxed-get a))]
+                     [(lex? a env) `(set! ,a zz)]
+                     [(ac-defined-var? a) `(,(ac-global-name a) zz)]
+                     [#t `(set! ,(ac-global-name a) zz)])
+               'zz))
+
       (err "First arg to set must be a symbol" a)))
 
 
@@ -605,6 +590,52 @@
             (ac-args (if (pair? names) (cdr names) '())
                      (cdr exprs)
                      env))))
+
+(define (ac-lexname env)
+  (let ((name (ac-dbname env)))
+    (if (eqv? name #f)
+        'fn
+        (apply string-append
+               (map (lambda (x) (string-append (symbol->string x) "-"))
+                    (apply append (keep pair? env)))))))
+
+(define (ac-lenv args env)
+  (ac-lexenv (ac-lexname env) env))
+
+(define (ac-lexenv name env)
+  `(list (list '*name ',name)
+         ,@(imap (lambda (var)
+                   (let ((val (gensym)))
+                     `(list ',var
+                            (lambda ,val ,var)
+                            (lambda (,val) (set! ,var ,val)))))
+                 (filter (lambda (x) (not (or (ar-false? x) (pair? x)))) env))))
+
+(define boxed* '())
+
+(define (ac-boxed? op name)
+  (let ((result
+    (when (not (ar-false? name))
+      (when (not (ar-false? boxed*))
+        (let ((slot (assoc name boxed*)))
+          (case op
+            ((get) (when (and slot (>= (length slot) 2)) (cadr slot)))
+            ((set) (when (and slot (>= (length slot) 3)) (caddr slot)))
+            (else (err "ac-boxed?: bad op" name op))))))))
+    (if (void? result) #f result)))
+
+(define (ac-boxed-set name val)
+  (let ((setter (ac-boxed? 'set name)))
+     (if (procedure? setter)
+       `(,setter ,val)
+       (err "invalid setter" name val setter))))
+
+(define (ac-boxed-get name)
+  (let ((getter (ac-boxed? 'get name)))
+    (if (procedure? getter)
+      `(,getter 'nil)
+      getter)))
+
 
 ; generate special fast code for ordinary two-operand
 ; calls to the following functions. this is to avoid
@@ -894,7 +925,7 @@
                   (apply string-append
                          (map (lambda (a) (ar-coerce a 'string))
                               args))]
-                 [(arc-list? (car args))
+                 [(andmap arc-list? args)
                   (ac-niltree (apply append (map ar-denil-last args)))]
                  [(evt? (car args))
                   (apply choice-evt args)]
@@ -944,21 +975,19 @@
                    [(hash? x) (hash-count x)]
                    [#t (length (ar-denil-last x))])))
 
-(define (ar-tagged? x)
-  (and (vector? x) (eq? (vector-ref x 0) 'tagged)))
-
 (define (ar-tag type rep)
   (cond [(eqv? (ar-type rep) type) rep]
-        [#t (vector 'tagged type rep)]))
+        [#t (ar-tagged type rep)]))
 
 (xdef annotate ar-tag)
+(xdef annotated? ar-tagged?)
 
 ; (type nil) -> sym
 
 (define (exint? x) (and (integer? x) (exact? x)))
 
 (define (ar-type x)
-  (cond [(ar-tagged? x)     (vector-ref x 1)]
+  (cond [(ar-tagged? x)     (ar-tagged-type x)]
         [(pair? x)          'cons]
         [(symbol? x)        'sym]
         [(null? x)          'sym]
@@ -987,7 +1016,7 @@
 
 (define (ar-rep x)
   (if (ar-tagged? x)
-      (vector-ref x 2)
+      (ar-tagged-rep x)
       x))
 
 (xdef rep ar-rep)
@@ -1096,10 +1125,11 @@
 
 ; sread = scheme read. eventually replace by writing read
 
-(xdef sdata (lambda (p (eof eof))
-               (let ((expr (read p)))
-                 (if (eof-object? expr) eof expr))))
-(xdef sread sread)
+
+(xdef sread (lambda (p)
+               (let ([expr (read p)])
+                 expr)))
+
 
 ; these work in PLT but not scheme48
 
@@ -1367,9 +1397,27 @@
               (compile-syntax (namespace-syntax-introduce racket-expr))
               (compile racket-expr)))))
 
-(define (arc-eval expr (env (env*)))
-  (parameterize ((env* env))
-    (arc-exec (ac expr))))
+
+(define (arc-eval expr . args)
+  (if (null? args)
+      (arc-exec (ac expr '()))
+      (apply arc-eval-boxed expr args)))
+
+(define-syntax w/restore
+  (syntax-rules ()
+    ((_ var val body ...)
+     (let ((w/restore-prev var)
+           (w/restore-val  val))
+       (dynamic-wind (lambda () (set! var w/restore-val))
+                     (lambda () body ...)
+                     (lambda () (set! var w/restore-prev)))))))
+
+(define (arc-eval-boxed expr lexenv)
+  (w/restore boxed* (if (or (ar-false? boxed*)
+                            (ar-false? lexenv))
+                      lexenv
+                      (append lexenv boxed*))
+    (arc-eval expr)))
 
 (define (tle)
   (display "Arc> ")
@@ -1402,7 +1450,6 @@ For help on say 'string':
 For a list of differences with arc 3.1:
   arc> (incompatibilities)
 To run all automatic tests:
-  $ hg clone https://bitbucket.org/zck/unit-test.arc
   $ ./arc.sh
   arc> (load \"tests.arc\")
 
@@ -1496,34 +1543,33 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
                  [current-readtable bracket-readtable])
     (aload filename)))
 
-;create a normalized, absolute path from the Arc install, 
-;where p is a relative path. The returned path will not
-;be case insensitive. 
-(define (normalize-path p)
-  (simple-form-path 
-    (apply build-path 
-      (path-only arc-arc-path)
-; to get a list of path segments, we need to normalize slashes,
-; split on those slashes, then remove any blank elements.
-   (remove* (list "") 
-      (string-split 
-        (string-replace (~a p) "\\" "/") 
-      "/")))))
-
 (xdef required-files* (make-hash))
 (define (arc-required-files)
   (namespace-variable-value (ac-global-name 'required-files*)))
 
+; create a normalized, absolute path from an Arc base path, where
+; p is a relative path from that base path. 
+(define (arc-normalize-path p [b arc-arc-path])
+  (path->string (normalize-path p (path-only b))))
+
+;'canonicalize' an absolute path by making it lowercase
+(define (arc-path-key p [b arc-arc-path])
+  (string-downcase (arc-normalize-path p b)))
+
+;replicates the former behavior of require.arc by keeping a hash of
+;loaded filepaths, preventing multiple reloads. 
+
 (define (list-required-files)
   (hash-values (arc-required-files)))
 
-(define (aload-unique p)
-  (let* ([np (~a (normalize-path p)) ]
-         [k  (string-downcase np)])
+(define (aload-unique p [b arc-arc-path])
+  (let* ([np (~a (arc-normalize-path p b)) ]
+         [k  (arc-path-key np b)])
     (and (file-exists? np) (not (hash-has-key? (arc-required-files) k))
       (begin
         (hash-set! (arc-required-files) k np)
-        (aload np)))))
+        (aload np)
+))))
 
 (define (test filename)
   (call-with-line-counting-input-file filename atests1))
@@ -1600,14 +1646,20 @@ Arc 3.1 documentation: https://arclanguage.github.io/ref.
 ; We could almost use `unsafe-set-mcar!` and `unsafe-set-mcdr!`
 ; directly, but these do a sanity check to make sure we don't unsafely
 ; set the car or cdr of something that isn't an immutable pair.
-
-(define/contract (x-set-car! p x)
+(require ffi/unsafe/vm)
+(define/contract x-set-car!
   (-> pair? any/c any)
-  (unsafe-set-mcar! p x))
+  (if (eq? 'chez-scheme (system-type 'vm))
+      (let ([f (vm-primitive 'set-car!)])
+        (lambda (p x) (f p x)))
+      (lambda (p x) (unsafe-set-mcar! p x))))
 
-(define/contract (x-set-cdr! p x)
+(define/contract x-set-cdr!
   (-> pair? any/c any)
-  (unsafe-set-mcdr! p x))
+  (if (eq? 'chez-scheme (system-type 'vm))
+      (let ([f (vm-primitive 'set-cdr!)])
+        (lambda (p x) (f p x)))
+      (lambda (p x) (unsafe-set-mcdr! p x))))
 
 ; When and if cdr of a string returned an actual (eq) tail, could
 ; say (if (string? x) (string-replace! x val 1) ...) in scdr, but

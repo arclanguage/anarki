@@ -66,11 +66,9 @@
                             (test hex-string-with-E
                                   (assert-same 62 (coerce "3E" 'int 16)))
                             (test coerce-positive-infinity-to-int
-                                  (assert-error (coerce "+inf.0" 'int)
-                                                "inexact->exact: no exact representation\n  number: +inf.0"))
+                                  (assert-error (coerce "+inf.0" 'int)))
                             (test coerce-negative-infinity-to-int
-                                  (assert-error (coerce "-inf.0" 'int)
-                                                "inexact->exact: no exact representation\n  number: -inf.0")))
+                                  (assert-error (coerce "-inf.0" 'int))))
                      (suite string->num
                             (test rational
                                   (assert-same 3/4 (coerce "3/4" 'num)))

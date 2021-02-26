@@ -18,7 +18,7 @@
 ;   lib/tree.arc
 ;   lib/util.arc
 ;   lib/spliceable-list.arc
-;   lib/client.arc
+    lib/client.arc
 ;   lib/pd.arc
 
     ; web
@@ -26,6 +26,7 @@
     lib/srv.arc
     lib/app.arc
     lib/prompt.arc
+    lib/json.arc
 
     ; helpers for the repl
     lib/ppr.arc

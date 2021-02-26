@@ -1,23 +1,22 @@
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
    parent-url*   "http://github.com/arclanguage/anarki"
-;  favicon-url*  "favicon.ico"
-   ; Page Layout
-   up-url*       "grayarrow.gif" 
-   down-url*     "graydown.gif" 
+; Page Layout
+
    logo-url*     "arc.png"
    site-desc*    "What this site is about."               ; for rss feed
    site-color*   (color 180 180 180)
-   border-color* (color 180 180 180)
    prefer-url*   t
+
    newsdir*   srvdir*
    storydir*  (+ newsdir* "story/")
    profdir*   (+ newsdir* "profile/")
    votedir*   (+ newsdir* "vote/")
+   pagedir*   (+ newsdir* "page/")
 
 ; remember to set caching to 0 when testing non-logged-in
 
-   caching*  1
+   caching*  0
    perpage* 30 
    threads-perpage* 10 
    maxend* 210
@@ -25,10 +24,22 @@
 ; browsers can cache static files for 7200 sec
    static-max-age* 7200
 
-; cache css in browser for 1 day
-; .. how does this work with static-max-age above?
+   (max-age* 'news.css) 86400
+   (max-age* 'custom.css) 86400
 
-   (max-age* 'news.css) 86400   
+; non static file defops which will return custom (non html) content-types
+   op-ctypes* {
+    rss           "text/xml" 
+    rss-stories   "text/xml" 
+    follow        "text/xml"
+    personal-data "application/json"
+}
+
+;theme css files. Names here should match a css filename
+;in the static dir (eg default.css). First element in this
+;list will be used as the default
+   themes* `("default" "dark")
+
 )
 
 ; Look up title on Searx, a free metasearch engine
@@ -78,6 +89,8 @@
   lastview   nil
   maxvisit   20
   minaway    180
+  font-size  12
+  theme      0
   topcolor   nil
   keys       nil
   delay      0)
@@ -89,6 +102,7 @@
   ip         nil
   time       (seconds)
   url        nil
+  archive-url nil
   title      nil
   text       nil
   votes      nil   ; elts each (time ip user type score)
@@ -102,17 +116,127 @@
   kids       nil
   keys       nil)
 
-; Load and Save
+(deftem page 
+  id 0
+  url nil
+  title nil
+  text nil)
 
+(= pages* (table) pageid* 0)
+
+; basically the blog code, but for "pages"
+; https://github.com/laarc/laarc/blob/master/blog.arc
+
+(def load-pages ()
+  (= (pages*) nil)
+  (each id (map int (dir pagedir*))
+    (= pageid* (max pageid* id)
+      (pages* id) (temload 'page (string pagedir* id)))))
+
+
+
+;url is not a full url, but the endpoint of a defop ex: "faq"
+(def save-page (url title text id)
+  (let p (inst 'page 'id id 
+               'url url 
+               'title title 
+               'text text)
+    (temstore 'page p (string pagedir* id))
+    (= (pages* id) p)))
+
+(def get-page (id) 
+  (pages* (errsafe:int id)))
+
+(def page-editlink (id) 
+  (link "edit" (string "/editpage?id=" id)))
+
+(def page-createlink () 
+  (link "new page" "/newpage"))
+
+(def page-link (url id) 
+  (link url (string "/page?id=" id)))
+
+(def page-menu () 
+  (each (k p) pages* 
+    (do 
+      (page-link p!url p!id)
+      (pr " | "))))
+
+; returns the new id 
+ (def new-page (url title text)
+  (let i (++ pageid*) 
+    (save-page url title text i) i))
+
+ (def edit-page (url title text id)
+  (save-page url title text id))
+
+ (def delete-page (id)
+  (= (pages* (errsafe:int id)) nil) 
+  (if (file-exists (string pagedir* id))
+    (rmfile (string pagedir* id))))
+
+(def page-deletelink (id)
+  (link "delete" (rflink (fn (req) (delete-page id) "/"))))
+
+; need to delay macro expansion or else
+; the following error occurs: 
+; Can't coerce  #s(ar-tagged mac #<procedure: minipage>) fn
+; see http://arclanguage.org/item?id=18018
+;     http://arclanguage.org/item?id=13306
+
+(def show-page (user id tt tx)
+  (eval `(shortpage ,user nil ,tt "/" 
+    (do 
+      (tag ("h4") (pr ,tt))
+      
+      (tag ("div") (pr (markdown (trim (rem #\return ,tx) 'both) 80)))
+      
+      (when (admin ,user)
+        (page-editlink ,id)
+        (pr " | ")
+        (page-deletelink, id))))))
+
+(defop page req 
+  (iflet p (get-page (arg req "id"))
+    (show-page (get-user req) p!id p!title p!text)))
+
+(defop newpage req (when (admin (get-user req))
+  (arform (fn (req) 
+     (let i (new-page (arg req "url") 
+                      (arg req "title") 
+                      (arg req "text"))
+     (string "/page?id=" i)))
+     (tag table 
+       (row (prn "create a page"))
+       (row "url:" (input "url"))
+       (row "title:" (input "title"))
+       (row "text:" (textarea "text" 8 60)) 
+       (row (submit "create")))))) 
+
+(defop editpage req (when (admin (get-user req))
+  (whenlet p (get-page (arg req "id"))
+    (arform (fn (req) 
+      (edit-page p!url (arg req "title") (arg req "text") p!id)
+      (string "/page?id=" p!id))
+    (tag table 
+      (row (prn "edit a page"))
+      (row "title:" (input "title" (prn p!title)))
+      (row "text:" (textarea "text" 8 60 (prn p!text))) 
+      (row (submit "edit")))))))
+
+(defop deletepage req (when (admin (get-user req))
+  (delete-page (arg req "id"))))
 
 (= votes* (table) profs* (table))
-
+; Load and Save
 (= initload-users* nil)
 
 (def nsv ((o port 8080))
-  (map ensure-dir (list srvdir* newsdir* storydir* votedir* profdir*))
+  (map ensure-dir (list srvdir* newsdir* storydir* votedir* profdir* pagedir*))
   (unless stories* (load-items))
-  (if (and initload-users* (empty profs*)) (load-users))
+  (if (and initload-users* (empty profs*)) 
+    (load-users))
+    (load-pages)
   (asv port))
 
 (def load-users ()
@@ -410,56 +534,80 @@
 (def member (u)
   (and u (or (admin u) (uvar u member))))
 
+;inline stylesheet with user-set font size and topcolor
 (def userstyle (user)
-  (tag ("style" "type" "text/css")
-    (pr (string ".topcolor { 
-                  background-color: #" (hexrep (main-color user)) ";"
-                  "}"))))
+  (with (font-size (aif (and user (uvar user font-size)) it 12)
+         bgcolor (hexrep (main-color user)))
+    (pr 
+      (tag ("style" "type" "text/css")
+        (string  "body { 
+                    font-size:" font-size "pt!important; 
+                  }
+                  .topcolor { 
+                     background-color: #" bgcolor 
+                  "};")))))
+
+; css link to user-specified theme or default on fail
+(def usertheme (user)
+   (let theme (string "/" (aif (and user (uvar user theme)) it (themes* 0)) ".css")
+    (gentag link "rel" "stylesheet" "type" "text/css" "href"
+      (if (file-exists (+ staticdir* theme)) theme "/default.css"))))
+
 
 (= pagefns* nil)
 
 ; page top
-
 (= toplabels* '(nil "welcome" "new" "threads" "comments" "ask" "*")
    showkarma* t)
 
+;Other page templates have been deprecated and folded into this, which
+;provides a single macro for generating HTML pages for News (thus its size.)
 (mac longpage (user time label title whence . body)
   (w/uniq (gu gl gt gw gd)
-    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) (do 
+    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) 
+      (do 
        (prn "<!DOCTYPE html>")
        (tag html
          (tag head
            (gentag meta "charset" "UTF-8")
-           (gentag link "rel" "stylesheet" "type" "text/css" "href" "/news.css")
            (userstyle ,gu)
+           (usertheme, gu)
            (gentag link "rel" "icon" "href" "/favicon.ico")
            (gentag "meta" "name" "viewport" "value" "width=device-width")
            (tag (script "type" "text/javascript" "src" "/news.js"))
            (tag title (pr (+ this-site* (if ,gt (+ bar* ,gt) "")))))
            (tag body 
-           (tag (div "class" "layout sand") 
-           (if (check-procrast ,gu) (do
+           ;(tag (div "class" "layout sand") 
+           (tag (div "class" "layout")
+           (if (check-procrast ,gu) 
+            (do
              (tag (div "class" "topcolor page-header")
+               
                (tag (span "id" "navleft")
+                 
                  (tag (link rel "icon" href logo-url*))
+                 
                  (tag (a "id" "logo" href parent-url*)
-                   (tag (img src logo-url*)))               
-                   (link this-site* "news"))
+                   (tag (img src logo-url*)))
+
+                   (tag (span "id" "page-title") 
+                     (link this-site* "news")))
+               
                (tag (span "id" "navmain")
                  (w/bars 
                    (toplink "new" "newest" ,gl)
                    (toplink "comments" "newcomments" ,gl)
                    (toplink "ask" "ask" ,gl)
                    (link  "submit")))
+                
                 (tag (span "id" "navright")
                     (when ,gu
                       (if (noob ,gu)
-                        (toplink "welcome" "welcome" ,gl))
+                        (toplink "welcome " "welcome " ,gl))
                       (tag (span "id" "userlink") 
-                        (userlink ,gu ,gu nil)) 
+                        (userlink ,gu ,gu nil))
                       (when showkarma* 
-                        (pr (string "&nbsp;(" (karma ,gu) ")"))
-                        (pr "&nbsp;|"))
+                        (pr (string " (" (karma ,gu) ") |")))
                       (pr "&nbsp;")
                       (toplink "threads" (threads-url ,gu) ,gl)
                       (pr "&nbsp;|&nbsp;")
@@ -478,17 +626,23 @@
                                         (newslog ip u 'top-login))
                                       ,gw)))))
                  (hook 'toprow ,gu ,gl))
+
                (map [_ ,gu] pagefns*)
                (hook 'page ,gu ,gl)
+
                (tag (div "class" "page-content") ,@body)
-                (tag (div "class" "page-footer")
+
+               (tag (div "class" "page-footer topcolor")
                   (hook 'longfoot)
-                  (tag (span "class" "yclinks")
-                    (w/bars
-                      (link "faq")
-                      (link "lists")
-                      (link "rss")
-                      (link "bookmarklet")))
+                  (tag ("span" "class" "yclinks") 
+                    (page-menu)
+                    (when (admin, gu)
+                      (page-createlink)
+                      (pr " | "))
+                    (link "rss")
+                    (pr " | ")
+                    (link "bookmarklet"))
+                  
                   (if (bound 'search-bar) 
                     (search-bar ,gu))
                   (when (admin ,gu)
@@ -500,6 +654,7 @@
                         (link "settings" "newsadmin")
                         (link "appeditor")
                         (hook 'admin-bar ,gu ,gw)))))
+
              (tag (div "class" "noprocrast")
                (procrast-msg ,gu ,gw)))
 )))))))
@@ -537,13 +692,10 @@
 
 ; turn off server caching via (= caching* 0) or won't see changes
 
-(= sand (color 246 246 239) textgray (gray 130))
-
 (def main-color (user)
   (aif (and user (uvar user topcolor))
     (hex>color it)
     site-color*))
-
 
 ; News-Specific Defop Variants
 
@@ -703,6 +855,8 @@
       (posint  minaway    ,(p 'minaway)                            ,u  ,u)
       (sexpr   keys       ,(p 'keys)                               ,a  ,a)
       (hexcol  topcolor   ,(or (p 'topcolor) (hexrep site-color*)) ,k  ,k)
+      (choice   theme     ,themes*                                 ,u  ,u)     
+      (int font-size      ,(p 'font-size)                          ,u  ,u)
       (int     delay      ,(p 'delay)                              ,u  ,u))))
 
 (def saved-link (user subject)
@@ -789,22 +943,6 @@
 (def bestcomments (user n)
   (bestn n (compare > realscore) (visible user comments*)))
 
-
-(newsop lists ()
-  (longpage user (msec) "lists" "Lists" "lists"
-    (sptab
-      (row (link  "leaders")      "Users with most karma.")
-      (row (link  "best")         "Highest voted recent links.")
-      (row (link  "active")       "Most active current discussions.")
-      (row (link  "bestcomments") "Highest voted recent comments.")
-      (row (link  "noobstories")  "Submissions from new accounts.")
-      (row (link  "noobcomments") "Comments from new accounts.")
-      (when (admin user)
-        (map row:link
-             '(optimes topips flagged killed badguys badlogins goodlogins)))
-      (hook 'listspage user))))
-
-
 (def saved-url (user) (+ "saved?id=" user))
 
 (newsop saved (id)
@@ -878,7 +1016,7 @@
 (= follow-threshold* 5)
 
 (def titleline (s url user whence)
-  (tag (span "class" "title")
+  (tag (span "class" "comtitle")
     (if (cansee user s)
       (do (deadmark s user)
           (titlelink s url user)
@@ -886,8 +1024,32 @@
             (tag (span "class" "comhead")
               (pr " ("
                   (tostring (link it (string "from?site=" (sitename url))))
-                  ")"))))
+                  ") ")
+                  ; TODO? don't show if archive is unavailable
+                  (ia-archivelink s whence)
+            )))
       (pr (pseudo-text s)))))
+
+; site archival
+
+; check the Internet Archive for the item (s) url, if it exists, store the data locally
+; and return whence, otherwise return a link to IA to archive the url. 
+(def set-ia-archive (s whence (o port stdin))
+  (let arch (fromstring ((mkreq (string "https://archive.org/wayback/available?url=" s!url)) 1) (read-json (port)))
+    (if (len> arch!archived_snapshots 0)
+      (do
+        (= (s "archive-url") arch!archived_snapshots!closest!url
+           (items* s!id)     s)
+         whence)
+      (string "https://web.archive.org/save/" s!url))))
+
+; display the archival link
+(def ia-archivelink (s whence)
+  (if (s "archive-url")
+    (tag ("a" "href" (s "archive-url")) (pr "archived"))
+    (tag ("a" "href" (rflink (fn (req)
+      (set-ia-archive s whence)))) 
+      (pr "archive"))))
 
 (def titlelink (s url user)
   (let toself (blank url)
@@ -908,35 +1070,38 @@
   (when (and i!deleted (admin user))
     (pr " [deleted] ")))
 
-(= downvote-threshold* 200 downvote-time* 1440)
-
-(= votewid* 14)
+(= downvote-threshold* 200 
+   downvote-time* 1440
+   votewid* 14
+   uparrow-black "&#9650;"
+   uparrow-white "&#9651;"
+   downarrow-black "&#9660;"
+   downarrow-white "&#9660;")
 
 (def votelinks (i user whence (o downtoo))
-    (tag (span "class" "votelinks")
+  (tag (span "class" "votelinks")
     (if (and (cansee user i)
              (or (no user)
                  (no ((votes user) i!id))))
-         (do (votelink i user whence 'up)
+         (do (votelink-up i user whence)
              (when (and downtoo
                         (or (admin user)
                             (< (item-age i) downvote-time*))
                         (canvote user i 'down))
-               (votelink i user whence 'down)))
-        (author user i)
-         (do (fontcolor orange (pr "*"))))))
+               (votelink-down i user whence)))
+        ;(author user i) (do (fontcolor orange (pr "*"))))
+)))
 
 ; could memoize votelink more, esp for non-logged in users,
 ; since only uparrow is shown; could straight memoize
 
-(def votelink (i user whence dir)
-    (tag (a class "votelink" 
-            "data-id" (string i!id) 
-            "data-dir" (string dir)
-          href    (vote-url user i dir whence))
-    (if (is dir 'up)
-      (gentag img src up-url*   alt '^ border 0 vspace 3 hspace 2)
-      (gentag img src down-url* alt 'v border 0 vspace 3 hspace 2))))
+(def votelink-up (i user whence)
+  (tag (a "class" "votelink uplink" "data-id" (string i!id) "alt" "upvote" "href" (vote-url user i 'up whence))
+    (pr uparrow-black)))
+
+(def votelink-down (i user whence)
+  (tag (a "class" "votelink downlink" "data-id" (string i!id) "alt" "downvote" "href" (vote-url user i 'up whence))
+    (pr downarrow-black)))
 
 (= lowest-score* -4)
 
@@ -994,11 +1159,9 @@
     (byline i user)))
 
 (def itemscore (i (o user))
-  (tag (span 
-  "class" "itemscore"
-  "data-score" (string i!score)
-   id (+ "score_" i!id))
-   
+  (tag (span "class" "itemscore" 
+             "data-score" (string i!score)
+             id (+ "score_" i!id))
     (pr (plural (if (is i!type 'pollopt) (realscore i) i!score)
                 "point")))
     (if (isnt i!type 'pollopt)
@@ -1019,13 +1182,15 @@
   (awhen (and show-avg* (admin user) show-avg (uvar subject avg))
     (pr " (@(num it 1 t t))")))
 
-(= noob-color* (color 60 150 60))
+(= noob-color* (color 60 150 60) noob-limit* 1337)
 
 (def user-name (user subject)
   (if (and (editor user) (ignored subject))
-       (tostring (fontcolor darkred (pr subject)))
-      (and (editor user) (< (user-age subject) 1440))
-       (tostring (fontcolor noob-color* (pr subject)))
+       ;(tag ("span" "class" "editor") (pr subject))
+       (tostring (spanclass "editor" (pr subject)))
+      (and (editor user) (< (user-age subject) noob-limit*))
+       ; (tag ("span" "class" "noob") (pr subject))
+       (tostring (spanclass "noob" (pr subject)))
       subject))
 
 (= show-threadavg* nil)
@@ -1653,15 +1818,19 @@
 (def display-pollopt (n o user whence)
   (tr 
       (tag (td valign 'top)
-        (votelinks o user whence))
+      (votelinks o user whence))
       (tag (td class 'comment)
-        (tag (div style "margin-top:1px;margin-bottom:0px")
+        (tag (div "class" "pollopt")
           (if (~cansee user o) (pr (pseudo-text o))
               (~live o)        (spanclass dead
                                  (pr (if (~blank o!title) o!title o!text)))
                                (if (and (~blank o!title) (~blank o!url))
                                    (link o!title o!url)
-                                   (fontcolor black (pr o!text)))))))
+                                   ;(fontcolor black (pr o!text))
+                                   (pr o!text)
+                                   )
+                               )))
+  )
   (tr (if n (td))
       (td)
       (tag (td class 'default)
@@ -1754,9 +1923,8 @@
              (in s!type 'story 'poll)
              (blank s!url)
              (~blank s!text))
-    (spacerow 2)
-    (row "" s!text)))
-
+    (tag ("div" "class" "itemtext") (prn s!text))
+    ))
 
 ; Edit Item
 
@@ -1768,7 +1936,7 @@
              (cansee user i)
              (editable-type i)
              (or (news-type i) (admin user) (author user i)))
-      (edit-page user i)
+      (edit-item user i)
       (pr "No such item."))))
 
 (def editable-type (i) (fieldfn* i!type))
@@ -1818,7 +1986,7 @@
 ; does everything that has to happen after submitting a story,
 ; and call it both there and here.
 
-(def edit-page (user i)
+(def edit-item (user i)
   (let here (edit-url i)
     (shortpage user nil "Edit" here
       (tab (display-item nil i user here)
@@ -1835,7 +2003,7 @@
                         (save-item i)
                         (metastory&adjust-rank i)
                         (wipe (comment-cache* i!id))
-                        (edit-page user i)))
+                        (edit-item user i)))
       (hook 'edit user i))))
 
 (def ignore-edit (user i name val)
@@ -1924,7 +2092,7 @@
 
 (def display-comment-tree (c user whence (o indent 0) (o initialpar))
   (when (cansee-descendant user c)
-      (tag (li "class" "comment")
+      (tag (li)
         (display-comment nil c user whence t indent initialpar initialpar)
         (display-subcomments c user whence (+ indent 1)))))
 
@@ -1988,11 +2156,11 @@
                (* (+ (trunc (/ age 86400)) 1) 86400)))))
 
 (def gen-comment-body (c user whence astree indent showpar showon)
-  (tag (div class 'default)
     (let parent (and (or (no astree) showpar) (c 'parent))
-      (tag div
-        (tag (span "class" "comhead")
-          (itemline c user)
+      (tag ("div" "class" "comhead")
+         (tag-if (author user c) 
+            (span class "opcomment topcol") 
+          (itemline c user))
           (when parent
             (when (cansee user c) (pr bar*))
             (link "parent" (item-url ((item parent) 'id))))
@@ -2007,22 +2175,23 @@
           (when showon
             (pr " | on: ")
             (let s (superparent c)
-              (link (ellipsize s!title 50) (item-url s!id))))))
-      (when (or parent (cansee user c))
-        (br))
-      (spanclass comment
+              (link (ellipsize s!title 50) (item-url s!id)))))
+      (when (or parent (cansee user c)))
+      (tag ("div" "class"  (if (> c!score 0) "comment" (string "comment comment-" (abs c!score)))
+        "data-score" (string c!score) 
+        ;"style" (string "color: #" (hexrep (comment-color c)))
+        )
         (if (~cansee user c)               (pr (pseudo-text c))
             (nor (live c) (author user c)) (spanclass dead (pr c!text))
-                                           (fontcolor (comment-color c)
-                                             (pr c!text))))
+                                             (pr c!text)))
       (when (and astree (cansee user c) (live c))
-        (para)
-        (tag (font size 1)
+        
+        (tag ("div" "class" "comfoot")
           (if (and (~mem 'neutered c!keys)
                    (replyable c indent)
                    (comments-active c))
-            (underline (replylink c whence))
-))))))
+            (replylink c whence)
+)))))
 
 ; For really deeply nested comments, caching could add another reply
 ; delay, but that's ok.
@@ -2051,12 +2220,6 @@
                         (newslog ip u 'comment-login)
                         (addcomment-page i u whence))))
       (pr "No such item."))))
-
-(def comment-color (c)
-  (if (> c!score 0) black (grayrange c!score)))
-
-(defmemo grayrange (s)
-  (gray (min 230 (round (expt (* (+ (abs s) 2) 900) .6)))))
 
 
 ; Threads
@@ -2139,29 +2302,27 @@
 (newsop ask ()
   (listpage user (msec) (keep [empty (_ 'url)] stories*) "ask" "Ask"))
 
-
 ; RSS
-
 (newsop rss () (rsspage nil))
 
 (newscache rsspage user 90
   (rss-stories (retrieve perpage* live ranked-stories*)))
 
 (def rss-stories (stories (o title this-site*) (o url site-url*) (o desc site-desc*))
-  (tag (rss version "2.0")
-    (tag channel
-      (tag title (pr title))
-      (tag link (pr url))
-      (tag description (pr desc))
-      (each s stories
-        (tag item
-          (let comurl (+ site-url* (item-url s!id))
-            (tag title    (pr (eschtml s!title)
-                              (aif (sitename s!url) (+ " (" it ")") "")))
-            (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
-            (tag comments (pr comurl))
-            (tag description
-              (cdata (link "Comments" comurl)))))))))
+    (tag (rss version "2.0")
+      (tag channel
+        (tag title (pr title))
+        (tag link (pr url))
+        (tag description (pr desc))
+        (each s stories
+          (tag item
+            (let comurl (+ site-url* (item-url s!id))
+              (tag title    (pr (eschtml s!title)
+                                (aif (sitename s!url) (+ " (" it ")") "")))
+              (tag link     (pr (if (blank s!url) comurl (eschtml s!url))))
+              (tag comments (pr comurl))
+              (tag description
+                (cdata (link "Comments" comurl)))))))))
 
 ; RSS feed of user
 (newsop follow (subject)
@@ -2253,42 +2414,6 @@
 (newscache newcomments-page user 60
   (listpage user (msec) (visible user (firstn maxend* comments*))
             "comments" "New Comments" "newcomments" nil))
-
-
-; Doc
-
-(= formatdoc-url* "formatdoc")
-
-(defop formatdoc req
-  (msgpage (get-user req) formatdoc* "Formatting Options"))
-
-(= formatdoc*
-"Blank lines separate paragraphs.
-<p> Text after a blank line that is indented by two or more spaces is
-reproduced verbatim.  (This is intended for code.)
-<p> Text surrounded by asterisks is italicized, if the character after the
-first asterisk isn't whitespace.
-<p> Urls become links, except in the text field of a submission.<br><br>")
-
-
-; FAQ
-
-(defop faq req
-  (let user (get-user req)
-  (msgpage user (faq user) "FAQ")))
-
-(def faq (user)
-  (string
-"<b>Anarki FAQ</b><br><br>
-<b>What kind of formatting can you use in comments?</b><br>
-See the <a href=formatdoc>formatting options</a>.<br><br>
-<b>In my profile, what is showdead?</b><br>
-It lets you see stories that have been killed.<br><br>
-<b>In my profile, what is noprocrast?</b><br>
-If you enable noprocrast, you'll only be allowed to visit this site for maxvisit minutes at a time, with gaps of minaway minutes in between.<br><br>
-<b>In my profile, what is delay?</b><br>
-It is the number of minutes you can edit your comments before they appear to others.<br><br>"
-))
 
 ; Noprocrast
 
@@ -2408,11 +2533,17 @@ It is the number of minutes you can edit your comments before they appear to oth
             (tdr (when deads (pr (round (days-since ((car deads) 'time))))))
             (td site)
             (td (w/rlink (do (set-site-ban user site nil) "badsites")
-                  (fontcolor (if ban gray.220 black) (pr "x"))))
+                  ;(fontcolor (if ban gray.220 black) (pr "x"))
+              (tag-if ban (span class "banned") (pr "x"))
+            ))
             (td (w/rlink (do (set-site-ban user site 'kill) "badsites")
-                  (fontcolor (case ban kill darkred gray.220) (pr "x"))))
+              (spanclass (case ban kill "killed") (pr "x"))
+                  ;(fontcolor (case ban kill darkred gray.220) (pr "x"))
+            ))
             (td (w/rlink (do (set-site-ban user site 'ignore) "badsites")
-                  (fontcolor (case ban ignore darkred gray.220) (pr "x"))))
+              (spanclass (case ban ignore "ignored") (pr "x"))
+                  ;(fontcolor (case ban ignore darkred gray.220) (pr "x"))
+            ))
             (td (each u (dedup (map !by deads))
                   (userlink user u nil)
                   (pr " "))))))))
@@ -2450,7 +2581,10 @@ It is the number of minutes you can edit your comments before they appear to oth
         (tr (td (let banned (banned-ips* ip)
                   (w/rlink (do (set-ip-ban user ip (no banned))
                                "badips")
-                    (fontcolor (if banned darkred) (pr ip)))))
+
+                    ;(fontcolor (if banned darkred) (pr ip))
+                    (tag-if banned (span class "banned") (pr ip))
+                    )))
             (tdr (when (or (goods ip) (bads ip))
                    (pr (round (days-since
                                 (max (aif (car (goods ip)) it!time 0)
@@ -2532,8 +2666,7 @@ It is the number of minutes you can edit your comments before they appear to oth
 ; personal data export in machine readable format as required by GDPR
 ; TODO: should include logs (and export as JSON)
 (newsop personal-data ()
-  (tag code
-    (pr (obj
+    (pr (tojson (obj
            votes     (votes* user)
            comments  (keep [author user _] comments*)
            stories   (keep [author user _] stories*)))))

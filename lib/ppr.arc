@@ -128,7 +128,7 @@
       (sp (+ col 2))
       (indent-pairs (nthcdr n xs) (+ col 2))))
 
-; Support for the 'suite macro in https://bitbucket.org/zck/unit-test.arc
+; Support for the 'suite macro in lib/unit-test.arc
 (def indent-suite (xs (o col 0))
   (print-spaced (firstn 1 xs))
   (let suite-name-len (len xs.0)

@@ -172,12 +172,28 @@
 ;(mac gentag args (o tags '(#\< #\>))
 ; (start-tag args tags))
 
-(mac gentag args (start-tag args))
+(mac gentag args
+  "An opening tag.
+
+For example, (gentag html lang \"en\")
+results in printing out:
+<html lang=\"en\"> ."
+  (start-tag args))
 
 (mac tag (spec . body)
+  "Print a full html tag with opening and closing tags, plus a body.
+For example, (tag (a href \"https://arclanguage.org/\") (pr \"check it out\"))
+renders as: <a href=\"https://arclanguage.org/\">check it out</a>"
   `(do ,(start-tag spec)
        ,@body
-       ,(end-tag spec)))
+     ,(end-tag spec)))
+
+(mac sctag (spec)
+  "A self-closed tag.
+
+For example, (sctag (img src \"http://example.com/favicon.ico\"))
+renders as: <img src=\"http://example.com/favicon.ico\" />"
+  `,(start-tag spec t))
 
 (mac tag-if (test spec . body)
   `(if ,test
@@ -186,19 +202,25 @@
 
 ;(def start-tag (spec (o tags '(#\< #\>)))
 
-(def start-tag (spec)
+(def start-tag (spec (o self-close nil))
+  "Render an opening tag with the given SPEC.
+
+SELF-CLOSE, if given, means that the tag ends in a space, a slash.
+See https://html.spec.whatwg.org/multipage/syntax.html#start-tags"
   (if (atom spec)
 ;   `(pr ,(string (car tags) spec (cdr tags)))
-    `(pr ,(string "<" spec ">"))
+    `(pr ,(string "<" spec (when self-close " /") ">"))
     (let opts (tag-options (car spec) (pair (cdr spec)))
       (if (all [isa _ 'string] opts)
-        `(pr ,(string "<" (car spec) (apply string opts) ">"))
+        `(pr ,(string "<" (car spec) (apply string opts) (when self-close " /") ">"))
         `(do (pr ,(string "<" (car spec)))
              ,@(map (fn (opt)
                       (if (isa opt 'string)
                         `(pr ,opt)
                         opt))
                     opts)
+             (when ,self-close
+               (pr " /"))
              (pr ">"))))))
 
 (def end-tag (spec)
@@ -273,8 +295,7 @@
 (mac prbold body `(tag b (pr ,@body)))
 
 (def para args
-  (gentag p)
-  (when args (apply pr args)))
+  (tag p (apply pr args)))
 
 (def menu (name items (o sel nil))
   (tag (select name name)

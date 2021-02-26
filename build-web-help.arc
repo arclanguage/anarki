@@ -5,41 +5,47 @@
 ; docstrings.
 
 
+; Load the docstrings by running the unit tests.
+(require 'tests.arc)
+
+
+(assign-and-warn web-help-dir* "build-gh-pages/site/help")
+(assign-and-warn web-help-file* (+ web-help-dir* "/index.html"))
+
+(prn "Generating HTML documentation at " web-help-file* " ...")
+
+
 (def display-web-help-section (heading section-defs)
   (when section-defs
     (tag section
       (tag h2 (pr:esc-tags heading))
-        (each name (sort < section-defs)
-          (tag (div class "help-entry")
-            (let doc helpstr.name
-              (zap string name)
-              (zap
-                [$.regexp-replace*
-                  '#px"(.*?)(?:\\[\\[([^\\]\\s]*)\\]\\]|$)"
-                  _
-                  (fn (entire-match normal-text possible-link)
-                    (tostring
-                      (pr:esc-tags normal-text)
-                      (when possible-link
-                        (if (help*:sym possible-link)
-                          (tag (a href (+ "#" possible-link))
-                            (pr:esc-tags possible-link))
-                          (tag (span class "broken-link")
-                            (pr:esc-tags possible-link))))))]
-                doc)
-              (let (sig docstring) (split-at doc "\n")
-                (tag:a href (+ "#" name) name name)
-                (tag (pre class "type-and-sig")
-                  (pr sig))
-                (tag (pre class "docstring-and-examples")
-                  (pr:trim docstring)))))))))
+      (each name (sort < section-defs)
+        (tag (div class "help-entry")
+          (let doc helpstr.name
+            (zap string name)
+            (zap
+              [$.regexp-replace*
+                '#px"(.*?)(?:\\[\\[([^\\]\\s]*)\\]\\]|$)"
+                _
+                (fn (entire-match normal-text possible-link)
+                  (tostring
+                    (pr:esc-tags normal-text)
+                    (when possible-link
+                      (if (help*:sym possible-link)
+                        (tag (a href (+ "#" possible-link))
+                          (pr:esc-tags possible-link))
+                        (tag (span class "broken-link")
+                          (pr:esc-tags possible-link))))))]
+              doc)
+            (let (sig docstring) (split-at doc "\n")
+              (tag:a href (+ "#" name) name name)
+              (tag (pre class "type-and-sig")
+                (pr sig))
+              (tag (pre class "docstring-and-examples")
+                (pr:trim docstring)))))))))
 
-
-; Load the docstrings by running the unit tests.
-(require 'tests.arc)
-
-(ensure-dir "build-gh-pages/site/help")
-(w/outfile out "build-gh-pages/site/help/index.html"
+(ensure-dir web-help-dir*)
+(w/outfile out web-help-file*
   (w/stdout out
     (doctype "html")
     (tag (html lang "en")
@@ -150,3 +156,5 @@
                 other-defs.source))
             (display-web-help-section "Documented elsewhere"
               unknown-defs)))))))
+
+(prn "HTML documentation complete.")
