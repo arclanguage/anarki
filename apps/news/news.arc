@@ -1470,7 +1470,7 @@
 
 (def submit-page (user (o url) (o title) (o showtext) (o text "") (o msg)
                        (o req)) ; unused
-  (minipage "Submit"
+  (shortpage user "Submit" (+ this-site* bar* "Submit") "/"
     (pagemessage msg)
     (urform user req
             (process-story (get-user req)
