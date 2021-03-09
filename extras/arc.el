@@ -1,7 +1,7 @@
 ;;; arc.el --- Arc editing mode
 
 ;; Copyright (C) 1986, 1987, 1988, 1997, 1998, 2001, 2002, 2003, 2004, 2005,
-;;   2006, 2007, 2008  Free Software Foundation, Inc.
+;;   2006, 2007, 2008, 2021  Free Software Foundation, Inc.
 
 ;; Author: Bill Rozas <jinx@martigny.ai.mit.edu>
 ;; Adapted-by: Dave Love <d.love@dl.ac.uk>
@@ -31,6 +31,10 @@
 
 ;; The major mode for editing Arc-type Lisp code, very similar to
 ;; the Lisp mode documented in the Emacs manual.
+
+;; Change Log:
+;; - 2021/03/09: Pierre Rouleau. Replace destructuring-bind by
+;;               cl-destructuring-bind to support Emacs 24.2 and later.
 
 ;;; Code:
 
@@ -228,8 +232,8 @@ See `run-hooks'."
     (list
      ;;
      ;; Declarations.
-     (list 
-      (concat "(" (regexp-opt 
+     (list
+      (concat "(" (regexp-opt
                    '("def" "mac" "defop" "defpath" "defmemo" "defset" "deftem" "defcall" "redef" "set" "=")
                    t)
               "\\>"
@@ -422,7 +426,7 @@ rigidly along with this one."
             w/uniq w/stdout w/appendfile w/stdin w/infile)
          (2 w/infile whilet each on def mac defset defcall redef rfn let ret mapeach))))
   (dolist (entry arc-indent-function-list)
-    (destructuring-bind (level . syms) entry
+    (cl-destructuring-bind (level . syms) entry
       (dolist (sym syms)
         (put sym 'arc-indent-function level)))))
 
