@@ -1,12 +1,13 @@
 ;;; inferior-arc.el --- Arc process in a buffer. Adapted from cmuscheme.el
 
 ;; Copyright (C) 1988, 1994, 1997, 2001, 2002, 2003, 2004,
-;;   2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+;;   2005, 2006, 2007, 2008, 2021 Free Software Foundation, Inc.
 
 ;; Author: Olin Shivers <olin.shivers@cs.cmu.edu>
 ;; Keywords: processes, lisp, arc
 
 ;; Adapted for Arc by Sami Samhuri <sami.samhuri@gmail.com>
+;; Fixed bug by Pierre Rouleau <prouleau001@gmail.com>
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -36,8 +37,6 @@
 ;; Please send me bug reports, bug fixes, and extensions, so that I can
 ;; merge them into the master source.
 ;;
-;; The changelog is at the end of this file.
-;;
 ;;; CHANGE LOG
 ;;; ===========================================================================
 ;;; 8/88 Olin
@@ -66,6 +65,9 @@
 ;;;
 ;;; 2/08/08 sjs
 ;;; - Adapted for Arc (basically s/scheme/arc/g)
+;;;
+;;; 9/03/21 Pierre Rouleau
+;;; - Fixed variable name in arc-load-file that prevented caching.
 
 ;;; Code:
 
@@ -293,7 +295,7 @@ Used for determining the default in the next one.")
                                   arc-source-modes t)) ; t because `load'
                                                        ; needs an exact name
   (comint-check-source file-name) ; Check to see if buffer needs saved.
-  (setq arc-prev-l/c-dir/file (cons (file-name-directory    file-name)
+  (setq arc-prev-load/c-dir/file (cons (file-name-directory    file-name)
                                        (file-name-nondirectory file-name)))
   (comint-send-string (arc-proc) (concat "(load \""
                                             file-name
