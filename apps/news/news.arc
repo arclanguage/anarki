@@ -663,7 +663,7 @@
 ;  `(longpage ,user ,label ,title ,whence ,@body))
 
 (mac minipage (user label . body)
-  `(longpage user ,label (+ this-site* bar* ,label) "/" ,@body))
+  `(longpage ,user ,label (+ this-site* bar* ,label) "/" ,@body))
 
 (def msgpage (user msg (o title))
   (minipage user (or title "Message")
