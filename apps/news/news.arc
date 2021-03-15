@@ -185,7 +185,7 @@
 ;     http://arclanguage.org/item?id=13306
 
 (def show-page (user id tt tx)
-  (eval `(shortpage ,user nil ,tt "/" 
+  (eval `(longpage ,user nil ,tt "/" 
     (do 
       (tag ("h4") (pr ,tt))
       
@@ -562,9 +562,9 @@
 
 ;Other page templates have been deprecated and folded into this, which
 ;provides a single macro for generating HTML pages for News (thus its size.)
-(mac longpage (user time label title whence . body)
+(mac longpage (user label title whence . body)
   (w/uniq (gu gl gt gw gd)
-    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd ,time) 
+    `(with (,gu ,user ,gl ,label ,gt ,title ,gw ,whence ,gd) 
       (do 
        (prn "<!DOCTYPE html>")
        (tag html
@@ -659,24 +659,24 @@
                (procrast-msg ,gu ,gw)))
 )))))))
 
-(mac shortpage (user label title whence . body)
-  `(longpage ,user (msec) ,label ,title ,whence ,@body))
+;(mac shortpage (user label title whence . body)
+;  `(longpage ,user ,label ,title ,whence ,@body))
 
-(mac minipage (label . body)
-  `(longpage nil (msec) ,label (+ this-site* bar* ,label) "/" ,@body))
+(mac minipage (user label . body)
+  `(longpage ,user ,label (+ this-site* bar* ,label) "/" ,@body))
 
 (def msgpage (user msg (o title))
-  (minipage (or title "Message")
+  (minipage user (or title "Message")
     (tag ("span" "class" "admin")
       (pr msg))))
 
-(def listpage (user t1 items label title (o url label) (o number t))
+(def listpage (user items label title (o url label) (o number t))
   (hook 'listpage user)
-  (longpage user t1 label title url
+  (longpage user label title url
     (display-items user items label title url 0 perpage* number)))
 
 (def news-login-page ((o msg nil) (o afterward hello-page))
-     (minipage "Login"
+     (minipage nil "Login"
       (pagemessage msg)
       (login-form afterward)
       (hook 'login-form afterward)
@@ -735,14 +735,14 @@
   (w/uniq g
     `(opexpand defopa ,name ,parms
        (let ,g (string ',name)
-         (shortpage user ,g ,g ,g
+         (longpage user ,g ,g ,g
            ,@body)))))
 
 (mac edop (name parms . body)
   (w/uniq g
     `(opexpand defope ,name ,parms
        (let ,g (string ',name)
-         (shortpage user ,g ,g ,g
+         (longpage user ,g ,g ,g
            ,@body)))))
 
 
@@ -765,7 +765,7 @@
 ; Or could generalize vars-form to think of places (in the setf sense).
 
 (def newsadmin-page (user)
-  (shortpage user nil "newsadmin" "newsadmin"
+  (longpage user nil "newsadmin" "newsadmin"
     (vars-form user
                (nad-fields)
                (fn (name val)
@@ -801,7 +801,7 @@
 
 (def user-page (user subject)
   (let here (user-url subject)
-    (shortpage user nil (+ "Profile: " subject) here
+    (longpage user nil (+ "Profile: " subject) here
       (profile-form user subject)
       (when (some astory:item (uvar subject submitted))
         (underlink "submissions" (submitted-url subject)))
@@ -898,7 +898,7 @@
 ;(newsop index.html () (newspage user))
 
 (newscache newspage user 90
-  (listpage user (msec) (topstories user maxend*) nil nil "news"))
+  (listpage user (topstories user maxend*) nil nil "news"))
 
 (newsop newest () (newestpage user))
 
@@ -906,7 +906,7 @@
 ; cached page.  If this were a prob, could make deletion clear caches.
 
 (newscache newestpage user 40
-  (listpage user (msec) (newstories user maxend*) "new" "New Links" "newest"))
+  (listpage user (newstories user maxend*) "new" "New Links" "newest"))
 
 (def newstories (user n)
   (retrieve n [cansee user _] stories*))
@@ -914,7 +914,7 @@
 (newsop best () (bestpage user))
 
 (newscache bestpage user 1000
-  (listpage user (msec) (beststories user maxend*) "best" "Top Links"))
+  (listpage user (beststories user maxend*) "best" "Top Links"))
 
 ; As no of stories gets huge, could test visibility in fn sent to best.
 
@@ -925,7 +925,7 @@
 (newsop noobcomments () (noobspage user comments*))
 
 (def noobspage (user source)
-  (listpage user (msec) (noobs user maxend* source) "noobs" "New Accounts"))
+  (listpage user (noobs user maxend* source) "noobs" "New Accounts"))
 
 (def noobs (user n source)
   (retrieve n [and (cansee user _) (bynoob _)] source))
@@ -937,7 +937,7 @@
 (newsop bestcomments () (bestcpage user))
 
 (newscache bestcpage user 1000
-  (listpage user (msec) (bestcomments user maxend*)
+  (listpage user (bestcomments user maxend*)
             "best comments" "Best Comments" "bestcomments" nil))
 
 (def bestcomments (user n)
@@ -952,7 +952,7 @@
 
 (def savedpage (user subject)
   (if (or (is user subject) (admin user))
-    (listpage user (msec)
+    (listpage user
               (sort (compare < item-age) (voted-stories user subject))
              "saved" "Saved Links" (saved-url subject))
     (pr "Can't display that.")))
@@ -989,7 +989,7 @@
                      (with (url  (url-for it)     ; it bound by afnid
                             user (get-user req))
                        (newslog req!ip user 'more label)
-                       (longpage user (msec) label title url
+                       (longpage user label title url
                          (apply f user items label title url args))))))
           rel 'nofollow)
     (pr "More")))
@@ -1334,7 +1334,7 @@
 ; win because it happens to get loaded later.)  Not a big problem.
 
 (def del-confirm-page (user i whence)
-  (minipage "Confirm"
+  (minipage user "Confirm"
     (tab
       ; link never used so not testable but think correct
       (display-item nil i user (flink [del-confirm-page (get-user _) i whence]))
@@ -1470,7 +1470,7 @@
 
 (def submit-page (user (o url) (o title) (o showtext) (o text "") (o msg)
                        (o req)) ; unused
-  (shortpage user "Submit" (+ this-site* bar* "Submit") "/"
+  (longpage user "Submit" (+ this-site* bar* "Submit") "/"
     (pagemessage msg)
     (urform user req
             (process-story (get-user req)
@@ -1743,7 +1743,7 @@
 
 (def newpoll-page (user (o title "Poll: ") (o text "") (o opts "") (o msg)
                         (o req)) ; unused
-  (minipage "New Poll"
+  (minipage user "New Poll"
     (pagemessage msg)
     (urform user req
             (process-poll (get-user req)
@@ -1796,7 +1796,7 @@
     o))
 
 (def add-pollopt-page (p user)
-  (minipage "Add Poll Choice"
+  (minipage user "Add Poll Choice"
     (urform user req
             (do (add-pollopt user p (striptags (arg req "x")) req!ip)
                 (item-url p!id))
@@ -1872,7 +1872,7 @@
   (with (title (and (cansee user i)
                     (or i!title (aand i!text (ellipsize (striptags it)))))
          here (item-url i!id))
-    (longpage user (msec) nil title here
+    (longpage user nil title here
     (tag (div "class" "item")
       (display-item nil i user here)
       (display-item-text i user)
@@ -1988,7 +1988,7 @@
 
 (def edit-item (user i)
   (let here (edit-url i)
-    (shortpage user nil "Edit" here
+    (longpage user nil "Edit" here
       (tab (display-item nil i user here)
            (display-item-text i user))
       (br2)
@@ -2021,7 +2021,7 @@
                 (addcomment-page parent u whence text))))
 
 (def addcomment-page (parent user whence (o text) (o msg))
-  (minipage "Add Comment"
+  (minipage user "Add Comment"
     (pagemessage msg)
     (tab
       (let here (flink [addcomment-page parent (get-user _) whence text msg])
@@ -2236,7 +2236,7 @@
     (withs (title (+ subject "'s comments")
             label (if (is user subject) "threads" title)
             here  (threads-url subject))
-      (longpage user (msec) label title here
+      (longpage user label title here
         (awhen (keep [and (cansee user _) (~subcomment _)]
                      (comments subject maxend*))
           (display-threads user it label title here))))
@@ -2281,7 +2281,7 @@
   (if (profile subject)
     (with (label (+ subject "'s submissions")
            here  (submitted-url subject))
-      (longpage user (msec) label label here
+      (longpage user label label here
         (if (or (no (ignored subject))
                 (is user subject)
                 (seesdead user))
@@ -2294,13 +2294,13 @@
 ; list stories from one domain
 
 (newsop from (site)
-  (listpage user (msec) (keep [is (sitename (_ 'url)) site] stories*) "from" (string "Submissions from " site)))
+  (listpage user (keep [is (sitename (_ 'url)) site] stories*) "from" (string "Submissions from " site)))
 
 
 ; list stories that don't link anywhere
 
 (newsop ask ()
-  (listpage user (msec) (keep [empty (_ 'url)] stories*) "ask" "Ask"))
+  (listpage user (keep [empty (_ 'url)] stories*) "ask" "Ask"))
 
 ; RSS
 (newsop rss () (rsspage nil))
@@ -2339,7 +2339,7 @@
 (= nleaders* 20)
 
 (newscache leaderspage user 1000
-  (longpage user (msec) "leaders" "Leaders" "leaders"
+  (longpage user "leaders" "Leaders" "leaders"
     (sptab
       (let i 0
         (each u (firstn nleaders* (leading-users))
@@ -2395,7 +2395,7 @@
 (newsop active () (active-page user))
 
 (newscache active-page user 600
-  (listpage user (msec) (actives user) "active" "Active Threads"))
+  (listpage user (actives user) "active" "Active Threads"))
 
 (def actives (user (o n maxend*) (o consider 2000))
   (visible user (rank-stories n consider (memo active-rank))))
@@ -2412,7 +2412,7 @@
 (newsop newcomments () (newcomments-page user))
 
 (newscache newcomments-page user 60
-  (listpage user (msec) (visible user (firstn maxend* comments*))
+  (listpage user (visible user (firstn maxend* comments*))
             "comments" "New Comments" "newcomments" nil))
 
 ; Noprocrast
@@ -2462,7 +2462,7 @@
 (defopg resetpw req (resetpw-page (get-user req)))
 
 (def resetpw-page (user (o msg))
-  (minipage "Reset Password"
+  (minipage user "Reset Password"
     (if msg
          (pr msg)
         (blank (uvar user email))
@@ -2491,7 +2491,7 @@
 ; Or better still generalize vars-form.
 
 (def scrub-page (user rules (o msg nil))
-  (minipage "Scrubrules"
+  (minipage user "Scrubrules"
     (when msg (pr msg) (br2))
     (uform user req
            (with (froms (lines (arg req "from"))
@@ -2528,7 +2528,7 @@
       (let ban (car (banned-sites* site))
         (tr (tdr (when deads
                    (onlink (len deads)
-                           (listpage user (msec) deads
+                           (listpage user deads
                                      nil (+ "killed at " site) "badsites"))))
             (tdr (when deads (pr (round (days-since ((car deads) 'time))))))
             (td site)
@@ -2590,10 +2590,10 @@
                                 (max (aif (car (goods ip)) it!time 0)
                                      (aif (car (bads  ip)) it!time 0)))))))
             (tdr (onlink (len (bads ip))
-                         (listpage user (msec) (bads ip)
+                         (listpage user (bads ip)
                                    nil (+ "dead from " ip) "badips")))
             (tdr (onlink (len (goods ip))
-                         (listpage user (msec) (goods ip)
+                         (listpage user (goods ip)
                                    nil (+ "live from " ip) "badips")))
             (td (each u (subs ip)
                   (userlink user u nil)
