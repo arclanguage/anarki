@@ -1,3 +1,4 @@
+(require "search.arc")
 (= this-site*    "Anarki"
    site-url*     "http://site.example.com";your domain name
    parent-url*   "http://github.com/arclanguage/anarki"
@@ -659,6 +660,8 @@
                (procrast-msg ,gu ,gw)))
 )))))))
 
+
+
 ;(mac shortpage (user label title whence . body)
 ;  `(longpage ,user ,label ,title ,whence ,@body))
 
@@ -791,6 +794,33 @@
                (admin&newsadmin-page user)))
       (single-input "" 'ip 20 "ban ip"))))
 
+;   Search bar for News
+;   Copyright (C) 2017  Pelle Hjek
+
+(newsop search (q)
+  (search-page user q))
+
+(def search-bar (user)
+  (tag (form action "search")
+    (pr "Search: ")
+    (input 'q "" 18 )))
+
+(def search-page (user terms)
+  (listpage user (search (join stories* comments*) tokens.terms) "search"
+    (string "Search results for \"" terms #\")))
+
+(def search (stories terms)
+  (keep [match-all? _ terms] stories))
+
+(def match-all? (story terms)
+  (all idfn (map [match? story _] terms)))
+
+(def match? (story term)
+  (some [match-ignoring-case? (string story._) term] '(title url by text)))
+
+(def match-ignoring-case? (s pat)
+  (re-match (re:string "(?i:" pat ")")
+            s))
 
 ; Users
 
