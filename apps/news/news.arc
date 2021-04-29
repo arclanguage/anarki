@@ -43,12 +43,6 @@
 
 )
 
-; Look up title on Searx, a free metasearch engine
-
-(def weblink (q)
-  (pr bar*)
-  (link "web" (+ "https://searx.me/?q=" (urlencode q))))
-
 
 (def vote-url (user i dir whence)
   (+ "vote?for=" i!id
@@ -94,6 +88,7 @@
   theme      0
   topcolor   nil
   keys       nil
+  search-pref "https://searx.neocities.org?q=" ; search prefix
   delay      0)
 
 (deftem item
@@ -290,6 +285,12 @@
 (def save-prof  (u) (temstore 'profile (profs* u) (+ profdir* u)))
 
 (mac uvar (u k) `((profile ,u) ',k))
+
+
+; enable a user-defined prefix for title search and urls
+
+(def search-link (u q)
+  (aif (and u (uvar u search-pref)) (+ it (urlencode q)) it))
 
 (mac karma   (u) `(uvar ,u karma))
 (mac ignored (u) `(uvar ,u ignore))
@@ -887,6 +888,7 @@
       (hexcol  topcolor   ,(or (p 'topcolor) (hexrep site-color*)) ,k  ,k)
       (choice   theme     ,themes*                                 ,u  ,u)     
       (int font-size      ,(p 'font-size)                          ,u  ,u)
+      (string  search-pref,(p 'search-pref)                        ,u  ,u)
       (int     delay      ,(p 'delay)                              ,u  ,u))))
 
 (def saved-link (user subject)
@@ -1032,7 +1034,7 @@
         (tag (div "class" "subtext")
           (hook 'itemline s user)
           (itemline s user)
-          (when (isnt whence "news") (weblink s!title))
+          (when (isnt whence "news") (search-link user s!title))
           (when (in s!type 'story 'poll) (commentlink s user))
           (editlink s user)
           (when (apoll s) (addoptlink s user))
