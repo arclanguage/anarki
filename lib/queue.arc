@@ -1,7 +1,9 @@
-(def queue ()
+(def queue contents
 "A queue is like a list but with efficient insertion in one end and deletion
 in the other."
-  (annotate 'queue (list nil nil 0)))
+  (ret q (annotate 'queue (list nil nil 0))
+       (each obj contents
+             (enq obj q))))
 
 (def enq (obj qq)
 "Insert 'obj' into queue 'qq'."
