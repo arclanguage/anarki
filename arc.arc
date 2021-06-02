@@ -301,7 +301,7 @@ For example, {a 1 b 2} => (%braces a 1 b 2) => (obj a 1 b 2)"
 "Finds a (key value) pair in an association list 'al' of such pairs."
   (if (no acons.al)
        nil
-      (and (acons (car al)) (is (caar al) key))
+      (and (acons (car al)) (testify.key (caar al)))
        (car al)
       (assoc key (cdr al))))
 

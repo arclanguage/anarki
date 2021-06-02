@@ -19,6 +19,18 @@
        (test excludes-tagged-types
              (assert-nil (atom (annotate 'foo 34)))))
 
+(suite assoc
+       (test key-found
+             (assert-same '(b . 4)
+                          (assoc 'b '((a . 3) (b . 4)))))
+       (test not-found
+             (assert-nil (assoc 'c '((a . 3) (b . 4)))))
+       (test predicate-match
+             (assert-same '(4 . 13)
+                          (assoc even '((4 . 13) (5 . 15)))))
+       (test predicate-fail
+             (assert-nil (assoc even '((3 . 13) (5 . 15))))))
+
 (suite memtable
        (test no-args
              (assert-same (obj) (memtable)))
