@@ -73,5 +73,10 @@
        (test template-expressions-are-evaluated-at-inst
              (assert-same instance-with-expression!field1
                           (do (sleep 1)
-                              instance-with-expression!field1))))
-
+                              instance-with-expression!field1)))
+       (test empty-tem-has-len-zero
+             (assert-same 0
+                          (len empty-instance)))
+       (test tem-with-default-has-len-one
+             (assert-same 1
+                          (len tem-with-default))))
