@@ -105,15 +105,17 @@
                                                                                  'suite-name ,suite-name
                                                                                  'full-suite-name ',(make-full-name parent-suite-full-name cur-suite-name))
                                                                            ,(make-full-name parent-suite-full-name cur-suite-name)
-                                                                           ;;zck should this error if there's more than one setup clause?
+                                                                           ;;zck should this error if there's >1 setup, or >1 teardown clause?
                                                                            ,(cdr (car (keep-by-car suite-sexp 'setup)))
+                                                                           ,(cdr (car (keep-by-car suite-sexp 'teardown)))
                                                                            ,(keep-by-car suite-sexp 'test))
                                                        ,(keep-by-car suite-sexp 'suite))))))))
 
-(mac add-tests-to-suite (cur-suite-sexp full-suite-name setup tests-sexps)
+(mac add-tests-to-suite (cur-suite-sexp full-suite-name setup teardown tests-sexps)
      "Add tests to CUR-SUITE-SEXP, with setup SETUP. Tests come from TESTS-SEXPS.
 
-SETUP is a list of var val pairs, like (x 1) or (age 31 height 70).
+SETUP is a list of var val pairs, like (x 1), (age 31 height 70), or (backup-important-global (copy important-global)).
+Teardown is a list of s-expressions to run after the tests finish, like ((= important-global backup-important-global)).
 Don't quote FULL-SUITE-NAME."
      (if (no tests-sexps)
          cur-suite-sexp
@@ -130,10 +132,12 @@ Don't quote FULL-SUITE-NAME."
                           (make-test ',full-suite-name
                                      ',((car tests-sexps) 1) ;;this is the same as ',test-name, but needs to be macroexpanded directly. For reasons!
                                      ,setup
+                                     ,teardown
                                      ,@(cddr (car tests-sexps)))) ;;zck we need to be able to call this, right?
                        (add-tests-to-suite ,cur-suite
                                            ,full-suite-name
                                            ,setup
+                                           ,teardown
                                            ,(cdr tests-sexps))))))
 
 (mac add-suites-to-suite (full-suite-name cur-suite-sexp suites-sexps)
@@ -180,8 +184,8 @@ beginning with the symbol 'suitex ."
                                               (to-readable-string setup-clause)))
                                     (map [unless (and (acons _)
                                                       (mem (car _)
-                                                           '(suite test setup)))
-                                         (string "Each element of a suite should begin with one of the symbols 'suite, 'test, or 'setup. This doesn't: "
+                                                           '(suite test setup teardown)))
+                                         (string "Each element of a suite should begin with one of the symbols 'suite, 'test, 'setup, or 'teardown. This doesn't: "
                                                  (to-readable-string _)
                                                  ".")]
                                                  (cddr suite-sexp)))))))
@@ -206,10 +210,12 @@ beginning with the symbol 'suitex ."
   suite-name 'test-with-no-suite-name
   test-fn (fn args (assert nil "You didn't give this test a body. So I'm making it fail.")))
 
-(mac make-test (suite-name test-name setup . body)
+(mac make-test (suite-name test-name setup teardown . body)
      "Make a test for SUITE-NAME named TEST-NAME. Quote both of these.
 
-The test should have SETUP and BODY."
+The test should have SETUP, TEARDOWN, and BODY. SETUP is a list of
+variable-value pairs, like (x 3 y (+ x 2)). TEARDOWN is a list of
+s-expressions to run after the test, like ((wipe test-storage))."
      `(if (no (is-valid-name ,test-name))
           (err (string "Test names can't have periods in them. "
                        ,test-name
@@ -217,24 +223,28 @@ The test should have SETUP and BODY."
         (inst 'test
               'suite-name ,suite-name
               'test-name ,test-name
-              'test-fn (make-test-fn ,suite-name ,test-name ,setup ,@body))))
+              'test-fn (make-test-fn ,suite-name ,test-name ,setup ,teardown ,@body))))
 
-(mac make-test-fn (suite-name test-name setup . body)
-     `(fn ()
-          (on-err (fn (ex) (inst 'test-result
-                                 'suite-name ,suite-name
-                                 'test-name ,test-name
-                                 'full-test-name (make-full-name ,suite-name ,test-name)
-                                 'status 'fail
-                                 'details (details ex)))
-                  (fn ()
-                      (eval '(withs ,setup
-                                    (inst 'test-result
-                                          'suite-name ,suite-name
-                                          'test-name ,test-name
-                                          'full-test-name (make-full-name ,suite-name ,test-name)
-                                          'status 'pass
-                                          'return-value (w/stdout (outstring) ,@body))))))))
+(mac make-test-fn (suite-name test-name setup teardown . body)
+     (let test-code `'(withs ,setup (do1 (do ,@body) ,@teardown))
+          `(fn ()
+               (let test-code ,test-code
+                    (on-err (fn (ex) (inst 'test-result
+                                           'suite-name ,suite-name
+                                           'test-name ,test-name
+                                           'full-test-name (make-full-name ,suite-name ,test-name)
+                                           'status 'fail
+                                           'details (details ex)
+                                           'code ,test-code))
+                            (fn ()
+                                (eval '(withs ,setup
+                                        (inst 'test-result
+                                         'suite-name ,suite-name
+                                         'test-name ,test-name
+                                         'full-test-name (make-full-name ,suite-name ,test-name)
+                                         'status 'pass
+                                         'return-value (w/stdout (outstring) (do1 (do ,@body) ,@teardown))
+                                         'code ,test-code)))))))))
 
 
 
@@ -244,25 +254,36 @@ The test should have SETUP and BODY."
   suite-name 'test-results-with-no-suite-name
   status 'fail
   details "test results with no details"
-  return-value nil)
+  return-value nil
+  code nil)
 
-(def pretty-results (test-result)
-     "Print out a pretty summary of TEST-RESULT."
-     (pr test-result!suite-name "." test-result!test-name " ")
-     (if (is test-result!status 'pass)
-         (prn  "passed!")
-       (prn "failed: " test-result!details)))
+(def pretty-results (test-result (o verbose nil))
+  "Print out a pretty summary of TEST-RESULT."
+  ;; (prn "pretty resultsing!")
+  (let indentation (newstring (* 4 (get-nesting-level test-result!full-test-name))
+                              #\space)
+    ;;zck maybe this should always be on? Or at least, it should be working now?
+    (when (or verbose (is test-result!status 'fail))
+      (pr test-result!suite-name "." test-result!test-name " "))
+    (if (is test-result!status 'fail)
+        (prn "failed: "
+             test-result!details
+             ".\trerun this test: "
+             test-result!code)
+        verbose
+        (prn "passed!"))))
 
 (mac test names-list
      `(do-test ',names-list))
 
 (def do-test (names)
-     (if (no names)
-         (do (run-all-tests)
-             (summarize-run-of-all-tests))
-       (let unique-names (filter-unique-names names)
-            (do (run-specific-things unique-names t)
-                (summarize-run unique-names)))))
+  (let starting-time (seconds)
+    (if (no names)
+        (do (run-all-tests)
+            (summarize-run-of-all-tests starting-time))
+        (let unique-names (filter-unique-names names)
+             (do (run-specific-things unique-names t)
+                 (summarize-run unique-names starting-time))))))
 
 (mac test-and-error-on-failure names
      `(do-test-and-error-on-failure ',names))
@@ -400,7 +421,7 @@ from racket is needed to tell if all tests passed or not"
           (run-test it store-result)
           nil))
 
-(def summarize-run (names)
+(def summarize-run (names starting-time)
      "Summarize a given test run.
       That is, print out information about the overall status
       of a set of suites."
@@ -423,6 +444,7 @@ from racket is needed to tell if all tests passed or not"
              (each name names-not-found
                    (prn name))
              (prn))
+           (prn "Test run completed in " (plural (since starting-time) "second") ".")
            (if (is tests 0)
                (prn "We didn't find any tests. Odd...")
              (is passes tests)
@@ -432,9 +454,9 @@ from racket is needed to tell if all tests passed or not"
              (prn "Oh dear, " (- tests passes) " of " tests " failed."))
            (list passes tests)))
 
-(def summarize-run-of-all-tests ()
+(def summarize-run-of-all-tests (starting-time)
      "Summarise the run of all tests."
-     (summarize-run (get-all-top-level-suite-names)))
+     (summarize-run (get-all-top-level-suite-names) starting-time))
 
 
 (def total-tests (suite-results)
@@ -514,7 +536,7 @@ from racket is needed to tell if all tests passed or not"
 ;;compare (print-run-summary 'unit-test-tests.suite-creation.add-tests-to-suite)
 ;;with (print-run-summary 'unit-test-tests.suite-creation.add-tests-to-suite.passing-test-passes)
 
-(def print-suite-run-summary (suite-results-template (o nesting-dedent-level 0))
+(def print-suite-run-summary (suite-results-template (o nesting-dedent-level 0) (o verbose nil))
      (when suite-results-template
        (with (tests 0
               passed 0)
@@ -527,6 +549,7 @@ from racket is needed to tell if all tests passed or not"
                                            (string suite-results-template!suite-name))
                                     nesting-dedent-level))
                               #\space))
+               ;;zck after adding tests, refactor to add verbosity
                (if (is tests 0)
                    (prn "There are no tests directly in suite " suite-results-template!suite-name ".")
                  (is tests passed 1)
@@ -535,7 +558,7 @@ from racket is needed to tell if all tests passed or not"
                  (prn "Suite " suite-results-template!suite-name ": all " tests " tests passed!")
                  (do (prn "Suite " suite-results-template!suite-name ":")
                      (each (test-name test-result) suite-results-template!test-results
-                           (pretty-results test-result))
+                      (pretty-results test-result))
                    (prn "In suite " suite-results-template!suite-name ", " passed " of " tests " tests passed."))))
        (each (nested-name nested-results) suite-results-template!nested-suite-results
              (print-suite-run-summary nested-results nesting-dedent-level))))
@@ -608,7 +631,7 @@ from racket is needed to tell if all tests passed or not"
      `(assert-two-vals same ,expected ,actual ,fail-message))
 
 (mac assert-t (actual (o fail-message))
-     `(assert-two-vals isnt nil ,actual ,fail-message))
+     `(assert-two-vals and 'non-nil ,actual ,fail-message))
 ;; We can't call (assert-two-vals is t ,actual) because we want to accept _any_ non-nil value, not just 't
 
 (mac assert-nil (actual (o fail-message))
