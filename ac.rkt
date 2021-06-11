@@ -1006,10 +1006,13 @@
 
 (xdef call/ec call-with-escape-continuation)
 
-(xdef infile  open-input-file)
+(xdef infile (lambda (f . args)
+               (apply open-input-file
+                      (expand-user-path f)
+                      args)))
 
 (xdef outfile (lambda (f . args)
-                 (open-output-file f
+                 (open-output-file (expand-user-path f)
                                    ;#:mode 'text
                                    #:exists (if (equal? args '(append))
                                        'append
