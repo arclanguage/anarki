@@ -2,9 +2,6 @@ name: CI
 
 on: [push, pull_request]
 
-# TODO: The Travis CI script was only run on pushes to the master branch. See if
-# we should do the same here.
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,8 +17,8 @@ jobs:
             racket-version: "7.7"
         include:
           # This variable is constant across all builds. This is the name of the
-          # Racket package (`raco pkg install anarki` at the command line) and
-          # the name of the collection (`(require anarki)` in Racket code).
+          # (installable/uninstallable) Racket package and the name of the
+          # (`require`-able) Racket collection.
           - package: anarki
     steps:
       - name: Checkout
@@ -60,9 +57,9 @@ jobs:
       # package. If a submodule named "test" is not present in a module file,
       # this falls back to running the whole file.
       #
-      # Due to the `--drdr` option, this runs each test with a separate temporary
-      # directory, gives it no stdin, suppresses its stdout, and treats any
-      # stderr output as a test failure.
+      # Due to the `--drdr` option, this runs each test with a separate
+      # temporary directory, gives it no stdin, suppresses its stdout, and
+      # treats any stderr output as a test failure.
       # See <https://docs.racket-lang.org/raco/test.html>.
       #
       - name: Run just the Racket-style unit tests for `${{ matrix.package }}`
@@ -82,16 +79,6 @@ jobs:
 #        run: ./arc.sh -n tests.arc
       - name: Run the Arc unit tests, and build the HTML documentation
         run: ./arc.sh -n build-web-help.arc
-
-
-# TODO: Build something with functionality equivalent to this. We should probably
-# put this in a separate action.
-
-#after_success:
-#  # We commit the HTML help to the `gh-pages` branch. This script will
-#  # stop early if it wasn't initiated by a commit to the `master`
-#  # branch.
-#  - ./deploy-to-gh-pages.sh
 
 
 
@@ -124,5 +111,5 @@ jobs:
 # Versions prior to 7.6.0.7 don't define the `ffi/unsafe/vm` module, which is
 # needed to mutate pairs in the Chez-Scheme-based (CS) releases of Racket.
 #
-# Racket CS versions prior to 7.8 have different `double->string` behavior,
-# which breaks one of the tests.
+# Racket CS versions prior to 7.8 have different results when converting a
+# floating point number to a string for the `double->string` unit test.

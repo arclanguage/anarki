@@ -1,4 +1,4 @@
-# Anarki [![Travis build](https://travis-ci.org/arclanguage/anarki.svg?branch=master)](https://travis-ci.org/arclanguage/anarki)
+# Anarki [![CI](https://github.com/arclanguage/anarki/actions/workflows/ci.yml/badge.svg)](https://github.com/arclanguage/anarki/actions/workflows/ci.yml)
 ## A publicly modifiable 'wiki-like' fork of [Arc Lisp](http://www.paulgraham.com/arc.html)
 
 The intention is to be *extremely permissive* in accepting patches. For commit
