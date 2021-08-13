@@ -3,17 +3,21 @@ name: Continuous Delivery for GitHub Pages
 on:
   workflow_run:
     workflows: ["CI"]
-    # FIXME: Change this to master before we make a pull request.
-    branches: [2021-08-12/github-actions]
-#    branches: [master]
+    branches: [master]
     types: [completed]
 
 jobs:
   cd-gh-pages:
     runs-on: ubuntu-latest
+    # We only update the GitHub Pages branch for the main Anarki repo if this is
+    # the main Anarki repo (not a fork), only if the CI tests were caused by a
+    # push (not a pull request), and only if they succeeded.
     if: |
-      ${{ github.event.workflow_run.conclusion == 'success'
-        && github.repository == 'arclanguage/anarki' }}
+      ${{
+        github.repository == 'arclanguage/anarki'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.conclusion == 'success'
+      }}
     strategy:
       matrix:
         include:
@@ -56,16 +60,11 @@ jobs:
       # branch with an empty history. Note that we authenticate using the
       # `GITHUB_TOKEN` secret; this token is provided by GitHub to GitHub Actions
       # workflows.
-      #
-      # FIXME: Replace "2021-08-12/pretend-gh-pages-branch" with "gh-pages"
-      # before we make a pull request.
-      #
       - name: Clone the `gh-pages` branch, or create it with an empty history
         run: |
           git clone "https://${{ secret.GITHUB_TOKEN }}@github.com/arclanguage/anarki.git" build-gh-pages/repo
           cd build-gh-pages/repo
-          git checkout 2021-08-12/pretend-gh-pages-branch || \
-            git checkout --orphan 2021-08-12/pretend-gh-pages-branch
+          git checkout gh-pages || git checkout --orphan gh-pages
 
       # We replace all the files with the contents of the build-gh-pages/site/
       # directory, plus a short readme. We stage all the files for a commit.
@@ -90,4 +89,4 @@ jobs:
       # branch as `refs/heads/gh-pages` so that we create the branch if it
       # doesn't exist yet.
       - name: Push to `gh-pages`
-        run: git push -q origin HEAD:refs/heads/2021-08-12/pretend-gh-pages-branch
+        run: git push -q origin HEAD:refs/heads/gh-pages
