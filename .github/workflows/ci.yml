@@ -13,7 +13,11 @@ jobs:
         racket-variant: ["BC", "CS"]
         # There is no "allow failures" option for GitHub Actions, but we test on
         # the latest releases anyway just so we can notice if they break.
-        racket-version: ["7.7", "7.9", "stable", "current"]
+        racket-version: ["7.7", "7.8", "8.2", "stable", "current"]
+        exclude:
+          # The earliest supported version of Racket CS is 7.8.
+          - racket-variant: "CS"
+            racket-version: "7.7"
         include:
           # This variable is constant across all builds. This is the name of the
           # Racket package (`raco pkg install anarki` at the command line) and
@@ -98,12 +102,10 @@ jobs:
 # unknown how well they work.
 #
 # Versions prior to 6.0.1 don't provide the `--drdr` option, which is used by
-# one of the testing commands here, but they otherwise should work as well as
-# the versions after.
+# one of the testing commands here.
 #
 # Versions prior to 6.1 don't provide the `--check-pkg-deps` option, which is
-# used by one of the testing commands here, but they otherwise should work as
-# well as the versions after.
+# used by one of the testing commands here.
 #
 # Versions prior to 6.3 don't define the `racket/random` module, which is needed
 # for news.arc and one of the tests.
@@ -112,9 +114,15 @@ jobs:
 # prevents us from having ac.scm statically require `crypto-random-bytes` from
 # `racket/random` or `ssl-connect` from `openssl`.
 #
+# Versions prior to 7.4 didn't have a CS version. (This isn't a problem; it's
+# just something that could cause this CI script to fail if we weren't cautious
+# about putting versions this old in the version list.)
+#
 # Versions prior to 7.5 don't provide the `--no-docs` option, which is used by
-# the installation commands here, but they otherwise should work as well as the
-# versions after.
+# the installation commands here.
 #
 # Versions prior to 7.6.0.7 don't define the `ffi/unsafe/vm` module, which is
 # needed to mutate pairs in the Chez-Scheme-based (CS) releases of Racket.
+#
+# Racket CS versions prior to 7.8 have different `double->string` behavior,
+# which breaks one of the tests.
