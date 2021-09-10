@@ -1,0 +1,92 @@
+name: Continuous Delivery for GitHub Pages
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [master]
+    types: [completed]
+
+jobs:
+  cd-gh-pages:
+    runs-on: ubuntu-latest
+    # We only update the GitHub Pages branch for the main Anarki repo if this is
+    # the main Anarki repo (not a fork), only if the CI tests were caused by a
+    # push (not a pull request), and only if they succeeded.
+    if: |
+      ${{
+        github.repository == 'arclanguage/anarki'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.conclusion == 'success'
+      }}
+    strategy:
+      matrix:
+        include:
+          # This is the only entry of the matrix for this action.
+          - racket-variant: "CS"
+            racket-version: "8.2"
+            package: anarki
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Racket '${{ matrix.racket-version }}'
+        uses: Bogdanp/setup-racket@v1.1
+        with:
+          architecture: x64
+          distribution: full
+          variant: ${{ matrix.racket-variant }}
+          version: ${{ matrix.racket-version }}
+
+
+      # We build and test the package again. For more information about these
+      # commands, see ci.yml. Since we only run this upon the success of the CI
+      # builds, this is not likely to fail.
+      - name: Install and test `${{ matrix.package }}`
+        run: raco pkg install --auto --no-docs --batch
+      - name: Recompile to check dependencies, and build Racket package docs
+        run: raco setup --check-pkg-deps --unused-pkg-deps "${{ matrix.package }}"
+      - name: Run just the Racket-style unit tests for `${{ matrix.package }}`
+        run: raco test --drdr --package "${{ matrix.package }}"
+      - name: Run the Arc unit tests, and build the HTML documentation
+        run: ./arc.sh -n build-web-help.arc
+
+
+      # We take the built `build-gh-pages` content from the `master` branch and
+      # deploy it as a commit to the `gh-pages` branch.
+
+      # This is adapted from
+      # <https://github.com/steveklabnik/automatically_update_github_pages_with_travis_example>.
+
+      # We clone the `gh-pages` branch. If it doesn't exist yet, we create a new
+      # branch with an empty history. Note that we authenticate using the
+      # `GITHUB_TOKEN` secret; this token is provided by GitHub to GitHub Actions
+      # workflows.
+      - name: Clone the `gh-pages` branch, or create it with an empty history
+        run: |
+          git clone "https://${{ secret.GITHUB_TOKEN }}@github.com/arclanguage/anarki.git" build-gh-pages/repo
+          cd build-gh-pages/repo
+          git checkout gh-pages || git checkout --orphan gh-pages
+
+      # We replace all the files with the contents of the build-gh-pages/site/
+      # directory, plus a short readme. We stage all the files for a commit.
+      - name: Replace the `gh-pages` checkout's files with the built ones and a readme
+        run: |
+          git rm -rf .
+          cp -r ../site/* .
+          cat > README.md <<EOF
+          This `gh-pages` branch is generated and deployed automatically when commits are made to the Anarki `master` branch. See the script .github/workflows/cd.yml on `master`.
+          EOF
+
+      # We stage all the files and make a commit to the `gh-pages` branch that
+      # looks a lot like the latest commit to `master`.
+      - name: Commit to `gh-pages`
+        run: |
+          git add .
+          git config user.name "$(git log -1 --pretty=%an master)"
+          git config user.email "$(git log -1 --pretty=%ae master)"
+          git commit -m "$(git log -1 --pretty=%B master)"
+
+      # We push this new commit to the `gh-pages` branch. We specify the remote
+      # branch as `refs/heads/gh-pages` so that we create the branch if it
+      # doesn't exist yet.
+      - name: Push to `gh-pages`
+        run: git push -q origin HEAD:refs/heads/gh-pages

@@ -1,0 +1,115 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        racket-variant: ["BC", "CS"]
+        # There is no "allow failures" option for GitHub Actions, but we test on
+        # the latest releases anyway just so we can notice if they break.
+        racket-version: ["7.7", "7.8", "8.2", "stable", "current"]
+        exclude:
+          # The earliest supported version of Racket CS is 7.8.
+          - racket-variant: "CS"
+            racket-version: "7.7"
+        include:
+          # This variable is constant across all builds. This is the name of the
+          # (installable/uninstallable) Racket package and the name of the
+          # (`require`-able) Racket collection.
+          - package: anarki
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Racket '${{ matrix.racket-version }}'
+        uses: Bogdanp/setup-racket@v1.1
+        with:
+          architecture: x64
+          distribution: full
+          variant: ${{ matrix.racket-variant }}
+          version: ${{ matrix.racket-version }}
+
+
+      # We test that the Racket package installs and sets up properly, and we
+      # run the Racket unit test runner just to be sure it works, even though we
+      # launch most of our unit tests in a different way.
+
+      # We install each package directory as a linked package, and we
+      # automatically fetch all the dependencies. We don't build the docs yet;
+      # we'll do that later when we're recompiling the project to check its
+      # dependencies.
+      - name: Install `${{ matrix.package }}` and its dependencies
+        run: raco pkg install --auto --no-docs --batch
+
+      # We recompile Anarki and check that the package dependencies declared in
+      # info.rkt are correct. In the process, we compile the docs this time.
+      - name: Recompile to check dependencies, and build Racket package docs
+        run: raco setup --check-pkg-deps --unused-pkg-deps "${{ matrix.package }}"
+
+      # We run Racket tests according to the way the DrDr continuous testing
+      # system does. This imitates the settings used by the Racket package index
+      # at <https://pkgs.racket-lang.org/>.
+      #
+      # Due to the usual `raco test` behavior, this runs any submodules named
+      # "test" of any Racket module files existing recursively under this
+      # package. If a submodule named "test" is not present in a module file,
+      # this falls back to running the whole file.
+      #
+      # Due to the `--drdr` option, this runs each test with a separate
+      # temporary directory, gives it no stdin, suppresses its stdout, and
+      # treats any stderr output as a test failure.
+      # See <https://docs.racket-lang.org/raco/test.html>.
+      #
+      - name: Run just the Racket-style unit tests for `${{ matrix.package }}`
+        run: raco test --drdr --package "${{ matrix.package }}"
+
+
+      # We finally run the main unit tests and try to build the HTML help. While
+      # doing so, we disable rlwrap using `-n`.
+      #
+      # Note that at this point, we have already installed any necessary Racket
+      # package dependencies using the `raco pkg install` command above.
+      #
+      # Running build-web-help.arc actually runs tests.arc too, so we don't need
+      # to do both.
+      #
+#      - name: Run the Arc unit tests
+#        run: ./arc.sh -n tests.arc
+      - name: Run the Arc unit tests, and build the HTML documentation
+        run: ./arc.sh -n build-web-help.arc
+
+
+
+# ===== Racket version compatibility notes =====
+#
+# Versions prior to 5.92 don't seem to install the current directory as a
+# package named "anarki" using `raco pkg install --deps search-auto`. It's
+# unknown how well they work.
+#
+# Versions prior to 6.0.1 don't provide the `--drdr` option, which is used by
+# one of the testing commands here.
+#
+# Versions prior to 6.1 don't provide the `--check-pkg-deps` option, which is
+# used by one of the testing commands here.
+#
+# Versions prior to 6.3 don't define the `racket/random` module, which is needed
+# for news.arc and one of the tests.
+#
+# Versions prior to 6.11 have a bug in unmarshaling namespace information, which
+# prevents us from having ac.scm statically require `crypto-random-bytes` from
+# `racket/random` or `ssl-connect` from `openssl`.
+#
+# Versions prior to 7.4 didn't have a CS version. (This isn't a problem; it's
+# just something that could cause this CI script to fail if we weren't cautious
+# about putting versions this old in the version list.)
+#
+# Versions prior to 7.5 don't provide the `--no-docs` option, which is used by
+# the installation commands here.
+#
+# Versions prior to 7.6.0.7 don't define the `ffi/unsafe/vm` module, which is
+# needed to mutate pairs in the Chez-Scheme-based (CS) releases of Racket.
+#
+# Racket CS versions prior to 7.8 have different results when converting a
+# floating point number to a string for the `double->string` unit test.
