@@ -68,8 +68,11 @@ jobs:
 
       # We replace all the files with the contents of the build-gh-pages/site/
       # directory, plus a short readme. We stage all the files for a commit.
+      # (GitHub Actions workflows reset the working directory between steps, so
+      # we `cd` again.)
       - name: Replace the `gh-pages` checkout's files with the built ones and a readme
         run: |
+          cd build-gh-pages/repo
           git rm -rf .
           cp -r ../site/* .
           cat > README.md <<EOF
@@ -80,6 +83,7 @@ jobs:
       # looks a lot like the latest commit to `master`.
       - name: Commit to `gh-pages`
         run: |
+          cd build-gh-pages/repo
           git add .
           git config user.name "$(git log -1 --pretty=%an master)"
           git config user.email "$(git log -1 --pretty=%ae master)"
@@ -89,4 +93,6 @@ jobs:
       # branch as `refs/heads/gh-pages` so that we create the branch if it
       # doesn't exist yet.
       - name: Push to `gh-pages`
-        run: git push -q origin HEAD:refs/heads/gh-pages
+        run: |
+          cd build-gh-pages/repo
+          git push -q origin HEAD:refs/heads/gh-pages
