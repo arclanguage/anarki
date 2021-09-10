@@ -62,7 +62,7 @@ jobs:
       # workflows.
       - name: Clone the `gh-pages` branch, or create it with an empty history
         run: |
-          git clone "https://${{ secret.GITHUB_TOKEN }}@github.com/arclanguage/anarki.git" build-gh-pages/repo
+          git clone "https://${{ secrets.GITHUB_TOKEN }}@github.com/arclanguage/anarki.git" build-gh-pages/repo
           cd build-gh-pages/repo
           git checkout gh-pages || git checkout --orphan gh-pages
 
