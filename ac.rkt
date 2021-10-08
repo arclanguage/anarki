@@ -1424,14 +1424,14 @@ To quit:
   (or press ctrl and 'd' at once)
 For help on say 'string':
   arc> (help string)
-For a list of differences with arc 3.1:
+For a list of differences with arc 3.2:
   arc> (incompatibilities)
 To run all automatic tests:
   $ ./arc.sh
   arc> (load \"tests.arc\")
 
 If you have questions or get stuck, come to http://arclanguage.org/forum.
-Arc 3.1 documentation: https://arclanguage.github.io/ref.
+Arc 3.2 documentation: https://arclanguage.github.io/ref.
 "))
   (tl2 interactive?))
 
