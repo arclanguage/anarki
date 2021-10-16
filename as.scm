@@ -1,4 +1,4 @@
-; mzscheme -m -f as.scm
+; racket -f as.scm
 ; (tl)
 ; (asv)
 ; http://localhost:8080

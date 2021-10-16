@@ -1,4 +1,4 @@
-Arc 3.1 stable: http://arclanguage.github.io
+Arc 3.2 stable: http://arclanguage.github.io
 
 Official arc releases + crucial patches and bugfixes from the community.
 

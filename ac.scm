@@ -1251,7 +1251,7 @@
                   (x-set-cdr! x val))
               val))
 
-; waterhouse's code to modify mzscheme-4's immutable pairs.
+; waterhouse's code to modify Racket's immutable pairs.
 ; http://arclanguage.org/item?id=13616
 (require racket/unsafe/ops)
 

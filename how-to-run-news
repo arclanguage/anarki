@@ -8,7 +8,7 @@ mkdir arc
 
 echo "myname" > arc/admins
 
-mzscheme -f as.scm
+racket -f as.scm
 
 at the arc prompt:
 
