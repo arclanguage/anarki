@@ -72,8 +72,7 @@ jobs:
       #
       # NOTE: The `cp -r path/. path` command syntax is based on:
       #
-      #   https://stackoverflow.com/questions/14922562/how-do-i-copy-folder-wit
-h-files-to-another-folder-in-unix-linux
+      #   https://stackoverflow.com/questions/14922562/how-do-i-copy-folder-with-files-to-another-folder-in-unix-linux
       #
       # We could also say `cp -r path/* path`, but it would fail if the source
       # directory were empty.
