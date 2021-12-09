@@ -1,7 +1,7 @@
 ; build-web-help.arc
 ;
 ; Running this file executes the unit tests and then generates
-; build-gh-pages/site/help/index.html, a simple HTML file full of
+; dist/gh-pages/help/index.html, a simple HTML file full of
 ; docstrings.
 
 
@@ -9,7 +9,9 @@
 (require 'tests.arc)
 
 
-(assign-and-warn web-help-dir* "build-gh-pages/site/help")
+(assign-and-warn gh-pages-dir* "dist/gh-pages")
+(assign-and-warn gh-pages-readme* (+ gh-pages-dir* "/README.md"))
+(assign-and-warn web-help-dir* (+ gh-pages-dir* "/help"))
 (assign-and-warn web-help-file* (+ web-help-dir* "/index.html"))
 
 (prn "Generating HTML documentation at " web-help-file* " ...")
@@ -44,7 +46,17 @@
               (tag (pre class "docstring-and-examples")
                 (pr:trim docstring)))))))))
 
+
 (ensure-dir web-help-dir*)
+
+(w/outfile out gh-pages-readme*
+  (w/stdout out
+    (prn:+
+      "This `gh-pages` branch is generated and deployed "
+      "automatically when commits are made to the Anarki `master` "
+      "branch. See the script .github/workflows/cd-gh-pages.yml on "
+      "`master`.")))
+
 (w/outfile out web-help-file*
   (w/stdout out
     (doctype "html")
@@ -156,5 +168,6 @@
                 other-defs.source))
             (display-web-help-section "Documented elsewhere"
               unknown-defs)))))))
+
 
 (prn "HTML documentation complete.")

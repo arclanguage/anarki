@@ -50,7 +50,7 @@ jobs:
         run: ./arc.sh -n build-web-help.arc
 
 
-      # We take the built `build-gh-pages` content from the `master` branch and
+      # We take the built dist/gh-pages/ content from the `master` branch and
       # deploy it as a commit to the `gh-pages` branch.
 
       # This is adapted from
@@ -58,41 +58,51 @@ jobs:
 
       # We clone the `gh-pages` branch. If it doesn't exist yet, we create a new
       # branch with an empty history. Note that we authenticate using the
-      # `GITHUB_TOKEN` secret; this token is provided by GitHub to GitHub Actions
-      # workflows.
+      # `GITHUB_TOKEN` secret; this token is provided by GitHub to
+      # GitHub Actions workflows.
       - name: Clone the `gh-pages` branch, or create it with an empty history
         run: |
-          git clone "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build-gh-pages/repo
-          cd build-gh-pages/repo
+          git clone "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build/gh-pages-repo
+          cd build/gh-pages-repo
           git checkout gh-pages || git checkout --orphan gh-pages
 
-      # We replace all the files with the contents of the build-gh-pages/site/
-      # directory, plus a short readme. We stage all the files for a commit.
-      # (GitHub Actions workflows reset the working directory between steps, so
-      # we `cd` again.)
-      - name: Replace the `gh-pages` checkout's files with the built ones and a readme
+      # We replace the contents of the working directory with those of the built
+      # GitHub Pages site (first making sure that nothing would overwrite the
+      # .git/ directory). We stage all the files, including untracked ones.
+      #
+      # NOTE: The `cp -r path/. path` command syntax is based on:
+      #
+      #   https://stackoverflow.com/questions/14922562/how-do-i-copy-folder-wit
+h-files-to-another-folder-in-unix-linux
+      #
+      # We could also say `cp -r path/* path`, but it would fail if the source
+      # directory were empty.
+      #
+      - name: Stage a commit to `gh-pages` with the built GitHub Pages site
         run: |
-          cd build-gh-pages/repo
+          cd build/gh-pages-repo
           git rm -rf .
-          cp -r ../site/* .
-          cat > README.md <<EOF
-          This `gh-pages` branch is generated and deployed automatically when commits are made to the Anarki `master` branch. See the script .github/workflows/cd.yml on `master`.
-          EOF
+          test ! -e dist/gh-pages/.git
+          cp -r ../../dist/gh-pages/. .
+          git add -A .
 
-      # We stage all the files and make a commit to the `gh-pages` branch that
-      # looks a lot like the latest commit to `master`.
-      - name: Commit to `gh-pages`
+      # If there are any changes to commit, we make a commit to the `gh-pages`
+      # branch that looks a lot like the latest commit to `master`.
+      #
+      - name: Commit to `gh-pages` in a way that resembles the commit to `master`
         run: |
-          cd build-gh-pages/repo
+          cd build/gh-pages-repo
           git add .
           git config user.name "$(git log -1 --pretty=%an master)"
           git config user.email "$(git log -1 --pretty=%ae master)"
-          git commit -m "$(git log -1 --pretty=%B master)"
+          if [[ ! -z $(git status --untracked-files=no --porcelain) ]]; then
+            git commit -m "$(git log -1 --pretty=%B master)"
+          fi
 
       # We push this new commit to the `gh-pages` branch. We specify the remote
       # branch as `refs/heads/gh-pages` so that we create the branch if it
       # doesn't exist yet.
       - name: Push to `gh-pages`
         run: |
-          cd build-gh-pages/repo
+          cd build/gh-pages-repo
           git push -q origin HEAD:refs/heads/gh-pages

@@ -13,8 +13,10 @@ apps/managed/*
 
 www/
 
-# The build-web-help.arc script generates this directory.
-/build-gh-pages/
+# The build-web-help.arc script generates /dist/gh-pages/, for
+# deployment to GitHub Pages. Deliverables of other kinds could go
+# here too.
+/dist/
 
 # When `raco setup --package anarki` builds documentation, it goes
 # here.
