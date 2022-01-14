@@ -27,6 +27,8 @@
 
   racket/struct
 
+  syntax/stx
+
   (only-in "brackets.rkt" bracket-readtable)
 
   (for-syntax racket/base))
