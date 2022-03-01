@@ -22,7 +22,7 @@
                                     #:database ,db 
                                     #:password ,password)))
 
-(mac postgresql-secure-connect (user db ssl-protocol (o passowrd nil))
+(mac postgresql-secure-connect (user db ssl-protocol (o password nil))
     `(vconn (postgresql-data-source #:user ,user 
                                     #:database ,db 
                                     #:password ,password
