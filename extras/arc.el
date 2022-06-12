@@ -1,5 +1,9 @@
 ;;; arc.el --- Arc editing mode
 
+;; Version: 0.1
+;; Url: https://github.com/arclanguage/anarki
+;; Package-Requires: ((emacs "24.3"))
+
 ;; Copyright (C) 1986, 1987, 1988, 1997, 1998, 2001, 2002, 2003, 2004, 2005,
 ;;   2006, 2007, 2008, 2021  Free Software Foundation, Inc.
 
@@ -33,7 +37,7 @@
 ;; the Lisp mode documented in the Emacs manual.
 
 ;; Change Log:
-;; - 2021/03/09: Pierre Rouleau. Replace destructuring-bind by
+;; - 2021/03/09: Pierre Rouleau.  Replace destructuring-bind by
 ;;               cl-destructuring-bind to support Emacs 24.2 and later.
 
 ;;; Code:
@@ -244,8 +248,7 @@ See `run-hooks'."
       '(2 (cond ((match-beginning 2) font-lock-function-name-face)
                 ((match-beginning 5) font-lock-variable-name-face)
                 (t font-lock-type-face))
-          nil t))
-     ))
+          nil t))))
   "Subdued expressions to highlight in Arc modes.")
 
 (defconst arc-font-lock-keywords-2
@@ -281,10 +284,10 @@ See `run-hooks'."
                "accum" "after" "atomic" "catch" "errsafe" "point" "thread"
                "w/table" "w/uniq"
                ; misc
-               "do" "do1" "get"
-               ) t)
-        "\\>") 1)
-      )))
+               "do" "do1" "get")
+             t)
+        "\\>")
+       1))))
   "Gaudy expressions to highlight in Arc modes.")
 
 (defvar arc-font-lock-keywords arc-font-lock-keywords-1
@@ -334,8 +337,9 @@ See `run-hooks'."
 ;; because Arc doesn't care about how many comment chars you use.
 (defun arc-indent-line (&optional whole-exp)
   "Indent current line as Arc code.
-With argument, indent any additional lines of the same expression
-rigidly along with this one."
+
+With argument WHOLE-EXP, indent any additional lines of the same
+expression rigidly along with this one."
   (interactive "P")
   (let ((indent (calculate-lisp-indent)) shift-amt end
         (pos (- (point-max) (point)))
@@ -412,7 +416,7 @@ rigidly along with this one."
 ;; like def if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
-(eval-when-compile (require 'cl-macs))
+(eval-when-compile (require 'cl-lib))
 
 (let ((arc-indent-function-list
        ;; format is ((LEVEL . SYMS) ...)
