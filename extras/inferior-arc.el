@@ -1,5 +1,8 @@
 ;;; inferior-arc.el --- Arc process in a buffer. Adapted from cmuscheme.el
 
+;; Version: 0.1
+;; Url: https://github.com/arclanguage/anarki
+
 ;; Copyright (C) 1988, 1994, 1997, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2021 Free Software Foundation, Inc.
 
@@ -30,7 +33,7 @@
 
 ;;    This is a customization of comint-mode (see comint.el)
 ;;
-;; Written by Olin Shivers (olin.shivers@cs.cmu.edu). With bits and pieces
+;; Written by Olin Shivers (olin.shivers@cs.cmu.edu).  With bits and pieces
 ;; lifted from scheme.el, shell.el, clisp.el, newclisp.el, cobol.el, et al..
 ;; 8/88
 ;;
@@ -43,18 +46,18 @@
 ;;; Created.
 ;;;
 ;;; 2/15/89 Olin
-;;; Removed -emacs flag from process invocation. It's only useful for
+;;; Removed -emacs flag from process invocation.  It's only useful for
 ;;; cscheme, and makes cscheme assume it's running under xscheme.el,
-;;; which messes things up royally. A bug.
+;;; which messes things up royally.  A bug.
 ;;;
 ;;; 5/22/90 Olin
 ;;; - Upgraded to use comint-send-string and comint-send-region.
 ;;; - run-scheme now offers to let you edit the command line if
-;;;   you invoke it with a prefix-arg. M-x scheme is redundant, and
+;;;   you invoke it with a prefix-arg.  M-x scheme is redundant, and
 ;;;   has been removed.
 ;;; - Explicit references to process "scheme" have been replaced with
-;;;   (scheme-proc). This allows better handling of multiple process bufs.
-;;; - Added scheme-send-last-sexp, bound to C-x C-e. A gnu convention.
+;;;   (scheme-proc).  This allows better handling of multiple process bufs.
+;;; - Added scheme-send-last-sexp, bound to C-x C-e.  A gnu convention.
 ;;; - Have not added process query facility a la cmulisp.el's lisp-show-arglist
 ;;;   and friends, but interested hackers might find a useful application
 ;;;   of this facility.
@@ -125,8 +128,7 @@
   (define-key map [send-region]
     '("Evaluate Region" . arc-send-region))
   (define-key map [send-sexp]
-    '("Evaluate Last S-expression" . arc-send-last-sexp))
-  )
+    '("Evaluate Last S-expression" . arc-send-last-sexp)))
 
 (defvar arc-buffer)
 
@@ -136,9 +138,9 @@
 The following commands are available:
 \\{inferior-arc-mode-map}
 
-An Arc process can be fired up with M-x run-arc.
+An Arc process can be fired up with \\[execute-extended-command] run-arc.
 
-Customization: Entry to this mode runs the hooks on comint-mode-hook and
+Customization: Entry to this mode runs the hooks on 'comint-mode-hook' and
 inferior-arc-mode-hook (in that order).
 
 You can send text to the inferior Arc process from other buffers containing
@@ -160,7 +162,7 @@ Return before the end of the process' output copies the sexp ending at point
 Delete converts tabs to spaces as it moves back.
 Tab indents for Arc; with argument, shifts rest
     of expression rigidly with the current line.
-C-M-q does Tab on each line starting within following expression.
+\\[indent-pp-sexp] does Tab on each line starting within following expression.
 Paragraphs are separated only by blank lines.  Semicolons start comments.
 If you accidentally suspend your process, use \\[comint-continue-subjob]
 to continue it."
@@ -212,7 +214,7 @@ is run).
 ;;;###autoload (add-hook 'same-window-buffer-names "*arc*")
 
 (defun arc-send-region (start end)
-  "Send the current region to the inferior Arc process."
+  "Send the current region from START to END to the inferior Arc process."
   (interactive "r")
   (comint-send-region (arc-proc) start end)
   (comint-send-string (arc-proc) "\n"))
@@ -263,7 +265,7 @@ With argument, position cursor at end of buffer."
     (goto-char (point-max))))
 
 (defun arc-send-region-and-go (start end)
-  "Send the current region to the inferior Arc process.
+  "Send the current region from START to END to the inferior Arc process.
 Then switch to the process buffer."
   (interactive "r")
   (arc-send-region start end)
