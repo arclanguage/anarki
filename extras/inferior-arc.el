@@ -110,6 +110,7 @@
 (define-key arc-mode-map "\C-c\C-x" 'arc-expand-current-form)
 (define-key arc-mode-map "\C-c\C-z" 'switch-to-arc)
 (define-key arc-mode-map "\C-c\C-l" 'arc-load-file)
+(define-key arc-mode-map (kbd "C-c C-k") 'arc-load-buffer)
 
 (let ((map (lookup-key arc-mode-map [menu-bar arc])))
   (define-key map [separator-eval] '("--"))
@@ -290,6 +291,11 @@ these commands to determine defaults."
   "Caches the last (directory . file) pair.
 Caches the last pair used in the last `arc-load-file' command.
 Used for determining the default in the next one.")
+
+(defun arc-load-current-buffer ()
+  "Load the current buffer into Arc."
+  (interactive)
+  (arc-send-region (point-min) (point-max)))
 
 (defun arc-load-file (file-name)
   "Load a Arc file FILE-NAME into the inferior Arc process."
