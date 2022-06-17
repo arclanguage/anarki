@@ -113,6 +113,7 @@
   "Imenu generic expression for Arc mode.  See `imenu-generic-expression'.")
 
 (defun arc-mode-variables ()
+  "Set up variables for arc-mode."
   (set-syntax-table arc-mode-syntax-table)
   (setq local-abbrev-table arc-mode-abbrev-table)
   (make-local-variable 'paragraph-start)
@@ -309,6 +310,9 @@ See `run-hooks'."
        (if (eq (char-after) ?\() 2 0)))
 
 (defun arc-font-lock-syntactic-face-function (state)
+  "Return syntactic face function for the position represented by STATE.
+STATE is a ‘parse-partial-sexp’ state, and the returned function is the
+Lisp font lock syntactic face function."
   (when (and (null (nth 3 state))
              (eq (char-after (nth 8 state)) ?#)
              (eq (char-after (1+ (nth 8 state))) ?\;))
@@ -374,7 +378,7 @@ expression rigidly along with this one."
 (defvar calculate-lisp-indent-last-sexp)
 
 ;; Copied from lisp-indent-function, but with gets of
-;; arc-indent-{function,hok}.
+;; arc-indent-{function,hook}.
 (defun arc-indent-function (indent-point state)
   (let ((normal-indent (current-column)))
     (goto-char (1+ (elt state 1)))
