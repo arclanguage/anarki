@@ -95,6 +95,7 @@
     (define-key m "\M-\C-x" 'arc-send-definition) ;gnu convention
     (define-key m "\C-x\C-e" 'arc-send-last-sexp)
     (define-key m "\C-c\C-l" 'arc-load-file)
+    (define-key m (kbd "C-c C-q" #'arc-quit))
     m))
 
 (defvar arc-program-name "arc.sh -n"
@@ -111,6 +112,7 @@
 (define-key arc-mode-map "\C-c\C-z" 'switch-to-arc)
 (define-key arc-mode-map "\C-c\C-l" 'arc-load-file)
 (define-key arc-mode-map (kbd "C-c C-k") 'arc-load-buffer)
+(define-key arc-mode-map (kbd "C-c C-q") #'arc-quit)
 
 (let ((map (lookup-key arc-mode-map [menu-bar arc])))
   (define-key map [separator-eval] '("--"))
@@ -214,11 +216,16 @@ is run).
   (pop-to-buffer "*arc*"))
 ;;;###autoload (add-hook 'same-window-buffer-names "*arc*")
 
+(defun arc-send-string (string)
+  "Send STRING to the inferior Arc process."
+  (comint-send-string (arc-proc) string)
+  (comint-send-string (arc-proc) "\n"))
+
 (defun arc-send-region (start end)
   "Send the current region from START to END to the inferior Arc process."
   (interactive "r")
   (comint-send-region (arc-proc) start end)
-  (comint-send-string (arc-proc) "\n"))
+  (arc-send-string "\n"))
 
 (defun arc-send-definition ()
   "Send the current definition to the inferior Arc process."
@@ -234,15 +241,20 @@ is run).
   (interactive)
   (arc-send-region (save-excursion (backward-sexp) (point)) (point)))
 
+(defun arc-quit ()
+  "Quit the running arc."
+  (interactive)
+  (when (arc-get-process)
+    (arc-send-string "(quit)")))
+
 (defun arc-expand-current-form ()
   "Macro-expand the form at point in the inferior Arc process."
   (interactive)
   (let ((current-form (arc-form-at-point)))
     (if current-form
         (progn
-          (comint-send-string (arc-proc)
-                              (format "(macex1 '%s)" current-form))
-          (comint-send-string (arc-proc) "\n"))
+          (arc-send-string (format "(macex1 '%s)" current-form))
+          (arc-send-string "\n"))
       (error "Not at a form"))))
 
 (defun arc-form-at-point ()
@@ -305,9 +317,9 @@ Used for determining the default in the next one.")
   (comint-check-source file-name) ; Check to see if buffer needs saved.
   (setq arc-prev-load/c-dir/file (cons (file-name-directory    file-name)
                                        (file-name-nondirectory file-name)))
-  (comint-send-string (arc-proc) (concat "(load \""
-                                            file-name
-                                            "\"\)\n")))
+  (arc-send-string (concat "(load \""
+                           file-name
+                           "\"\)\n")))
 
 
 (defvar arc-buffer nil "*The current arc process buffer.
