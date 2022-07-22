@@ -8,14 +8,20 @@ privileges, just submit your first pull request or ask on [**Arc Language Forum*
 
 ### Installation
 
-First [install **Racket** (v7.7 or later)](http://racket-lang.org), then
+First [install **Racket** (v7.7 or later)](http://racket-lang.org), then in a terminal, run:
 
     $ raco pkg install sha
     $ git clone http://github.com/arclanguage/anarki
     $ cd anarki
-    $ ./arc.sh    # start the interactive repl
+    
+You can start the interactive repl with:
+
+    $ ./arc.sh
+    
+Or start news (and the repl) with:
+
     $ cd apps/news
-    $ ./run-news  # or start News (also with the repl)
+    $ ./run-news
 
 ### Tutorial
 
