@@ -1345,6 +1345,10 @@
                 (rename-file-or-directory old new #t)
                 'nil))
 
+(xdef cpfile (lambda (old new)
+               (copy-file old new #t)
+               'nil))
+
 ; top level read-eval-print
 ; tle kept as a way to get a break loop when a scheme err
 
