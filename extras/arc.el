@@ -446,6 +446,9 @@ expression rigidly along with this one."
                  (eq (cdr coding) 'no-conversion-multibyte)))
     (setcar coding (replace-match "" nil nil (car coding)))))
 
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.arc\\'" . arc-mode))
+
 (provide 'arc)
 
 ;;; arc.el ends here
