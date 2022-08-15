@@ -95,7 +95,7 @@
     (define-key m "\M-\C-x" 'arc-send-definition) ;gnu convention
     (define-key m "\C-x\C-e" 'arc-send-last-sexp)
     (define-key m "\C-c\C-l" 'arc-load-file)
-    (define-key m (kbd "C-c C-q" #'arc-quit))
+    (define-key m (kbd "C-c C-q") #'arc-quit)
     m))
 
 (defvar arc-program-name "arc.sh -n"
