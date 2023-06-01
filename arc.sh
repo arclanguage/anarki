@@ -73,7 +73,7 @@ case $(uname) in
     "Darwin")
         if ! which greadlink >&/dev/null
         then
-          echo 'Please do "brew install coreutils."'
+          echo 'Please do "brew install coreutils"'
           exit 1
         fi
         arc_dir=$(dirname "$(greadlink -f "$0")")
