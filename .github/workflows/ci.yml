@@ -6,6 +6,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      # continue running other jobs in the matrix when one fails
+      fail-fast: false
       matrix:
         racket-variant: ["BC", "CS"]
         # There is no "allow failures" option for GitHub Actions, but we test on
