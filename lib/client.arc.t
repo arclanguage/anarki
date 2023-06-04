@@ -41,5 +41,5 @@
        (suite send-request
               (test get-200
                     (assert-same "HTTP/1.1 200 OK"
-                                 (caar (mkreq "https://httpstat.us/200"))))))
+                                 (caar (mkreq "httpstat.us/200"))))))
 
