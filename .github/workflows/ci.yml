@@ -24,9 +24,9 @@ jobs:
           - package: anarki
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install Racket '${{ matrix.racket-version }}'
-        uses: Bogdanp/setup-racket@v1.1
+        uses: Bogdanp/setup-racket@v1.10
         with:
           architecture: x64
           distribution: full
