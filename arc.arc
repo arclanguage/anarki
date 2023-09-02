@@ -647,6 +647,10 @@ More convenient form of [[coerce]] with arguments reversed; doesn't need
 "Converts 'x' into a symbol."
   (coerce x 'sym))
 
+(def str (x)
+"Converts 'x' into a string."
+  (coerce x 'string))
+
 (def int (x (o b 10))
 "Converts 'x' into an integer, optionally in the given base 'b' (decimal by default)."
   (coerce x 'int b))
