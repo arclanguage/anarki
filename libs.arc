@@ -2,6 +2,8 @@
 
 (require '(
     ; core
+    lib/colors.arc
+    lib/dbg.arc
     lib/strings.arc
     lib/re.arc
     lib/binary.arc
