@@ -1,6 +1,6 @@
 ($:require (only-in racket vector-map))
 
-(= templates* (table))
+(or= templates* (table))
 
 (mac deftem (tem . fields)
 "Defines a _template_, a table with defaults defined for various keys.

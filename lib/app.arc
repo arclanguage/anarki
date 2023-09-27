@@ -30,7 +30,7 @@
 
 ; idea: a bidirectional table, so don't need two vars (and sets)
 
-(= cookie->user* (table) user->cookie* (table) logins* (table))
+(or= cookie->user* (table) user->cookie* (table) logins* (table))
 
 (def get-user (req)
 "Gets the user id string associated with 'req'.
@@ -258,7 +258,7 @@ Returns nil if no logged-in user."
                    (link "Try logging in now." "/")))))
     (single-input "New password: " 'p 20 "update" t)))
 
-(= good-logins* (queue) bad-logins* (queue))
+(or= good-logins* (queue) bad-logins* (queue))
 
 (def good-login (user pw ip)
   (let record (list (seconds) ip user)
@@ -279,7 +279,7 @@ Returns nil if no logged-in user."
    ;prepending this (stdin)= for backwards compatibility with previous hashes
    (+ "(stdin)= " ($.bytes->hex-string ($.sha512 ($.string->bytes/utf-8 str)))))
 
-(= dc-usernames* (table))
+(or= dc-usernames* (table))
 
 (def username-taken (user)
   (when (empty dc-usernames*)

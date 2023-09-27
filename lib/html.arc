@@ -28,7 +28,7 @@
    darkblue (color 0 0 120)
    )
 
-(= opmeths* (table))
+(or= opmeths* (table))
 
 (mac opmeth args
   `(opmeths* (list ,@args)))
