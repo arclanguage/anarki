@@ -1446,9 +1446,10 @@ Arc 3.2 documentation: https://arclanguage.github.io/ref.
 
 
 (define (trash-whitespace)
-  (when (and (char-ready?) (char-whitespace? (peek-char)))
-    (read-char)
-    (trash-whitespace)))
+  (with-handlers ([exn:fail:contract? (lambda (exn) (void))])
+    (when (and (char-ready?) (char-whitespace? (peek-char)))
+      (read-char)
+    (trash-whitespace))))
 
 (define (tl2 interactive?)
   (when interactive? (display "arc> "))
