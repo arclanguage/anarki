@@ -60,7 +60,7 @@
 ;TODO:
 ; - 'defpat does not rearrange patterns, so you must manually arrange
 ;   from most specific to most generic patterns for now.  Obviously it's
-;   possible to do this programatically but I will defer it for now.
+;   possible to do this programmatically but I will defer it for now.
 ; - code cleanup
 ;
 ;

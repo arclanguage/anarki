@@ -48,7 +48,7 @@
              (anarki-eval expr)))
 
          (let ()
-           ; We evaluate each top-level exprssion in the file.
+           ; We evaluate each top-level expression in the file.
            (eval-here 'body)
            ...
 

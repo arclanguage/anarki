@@ -26,7 +26,7 @@
 ; library or the GNU Readline library for its implementation.
 ;
 ; An undocumented feature of XREPL makes it possible to disable
-; Readline support altogether by setting the "TERM" envrionment
+; Readline support altogether by setting the "TERM" environment
 ; variable to "dumb" when running Racket at the command line, like so:
 ;
 ;   $ TERM=dumb racket
