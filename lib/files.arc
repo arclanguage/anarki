@@ -25,7 +25,7 @@
   ($.file-or-directory-modify-seconds path))
 
 (def file-perms (path)
-  " Returns a list of the effective file permssions of `path'. "
+  " Returns a list of the effective file permissions of `path'. "
   ($.file-or-directory-permissions path))
 
 (def file-size (path)

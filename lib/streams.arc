@@ -58,7 +58,7 @@
 
 (def integers-from (n)
   "creates the infinite stream of integers starting from n"
-  ;; might want to change this so it doens't use memoization
+  ;; might want to change this so it doesn't use memoization
   (lazy-cons n (integers-from inc.n)))
 
 ;; variants of common list operations that return lazy streams

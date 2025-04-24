@@ -46,7 +46,7 @@
   (init-matrix dims 1))
 
 (mac elt (mat pos)
-  "access the element of the matix given by co-ords listed in pos"
+  "access the element of the matrix given by co-ords listed in pos"
   (if (cdr pos)
     `(elt (,mat ,(last pos)) ,(butlast pos))
     `(,mat ,(car pos))))
@@ -170,7 +170,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 ;calculus fns
 
 (def deriv (f)
-  "provides differential of a function of a single vairable"
+  "provides differential of a function of a single variable"
   (fn (x)
     (let dx (if (is x 0) 1d-9 (abs:* x 1d-9))
       (/ (- (f (+ x dx))
@@ -529,7 +529,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 ;data-fitting
 
 (def least-squares-linear (data)
-  "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in acsending order"
+  "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in ascending order"
   (if (< len.data 2) (err "cannot fit to less than 2 points"))
   (withs (xs (map car  data)
           ys (map cadr data)
@@ -543,7 +543,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     (gauss-elim A B)))
 
 (def least-squares-quadratic (data)
-  "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in acsending order"
+  "data is expected in the form ((x1 y1)(x2 y2)...) returns list of co-efficients for powers of x in ascending order"
   (if (< len.data 3) (err "cannot fit to less than 3 points"))
   (withs (xs (map car  data)
           ys (map cadr data)
@@ -558,7 +558,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
     (gauss-elim A B)))
 
 (def least-squares-custom (data . fns)
-  "data is expected in the form ((x1 y1)(x2 y2)...), fns must each accept 1 argument, returns list of co-efficients for powers of x in acsending order"
+  "data is expected in the form ((x1 y1)(x2 y2)...), fns must each accept 1 argument, returns list of co-efficients for powers of x in ascending order"
   (if (< len.data len.fns) (err "cannot fit to less points than component functions"))
   (withs (xs (map car  data)
           ys (map cadr data)
