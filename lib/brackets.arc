@@ -1,5 +1,4 @@
 ; avoid redefinition warning
-($ (namespace-undefine-variable! (ac-global-name '%brackets)))
 
 (def -mbf-argsym (e)
   (and (begins string.e "_")
@@ -23,7 +22,7 @@
 ;   treats any symbols starting with '_' as args, ordered alphabetically
 ;     e.g. _1, _2, _3, or _a, _b, _c, etc.
 ;   treats __ as the rest arg
-(mac %brackets body
+(remac %brackets body
   (let args '__
     (each arg (dedup:sort > -mbf-argsyms.body)
       (pushnew arg args))
