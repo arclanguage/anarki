@@ -28,7 +28,7 @@
    (max-age* 'news.css) 86400
    (max-age* 'custom.css) 86400
 
-; non static file defops which will return custom (non html) content-types
+; non static file defops which will return custom (non HTML) content-types
    op-ctypes* {
     rss           "text/xml" 
     rss-stories   "text/xml" 
@@ -60,7 +60,7 @@
 ; enable string interpolation just in this file
 (declare 'atstrings t)
 
-; Could add (html) types like choice, yesno to profile fields.  But not
+; Could add (HTML) types like choice, yesno to profile fields.  But not
 ; as part of deftem, which is defstruct.  Need another mac on top of
 ; deftem.  Should not need the type specs in user-fields.
 
@@ -2142,7 +2142,7 @@
 ; Comment caching doesn't make generation of comments significantly
 ; faster, but may speed up everything else by generating less garbage.
 
-; It might solve the same problem more generally to make html code
+; It might solve the same problem more generally to make HTML code
 ; more efficient.
 
 (= comment-cache* (table) comment-cache-timeout* (table) cc-window* 10000)
