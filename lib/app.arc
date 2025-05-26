@@ -394,9 +394,9 @@ Returns nil if no logged-in user."
 ; remove the /rs in individual cases below.  Could do it in aform or
 ; even in the parsing of http requests, in the server.
 
-; Need the calls to striptags so that news users can't get html
+; Need the calls to striptags so that news users can't get HTML
 ; into a title or comment by editing it.  If want a form that
-; can take html, just create another typ for it.
+; can take HTML, just create another typ for it.
 
 (def readvar (typ str (o fail nil))
   (case (carif typ)
