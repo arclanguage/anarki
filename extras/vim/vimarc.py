@@ -24,7 +24,7 @@ class Funnel(pexpect.spawn):
         finally:
             tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
-    def __interact_writen(self, fd, data):
+    def __interact_written(self, fd, data):
         while data != '' and self.isalive():
             n = os.write(fd, data)
             data = data[n:]
@@ -57,10 +57,10 @@ class Funnel(pexpect.spawn):
                 os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
                 data = self.__interact_read(self.STDIN_FILENO)
-                self.__interact_writen(self.child_fd, data)
+                self.__interact_written(self.child_fd, data)
             if pipe in r:
                 data = self.__interact_read(pipe)
-                self.__interact_writen(self.child_fd, data)
+                self.__interact_written(self.child_fd, data)
 
 f = Funnel(lispCmd, logfile=sys.stdout)
 pipe = open(pipeLoc, "r+")

@@ -335,7 +335,7 @@ using gaussian elimination and returns a list of x's (N.B. not efficient for lar
 
 
 (def gauss-random (sigma (o mu 0))
-  "gausian distributed random with width sigma around mu"
+  "gaussian distributed random with width sigma around mu"
   (withs (u (rand)
           v (* 1.7156 (- (rand) 0.5))
           x (- u 0.449871)
