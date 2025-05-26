@@ -77,7 +77,7 @@
       (rec key-val-lis))))
 
 (def matrix-minor (mat indices (o table? t))
-  "creates the minor the the element of mat with the indices specified, i.e. if the indices are (i j k ...) then it is the matrix which excludes elements in the ith row or jth column or kth depth etc"
+  "creates the minor element of mat with the indices specified, i.e. if the indices are (i j k ...) then it is the matrix which excludes elements in the ith row or jth column or kth depth etc"
   (if (acons mat) (zap mat-to-table mat))
   (= indices (firstn (len mat!dims) indices))
   (let ans (mat-to-table:init-matrix (map [- _ 1] mat!dims) 0)
@@ -133,9 +133,9 @@ mat_10*x_0 + mat_11*x_1 ... mat_1n*x_n = rhs_1
 ...
 mat_n0*x_0 + mat_n1*x_1 ... mat_nn*x_n = rhs_n
 
-using gaussian elimination and returns a list of x's (N.B. not efficient for large sparce matrices)"
+using gaussian elimination and returns a list of x's (N.B. not efficient for large sparse matrices)"
   (zap flat rhs)
-  (if (acons mat) (zap mat-to-table mat)) ;assumes if using list-of-lists representation of matrices you arent worried about efficiency and so wont mind inline conversion
+  (if (acons mat) (zap mat-to-table mat)) ;assumes if using list-of-lists representation of matrices you aren't worried about efficiency and so won't mind inline conversion
   (withs (MAX  0
           tmp  0
           X  (if (is (car mat!dims) (cadr mat!dims) len.rhs) (zeros (car mat!dims))

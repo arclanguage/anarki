@@ -1747,7 +1747,7 @@ protocol requires them."
     s))
 
 (mac on (var s . body)
-"Like [[each]], but also maintains a variable calles 'index' counting the iterations."
+"Like [[each]], but also maintains a variable called 'index' counting the iterations."
   (if (is var 'index)
     (err "Can't use index as first arg to on.")
     (w/uniq gs
