@@ -1,8 +1,8 @@
-(= pprsyms* (fill-table (table) 
-                        '(quote "'" 
-                          quasiquote "`"
-                          unquote ","
-                          unquote-splicing ",@")))
+(or= pprsyms* (fill-table (table) 
+                          '(quote "'" 
+                            quasiquote "`"
+                            unquote ","
+                            unquote-splicing ",@")))
 
 (def sp ((o n 1))
   " Print a number of spaces. "
@@ -143,7 +143,7 @@
         (indent-block (nthcdr 2 xs) (+ col (len "(suite "))))
       (indent-block (cdr xs) (+ col (len "(suite "))))))
 
-(= indent-rules* 
+(or= indent-rules* 
    (fill-table (table)
      `(if      ,(indent-if (len "if"))
        aif     ,(indent-if (len "aif"))

@@ -953,6 +953,17 @@ See [[atomic]]."
   (= x 2 y 4)
   _)
 
+(mac or= args
+  `(do ,@(map [cons 'or-assign _] (pair args))))
+
+(mac or-assign (slot value)
+  `(atomic
+     ,(if (ssyntax slot)
+          `(or-assign ,(ssexpand slot) ,value)
+          (alist slot)
+          `(or ,slot (= ,slot ,value))
+        `(or (if (bound ',slot) ,slot) (= ,slot ,value)))))
+
 (def lastcons (xs)
 "Returns the absolute last link of list 'xs'. Save this value to efficiently
 append to 'xs'."
@@ -2751,11 +2762,6 @@ of 'x' by calling 'self'."
    (3 4)
    (4)))
 
-(mac or= (place expr)
-  (let (binds val setter) (setforms place)
-    `(atwiths ,binds
-       (or ,val (,setter ,expr)))))
-
 (defextend iso (x y) (isa x 'table)
   (and (isa x 'table)
        (isa y 'table)
@@ -2875,7 +2881,7 @@ of 'x' by calling 'self'."
 (def write (x (o port (stdout)))
   (swrite serialize.x port))
 
-(= hooks* (table))
+(or= hooks* (table))
 
 (def hook (name . args)
   (aif (hooks* name) (apply it args)))
@@ -2900,7 +2906,7 @@ Useful in higher-order functions, or to index into lists, strings, tables, etc."
   (map get.2 '((a b c) (1 2 3) (p q r)))
   (c 3 r))
 
-(= savers* (table))
+(or= savers* (table))
 
 (mac fromdisk (var file init load save)
   (w/uniq (gf gv)
