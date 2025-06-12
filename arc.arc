@@ -1562,17 +1562,17 @@ read from the stream 'str'."
      (tostring ,@body)
      ,dest))
 
-(def readstring1 (s)
+(def readstring1 (s (o data t))
 "Reads a single expression from string 's'. Returns the uninterned symbol
 stored as the global value of 'eof' if there's nothing left to read."
-  (w/instring i s (read i)))
+  (w/instring i s (read i data)))
 
-(def read ((o x (stdin)))
+(def read ((o x (stdin)) (o data t))
 "Reads a single expression from string or stream 'x'. Returns the uninterned
 symbol stored as the global value of 'eof' if there's nothing left to read."
   (if (isa x 'string)
-    (readstring1 x)
-    (sread x)))
+    (readstring1 x data)
+    ((if data sdata sread) x)))
 
 (mac fromfile (f . body)
 "Redirects standard input from the file 'f' within 'body'."
@@ -2867,10 +2867,10 @@ of 'x' by calling 'self'."
     (map (fn ((k v)) (= h.k unserialize.v))
          rep*.x)))
 
-(redef read ((o x (stdin)))
+(redef read ((o x (stdin)) (o data t))
   (if (isa x 'string)
-    (readstring1 x)
-    (unserialize:sread x)))
+    (readstring1 x data)
+    (unserialize ((if data sdata sread) x))))
 
 (def write (x (o port (stdout)))
   (swrite serialize.x port))

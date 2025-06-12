@@ -24,6 +24,7 @@
   openssl
   racket/string
   racket/random
+
   racket/struct
 
   (only-in "brackets.rkt" bracket-readtable)
@@ -104,6 +105,7 @@
     ([anarki-init-in-main-namespace-func anarki-init-verbose])
     (anarki-init-in-main-namespace)))
 
+
 (struct ar-tagged (type rep) #:prefab)
 
 ; compile an Arc expression into a Scheme expression,
@@ -111,12 +113,18 @@
 ; env is a list of lexically bound variables, which we
 ; need in order to decide whether set should create a global.
 
-(defarc (ac s env)
+(define (stx-map proc stxl)
+  (map proc (stx->list stxl)))
+
+(defarc (ac* e s env)
   (cond [(string? s) (ac-string s env)]
-        [(literal? s) (list 'quote s)]
+        [(keyword? s) s]
+        [(literal? s) (list 'quote (ac-quoted s))]
         [(eqv? s 'nil) (list 'quote 'nil)]
         [(ssyntax? s) (ac (expand-ssyntax s) env)]
         [(symbol? s) (ac-var-ref s env)]
+        [(eq? (xcar s) 'syntax) (cadr (syntax-e e))]
+        [(eq? (xcar (xcar s)) 'syntax) (stx-map ac e)]
         [(ssyntax? (xcar s)) (ac (cons (expand-ssyntax (car s)) (cdr s)) env)]
         [(eq? (xcar s) '$) (ac-$ (cadr s) env)]
         [(eq? (xcar s) 'quote) (list 'quote (ac-quoted (ac-niltree (cadr s))))]
@@ -135,7 +143,16 @@
          (ac (list 'no (cons (cadar s) (cdr s))) env)]
         [(eq? (xcar (xcar s)) 'andf) (ac-andf s env)]
         [(pair? s) (ac-call (car s) (cdr s) env)]
+        [(syntax? s) s]
         [#t (err "Bad object in expression" s)]))
+
+(defarc (ac stx (env (env*)) (ns main-namespace))
+  (parameterize ((env* env))
+    (let* ((s (syn stx))
+           (e (syntax->datum s))
+           (expr (ac* s e env)))
+      (parameterize ((current-namespace ns))
+        (namespace-syntax-introduce (syn expr stx))))))
 
 (define (ac-string s env)
   (if (ar-bflag 'atstrings)
@@ -548,6 +565,7 @@
 
 (define (ac-set1 a b1 env)
   (if (symbol? a)
+
       (let ([b (ac b1 (ac-dbname! a env))])
         (list 'let `([zz ,b])
                (cond [(eqv? a 'nil) (err "Can't rebind nil")]
@@ -557,7 +575,9 @@
                      [(ac-defined-var? a) `(,(ac-global-name a) zz)]
                      [#t `(set! ,(ac-global-name a) zz)])
                'zz))
+
       (err "First arg to set must be a symbol" a)))
+
 
 ; given a list of Arc expressions, return a list of Scheme expressions.
 ; for compiling passed arguments.
@@ -666,7 +686,7 @@
 
 (define (ac-macro? fn)
   (if (symbol? fn)
-    (let ([v (and (bound? fn) (arc-eval fn))])
+    (let ([v (and (bound? fn) (bound fn))])
       (if (and v
                (ar-tagged? v)
                (eq? (ar-type v) 'mac))
@@ -990,6 +1010,7 @@
         ((async-channel? x) 'channel)
         ((evt? x)           'event)
         [(keyword? x)       'keyword]
+        [(syntax? x)        'syntax]
         [#t                 (err "Type: unknown type" x)]))
 (xdef type ar-type)
 
@@ -1107,9 +1128,11 @@
 
 ; sread = scheme read. eventually replace by writing read
 
+
 (xdef sread (lambda (p)
                (let ([expr (read p)])
                  expr)))
+
 
 ; these work in PLT but not scheme48
 
@@ -1377,7 +1400,10 @@
 ;
 (define (arc-exec racket-expr)
   (eval (parameterize ([compile-allow-set!-undefined #t])
-          (compile racket-expr))))
+          (if (syntax? racket-expr)
+              (compile-syntax (namespace-syntax-introduce racket-expr))
+              (compile racket-expr)))))
+
 
 (define (arc-eval expr . args)
   (if (null? args)
@@ -1491,7 +1517,7 @@ Arc 3.2 documentation: https://arclanguage.github.io/ref.
   (xdef current-fn current-fn))
 
 (define (aload1 p)
-  (let ([x (read p)])
+  (let ([x (sread p)])
     (if (eof-object? x)
         (void)
         (begin
@@ -1499,7 +1525,7 @@ Arc 3.2 documentation: https://arclanguage.github.io/ref.
           (aload1 p)))))
 
 (define (atests1 p)
-  (let ([x (read p)])
+  (let ([x (sread p)])
     (if (eof-object? x)
         #t
         (begin
@@ -1557,10 +1583,10 @@ Arc 3.2 documentation: https://arclanguage.github.io/ref.
   (call-with-line-counting-input-file filename atests1))
 
 (define (acompile1 ip op)
-  (let ([x (read ip)])
+  (let ([x (sread ip)])
     (if (eof-object? x)
         #t
-        (let ([scm (ac x '())])
+        (let ([scm (ac x)])
           (arc-exec scm)
           (pretty-print scm op)
           (newline op)
@@ -1679,6 +1705,11 @@ Arc 3.2 documentation: https://arclanguage.github.io/ref.
                   [exn:fail:contract:variable? (lambda (e) #f)])
     (namespace-variable-value (ac-global-name arcname))
     #t))
+
+(define (bound arcname)
+  (with-handlers ([exn:fail:syntax? (lambda (e) #t)]
+                  [exn:fail:contract:variable? (lambda (e) #f)])
+    (namespace-variable-value (ac-global-name arcname))))
 
 (xdef bound (lambda (x) (tnil (bound? x))))
 
