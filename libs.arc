@@ -3,6 +3,7 @@
 (require '(
     ; core
     lib/strings.arc
+    lib/strftime.arc
     lib/re.arc
     lib/binary.arc
     lib/queue.arc

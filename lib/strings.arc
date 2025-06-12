@@ -200,6 +200,15 @@ trailing zeros and an initial zero before the decimal as desired."
       (+ "-" abrep)
       abrep)))
 
+(def leftpad (s (o digits 0) (o c "0"))
+  (if (isa s 'string)
+      (let n (len s)
+        (if (<= digits n) s
+          (tostring
+            (repeat (- digits n) (pr c))
+            (pr s))))
+    (leftpad (string s) digits c)))
+
 (def joinstr (lst (o glue " "))
   (string:intersperse glue lst))
 
